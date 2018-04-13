@@ -1,8 +1,8 @@
 {
-  "name": "server-physics",
-  "version": "1.0.0",
-  "description": "Marbles?",
-  "main": "main.js",
+  "name": "web-marbles",
+  "version": "0.0.1",
+  "description": "Aims to recreate Marble Racing from the ground up, as a fully web based game ",
+  "main": "web-marbles.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
