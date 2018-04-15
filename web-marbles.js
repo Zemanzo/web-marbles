@@ -73,15 +73,13 @@ setTimeout(function(){
 	clearInterval(interval)
 },10050); */
 
-steppies = setInterval(function(){
-	world.step(1/config.physics.steps);
-},1000/config.physics.steps);
-
 // Express connections
 var express = require('express');
 var mustacheExpress = require('mustache-express');
 var compression = require('compression');
 var app = express();
+var http = require('http').Server(app);
+var io = require('socket.io')(http);
 app.use(compression());
 app.use(express.static(__dirname + '/public'));
 app.engine('mustache', mustacheExpress());
@@ -90,10 +88,19 @@ if (config.express.cache) app.disable('view cache');
 app.set('views', __dirname + '/templates');
 
 var bodyParser = require('body-parser');
-app.use(bodyParser.json());       // to support JSON-encoded bodies
-app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
+app.use(bodyParser.json()); // to support JSON-encoded bodies
+app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
 })); 
+
+steppies = setInterval(function(){
+	world.step(1/config.physics.steps);
+	let pos = [];
+	for (key in world.bodies){
+		pos.push(world.bodies[key].position);
+	}
+	io.emit('physics step', {positions: pos});
+},1000/config.physics.steps);
 
 app.get("/", function (req, res) {
 	let str = "";
@@ -105,9 +112,21 @@ app.get("/", function (req, res) {
 	res.send(str);
 });
 
-var server = app.listen(config.express.port, function () {
+app.get("/client", function (req, res) {
+	res.render('client');
+});
+
+/* Express listener */
+var server = http.listen(config.express.port, function () {
   var port = server.address().port;
   console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
+});
+
+io.on('connection', function(socket){
+  console.log('A user connected!'.green);
+});
+io.on('disconnect', function(socket){
+  console.log('A user disconnected...'.red);
 });
 
 
