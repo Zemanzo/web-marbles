@@ -1,11 +1,14 @@
 const config = require('./config');
 const colors = require('colors');
-const fs = require('fs');
-const OBJFile = require('obj-file-parser');
+
+console.log(" Webbased Marble Racing".cyan);
+console.log("   by "+"Z".green+"emanz"+"o".green);
+console.log(" "+(new Date()).toLocaleString('nl').cyan);
+
 const CANNON = require('cannon');
 
 var size = .1;
-var interval, steppies;
+var interval, physStepInterval;
 
 // Spheres
 var world = new CANNON.World();
@@ -28,14 +31,20 @@ groundBody.addShape(groundShape);
 groundBody.position.set(0,0,-1000);
 world.add(groundBody);
 
-var obj = new OBJFile(fs.readFileSync("resources/marblemap.obj","utf-8"));
+/* var obj = new OBJFile(fs.readFileSync("resources/mapObj.obj","utf-8"));
 var heightMap = obj.parse();
-var zVertices = Array.from(heightMap.models[0].vertices, x => x.z);
-var distanceBetween = Math.abs(heightMap.models[0].vertices[1].y - heightMap.models[0].vertices[0].y);
+var zVertices = Array.from(heightMap.models[0].vertices, x => x.x);
+var distanceBetween = Math.abs(heightMap.models[0].vertices[1].x - heightMap.models[0].vertices[0].x); */
+
+// Load obj as heightfield
+const OBJHeightfield = require('./src/model-import/obj-heightfield');
+var mapObj = new OBJHeightfield("map2.obj");
+
+/* console.log(mapObj.heightArray); */
 
 // Create the heightfield
-var hfShape = new CANNON.Heightfield(matrixFromArray(zVertices), {
-	elementSize: distanceBetween
+var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
+	elementSize: mapObj.elementSize
 });
 var hfBody = new CANNON.Body({ mass: 0 });
 hfBody.addShape(hfShape);
@@ -50,7 +59,7 @@ for(var i=0; i<15 - 1; i++){
 		var sphereShape = new CANNON.Sphere(0.3);
 		var sphereBody = new CANNON.Body({ mass: 1 });
 		sphereBody.addShape(sphereShape);
-		sphereBody.position.set(0.25 + i, 0.25 + j, 35);
+		sphereBody.position.set(0.25 + i, 0.25 + j, 30);
 		sphereBody.position.vadd(hfBody.position, sphereBody.position);
 		world.addBody(sphereBody);
 	}
@@ -93,15 +102,6 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
 })); 
 
-steppies = setInterval(function(){
-	world.step(1/config.physics.steps);
-	let pos = [];
-	for (key in world.bodies){
-		pos.push(world.bodies[key].position);
-	}
-	io.emit('physics step', {positions: pos});
-},1000/config.physics.steps);
-
 app.get("/", function (req, res) {
 	let str = "";
 	str += JSON.stringify(world.time) + "<br/>";
@@ -109,9 +109,10 @@ app.get("/", function (req, res) {
 	for (key in world.bodies){
 		str += JSON.stringify(world.bodies[key].position) + "<br/>";
 	}
-	res.send(str);
+	res.send(mapObj.heightArray);
 });
 
+const util = require('util');
 app.get("/client", function (req, res) {
 	res.render('client');
 });
@@ -125,10 +126,21 @@ var server = http.listen(config.express.port, function () {
 io.on('connection', function(socket){
   console.log('A user connected!'.green);
 });
-io.on('disconnect', function(socket){
+io.on('disconnecting', function(socket){
   console.log('A user disconnected...'.red);
 });
 
+physStepInterval = setInterval(function(){
+	world.step(1/config.physics.steps);
+},1000/config.physics.steps);
+
+physSocketEmitInterval = setInterval(function(){
+	let pos = [];
+	for (key in world.bodies){
+		pos.push(world.bodies[key].position);
+	}
+	io.emit('physics step', {positions: pos});
+},1000/config.network.tickrate);
 
 function pad(num,size) {
     var s = "000000000" + num;
@@ -138,17 +150,4 @@ function pad(num,size) {
 function currentHourString() {
 	var date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
-}
-
-function matrixFromArray(arr) {
-	let root = Math.sqrt(arr.length);
-	if (Number.isInteger(root)) {
-		let matrix = [];
-		for (let i = 0; i < root; i++){
-			matrix.push( arr.slice( i*root, i*root+root ) );
-		}
-		return matrix;
-	} else {
-		throw "Cannot create matrix. Square root is not an integer. ("+arr.length+","+root+")";
-	}
 }

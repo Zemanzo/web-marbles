@@ -11,7 +11,6 @@ window.addEventListener("DOMContentLoaded",function(){
 	canvas.height = canvas.clientHeight;
 	canvas.width = canvas.clientWidth;
 	ctx = canvas.getContext("2d");
-	ctx.fillStyle = "#ff0000";
 	ctx.translate(canvas.width/2,canvas.height/2);
 	ctx.scale(8,8);
 	draw();
@@ -19,7 +18,10 @@ window.addEventListener("DOMContentLoaded",function(){
 
 function draw(){
 
-	ctx.clearRect(-canvas.width,-canvas.height,canvas.width,canvas.height);	
+	ctx.clearRect(-canvas.width,-canvas.height,canvas.width*2,canvas.height*2);	
+	ctx.fillStyle = "#dddddd";
+	ctx.fillRect(-25,-25,50,50);
+	ctx.fillStyle = "#ff0000";
 	for (i = 0; i < positions.length; i++){
 		ctx.fillRect(positions[i].x,positions[i].y,.3,.3);
 	}	
