@@ -53,12 +53,17 @@
 			
 			function animate() {
 				requestAnimationFrame( animate );
+				
+				// Update marble positions
 				for (i = 0; i < marbles.length; i++){
-					marbles[i].position.x = positions[i*3];
-					marbles[i].position.y = positions[i*3+2];
-					marbles[i].position.z = positions[i*3+1];
+					marbles[i].position.x = THREE.Math.lerp(marbles[i].position.x, positions[i*3], lastUpdate);
+					marbles[i].position.y = THREE.Math.lerp(marbles[i].position.y, positions[i*3+2], lastUpdate);
+					marbles[i].position.z = THREE.Math.lerp(marbles[i].position.z, positions[i*3+1], lastUpdate);
 				}
 				
+				lastUpdate += .167;
+				
+				// If there's marbles missing, add new ones.
 				if (marbles.length*3 < positions.length){
 					var spehereGeometry = new THREE.SphereGeometry( .3 );
 					var green = new THREE.MeshStandardMaterial( { color: 0x00ff00 } );

@@ -1,8 +1,10 @@
 var socket = io();
 var positions = [];
+var lastUpdate = 0;
 
 socket.on('physics step', function(obj){
 	positions = new Float32Array(obj);
+	lastUpdate = 0;
 });
 
 window.addEventListener("DOMContentLoaded",function(){
