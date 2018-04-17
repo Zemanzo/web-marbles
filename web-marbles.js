@@ -48,22 +48,23 @@ var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
 });
 var hfBody = new CANNON.Body({ mass: 0 });
 hfBody.addShape(hfShape);
-hfBody.position.set(-25, -25, -50);
+hfBody.position.set(-25, -25, -10);
 world.add(hfBody);
 
 // Add spheres
-for(var i=0; i<15 - 1; i++){
+/* for(var i=0; i<15 - 1; i++){
 	for (var j = 0; j < 15 - 1; j++) {
 		if(i===0 || i >= 15-2 || j===0 || j >= 15-2)
 			continue;
 		var sphereShape = new CANNON.Sphere(0.3);
 		var sphereBody = new CANNON.Body({ mass: 1 });
 		sphereBody.addShape(sphereShape);
-		sphereBody.position.set(0.25 + i, 0.25 + j, 30);
+		sphereBody.linearDamping = 0.2;
+		sphereBody.position.set(10.25 + i, 10.25 + j, 50);
 		sphereBody.position.vadd(hfBody.position, sphereBody.position);
 		world.addBody(sphereBody);
 	}
-}
+} */
 
 /* var bodies = [];
 var i = 0;
@@ -93,7 +94,7 @@ app.use(compression());
 app.use(express.static(__dirname + '/public'));
 app.engine('mustache', mustacheExpress());
 app.set('view engine', 'mustache');
-if (config.express.cache) app.disable('view cache');
+if (!config.express.cache) app.disable('view cache');
 app.set('views', __dirname + '/templates');
 
 var bodyParser = require('body-parser');
@@ -114,7 +115,18 @@ app.get("/", function (req, res) {
 
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
-		res.send("data lol");
+		if (req.query.marble){
+			var sphereShape = new CANNON.Sphere(0.3);
+			var sphereBody = new CANNON.Body({ mass: 1 });
+			sphereBody.addShape(sphereShape);
+			sphereBody.linearDamping = 0.2;
+			sphereBody.position.set(18 + (Math.random()*4 - 2), 18 + (Math.random()*4 - 2), 20);
+			sphereBody.position.vadd(hfBody.position, sphereBody.position);
+			world.addBody(sphereBody);
+			res.send("ok");
+		} else {
+			res.send("???");
+		}
 	} else {
 		res.render("client");
 	}

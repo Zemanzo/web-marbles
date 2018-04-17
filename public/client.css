@@ -4,10 +4,25 @@
 
 body {
 	font-family:monospace;
+	background:#000;
+	width:100vw;
+	height:100vh;
+	overflow:hidden;
 }
 
 canvas {
 	position:absolute;
 	width:100vw;
 	height:100vh;
+}
+
+#overlayControls {
+	position:absolute;
+	width:100vw;
+	height:100vh;
+	pointer-events:none;
+}
+
+#overlayControls > * {
+	pointer-events:initial;
 }
