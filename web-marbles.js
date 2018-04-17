@@ -112,9 +112,12 @@ app.get("/", function (req, res) {
 	res.send(mapObj.heightArray);
 });
 
-const util = require('util');
 app.get("/client", function (req, res) {
-	res.render('client');
+	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
+		res.send("data lol");
+	} else {
+		res.render("client");
+	}
 });
 
 /* Express listener */
@@ -123,6 +126,7 @@ var server = http.listen(config.express.port, function () {
   console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
 });
 
+/* Sockets */
 io.on('connection', function(socket){
   console.log('A user connected!'.green);
 });
@@ -130,18 +134,25 @@ io.on('disconnecting', function(socket){
   console.log('A user disconnected...'.red);
 });
 
+let pos;
+physSocketEmitInterval = setInterval(function(){
+	pos = new Float32Array(world.bodies.length*3);
+	let i = 0;
+	for (key in world.bodies){
+		pos[i+0] = world.bodies[key].position.x;
+		pos[i+1] = world.bodies[key].position.y;
+		pos[i+2] = world.bodies[key].position.z;
+		i+=3;
+	}
+	io.emit('physics step', pos.buffer);
+},1000/config.network.tickrate);
+
+/* Physics interval */
 physStepInterval = setInterval(function(){
 	world.step(1/config.physics.steps);
 },1000/config.physics.steps);
 
-physSocketEmitInterval = setInterval(function(){
-	let pos = [];
-	for (key in world.bodies){
-		pos.push(world.bodies[key].position);
-	}
-	io.emit('physics step', {positions: pos});
-},1000/config.network.tickrate);
-
+/* Other */
 function pad(num,size) {
     var s = "000000000" + num;
     return s.substr(s.length-size);

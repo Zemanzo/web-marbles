@@ -2,7 +2,7 @@ var socket = io();
 var positions = [];
 
 socket.on('physics step', function(obj){
-	positions = obj.positions;
+	positions = new Float32Array(obj);
 });
 
 var canvas,ctx;
@@ -21,9 +21,9 @@ function draw(){
 	ctx.clearRect(-canvas.width,-canvas.height,canvas.width*2,canvas.height*2);	
 	ctx.fillStyle = "#dddddd";
 	ctx.fillRect(-25,-25,50,50);
-	ctx.fillStyle = "#ff0000";
-	for (i = 0; i < positions.length; i++){
-		ctx.fillRect(positions[i].x,positions[i].y,.3,.3);
+	for (i = 0; i < positions.length; i+=3){
+		ctx.fillStyle = "rgb("+Math.max(Math.abs(255+Math.max(positions[i+2],-255)),0)+",0,0)";
+		ctx.fillRect(positions[i],positions[i+1],.3,.3);
 	}	
 	
 	requestAnimFrame(function() {
