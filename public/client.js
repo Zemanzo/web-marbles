@@ -1,5 +1,5 @@
 var socket = io({
-  transports: ['websocket']
+	transports: ['websocket']
 });
 var net = {
 	tickrate: 20, // Cannot be 0
@@ -8,7 +8,7 @@ var net = {
 	// Initialize, do not configure these values.
 	marblePositions: [],
 	lastUpdate: 0,
-	ready: true,
+	ready: 0,
 	requestsSkipped: 0 // Helps detect network issues
 };
 
@@ -17,12 +17,12 @@ var net = {
 }); */
 
 net.getServerDataInterval = setInterval(function(){
-	if (net.ready){
-		net.ready = false;
+	if (net.ready < net.tickrate){
+		net.ready++;
 		socket.emit('request physics', Date.now(), (data) => {
 			net.marblePositions = new Float32Array(data);
 			net.lastUpdate = 0;
-			net.ready = true;
+			net.ready--;
 		});
 	} else {
 		net.requestsSkipped++;
