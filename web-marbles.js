@@ -139,14 +139,29 @@ var server = http.listen(config.express.port, function () {
 });
 
 /* Sockets */
+let pos;
 io.on('connection', function(socket){
-  console.log('A user connected!'.green);
-});
-io.on('disconnecting', function(socket){
-  console.log('A user disconnected...'.red);
+	console.log('A user connected!'.green);
+	
+	// Request physics
+	socket.on('request physics', (timestamp, callback) => {
+		pos = new Float32Array(world.bodies.length*3);
+		let i = 0;
+		for (key in world.bodies){
+			pos[i+0] = world.bodies[key].position.x;
+			pos[i+1] = world.bodies[key].position.y;
+			pos[i+2] = world.bodies[key].position.z;
+			i+=3;
+		}
+		callback(pos.buffer);
+	});
 });
 
-let pos;
+io.on('disconnect', function(socket){
+	console.log('A user disconnected...'.red);
+});
+
+/* let pos;
 physSocketEmitInterval = setInterval(function(){
 	pos = new Float32Array(world.bodies.length*3);
 	let i = 0;
@@ -157,7 +172,9 @@ physSocketEmitInterval = setInterval(function(){
 		i+=3;
 	}
 	io.emit('physics step', pos.buffer);
-},1000/config.network.tickrate);
+},1000/config.network.tickrate); */
+
+
 
 /* Physics interval */
 physStepInterval = setInterval(function(){
