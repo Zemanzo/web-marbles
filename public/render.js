@@ -28,42 +28,36 @@ camera.rotation.y = .3;
 camera.rotation.z = 0;
 controls.update();
 
-var marbles = [];
+var marbleMeshes = [];
 
 function animate() {
 	requestAnimationFrame( animate );
 	
 	// Update marble positions
-	for (i = 0; i < marbles.length; i++){
-		//marbles[i].position.x = THREE.Math.lerp(marbles[i].position.x, net.marblePositions[i*3], net.lastUpdate);
-		//marbles[i].position.y = THREE.Math.lerp(marbles[i].position.y, net.marblePositions[i*3+2], net.lastUpdate);
-		//marbles[i].position.z = THREE.Math.lerp(marbles[i].position.z, net.marblePositions[i*3+1], net.lastUpdate);
-		marbles[i].position.x = net.marblePositions[i*3];
-		marbles[i].position.y = net.marblePositions[i*3+2];
-		marbles[i].position.z = net.marblePositions[i*3+1];
+	for (i = 0; i < marbleMeshes.length; i++){
+		//marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x, net.marblePositions[i*3], net.lastUpdate);
+		//marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y, net.marblePositions[i*3+2], net.lastUpdate);
+		//marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z, net.marblePositions[i*3+1], net.lastUpdate);
+		marbleMeshes[i].position.x = net.marblePositions[i*3];
+		marbleMeshes[i].position.y = net.marblePositions[i*3+2];
+		marbleMeshes[i].position.z = net.marblePositions[i*3+1];
 	}
 	
 	net.lastUpdate += 60/net.tickrate/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better base it on real time.
 	
-	// If there's marbles missing, add new ones.
-	if (marbles.length*3 < net.marblePositions.length){
-		var spehereGeometry = new THREE.SphereGeometry( .3 );
-		var green = new THREE.MeshStandardMaterial( { color: 0x00ff00 } );
-		for (i = 0; i < (net.marblePositions.length/3 - marbles.length); i++){
-			marbles.push( new THREE.Mesh( spehereGeometry, green ) );
-			scene.add( marbles[marbles.length-1] );
+	/* // If there's marbleMeshes missing, add new ones.
+	if (marbleMeshes.length*3 < net.marblePositions.length){
+		for (i = 0; i < (net.marblePositions.length/3 - marbleMeshes.length); i++){
+			
 		}
-	}
+	} */
 	
 	renderer.render( scene, camera );
 }
 
 setTimeout(function(){
-	var spehereGeometry = new THREE.SphereGeometry( .3 );
-	var green = new THREE.MeshStandardMaterial( { color: 0x00ff00 } );
 	for (i = 0; i < net.marblePositions.length/3; i++){
-		marbles.push( new THREE.Mesh( spehereGeometry, green ) );
-		scene.add( marbles[marbles.length-1] );
+		spawnMarble(marbleData[i].tags.color, .3);
 	}
 	
 	var cubeGeometry = new THREE.BoxGeometry( 3,3,3 );
@@ -75,3 +69,12 @@ setTimeout(function(){
 	
 	animate();
 },1000);
+
+function spawnMarble(color, size){
+	var sphereGeometry = new THREE.SphereGeometry( size );
+	var materialColor = new THREE.Color(color);
+	console.log(materialColor);
+	var sphereMaterial = new THREE.MeshStandardMaterial( { color: materialColor } );
+	marbleMeshes.push( new THREE.Mesh( sphereGeometry, sphereMaterial ) );
+	scene.add( marbleMeshes[marbleMeshes.length-1] );
+}

@@ -5,6 +5,7 @@ console.log(" Webbased Marble Racing".cyan);
 console.log("   by "+"Z".green+"emanz"+"o".green);
 console.log(" "+(new Date()).toLocaleString('nl').cyan);
 
+/* set up physics world */
 const CANNON = require('cannon');
 var world = new CANNON.World();
 world.gravity.set(0,0,-50);
@@ -15,18 +16,21 @@ world.defaultContactMaterial.contactEquationRelaxation = 10;
 world.quatNormalizeFast = true; // Since we have many bodies and they don't move very much, we can use the less accurate quaternion normalization
 world.quatNormalizeSkip = 4; // ...and we do not have to normalize every step.
 
-// ground plane
+/* list of marble physics bodies */
+var marbles = [];
+
+/* ground plane */
 var groundShape = new CANNON.Plane(new CANNON.Vec3(0,0,1));
 var groundBody = new CANNON.Body({ mass: 0 });
 groundBody.addShape(groundShape);
-groundBody.position.set(0,0,-1000);
+groundBody.position.set(0,0,-150);
 world.add(groundBody);
 
-// Load obj as heightfield
+/* Load obj as heightfield */
 const OBJHeightfield = require('./src/model-import/obj-heightfield');
 var mapObj = new OBJHeightfield("map2.obj");
 
-// Create the heightfield
+/* Create the heightfield */
 var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
 	elementSize: mapObj.elementSize
 });
@@ -35,7 +39,7 @@ hfBody.addShape(hfShape);
 hfBody.position.set(-25, -25, -10);
 world.add(hfBody);
 
-// Express connections
+/* Express connections */
 var express = require('express');
 var mustacheExpress = require('mustache-express');
 var compression = require('compression');
@@ -74,12 +78,20 @@ app.get("/client", function (req, res) {
 			sphereBody.linearDamping = 0.2;
 			sphereBody.position.set(18 + (Math.random()*4 - 2), 18 + (Math.random()*4 - 2), 20);
 			sphereBody.position.vadd(hfBody.position, sphereBody.position);
+			
+			// Add optional paramaters
+			sphereBody.tags = {};
+			sphereBody.tags.color = "#"+req.query.color || "#00ff00";
+			marbles.push(sphereBody);
+			
 			world.addBody(sphereBody);
+			
+			io.sockets.emit("new marble", sphereBody.tags);
+			
 			res.send("ok");
 		} else if (req.query.clear){
-			for (i = world.bodies.length - 1; i >= 0; --i){
-				if (world.bodies[i].id != 0 && world.bodies[i].id != 1)
-					world.remove(world.bodies[i]);
+			for (i = marbles.length - 1; i >= 0; --i){
+				world.remove(marbles[i]);
 			}
 			res.send("ok");
 		} else {
@@ -98,25 +110,38 @@ var server = http.listen(config.express.port, function () {
 
 /* Sockets */
 let pos;
-io.on('connection', function(socket){
-	console.log('A user connected!'.green);
+io.on("connection", function(socket){
+	console.log("A user connected!".green);
+	
+	var initialMarbleData = [];
+	for (i = 0; i < marbles.length; i++){
+		initialMarbleData.push({
+			pos: marbles[i].position,
+			id: marbles[i].id,
+			tags: marbles[i].tags
+		});
+	}
+	/* console.log(initialMarbleData); */
+	socket.emit("initial data", initialMarbleData);
 	
 	// Request physics
-	socket.on('request physics', (timestamp, callback) => {
-		pos = new Float32Array(world.bodies.length*3);
-		let i = 0;
-		for (key in world.bodies){
-			pos[i+0] = world.bodies[key].position.x;
-			pos[i+1] = world.bodies[key].position.y;
-			pos[i+2] = world.bodies[key].position.z;
-			i+=3;
+	socket.on("request physics", (timestamp, callback) => {
+		if (marbles.length !== 0){
+			pos = new Float32Array(marbles.length*3);
+			for (i = 0; i < marbles.length; i++){
+				pos[i*3+0] = marbles[i].position.x;
+				pos[i*3+1] = marbles[i].position.y;
+				pos[i*3+2] = marbles[i].position.z;
+			}
+			callback(pos.buffer);
+		} else {
+			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
 		}
-		callback(pos.buffer);
 	});
 });
 
-io.on('disconnect', function(socket){
-	console.log('A user disconnected...'.red);
+io.on("disconnect", function(socket){
+	console.log("A user disconnected...".red);
 });
 
 /* Physics interval */
