@@ -124,6 +124,12 @@ app.get("/client", function (req, res) {
 			sphereBody.position.vadd(hfBody.position, sphereBody.position);
 			world.addBody(sphereBody);
 			res.send("ok");
+		} else if (req.query.clear){
+			for (i = world.bodies.length - 1; i >= 0; --i){
+				if (world.bodies[i].id != 0 && world.bodies[i].id != 1)
+					world.remove(world.bodies[i]);
+			}
+			res.send("ok");
 		} else {
 			res.send("???");
 		}

@@ -33,6 +33,9 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("marble").addEventListener("click", function(){
 		getXMLDoc("/client?marble=true");
 	},false);
+	document.getElementById("clear").addEventListener("click", function(){
+		getXMLDoc("/client?clear=true");
+	},false);
 },false);
 
 function getXMLDoc(doc){
