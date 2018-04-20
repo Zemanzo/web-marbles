@@ -35,15 +35,17 @@ function animate() {
 	
 	// Update marble positions
 	for (i = 0; i < marbleMeshes.length; i++){
-		//marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x, net.marblePositions[i*3], net.lastUpdate);
-		//marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y, net.marblePositions[i*3+2], net.lastUpdate);
-		//marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z, net.marblePositions[i*3+1], net.lastUpdate);
-		marbleMeshes[i].position.x = net.marblePositions[i*3];
-		marbleMeshes[i].position.y = net.marblePositions[i*3+2];
-		marbleMeshes[i].position.z = net.marblePositions[i*3+1];
+		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x, net.marblePositions[i*3], net.lastUpdate);
+		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y, net.marblePositions[i*3+2], net.lastUpdate);
+		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z, net.marblePositions[i*3+1], net.lastUpdate);
+		//marbleMeshes[i].position.x = net.marblePositions[i*3];
+		//marbleMeshes[i].position.y = net.marblePositions[i*3+2];
+		//marbleMeshes[i].position.z = net.marblePositions[i*3+1];
 	}
 	
-	net.lastUpdate += 60/net.tickrate/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better base it on real time.
+	if (net.lastUpdate < 1.5){
+		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better base it on real time.
+	}
 	
 	/* // If there's marbleMeshes missing, add new ones.
 	if (marbleMeshes.length*3 < net.marblePositions.length){
