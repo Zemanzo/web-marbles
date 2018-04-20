@@ -43,7 +43,6 @@ window.addEventListener("DOMContentLoaded", function(){
 	// !marble
 	document.getElementById("marble").addEventListener("click", function(){
 		let str = "/client?marble=true&color="+document.getElementById("color").value.substr(1); // this is gross
-		console.log(str);
 		getXMLDoc(str);
 	},false);
 	

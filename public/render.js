@@ -35,9 +35,9 @@ function animate() {
 	
 	// Update marble positions
 	for (i = 0; i < marbleMeshes.length; i++){
-		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x, net.marblePositions[i*3], net.lastUpdate);
-		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y, net.marblePositions[i*3+2], net.lastUpdate);
-		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z, net.marblePositions[i*3+1], net.lastUpdate);
+		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3], net.lastUpdate);
+		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
+		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
 		//marbleMeshes[i].position.x = net.marblePositions[i*3];
 		//marbleMeshes[i].position.y = net.marblePositions[i*3+2];
 		//marbleMeshes[i].position.z = net.marblePositions[i*3+1];
@@ -77,6 +77,7 @@ function spawnMarble(color, size){
 	var materialColor = new THREE.Color(color);
 	console.log(materialColor);
 	var sphereMaterial = new THREE.MeshStandardMaterial( { color: materialColor } );
-	marbleMeshes.push( new THREE.Mesh( sphereGeometry, sphereMaterial ) );
+	var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
+	marbleMeshes.push( sphereMesh );
 	scene.add( marbleMeshes[marbleMeshes.length-1] );
 }
