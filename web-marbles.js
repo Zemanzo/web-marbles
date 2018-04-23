@@ -28,7 +28,7 @@ world.add(groundBody);
 
 /* Load obj as heightfield */
 const OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2.obj");
+var mapObj = new OBJHeightfield("map2v2.obj");
 
 /* Create the heightfield */
 var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
@@ -36,7 +36,7 @@ var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
 });
 var hfBody = new CANNON.Body({ mass: 0 });
 hfBody.addShape(hfShape);
-hfBody.position.set(-25, -25, -10);
+hfBody.position.set(0, 0, 0);
 world.add(hfBody);
 
 /* Express connections */
@@ -71,12 +71,16 @@ app.get("/", function (req, res) {
 
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
-		if (req.query.marble){
+		if (req.query.marble){ // Add new marble
 			var sphereShape = new CANNON.Sphere(0.3);
 			var sphereBody = new CANNON.Body({ mass: 1 });
 			sphereBody.addShape(sphereShape);
 			sphereBody.linearDamping = 0.2;
-			sphereBody.position.set(18 + (Math.random()*4 - 2), 18 + (Math.random()*4 - 2), 20);
+			sphereBody.position.set(
+				Math.random()*10-5,
+				Math.random()*10-5,
+				3
+			);
 			sphereBody.position.vadd(hfBody.position, sphereBody.position);
 			
 			// Add optional paramaters
@@ -89,11 +93,16 @@ app.get("/client", function (req, res) {
 			io.sockets.emit("new marble", sphereBody.tags);
 			
 			res.send("ok");
-		} else if (req.query.clear){
+		} else if (req.query.clear){ // Clear all marbles
 			for (i = marbles.length - 1; i >= 0; --i){
 				world.remove(marbles[i]);
 			}
+			marbles = [];
 			res.send("ok");
+		} else if (req.query.dlmap){ // Send map
+			res.send(JSON.stringify(mapObj.parsed));
+		}  else if (req.query.interpreted){ // Send interpreted map
+			res.send(JSON.stringify(mapObj.vertices));
 		} else {
 			res.send("???");
 		}

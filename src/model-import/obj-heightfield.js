@@ -5,10 +5,10 @@ const OBJFile = require('obj-file-parser');
 class OBJHeightfield {
 	constructor(file) {
 		this.obj = new OBJFile( fs.readFileSync( config.marbles.resources+file, "utf-8" ) );
-		this.parsedObj = this.obj.parse();
+		this.parsed = this.obj.parse();
 		
 		// Clone & sort vertices
-		this.vertices = this.parsedObj.models[0].vertices.slice(0).sort(
+		this.vertices = this.parsed.models[0].vertices.slice(0).sort(
 			function(a, b) {
 				return a.x - b.x || a.y - b.y 
 			}

@@ -10,7 +10,7 @@ config.marbles.maprotation = [
 
 /* Physics */
 config.physics = {};
-config.physics.steps = 120; // Amount of physics steps to calculate per second.
+config.physics.steps = 180; // Amount of physics steps to calculate per second.
 
 /* Express */
 config.express = {};

@@ -51,15 +51,25 @@ window.addEventListener("DOMContentLoaded", function(){
 		getXMLDoc("/client?clear=true");
 	},false);
 	
+	// Download map
+	document.getElementById("dlmap").addEventListener("click", function(){
+		getXMLDoc("/client?dlmap=map2",(response)=>{
+			console.log(JSON.parse(response));
+			spawnMap(JSON.parse(response));
+		});
+	},false);
+	
 },false);
 
-function getXMLDoc(doc){
+function getXMLDoc(doc,callback){
 	var xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState == 4 && xmlhttp.status != 200) {
+		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
 			console.log("rip", xmlhttp.response);
-  		}
+  		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200){
+			callback(xmlhttp.response);
+		}
 	}
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();

@@ -13,11 +13,17 @@ controls.enableZoom = true;
 var ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
 scene.add( ambientLight );
 
-var pointLight = new THREE.PointLight();
-scene.add( pointLight );
-pointLight.position.x = 5;
-pointLight.position.y = 5;
-pointLight.position.z = 5;
+var blueLight = new THREE.PointLight(0x0099ff);
+scene.add( blueLight );
+blueLight.position.x = 5;
+blueLight.position.y = 5;
+blueLight.position.z = 5;
+
+var orangeLight = new THREE.PointLight(0xff9900);
+scene.add( orangeLight );
+orangeLight.position.x = 5;
+orangeLight.position.y = 5;
+orangeLight.position.z = -80;
 
 camera.position.x = 5;
 camera.position.y = 10;
@@ -62,22 +68,95 @@ setTimeout(function(){
 		spawnMarble(marbleData[i].tags.color, .3);
 	}
 	
-	var cubeGeometry = new THREE.BoxGeometry( 3,3,3 );
-	var red = new THREE.MeshStandardMaterial( { color: 0xff0000 } );
-	cube = new THREE.Mesh( cubeGeometry, red );	
+	var cubeGeometry = new THREE.BoxGeometry(.3, .3, .3);
+	var red = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+	cube = new THREE.Mesh(cubeGeometry, red);	
 	scene.add( cube );
 	
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
+	
+	getXMLDoc("/client?interpreted=true",(response)=>{
+		console.log(response);
+		var heightbox = new THREE.BoxGeometry(.1, .1, .1);
+		var pinky = new THREE.MeshStandardMaterial({ color: 0xff00ff });
+		var boxmesh = new THREE.Mesh(heightbox, pinky);	
+		for (var value of response){
+			scene.add( boxmesh );
+			boxmesh.position.x = value.x;
+			boxmesh.position.y = value.z;
+			boxmesh.position.z = value.y;
+		}
+	});
 	
 	animate();
 },1000);
 
 function spawnMarble(color, size){
-	var sphereGeometry = new THREE.SphereGeometry( size );
-	var materialColor = new THREE.Color(color);
-	console.log(materialColor);
-	var sphereMaterial = new THREE.MeshStandardMaterial( { color: materialColor } );
-	var sphereMesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
-	marbleMeshes.push( sphereMesh );
-	scene.add( marbleMeshes[marbleMeshes.length-1] );
+	let sphereGeometry = new THREE.SphereGeometry(size);
+	let materialColor = new THREE.Color(color);
+	/* console.log(materialColor); */
+	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
+	let sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+	marbleMeshes.push(sphereMesh);
+	scene.add(marbleMeshes[marbleMeshes.length-1]);
+}
+
+function spawnMap(parsedObj){
+	let model = parsedObj.models[0];
+	let geometry = new THREE.BufferGeometry();
+	let vertices = vertexObjectArrayToFloat32Array(model.vertices);
+	let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
+	let indices = [];
+	for (let index of model.faces){
+		indices.push(
+			index.vertices[0].vertexIndex,
+			index.vertices[1].vertexIndex,
+			index.vertices[2].vertexIndex
+		);
+	}
+	
+	console.log(indices.length,vertices.length,normals);
+	
+	geometry.setIndex(indices);
+	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
+	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+	geometry.scale(-1,1,1); // Faces are flipped so flip them back by negative scaling
+	geometry.computeVertexNormals(true); // Recompute vertex normals
+	
+    var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x111111, roughness: .9 } );
+    var wireframeMaterial = new THREE.MeshLambertMaterial( { color: 0xff00ff, wireframe:true } );
+	
+	mesh = new THREE.Mesh( geometry, wireframeMaterial );
+	scene.add( mesh );
+	mesh.position.y = 0;
+	undermesh = new THREE.Mesh( geometry, solidMaterial );
+	scene.add( undermesh );
+	undermesh.position.y = -.05;
+}
+
+function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
+	
+	// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
+	let f32array = new Float32Array(array.length*3 + 3);
+	let i = 1;
+	
+	for (let vertex of array){
+		f32array[i*3+0] = vertex.x;
+		f32array[i*3+1] = vertex.z;
+		f32array[i*3+2] = vertex.y;
+		i++;
+	}
+	return f32array;
+}
+
+function vertexObjectArrayToArray(array){ // Also converts z up to y up
+	let newArray = [];
+	for (let vertex of array){
+		newArray.push(
+			vertex.x,
+			vertex.z,
+			vertex.y
+		);
+	}
+	return newArray;
 }
