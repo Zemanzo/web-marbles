@@ -65,7 +65,7 @@ function animate() {
 
 setTimeout(function(){
 	for (i = 0; i < net.marblePositions.length/3; i++){
-		spawnMarble(marbleData[i].tags.color, .3);
+		spawnMarble(marbleData[i].tags.color, marbleData[i].tags.size);
 	}
 	
 	var cubeGeometry = new THREE.BoxGeometry(.3, .3, .3);
@@ -76,16 +76,17 @@ setTimeout(function(){
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
 	getXMLDoc("/client?interpreted=true",(response)=>{
-		console.log(response);
-		var heightbox = new THREE.BoxGeometry(.1, .1, .1);
+		/* console.log(JSON.parse(response));
+		var heightbox = new THREE.PlaneGeometry(.2, .2);
 		var pinky = new THREE.MeshStandardMaterial({ color: 0xff00ff });
-		var boxmesh = new THREE.Mesh(heightbox, pinky);	
-		for (var value of response){
+		for (var value of JSON.parse(response)){
+			var boxmesh = new THREE.Mesh(heightbox, pinky);	
 			scene.add( boxmesh );
+			boxmesh.rotation.x = -Math.PI*.5;
 			boxmesh.position.x = value.x;
 			boxmesh.position.y = value.z;
 			boxmesh.position.z = value.y;
-		}
+		} */
 	});
 	
 	animate();
@@ -115,12 +116,12 @@ function spawnMap(parsedObj){
 		);
 	}
 	
-	console.log(indices.length,vertices.length,normals);
+	/* console.log(indices.length,vertices.length,normals); */
 	
 	geometry.setIndex(indices);
 	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-	geometry.scale(-1,1,1); // Faces are flipped so flip them back by negative scaling
+	geometry.scale(-1,1,-1); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
 	
     var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x111111, roughness: .9 } );
@@ -129,9 +130,9 @@ function spawnMap(parsedObj){
 	mesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( mesh );
 	mesh.position.y = 0;
-	undermesh = new THREE.Mesh( geometry, solidMaterial );
+	/* undermesh = new THREE.Mesh( geometry, solidMaterial );
 	scene.add( undermesh );
-	undermesh.position.y = -.05;
+	undermesh.position.y = -.05; */
 }
 
 function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up

@@ -20,7 +20,7 @@ socket.on("initial data", function(obj){
 	
 	socket.on("new marble", function(obj){
 		console.log(obj);
-		spawnMarble(obj.color, .3);
+		spawnMarble(obj.color, obj.size);
 	});
 
 	// Once connection is acknowledged, start requesting physics updates
@@ -42,7 +42,10 @@ window.addEventListener("DOMContentLoaded", function(){
 	
 	// !marble
 	document.getElementById("marble").addEventListener("click", function(){
-		let str = "/client?marble=true&color="+document.getElementById("color").value.substr(1); // this is gross
+		let str = "/client?marble=true";
+		str += "&color="+document.getElementById("color").value.substr(1);
+		/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
+		str += "&size=.15";
 		getXMLDoc(str);
 	},false);
 	

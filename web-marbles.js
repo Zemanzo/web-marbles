@@ -28,7 +28,7 @@ world.add(groundBody);
 
 /* Load obj as heightfield */
 const OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2v2.obj");
+var mapObj = new OBJHeightfield("map2v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
 
 /* Create the heightfield */
 var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
@@ -72,20 +72,21 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		if (req.query.marble){ // Add new marble
-			var sphereShape = new CANNON.Sphere(0.3);
+			var sphereShape = new CANNON.Sphere(req.query.size || 0.2);
 			var sphereBody = new CANNON.Body({ mass: 1 });
 			sphereBody.addShape(sphereShape);
-			sphereBody.linearDamping = 0.2;
+			/* sphereBody.linearDamping = 0.2; */
 			sphereBody.position.set(
-				Math.random()*10-5,
-				Math.random()*10-5,
-				3
+				Math.random() +1.5,
+				Math.random() +1.5,
+				1
 			);
 			sphereBody.position.vadd(hfBody.position, sphereBody.position);
 			
 			// Add optional paramaters
 			sphereBody.tags = {};
 			sphereBody.tags.color = "#"+req.query.color || "#00ff00";
+			sphereBody.tags.size = req.query.size || 0.2;
 			marbles.push(sphereBody);
 			
 			world.addBody(sphereBody);

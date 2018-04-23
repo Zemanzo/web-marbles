@@ -10,7 +10,7 @@ class OBJHeightfield {
 		// Clone & sort vertices
 		this.vertices = this.parsed.models[0].vertices.slice(0).sort(
 			function(a, b) {
-				return a.x - b.x || a.y - b.y 
+				return b.x - a.x || b.y - a.y 
 			}
 		);
 		
