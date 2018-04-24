@@ -7,6 +7,7 @@ var net = {
 	
 	// Initialize, do not configure these values.
 	marblePositions: new Float32Array(0),
+	marbleRotations: new Float32Array(0),
 	lastUpdate: 0,
 	ready: 0,
 	requestsSkipped: 0 // Helps detect network issues
@@ -19,7 +20,7 @@ socket.on("initial data", function(obj){
 	marbleData = obj;
 	
 	socket.on("new marble", function(obj){
-		console.log(obj);
+		/* console.log(obj); */
 		spawnMarble(obj.color, obj.size);
 	});
 
@@ -28,7 +29,8 @@ socket.on("initial data", function(obj){
 		if (net.ready < net.tickrate){
 			net.ready++;
 			socket.emit("request physics", Date.now(), (data) => {
-				net.marblePositions = new Float32Array(data);
+				net.marblePositions = new Float32Array(data.pos);
+				net.marbleRotations = new Float32Array(data.rot);
 				net.lastUpdate = 0;
 				net.ready--;
 			});

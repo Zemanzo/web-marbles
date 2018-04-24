@@ -41,12 +41,14 @@ function animate() {
 	
 	// Update marble positions
 	for (i = 0; i < marbleMeshes.length; i++){
-		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3], net.lastUpdate);
+		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3+0], net.lastUpdate);
 		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
 		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
-		//marbleMeshes[i].position.x = net.marblePositions[i*3];
-		//marbleMeshes[i].position.y = net.marblePositions[i*3+2];
-		//marbleMeshes[i].position.z = net.marblePositions[i*3+1];
+		
+		marbleMeshes[i].quaternion.x = net.marbleRotations[i*3+0];
+		marbleMeshes[i].quaternion.y = net.marbleRotations[i*3+1];
+		marbleMeshes[i].quaternion.z = net.marbleRotations[i*3+2];
+		marbleMeshes[i].quaternion.w = net.marbleRotations[i*3+3];
 	}
 	
 	if (net.lastUpdate < 1.5){
@@ -75,25 +77,17 @@ setTimeout(function(){
 	
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
-	getXMLDoc("/client?interpreted=true",(response)=>{
-		/* console.log(JSON.parse(response));
-		var heightbox = new THREE.PlaneGeometry(.2, .2);
-		var pinky = new THREE.MeshStandardMaterial({ color: 0xff00ff });
-		for (var value of JSON.parse(response)){
-			var boxmesh = new THREE.Mesh(heightbox, pinky);	
-			scene.add( boxmesh );
-			boxmesh.rotation.x = -Math.PI*.5;
-			boxmesh.position.x = value.x;
-			boxmesh.position.y = value.z;
-			boxmesh.position.z = value.y;
-		} */
+	getXMLDoc("/client?dlmap=map2",(response)=>{
+		console.log(JSON.parse(response));
+		spawnMap(JSON.parse(response));
 	});
 	
 	animate();
 },1000);
 
 function spawnMarble(color, size){
-	let sphereGeometry = new THREE.SphereGeometry(size);
+	/* let sphereGeometry = new THREE.SphereGeometry(size); */
+	let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2);
 	let materialColor = new THREE.Color(color);
 	/* console.log(materialColor); */
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
