@@ -30,7 +30,7 @@ socket.on("initial data", function(obj){
 			net.ready++;
 			socket.emit("request physics", Date.now(), (data) => {
 				net.marblePositions = new Float32Array(data.pos);
-				net.marbleRotations = new Float32Array(data.rot);
+				net.marbleRotations = new Float64Array(data.rot);
 				net.lastUpdate = 0;
 				net.ready--;
 			});

@@ -45,10 +45,14 @@ function animate() {
 		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
 		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
 		
-		marbleMeshes[i].quaternion.x = net.marbleRotations[i*3+0];
-		marbleMeshes[i].quaternion.y = net.marbleRotations[i*3+1];
-		marbleMeshes[i].quaternion.z = net.marbleRotations[i*3+2];
-		marbleMeshes[i].quaternion.w = net.marbleRotations[i*3+3];
+		
+		marbleMeshes[i].quaternion.set(
+			net.marbleRotations[i*3+0],
+			net.marbleRotations[i*3+1],
+			net.marbleRotations[i*3+2],
+			net.marbleRotations[i*3+3]
+		);
+		marbleMeshes[i].quaternion.normalize();
 	}
 	
 	if (net.lastUpdate < 1.5){
