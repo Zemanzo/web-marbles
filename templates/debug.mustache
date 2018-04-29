@@ -39,26 +39,39 @@
             world.gravity.set(0, 0, -10);
             world.broadphase = new CANNON.NaiveBroadphase();
 
-            // Create a matrix of height values
-            var matrix = {{{vertices}}};
-            var sizeX = 15,
-                sizeY = 15;
+            var map = {{{map}}}
+			console.log(map);
 
             // Create the heightfield
-			/* for (arr of matrix){
-				arr.reverse();
-			}
-			matrix.reverse(); */
-			
-            var hfShape = new CANNON.Heightfield(matrix, {
-                elementSize: 1
-            });
-            var hfBody = new CANNON.Body({ mass: 0 });
-            hfBody.addShape(hfShape);
-            hfBody.position.set(-sizeX * hfShape.elementSize / 2, -20, -10);
-            world.addBody(hfBody);
-            demo.addVisual(hfBody);
+			/* matrix = matrix.slice(0,16);
+			for(i=0;i<matrix.length;i++){
+				matrix[i] = matrix[i].slice(0,16);
+			} */
 
+			let model = map.models[0];
+			let vertices = vertexObjectArrayToFloat32Array(model.vertices);
+			let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
+			let indices = [];
+			for (let index of model.faces){
+				indices.push(
+					index.vertices[0].vertexIndex,
+					index.vertices[1].vertexIndex,
+					index.vertices[2].vertexIndex
+				);
+			}
+			
+			indices.reverse();
+			
+            var triShape = new CANNON.Trimesh(vertices,indices);
+            var triBody = new CANNON.Body({ mass: 0 });
+            triBody.addShape(triShape);
+            triBody.quaternion.setFromEuler(Math.PI*.5,-Math.PI*.5,0);
+            world.addBody(triBody);
+            demo.addVisual(triBody);
+
+            var sizeX = 15,
+                sizeY = 15;
+				
             // Add spheres
             var mass = 1;
             for(var i=0; i<sizeX - 1; i++){
@@ -68,8 +81,8 @@
                     var sphereShape = new CANNON.Box(new CANNON.Vec3(.15,.15,.15));
                     var sphereBody = new CANNON.Body({ mass: mass });
                     sphereBody.addShape(sphereShape);
-                    sphereBody.position.set(.25 + i, .25 + j, 1);
-                    sphereBody.position.vadd(hfBody.position, sphereBody.position);
+                    sphereBody.position.set(.25 + i, .25 + j, 5);
+                    sphereBody.position.vadd(triBody.position, sphereBody.position);
                     world.addBody(sphereBody);
                     demo.addVisual(sphereBody);
                 }
@@ -79,7 +92,7 @@
             var boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
 			boxBody.position.set(0,0,0);
-			boxBody.position.vadd(hfBody.position, boxBody.position);
+			boxBody.position.vadd(triBody.position, boxBody.position);
             world.addBody(boxBody);
             demo.addVisual(boxBody);
 			
@@ -87,7 +100,7 @@
             boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
 			boxBody.position.set(0,0,0);
-			boxBody.position.vadd(hfBody.position, boxBody.position);
+			boxBody.position.vadd(triBody.position, boxBody.position);
             world.addBody(boxBody);
             demo.addVisual(boxBody);
 			
@@ -95,12 +108,27 @@
             boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
 			boxBody.position.set(0,0,0);
-			boxBody.position.vadd(hfBody.position, boxBody.position);
+			boxBody.position.vadd(triBody.position, boxBody.position);
             world.addBody(boxBody);
             demo.addVisual(boxBody);
         });
 
       demo.start();
+
+		function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
+			
+			// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
+			let f32array = new Float32Array(array.length*3 + 3);
+			let i = 1;
+			
+			for (let vertex of array){
+				f32array[i*3+0] = vertex.x;
+				f32array[i*3+1] = vertex.z;
+				f32array[i*3+2] = vertex.y;
+				i++;
+			}
+			return f32array;
+		}
 
     </script>
 	</body>

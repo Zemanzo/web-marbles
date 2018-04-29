@@ -28,7 +28,7 @@ world.add(groundBody);
 
 /* Load obj as heightfield */
 const OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield("map2v3.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
 
 /* Create the heightfield */
 var slipperyContact = new CANNON.Material();
@@ -67,13 +67,7 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 })); 
 
 app.get("/", function (req, res) {
-	let str = "";
-	str += JSON.stringify(world.time) + "<br/>";
-	str += JSON.stringify(world.stepnumber) + "<br/>";
-	for (key in world.bodies){
-		str += JSON.stringify(world.bodies[key].position) + "<br/>";
-	}
-	res.send(mapObj.heightArray);
+	res.send(mapObj.vertices);
 });
 
 app.get("/client", function (req, res) {
@@ -128,7 +122,7 @@ app.get("/client", function (req, res) {
 
 app.get("/debug", function (req, res) {
 	res.render("debug",{
-		vertices: JSON.stringify(mapObj.heightArray)
+		map: JSON.stringify(mapObj.parsed)
 	});
 });
 
@@ -169,7 +163,7 @@ io.on("connection", function(socket){
 				rot[i*4+2] = marbles[i].quaternion.z;
 				rot[i*4+3] = marbles[i].quaternion.w;
 			}
-			console.log(rot[0],rot[1],rot[2],rot[3]);
+			/* console.log(rot[0],rot[1],rot[2],rot[3]); */
 			callback({pos:pos.buffer,rot:rot.buffer});
 		} else {
 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
