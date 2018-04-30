@@ -28,7 +28,7 @@ world.add(groundBody);
 
 /* Load obj as heightfield */
 const OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2v3.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield("map2v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
 
 /* Create the heightfield */
 var slipperyContact = new CANNON.Material();
@@ -121,7 +121,7 @@ app.get("/client", function (req, res) {
 });
 
 app.get("/debug", function (req, res) {
-	res.render("debug",{
+	res.render("ammo",{
 		map: JSON.stringify(mapObj.parsed)
 	});
 });
