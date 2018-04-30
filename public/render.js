@@ -90,8 +90,8 @@ setTimeout(function(){
 },1000);
 
 function spawnMarble(color, size){
-	/* let sphereGeometry = new THREE.SphereGeometry(size); */
-	let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2);
+	let sphereGeometry = new THREE.SphereGeometry(size);
+	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	/* console.log(materialColor); */
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
@@ -100,8 +100,8 @@ function spawnMarble(color, size){
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
 }
 
-function spawnMap(parsedObj){
-	let model = parsedObj.models[0];
+function spawnMap(map){
+	let model = map.parsed.models[0];
 	let geometry = new THREE.BufferGeometry();
 	let vertices = vertexObjectArrayToFloat32Array(model.vertices);
 	let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
@@ -119,7 +119,7 @@ function spawnMap(parsedObj){
 	geometry.setIndex(indices);
 	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-	geometry.scale(-1,1,-1); // Faces are flipped so flip them back by negative scaling
+	geometry.scale(3,3,-3); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
 	
     var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x111111, roughness: .9 } );
@@ -127,7 +127,11 @@ function spawnMap(parsedObj){
 	
 	mesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( mesh );
-	mesh.position.y = 0;
+	/* mesh.position.y = 0;
+	mesh.position.x = (map.gridDistance*map.width*1.5);
+	mesh.position.z = -(map.gridDistance*map.depth*1.5);
+	mesh.position.z = -(map.gridDistance*map.depth*1.5); */
+	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
 	/* undermesh = new THREE.Mesh( geometry, solidMaterial );
 	scene.add( undermesh );
 	undermesh.position.y = -.05; */

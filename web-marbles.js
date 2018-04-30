@@ -1,50 +1,103 @@
-const config = require('./config');
-const colors = require('colors');
+var config = require('./config');
+var colors = require('colors');
 
 console.log(" Webbased Marble Racing".cyan);
 console.log("   by "+"Z".green+"emanz"+"o".green);
 console.log(" "+(new Date()).toLocaleString('nl').cyan);
 
 /* set up physics world */
-const CANNON = require('cannon');
-var world = new CANNON.World();
-world.gravity.set(0,0,-50);
-world.broadphase = new CANNON.NaiveBroadphase();
-world.solver.iterations = 5;
-world.defaultContactMaterial.contactEquationStiffness = 5e6;
-world.defaultContactMaterial.contactEquationRelaxation = 10;
-world.quatNormalizeFast = true; // Since we have many bodies and they don't move very much, we can use the less accurate quaternion normalization
-world.quatNormalizeSkip = 4; // ...and we do not have to normalize every step.
+var Ammo = require('ammo-node');
+
+// Physics variables
+var collisionConfiguration,
+	dispatcher,
+	broadphase,
+	solver,
+	physicsWorld,
+	terrainBody;
+var dynamicObjects = [];
+var transformAux1 = new Ammo.btTransform();
+
+// Physics configuration
+collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
+dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
+broadphase = new Ammo.btDbvtBroadphase();
+solver = new Ammo.btSequentialImpulseConstraintSolver();
+physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
+physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
 
 /* list of marble physics bodies */
 var marbles = [];
 
-/* ground plane */
-var groundShape = new CANNON.Plane(new CANNON.Vec3(0,0,1));
-var groundBody = new CANNON.Body({ mass: 0 });
-groundBody.addShape(groundShape);
-groundBody.position.set(0,0,-150);
-world.add(groundBody);
+function createTerrainShape() {
+	// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
+	var upAxis = 1;
+
+	// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
+	var hdt = "PHY_FLOAT";
+
+	// Set this to your needs (inverts the triangles)
+	var flipQuadEdges = false;
+
+	// Creates height data buffer in Ammo heap
+    var ammoHeightData = null;
+	ammoHeightData = Ammo._malloc( 4 * mapObj.width * mapObj.depth );
+
+	// Copy the javascript height data array to the Ammo one.
+	var p = 0;
+	var p2 = 0;
+	for ( var j = 0; j < mapObj.depth; j ++ ) {
+		for ( var i = 0; i < mapObj.width; i ++ ) {
+
+			// write 32-bit float data to memory
+			Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[ p ];
+			p++;
+			
+			// 4 bytes/float
+			p2 += 4;
+		}
+	}
+
+	// Creates the heightfield physics shape
+	var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+		mapObj.width,
+		mapObj.depth,
+		ammoHeightData,
+		1,
+		mapObj.minZ,
+		mapObj.maxZ,
+		upAxis,
+		hdt,
+		flipQuadEdges
+	);
+
+	// Set horizontal scale
+	var scaleX = 100 / ( mapObj.width - 1 );
+	var scaleZ = 100 / ( mapObj.depth - 1 );
+	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
+
+	heightFieldShape.setMargin( 0.05 );
+
+	return heightFieldShape;
+
+}
 
 /* Load obj as heightfield */
-const OBJHeightfield = require('./src/model-import/obj-heightfield');
+var OBJHeightfield = require('./src/model-import/obj-heightfield');
 var mapObj = new OBJHeightfield("map2v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+mapObj.centerOrigin("xyz");
 
-/* Create the heightfield */
-var slipperyContact = new CANNON.Material();
-slipperyContact.friction = 0.001;
-var hfShape = new CANNON.Heightfield(mapObj.heightArray, {
-	elementSize: mapObj.elementSize
-});
-/* var hfShape = new CANNON.Plane(new CANNON.Vec3(0,0,1)); */
-var hfBody = new CANNON.Body({ 
-	mass: 0,
-    material: slipperyContact
-});
-hfBody.addShape(hfShape);
-hfBody.position.set(0, 0, 0);
-/* hfBody.quaternion.setFromAxisAngle(new CANNON.Vec3(.1,0,0),-Math.PI/2); */
-world.add(hfBody);
+/* Create the terrain body */
+groundShape = createTerrainShape( mapObj );
+var groundTransform = new Ammo.btTransform();
+groundTransform.setIdentity();
+// Shifts the terrain, since bullet re-centers it on its bounding box.
+//groundTransform.setOrigin( new Ammo.btVector3( 0, ( mapObj.maxHeight + mapObj.minHeight ) / 2, 0 ) );
+var groundMass = 0;
+var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+physicsWorld.addRigidBody( groundBody );
 
 /* Express connections */
 var express = require('express');
@@ -73,43 +126,40 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		if (req.query.marble){ // Add new marble
-			for(i=0;i<100;i++){
-				var basicContact = new CANNON.Material();
-				basicContact.friction = 0.3;
-				var sphereShape = new CANNON.Box(new CANNON.Vec3(0.2,0.2,0.2));
-				/* var sphereShape = new CANNON.Sphere(req.query.size || 0.2); */
-				var sphereBody = new CANNON.Body({
-					mass: 5,
-					material: basicContact
-				});
-				sphereBody.addShape(sphereShape);
-				sphereBody.linearDamping = 0.2;
-				sphereBody.position.set(
-					Math.random()*24,
-					Math.random()*24,
-					1
-				);
-				sphereBody.position.vadd(hfBody.position, sphereBody.position);
+			for (i = 0; i < 100; i++){
+				var sphereShape =  new Ammo.btSphereShape(req.query.size || 0.5);
+				sphereShape.setMargin( 0.05 );
+				var mass = (req.query.size || 0.5) * 5;
+				var localInertia = new Ammo.btVector3( 0, 0, 0 );
+				sphereShape.calculateLocalInertia( mass, localInertia );
+				var transform = new Ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin( new Ammo.btVector3( Math.random()*100-50, 10, Math.random()*100-50 ) );
+				var motionState = new Ammo.btDefaultMotionState( transform );
+				var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+				var ammoBody = new Ammo.btRigidBody( bodyInfo );
 				
-				// Add optional paramaters
-				sphereBody.tags = {};
-				sphereBody.tags.color = "#"+req.query.color || "#00ff00";
-				sphereBody.tags.size = req.query.size || 0.2;
-				marbles.push(sphereBody);
+				var body = {
+					ammoBody: ammoBody,
+					tags: {}
+				}
+				body.tags.color = "#"+req.query.color || "#00ff00";
+				body.tags.size = req.query.size || 0.2;
 				
-				world.addBody(sphereBody);
+				marbles.push(body);
+				physicsWorld.addRigidBody( body.ammoBody );
 				
-				io.sockets.emit("new marble", sphereBody.tags);
+				io.sockets.emit("new marble", body.tags);
 			}
 			res.send("ok");
 		} else if (req.query.clear){ // Clear all marbles
 			for (i = marbles.length - 1; i >= 0; --i){
-				world.remove(marbles[i]);
+				physicsWorld.removeRigidBody(marbles[i].ammoBody);
 			}
 			marbles = [];
 			res.send("ok");
 		} else if (req.query.dlmap){ // Send map
-			res.send(JSON.stringify(mapObj.parsed));
+			res.send(JSON.stringify(mapObj));
 		}  else if (req.query.interpreted){ // Send interpreted map
 			res.send(JSON.stringify(mapObj.vertices));
 		} else {
@@ -154,16 +204,23 @@ io.on("connection", function(socket){
 			pos = new Float32Array(marbles.length*3);
 			rot = new Float64Array(marbles.length*4);
 			for (i = 0; i < marbles.length; i++){
-				pos[i*3+0] = marbles[i].position.x;
-				pos[i*3+1] = marbles[i].position.y;
-				pos[i*3+2] = marbles[i].position.z;
-				
-				rot[i*4+0] = marbles[i].quaternion.x;
-				rot[i*4+1] = marbles[i].quaternion.y;
-				rot[i*4+2] = marbles[i].quaternion.z;
-				rot[i*4+3] = marbles[i].quaternion.w;
+				var ms = marbles[i].ammoBody.getMotionState();
+				if (ms){
+					ms.getWorldTransform( transformAux1 );
+					var p = transformAux1.getOrigin();
+					var q = transformAux1.getRotation();
+					
+					pos[i*3+0] = p.x();
+					pos[i*3+1] = p.z();
+					pos[i*3+2] = p.y();
+					
+					rot[i*4+0] = q.x();
+					rot[i*4+1] = q.y();
+					rot[i*4+2] = q.z();
+					rot[i*4+3] = q.w();
+				}
 			}
-			/* console.log(rot[0],rot[1],rot[2],rot[3]); */
+			//console.log(rot[0],rot[1],rot[2],rot[3]);
 			callback({pos:pos.buffer,rot:rot.buffer});
 		} else {
 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
@@ -175,10 +232,35 @@ io.on("disconnect", function(socket){
 	console.log("A user disconnected...".red);
 });
 
+var lastPhysicsUpdate = Date.now();
 /* Physics interval */
 physStepInterval = setInterval(function(){
-	world.step(1/config.physics.steps);
+    var now = Date.now();
+    var deltaTime = (now - lastPhysicsUpdate)/1000;
+    lastPhysicsUpdate = now;
+	updatePhysics(deltaTime)
 },1000/config.physics.steps);
+
+function updatePhysics( deltaTime ) {
+
+	physicsWorld.stepSimulation( deltaTime, 10 );
+
+	// Update objects
+	for ( var i = 0, il = dynamicObjects.length; i < il; i++ ) {
+		var objThree = dynamicObjects[ i ];
+		var objPhys = objThree.userData.physicsBody;
+		var ms = objPhys.getMotionState();
+		if ( ms ) {
+
+			ms.getWorldTransform( transformAux1 );
+			var p = transformAux1.getOrigin();
+			var q = transformAux1.getRotation();
+			objThree.position.set( p.x(), p.y(), p.z() );
+			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+
+		}
+	}
+}
 
 /* Other */
 function pad(num,size) {

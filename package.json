@@ -9,8 +9,8 @@
   "author": "Merlijn van der Kamp",
   "license": "ISC",
   "dependencies": {
+    "ammo-node": "^1.0.0",
     "body-parser": "^1.18.2",
-    "cannon": "^0.6.2",
     "colors": "^1.2.1",
     "compression": "^1.7.2",
     "express": "^4.16.3",
