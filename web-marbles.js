@@ -84,7 +84,7 @@ function createTerrainShape() {
 
 /* Load obj as heightfield */
 var OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2v4.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield("map4v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
 /* Create the terrain body */
@@ -134,7 +134,7 @@ app.get("/client", function (req, res) {
 				sphereShape.calculateLocalInertia( mass, localInertia );
 				var transform = new Ammo.btTransform();
 				transform.setIdentity();
-				transform.setOrigin( new Ammo.btVector3( Math.random()*3-10, mapObj.maxZ + 2, Math.random()*3-10 ) );
+				transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
 				var motionState = new Ammo.btDefaultMotionState( transform );
 				var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 				var ammoBody = new Ammo.btRigidBody( bodyInfo );

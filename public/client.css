@@ -21,6 +21,8 @@ canvas {
 	width:100vw;
 	height:100vh;
 	pointer-events:none;
+	padding-left:100px;
+	box-sizing:border-box;
 }
 
 #overlayControls > * {

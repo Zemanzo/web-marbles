@@ -38,6 +38,16 @@ socket.on("initial data", function(obj){
 			net.requestsSkipped++;
 		}
 	}, 1000 / net.tickrate);
+	
+	// Initial request to kick off rendering on the first physics update
+	net.ready++;
+	socket.emit("request physics", Date.now(), (data) => {
+		net.marblePositions = new Float32Array(data.pos);
+		net.marbleRotations = new Float64Array(data.rot);
+		net.lastUpdate = 0;
+		net.ready--;
+		renderInit();
+	});
 });
 
 window.addEventListener("DOMContentLoaded", function(){
@@ -54,14 +64,6 @@ window.addEventListener("DOMContentLoaded", function(){
 	// !clear
 	document.getElementById("clear").addEventListener("click", function(){
 		getXMLDoc("/client?clear=true");
-	},false);
-	
-	// Download map
-	document.getElementById("dlmap").addEventListener("click", function(){
-		getXMLDoc("/client?dlmap=map2",(response)=>{
-			console.log(JSON.parse(response));
-			spawnMap(JSON.parse(response));
-		});
 	},false);
 	
 },false);

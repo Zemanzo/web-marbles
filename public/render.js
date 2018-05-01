@@ -1,29 +1,106 @@
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
+
+var stats = new Stats();
+stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+document.body.appendChild( stats.dom );
 
 var controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
 controls.enableZoom = true;
 
-var ambientLight = new THREE.AmbientLight( 0x404040 ); // soft white light
+var ambientLight = new THREE.AmbientLight( 0xb49090 );
 scene.add( ambientLight );
 
-var blueLight = new THREE.PointLight(0x0099ff);
+//
+
+light = new THREE.DirectionalLight( 0xffffff, 0.8 );
+scene.add( light );
+				
+// Water
+var waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
+
+water = new THREE.Water(
+	waterGeometry,
+	{
+		textureWidth: 512,
+		textureHeight: 512,
+		waterNormals: new THREE.TextureLoader().load( "threejs/textures/waternormals.jpg", function ( texture ) {
+			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		}),
+		alpha: 1.0,
+		sunDirection: light.position.clone().normalize(),
+		sunColor: 0xffffff,
+		waterColor: 0x001e0f,
+		distortionScale:  3.7,
+		fog: scene.fog !== undefined
+	}
+);
+
+water.rotation.x = - Math.PI / 2;
+water.position.y = -9
+
+scene.add( water );
+
+// Skybox
+
+var sky = new THREE.Sky();
+sky.scale.setScalar( 10000 );
+scene.add( sky );
+
+var uniforms = sky.material.uniforms;
+
+uniforms.turbidity.value = 10;
+uniforms.rayleigh.value = 2;
+uniforms.luminance.value = 1;
+uniforms.mieCoefficient.value = 0.005;
+uniforms.mieDirectionalG.value = 0.8;
+
+var parameters = {
+	distance: 4000,
+	inclination: 0.25,
+	azimuth: 0.205
+};
+
+var cubeCamera = new THREE.CubeCamera( 1, 20000, 256 );
+cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+function updateSun() {
+
+	var theta = Math.PI * ( parameters.inclination - 0.5 );
+	var phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
+
+	light.position.x = parameters.distance * Math.cos( phi );
+	light.position.y = parameters.distance * Math.sin( phi ) * Math.sin( theta );
+	light.position.z = parameters.distance * Math.sin( phi ) * Math.cos( theta );
+
+	sky.material.uniforms.sunPosition.value = light.position.copy( light.position );
+	water.material.uniforms.sunDirection.value.copy( light.position ).normalize();
+
+	cubeCamera.update( renderer, scene );
+
+}
+
+updateSun();
+
+//
+
+/* var blueLight = new THREE.PointLight(0x0099ff);
 scene.add( blueLight );
 blueLight.position.x = 5;
-blueLight.position.y = 5;
-blueLight.position.z = 5;
+blueLight.position.y = 70;
+blueLight.position.z = 500;
 
 var orangeLight = new THREE.PointLight(0xff9900);
 scene.add( orangeLight );
 orangeLight.position.x = 5;
-orangeLight.position.y = 5;
-orangeLight.position.z = -80;
+orangeLight.position.y = 70;
+orangeLight.position.z = -500; */
 
 camera.position.x = 5;
 camera.position.y = 10;
@@ -65,11 +142,16 @@ function animate() {
 			
 		}
 	} */
+
+	// Update water material
+	water.material.uniforms.time.value += 1.0 / 60.0;
+	
+	stats.update();
 	
 	renderer.render( scene, camera );
 }
 
-setTimeout(function(){
+function renderInit(){
 	for (i = 0; i < net.marblePositions.length/3; i++){
 		spawnMarble(marbleData[i].tags.color, marbleData[i].tags.size);
 	}
@@ -87,7 +169,7 @@ setTimeout(function(){
 	});
 	
 	animate();
-},1000);
+}
 
 function spawnMarble(color, size){
 	let sphereGeometry = new THREE.SphereGeometry(size);
@@ -122,15 +204,17 @@ function spawnMap(map){
 	geometry.scale(1,1,-1); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
 	
-    var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x111111, roughness: .9 } );
+    var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x33c49a, roughness: .9 } );
     var wireframeMaterial = new THREE.MeshLambertMaterial( { color: 0xff00ff, wireframe:true } );
 	
-	mesh = new THREE.Mesh( geometry, wireframeMaterial );
+	mesh = new THREE.Mesh( geometry, solidMaterial );
 	scene.add( mesh );
 	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
-	/* undermesh = new THREE.Mesh( geometry, solidMaterial );
+	
+/* 	undermesh = new THREE.Mesh( geometry, solidMaterial );
 	scene.add( undermesh );
-	undermesh.position.y = -.05; */
+	undermesh.position.y = -.05;
+	undermesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) ); */
 }
 
 function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
