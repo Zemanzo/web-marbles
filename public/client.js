@@ -47,7 +47,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		let str = "/client?marble=true";
 		str += "&color="+document.getElementById("color").value.substr(1);
 		/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
-		str += "&size=.5";
+		str += "&size=.15";
 		getXMLDoc(str);
 	},false);
 	

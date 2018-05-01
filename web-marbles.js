@@ -72,8 +72,8 @@ function createTerrainShape() {
 	);
 
 	// Set horizontal scale
-	var scaleX = 100 / ( mapObj.width - 1 );
-	var scaleZ = 100 / ( mapObj.depth - 1 );
+	var scaleX = mapObj.gridDistance;
+	var scaleZ = mapObj.gridDistance;
 	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
 
 	heightFieldShape.setMargin( 0.05 );
@@ -84,7 +84,7 @@ function createTerrainShape() {
 
 /* Load obj as heightfield */
 var OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map2v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield("map2v4.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
 /* Create the terrain body */
@@ -126,7 +126,7 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		if (req.query.marble){ // Add new marble
-			for (i = 0; i < 100; i++){
+			for (i = 0; i < 10; i++){
 				var sphereShape =  new Ammo.btSphereShape(req.query.size || 0.5);
 				sphereShape.setMargin( 0.05 );
 				var mass = (req.query.size || 0.5) * 5;
@@ -134,7 +134,7 @@ app.get("/client", function (req, res) {
 				sphereShape.calculateLocalInertia( mass, localInertia );
 				var transform = new Ammo.btTransform();
 				transform.setIdentity();
-				transform.setOrigin( new Ammo.btVector3( Math.random()*100-50, 10, Math.random()*100-50 ) );
+				transform.setOrigin( new Ammo.btVector3( Math.random()*3-10, mapObj.maxZ + 2, Math.random()*3-10 ) );
 				var motionState = new Ammo.btDefaultMotionState( transform );
 				var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 				var ammoBody = new Ammo.btRigidBody( bodyInfo );
@@ -215,8 +215,8 @@ io.on("connection", function(socket){
 					pos[i*3+2] = p.y();
 					
 					rot[i*4+0] = q.x();
-					rot[i*4+1] = q.y();
-					rot[i*4+2] = q.z();
+					rot[i*4+1] = q.z();
+					rot[i*4+2] = q.y();
 					rot[i*4+3] = q.w();
 				}
 			}

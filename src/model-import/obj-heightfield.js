@@ -16,21 +16,24 @@ class OBJHeightfield {
 		
 		this.centerOrigin = function(axes){
 			if (axes.indexOf("x") !== -1){
-				let half = ( this.maxX - this.minX ) * .5;
+				let diff = this.maxX - this.minX;
+				let half = diff * .5;
 				for ( let verts of this.vertices ){
-					verts.x = verts.x + half;
+					verts.x = 0 - (this.maxX - verts.x) + half;
 				}
 			}
 			if (axes.indexOf("y") !== -1){
-				let half = ( this.maxY - this.minY ) * .5;
+				let diff = this.maxY - this.minY;
+				let half = diff * .5;
 				for ( let verts of this.vertices ){
-					verts.y = verts.y + half;
+					verts.y = 0 - (this.maxY - verts.y) + half;
 				}
 			}
 			if (axes.indexOf("z") !== -1){
-				let half = ( this.maxZ - this.minZ ) * .5;
+				let diff = this.maxZ - this.minZ;
+				let half = diff * .5;
 				for ( let verts of this.vertices ){
-					verts.z = verts.z + half;
+					verts.z = 0 - (this.maxZ - verts.z) + half;
 				}
 			}
 			

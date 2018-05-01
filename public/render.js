@@ -119,7 +119,7 @@ function spawnMap(map){
 	geometry.setIndex(indices);
 	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-	geometry.scale(3,3,-3); // Faces are flipped so flip them back by negative scaling
+	geometry.scale(1,1,-1); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
 	
     var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x111111, roughness: .9 } );
@@ -127,10 +127,6 @@ function spawnMap(map){
 	
 	mesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( mesh );
-	/* mesh.position.y = 0;
-	mesh.position.x = (map.gridDistance*map.width*1.5);
-	mesh.position.z = -(map.gridDistance*map.depth*1.5);
-	mesh.position.z = -(map.gridDistance*map.depth*1.5); */
 	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
 	/* undermesh = new THREE.Mesh( geometry, solidMaterial );
 	scene.add( undermesh );
