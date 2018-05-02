@@ -47,7 +47,7 @@ socket.on("initial data", function(obj){
 		net.marbleRotations = new Float64Array(data.rot);
 		net.lastUpdate = 0;
 		net.ready--;
-		if (!renderInitFired && document.readyState === "interactive"){
+		if (!renderInitFired && (document.readyState === "interactive" || document.readyState === "complete")){
 			renderInitFired = true;
 			renderInit();
 		} else {
@@ -73,7 +73,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	},false);
 	
 	if (renderInitFired === "tried"){
-		console.log(renderInitFired);
+		renderInitFired = true;
 		renderInit();
 	}
 },false);
