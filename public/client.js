@@ -13,6 +13,7 @@ var net = {
 	requestsSkipped: 0 // Helps detect network issues
 };
 var marbleData;
+var renderInitFired = false;
 
 // Once connected, client receives initial data
 socket.on("initial data", function(obj){
@@ -46,7 +47,10 @@ socket.on("initial data", function(obj){
 		net.marbleRotations = new Float64Array(data.rot);
 		net.lastUpdate = 0;
 		net.ready--;
-		renderInit();
+		if (!renderInitFired && document.readyState === "complete"){
+			renderInitFired = true;
+			renderInit();
+		}
 	});
 });
 
@@ -66,6 +70,10 @@ window.addEventListener("DOMContentLoaded", function(){
 		getXMLDoc("/client?clear=true");
 	},false);
 	
+	if (!renderInitFired){
+		renderInitFired = true;
+		renderInit();
+	}
 },false);
 
 function getXMLDoc(doc,callback){

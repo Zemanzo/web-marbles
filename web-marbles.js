@@ -84,7 +84,7 @@ function createTerrainShape() {
 
 /* Load obj as heightfield */
 var OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield("map4v2.obj"); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield(config.marbles.maprotation[0]); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
 /* Create the terrain body */
@@ -106,7 +106,9 @@ var compression = require('compression');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
-app.use(compression());
+app.use(compression({
+  filter: function () { return true; }
+}));
 app.use(express.static(__dirname + '/public'));
 app.engine('mustache', mustacheExpress());
 app.set('view engine', 'mustache');
@@ -120,7 +122,7 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 })); 
 
 app.get("/", function (req, res) {
-	res.send(mapObj.vertices);
+	res.send("hi :)");
 });
 
 app.get("/client", function (req, res) {
@@ -158,8 +160,8 @@ app.get("/client", function (req, res) {
 			}
 			marbles = [];
 			res.send("ok");
-		} else if (req.query.dlmap){ // Send map
-			res.send(JSON.stringify(mapObj));
+		} else if (req.query.dlmap){ // Send map id
+			res.send(config.marbles.maprotation[0]);
 		}  else if (req.query.interpreted){ // Send interpreted map
 			res.send(JSON.stringify(mapObj.vertices));
 		} else {

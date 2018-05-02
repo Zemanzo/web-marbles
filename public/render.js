@@ -164,15 +164,19 @@ function renderInit(){
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
-		console.log(JSON.parse(response));
-		spawnMap(JSON.parse(response));
+		console.log(response);
+		getXMLDoc("/resources/"+response,(response)=>{
+			let map = new OBJHeightfield(response);
+			map.centerOrigin("xyz");
+			spawnMap(map);
+		});
 	});
 	
 	animate();
 }
 
 function spawnMarble(color, size){
-	let sphereGeometry = new THREE.SphereGeometry(size);
+	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	/* console.log(materialColor); */
@@ -242,4 +246,66 @@ function vertexObjectArrayToArray(array){ // Also converts z up to y up
 		);
 	}
 	return newArray;
+}
+
+class OBJHeightfield {
+	constructor(file) {
+		this.obj = new OBJFile( file );
+		this.parsed = this.obj.parse();
+		
+		// Clone & sort vertices
+		this.vertices = this.parsed.models[0].vertices.slice(0).sort(
+			function(a, b) {
+				return b.x - a.x || b.y - a.y 
+			}
+		);
+		
+		this.centerOrigin = function(axes){
+			if (axes.indexOf("x") !== -1){
+				let diff = this.maxX - this.minX;
+				let half = diff * .5;
+				for ( let verts of this.vertices ){
+					verts.x = 0 - (this.maxX - verts.x) + half;
+				}
+			}
+			if (axes.indexOf("y") !== -1){
+				let diff = this.maxY - this.minY;
+				let half = diff * .5;
+				for ( let verts of this.vertices ){
+					verts.y = 0 - (this.maxY - verts.y) + half;
+				}
+			}
+			if (axes.indexOf("z") !== -1){
+				let diff = this.maxZ - this.minZ;
+				let half = diff * .5;
+				for ( let verts of this.vertices ){
+					verts.z = 0 - (this.maxZ - verts.z) + half;
+				}
+			}
+			
+			// Update arrays after modifying origin
+			this.updateVertexArrays();
+			
+			return this.vertices;
+		}
+		
+		this.updateVertexArrays = function(){
+			this.xArray = Array.from( this.vertices, a => a.x );
+			this.yArray = Array.from( this.vertices, a => a.y );
+			this.zArray = Array.from( this.vertices, a => a.z );
+		
+			this.minX = this.xArray.reduce(function(a, b) {return Math.min(a, b);});
+			this.maxX = this.xArray.reduce(function(a, b) {return Math.max(a, b);});
+			this.minY = this.yArray.reduce(function(a, b) {return Math.min(a, b);});
+			this.maxY = this.yArray.reduce(function(a, b) {return Math.max(a, b);});
+			this.minZ = this.zArray.reduce(function(a, b) {return Math.min(a, b);});
+			this.maxZ = this.zArray.reduce(function(a, b) {return Math.max(a, b);});
+		}
+		
+		this.updateVertexArrays();
+		
+		this.width = this.depth = Math.sqrt(this.zArray.length);
+		
+		this.gridDistance = Math.abs( this.vertices[0].y - this.vertices[1].y )
+	}
 }

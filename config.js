@@ -2,10 +2,9 @@ var config = {};
 
 /* Marbles */
 config.marbles = {};
-config.marbles.resources = "resources/";
+config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
 config.marbles.maprotation = [
-	"map1",
-	"map2"
+	"map4v2.obj"
 ];
 
 /* Physics */
