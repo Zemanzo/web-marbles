@@ -102,9 +102,9 @@ orangeLight.position.x = 5;
 orangeLight.position.y = 70;
 orangeLight.position.z = -500; */
 
-camera.position.x = 5;
-camera.position.y = 10;
-camera.position.z = 5;
+camera.position.x = 40;
+camera.position.y = 80;
+camera.position.z = 40;
 
 camera.rotation.x = -.6;
 camera.rotation.y = .3;

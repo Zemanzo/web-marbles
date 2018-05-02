@@ -128,31 +128,29 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		if (req.query.marble){ // Add new marble
-			for (i = 0; i < 10; i++){
-				var sphereShape =  new Ammo.btSphereShape(req.query.size || 0.5);
-				sphereShape.setMargin( 0.05 );
-				var mass = (req.query.size || 0.5) * 5;
-				var localInertia = new Ammo.btVector3( 0, 0, 0 );
-				sphereShape.calculateLocalInertia( mass, localInertia );
-				var transform = new Ammo.btTransform();
-				transform.setIdentity();
-				transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
-				var motionState = new Ammo.btDefaultMotionState( transform );
-				var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-				var ammoBody = new Ammo.btRigidBody( bodyInfo );
-				
-				var body = {
-					ammoBody: ammoBody,
-					tags: {}
-				}
-				body.tags.color = "#"+req.query.color || "#00ff00";
-				body.tags.size = req.query.size || 0.2;
-				
-				marbles.push(body);
-				physicsWorld.addRigidBody( body.ammoBody );
-				
-				io.sockets.emit("new marble", body.tags);
+			var sphereShape =  new Ammo.btSphereShape(req.query.size || 0.5);
+			sphereShape.setMargin( 0.05 );
+			var mass = (req.query.size || 0.5) * 5;
+			var localInertia = new Ammo.btVector3( 0, 0, 0 );
+			sphereShape.calculateLocalInertia( mass, localInertia );
+			var transform = new Ammo.btTransform();
+			transform.setIdentity();
+			transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
+			var motionState = new Ammo.btDefaultMotionState( transform );
+			var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+			var ammoBody = new Ammo.btRigidBody( bodyInfo );
+			
+			var body = {
+				ammoBody: ammoBody,
+				tags: {}
 			}
+			body.tags.color = "#"+req.query.color || "#00ff00";
+			body.tags.size = req.query.size || 0.2;
+			
+			marbles.push(body);
+			physicsWorld.addRigidBody( body.ammoBody );
+			
+			io.sockets.emit("new marble", body.tags);
 			res.send("ok");
 		} else if (req.query.clear){ // Clear all marbles
 			for (i = marbles.length - 1; i >= 0; --i){

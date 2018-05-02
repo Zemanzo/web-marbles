@@ -47,9 +47,11 @@ socket.on("initial data", function(obj){
 		net.marbleRotations = new Float64Array(data.rot);
 		net.lastUpdate = 0;
 		net.ready--;
-		if (!renderInitFired && document.readyState === "complete"){
+		if (!renderInitFired && document.readyState === "interactive"){
 			renderInitFired = true;
 			renderInit();
+		} else {
+			renderInitFired = "tried";
 		}
 	});
 });
@@ -70,8 +72,8 @@ window.addEventListener("DOMContentLoaded", function(){
 		getXMLDoc("/client?clear=true");
 	},false);
 	
-	if (!renderInitFired){
-		renderInitFired = true;
+	if (renderInitFired === "tried"){
+		console.log(renderInitFired);
 		renderInit();
 	}
 },false);
