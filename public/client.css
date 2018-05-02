@@ -23,8 +23,13 @@ canvas {
 	pointer-events:none;
 	padding-left:100px;
 	box-sizing:border-box;
+	display:flex;
+	flex-direction:column;
+	justify-content:flex-start;
+	align-items:flex-end;
 }
 
 #overlayControls > * {
 	pointer-events:initial;
+	min-width:100px;
 }

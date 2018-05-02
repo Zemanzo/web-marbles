@@ -3,8 +3,32 @@ var config = {};
 /* Marbles */
 config.marbles = {};
 config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
-config.marbles.maprotation = [
-	"map4v2.obj"
+config.marbles.mapRotation = [
+	{
+		name: "map4v2.obj",
+		startGate: {
+			position: {x: -23, y: 8, z: 50},
+			size: [7.5, 6, .5]
+		}
+	}
+];
+// Bots
+config.marbles.bots = {}
+config.marbles.bots.names = [
+	{
+		name: "LAIKA bot",
+	},{
+		name: "Hirona bot"
+	},{
+		name: "Racherona bot"
+	},{
+		name: "A Generic Gamer bot"
+	},{
+		name: "Kcaz95 bot"
+	},{
+		name: "Nightbot",
+		color: "#000000"
+	}
 ];
 
 /* Physics */

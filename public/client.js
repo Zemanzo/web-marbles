@@ -22,7 +22,18 @@ socket.on("initial data", function(obj){
 	
 	socket.on("new marble", function(obj){
 		/* console.log(obj); */
-		spawnMarble(obj.color, obj.size);
+		spawnMarble(obj);
+	});
+	
+	socket.on("clear", function(obj){
+		console.log("Clearning mah marbles?",obj)
+		for (let mesh of marbleMeshes){
+			for (var i = mesh.children.length - 1; i >= 0; i--) {
+				mesh.remove(mesh.children[i]);
+			}
+			scene.remove(mesh);
+		}
+		marbleMeshes = [];
 	});
 
 	// Once connection is acknowledged, start requesting physics updates
@@ -62,14 +73,20 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("marble").addEventListener("click", function(){
 		let str = "/client?marble=true";
 		str += "&color="+document.getElementById("color").value.substr(1);
+		str += "&name="+document.getElementById("name").value;
 		/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
-		str += "&size=.15";
+		str += "&size=.2";
 		getXMLDoc(str);
 	},false);
 	
 	// !clear
 	document.getElementById("clear").addEventListener("click", function(){
 		getXMLDoc("/client?clear=true");
+	},false);
+	
+	// Start race
+	document.getElementById("start").addEventListener("click", function(){
+		getXMLDoc("/client?start=true");
 	},false);
 	
 	if (renderInitFired === "tried"){

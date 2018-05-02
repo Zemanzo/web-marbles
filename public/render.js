@@ -1,3 +1,5 @@
+var map;
+
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
 
@@ -16,6 +18,9 @@ controls.enableZoom = true;
 
 var ambientLight = new THREE.AmbientLight( 0xb49090 );
 scene.add( ambientLight );
+
+var axesHelper = new THREE.AxesHelper( 3 );
+scene.add( axesHelper );
 
 //
 
@@ -44,6 +49,7 @@ water = new THREE.Water(
 
 water.rotation.x = - Math.PI / 2;
 water.position.y = -9
+water.material.uniforms.size.value = 8;
 
 scene.add( water );
 
@@ -151,22 +157,23 @@ function animate() {
 	renderer.render( scene, camera );
 }
 
-function renderInit(){
+// Stuff that can only be rendered after network data has been received
+function renderInit(){ 
 	for (i = 0; i < net.marblePositions.length/3; i++){
-		spawnMarble(marbleData[i].tags.color, marbleData[i].tags.size);
+		spawnMarble(marbleData[i].tags);
 	}
 	
-	var cubeGeometry = new THREE.BoxGeometry(.3, .3, .3);
+	/* var cubeGeometry = new THREE.BoxGeometry(.3, .3, .3);
 	var red = new THREE.MeshStandardMaterial({ color: 0xff0000 });
 	cube = new THREE.Mesh(cubeGeometry, red);	
-	scene.add( cube );
+	scene.add( cube ); */
 	
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
 		console.log(response);
 		getXMLDoc("/resources/"+response,(response)=>{
-			let map = new OBJHeightfield(response);
+			map = new OBJHeightfield(response);
 			map.centerOrigin("xyz");
 			spawnMap(map);
 		});
@@ -175,15 +182,22 @@ function renderInit(){
 	animate();
 }
 
-function spawnMarble(color, size){
+function spawnMarble(tags){
+	let size = tags.size;
+	let color = tags.color;
+	let name = tags.name;
+	
 	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	/* console.log(materialColor); */
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
 	let sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+	let nameSprite = makeTextSprite(name);
 	marbleMeshes.push(sphereMesh);
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
+	scene.add(nameSprite);
+	nameSprite.parent = marbleMeshes[marbleMeshes.length-1];
 }
 
 function spawnMap(map){
@@ -215,9 +229,9 @@ function spawnMap(map){
 	scene.add( mesh );
 	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
 	
-/* 	undermesh = new THREE.Mesh( geometry, solidMaterial );
+	/* undermesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( undermesh );
-	undermesh.position.y = -.05;
+	undermesh.position.y = .05;
 	undermesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) ); */
 }
 
@@ -247,6 +261,8 @@ function vertexObjectArrayToArray(array){ // Also converts z up to y up
 	}
 	return newArray;
 }
+
+// Duplicate code, find a better way to get this in.
 
 class OBJHeightfield {
 	constructor(file) {
@@ -308,4 +324,38 @@ class OBJHeightfield {
 		
 		this.gridDistance = Math.abs( this.vertices[0].y - this.vertices[1].y )
 	}
+}
+
+//
+
+function makeTextSprite( message )
+{
+	var parameters = {};
+	
+	var fontface = "Courier New";
+	var fontsize = 24;
+		
+	var canvas = document.createElement('canvas');
+	var width = canvas.width = 256;
+	var height = canvas.height = 64;
+	var context = canvas.getContext('2d');
+	context.font = "Bold " + fontsize + "px " + fontface;
+	context.textAlign = "center"; 
+    
+	// get size data (height depends only on font size)
+	var metrics = context.measureText( message );
+	var textWidth = metrics.width;
+	
+	// text color
+	context.fillStyle = "#ffffff";
+
+	context.fillText(message, 128, fontsize);
+	
+	// canvas contents will be used for a texture
+	var texture = new THREE.Texture(canvas) 
+	texture.needsUpdate = true;
+	var spriteMaterial = new THREE.SpriteMaterial({map: texture});
+	var sprite = new THREE.Sprite( spriteMaterial );
+	sprite.scale.set(4,1,1.0);
+	return sprite;	
 }

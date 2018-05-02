@@ -84,7 +84,7 @@ function createTerrainShape() {
 
 /* Load obj as heightfield */
 var OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield(config.marbles.maprotation[0]); // X forward, Z up. Write normals & Objects as OBJ Objects.
+var mapObj = new OBJHeightfield(config.marbles.mapRotation[0].name); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
 /* Create the terrain body */
@@ -98,6 +98,25 @@ var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
 var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
 var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
 physicsWorld.addRigidBody( groundBody );
+
+/* Add start gate */
+var gateSize = config.marbles.mapRotation[0].startGate.size;
+var gateShape = new Ammo.btBoxShape(new Ammo.btVector3( gateSize[0], gateSize[1], gateSize[2] ));
+
+var gateTransform = new Ammo.btTransform();
+gateTransform.setIdentity();
+var gatePosition = config.marbles.mapRotation[0].startGate.position;
+gateTransform.setOrigin( new Ammo.btVector3( gatePosition.x,gatePosition.z,gatePosition.y ) );
+
+var gateMass = 0;
+var gatelocalInertia = new Ammo.btVector3(0, 0, 0);
+gateShape.calculateLocalInertia(gateMass, gatelocalInertia);
+
+var gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
+var gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
+var gateBody = new Ammo.btRigidBody(gateRbInfo);
+
+physicsWorld.addRigidBody(gateBody);
 
 /* Express connections */
 var express = require('express');
@@ -127,8 +146,12 @@ app.get("/", function (req, res) {
 
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
+		
 		if (req.query.marble){ // Add new marble
-			var sphereShape =  new Ammo.btSphereShape(req.query.size || 0.5);
+			
+			// Create physics body
+			var size = (Math.random() > .9 ? .5 : false) || req.query.size || 0.2
+			var sphereShape =  new Ammo.btSphereShape(size);
 			sphereShape.setMargin( 0.05 );
 			var mass = (req.query.size || 0.5) * 5;
 			var localInertia = new Ammo.btVector3( 0, 0, 0 );
@@ -140,28 +163,53 @@ app.get("/client", function (req, res) {
 			var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 			var ammoBody = new Ammo.btRigidBody( bodyInfo );
 			
+			// Add metadata
 			var body = {
 				ammoBody: ammoBody,
 				tags: {}
 			}
 			body.tags.color = "#"+req.query.color || "#00ff00";
-			body.tags.size = req.query.size || 0.2;
+			body.tags.size = size;
+			body.tags.name = req.query.name || "Nightbot";
 			
+			// Add to physics world
 			marbles.push(body);
 			physicsWorld.addRigidBody( body.ammoBody );
 			
+			// Send client info on new marble
 			io.sockets.emit("new marble", body.tags);
 			res.send("ok");
+			
 		} else if (req.query.clear){ // Clear all marbles
+		
+			// Set starting gate to original position
+			var origin = gateBody.getWorldTransform().getOrigin();
+			origin.setZ(config.marbles.mapRotation[0].startGate.position.z);
+			gateBody.activate();
+			
+			// Remove marble physics bodies
 			for (i = marbles.length - 1; i >= 0; --i){
 				physicsWorld.removeRigidBody(marbles[i].ammoBody);
 			}
+			
+			// Clear the marble array
 			marbles = [];
+			
+			// Send clients game restart so they can clean up on their side
+			io.sockets.emit("clear", true);
 			res.send("ok");
+			
+		} else if (req.query.start){ // Start the game, move the startGate out of the way
+			var origin = gateBody.getWorldTransform().getOrigin();
+			origin.setZ(0);
+			gateBody.activate();
+			
 		} else if (req.query.dlmap){ // Send map id
-			res.send(config.marbles.maprotation[0]);
+			res.send(config.marbles.mapRotation[0].name);
+			
 		}  else if (req.query.interpreted){ // Send interpreted map
 			res.send(JSON.stringify(mapObj.vertices));
+			
 		} else {
 			res.send("???");
 		}
