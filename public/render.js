@@ -172,7 +172,8 @@ function renderInit(){
 	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
 		console.log(response);
-		getXMLDoc("/resources/"+response,(response)=>{
+		getXMLDoc("/resources/map4v2_optimized.obj",(response)=>{
+		/* getXMLDoc("https://a.safe.moe/XuTQTmy.obj",(response)=>{ */
 			map = new OBJHeightfield(response);
 			map.centerOrigin("xyz");
 			spawnMap(map);
@@ -201,7 +202,7 @@ function spawnMarble(tags){
 }
 
 function spawnMap(map){
-	let model = map.parsed.models[0];
+	let model = map.parsed.models[1];
 	let geometry = new THREE.BufferGeometry();
 	let vertices = vertexObjectArrayToFloat32Array(model.vertices);
 	let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
@@ -214,20 +215,42 @@ function spawnMap(map){
 		);
 	}
 	
-	/* console.log(indices.length,vertices.length,normals); */
+	console.log(indices.length,vertices.length,normals.length,30560);
 	
 	geometry.setIndex(indices);
 	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
 	geometry.scale(1,1,-1); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
+
+	//
+	
+	var mapMaterial = createMapMaterial();
+	console.log(mapMaterial);
+	
+	//
 	
     var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x33c49a, roughness: .9 } );
     var wireframeMaterial = new THREE.MeshLambertMaterial( { color: 0xff00ff, wireframe:true } );
 	
-	mesh = new THREE.Mesh( geometry, solidMaterial );
+	mesh = new THREE.Mesh( geometry);
 	scene.add( mesh );
+	mesh.material = mapMaterial;
 	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
+	
+	var box = new THREE.Mesh( new THREE.BoxGeometry(5,5,5) );
+	scene.add( box );
+	box.position.x = 50;
+	box.position.y = 30;
+	box.position.z = -50;
+	box.material = mapMaterial;
+	
+	var sphere = new THREE.Mesh( new THREE.SphereBufferGeometry(2.5,32,32) );
+	scene.add( sphere );
+	sphere.position.x = 43;
+	sphere.position.y = 30;
+	sphere.position.z = -50;
+	sphere.material = mapMaterial;
 	
 	/* undermesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( undermesh );
@@ -235,11 +258,85 @@ function spawnMap(map){
 	undermesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) ); */
 }
 
+var rtTexture, rtMaterial;
+var library = {};
+var textures = {
+	brick: { url: 'threejs/textures/brick_diffuse.jpg' },
+	dirt: { url: 'threejs/textures/dirt.jpg' },
+	grass: { url: 'threejs/textures/grasslight-big.jpg' },
+	grassNormal: { url: 'threejs/textures/grasslight-big-nm.jpg' },
+	decalDiffuse: { url: 'threejs/textures/decal-diffuse.png' },
+	cloud: { url: 'threejs/textures/lava/cloud.png' },
+	spherical: { url: 'threejs/textures/envmap.png' }
+};
+var param = { example: 'standard' };
+
+function getTexture( name ) {
+	var texture = textures[ name ].texture;
+	if ( ! texture ) {
+		texture = textures[ name ].texture = new THREE.TextureLoader().load( textures[ name ].url );
+		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		library[ texture.uuid ] = texture;
+	}
+	return texture;
+}
+
+var cubemap = function () {
+	var path = "threejs/textures/cube/";
+	var format = '.jpg';
+	var urls = [
+		path + 'posx' + format, path + 'negx' + format,
+		path + 'posy' + format, path + 'negy' + format,
+		path + 'posz' + format, path + 'negz' + format
+	];
+	var textureCube = new THREE.CubeTextureLoader().load( urls );
+	textureCube.format = THREE.RGBFormat;
+	library[ textureCube.uuid ] = textureCube;
+	return textureCube;
+}();
+
+function createMapMaterial(){
+	var name = param.example;
+	var mtl;
+	
+	// MATERIAL
+	mtl = new THREE.PhongNodeMaterial();
+	var tex1 = new THREE.TextureNode( getTexture( "grass" ) );
+	var tex2 = new THREE.TextureNode( getTexture( "dirt" ) );
+	var offset = new THREE.FloatNode( 0 );
+	var scale = new THREE.FloatNode( 1 );
+	var uv = new THREE.UVNode();
+	var uvOffset = new THREE.OperatorNode(
+		offset,
+		uv,
+		THREE.OperatorNode.ADD
+	);
+	var uvScale = new THREE.OperatorNode(
+		uvOffset,
+		scale,
+		THREE.OperatorNode.MUL
+	);
+	var mask = new THREE.TextureNode( getTexture( "decalDiffuse" ), uvScale );
+	var maskAlphaChannel = new THREE.SwitchNode( mask, 'w' );
+	var blend = new THREE.Math3Node(
+		tex1,
+		tex2,
+		maskAlphaChannel,
+		THREE.Math3Node.MIX
+	);
+	mtl.color = blend;
+	
+	// build shader
+	mtl.build();
+	// set material
+	return mtl;
+}
+
 function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
 	
 	// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
-	let f32array = new Float32Array(array.length*3 + 3);
-	let i = 1;
+	let f32array = new Float32Array(array.length*3 + 15);
+	let i = 5;
 	
 	for (let vertex of array){
 		f32array[i*3+0] = vertex.x;
@@ -270,7 +367,7 @@ class OBJHeightfield {
 		this.parsed = this.obj.parse();
 		
 		// Clone & sort vertices
-		this.vertices = this.parsed.models[0].vertices.slice(0).sort(
+		this.vertices = this.parsed.models[1].vertices.slice(0).sort(
 			function(a, b) {
 				return b.x - a.x || b.y - a.y 
 			}
@@ -320,9 +417,9 @@ class OBJHeightfield {
 		
 		this.updateVertexArrays();
 		
-		this.width = this.depth = Math.sqrt(this.zArray.length);
+		/* this.width = this.depth = Math.sqrt(this.zArray.length);
 		
-		this.gridDistance = Math.abs( this.vertices[0].y - this.vertices[1].y )
+		this.gridDistance = Math.abs( this.vertices[0].y - this.vertices[1].y ); */
 	}
 }
 

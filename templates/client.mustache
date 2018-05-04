@@ -17,11 +17,81 @@
 		<script src="lib/OBJFile.js"></script>
 	</head>
 	<body>
+		<!-- threejs -->
 		<script src="threejs/three.js"></script>
 		<script src="threejs/OrbitControls.js"></script>
 		<script src="threejs/stats.min.js"></script>
 		<script src="threejs/Water.js"></script>
 		<script src="threejs/Sky.js"></script>
+		
+		<!-- NodeLibrary -->
+		<script src="threejs/nodes/GLNode.js"></script>
+		<script src="threejs/nodes/RawNode.js"></script>
+		<script src="threejs/nodes/TempNode.js"></script>
+		<script src="threejs/nodes/InputNode.js"></script>
+		<script src="threejs/nodes/ConstNode.js"></script>
+		<script src="threejs/nodes/VarNode.js"></script>
+		<script src="threejs/nodes/FunctionNode.js"></script>
+		<script src="threejs/nodes/FunctionCallNode.js"></script>
+		<script src="threejs/nodes/AttributeNode.js"></script>
+		<script src="threejs/nodes/NodeBuilder.js"></script>
+		<script src="threejs/nodes/NodeLib.js"></script>
+		<script src="threejs/nodes/NodeFrame.js"></script>
+		<script src="threejs/nodes/NodeMaterial.js"></script>
+
+		<!-- Accessors -->
+		<script src="threejs/nodes/accessors/PositionNode.js"></script>
+		<script src="threejs/nodes/accessors/NormalNode.js"></script>
+		<script src="threejs/nodes/accessors/UVNode.js"></script>
+		<script src="threejs/nodes/accessors/ScreenUVNode.js"></script>
+		<script src="threejs/nodes/accessors/ColorsNode.js"></script>
+		<script src="threejs/nodes/accessors/CameraNode.js"></script>
+		<script src="threejs/nodes/accessors/ReflectNode.js"></script>
+		<script src="threejs/nodes/accessors/LightNode.js"></script>
+
+		<!-- Inputs -->
+		<script src="threejs/nodes/inputs/IntNode.js"></script>
+		<script src="threejs/nodes/inputs/FloatNode.js"></script>
+		<script src="threejs/nodes/inputs/ColorNode.js"></script>
+		<script src="threejs/nodes/inputs/Vector2Node.js"></script>
+		<script src="threejs/nodes/inputs/Vector3Node.js"></script>
+		<script src="threejs/nodes/inputs/Vector4Node.js"></script>
+		<script src="threejs/nodes/inputs/TextureNode.js"></script>
+		<script src="threejs/nodes/inputs/Matrix3Node.js"></script>
+		<script src="threejs/nodes/inputs/Matrix4Node.js"></script>
+		<script src="threejs/nodes/inputs/CubeTextureNode.js"></script>
+
+		<!-- Math -->
+		<script src="threejs/nodes/math/Math1Node.js"></script>
+		<script src="threejs/nodes/math/Math2Node.js"></script>
+		<script src="threejs/nodes/math/Math3Node.js"></script>
+		<script src="threejs/nodes/math/OperatorNode.js"></script>
+
+		<!-- Utils -->
+		<script src="threejs/nodes/utils/SwitchNode.js"></script>
+		<script src="threejs/nodes/utils/JoinNode.js"></script>
+		<script src="threejs/nodes/utils/TimerNode.js"></script>
+		<script src="threejs/nodes/utils/RoughnessToBlinnExponentNode.js"></script>
+		<script src="threejs/nodes/utils/VelocityNode.js"></script>
+		<script src="threejs/nodes/utils/LuminanceNode.js"></script>
+		<script src="threejs/nodes/utils/ColorAdjustmentNode.js"></script>
+		<script src="threejs/nodes/utils/NoiseNode.js"></script>
+		<script src="threejs/nodes/utils/ResolutionNode.js"></script>
+		<script src="threejs/nodes/utils/BumpNode.js"></script>
+		<script src="threejs/nodes/utils/BlurNode.js"></script>
+		<script src="threejs/nodes/utils/UVTransformNode.js"></script>
+
+		<!-- Phong Material -->
+		<script src="threejs/nodes/materials/PhongNode.js"></script>
+		<script src="threejs/nodes/materials/PhongNodeMaterial.js"></script>
+
+		<!-- Standard Material -->
+		<script src="threejs/nodes/materials/StandardNode.js"></script>
+		<script src="threejs/nodes/materials/StandardNodeMaterial.js"></script>
+
+		<!-- NodeMaterial Loader -->
+		<script src="threejs/loaders/NodeMaterialLoader.js"></script>
+		
 		<script src="render.js"></script>
 		<div id="overlayControls">
 			<input type="color" id="color" value="#ffffff"/>
