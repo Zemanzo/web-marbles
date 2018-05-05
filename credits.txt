@@ -1,0 +1,38 @@
+This project couldn't have existed without these amazing tools by amazing people:
+
+Node.js
+Three.js
+Ammo.js (with Bullet in extension)
+Sockets.io
+Git
+GitHub
+Stackoverflow
+
+//
+
+Specifically, I would like to thank these people:
+
+The open source community, for allowing me to use all these tools at no additional cost.
+
+//
+
+Special thanks:
+
+Britta
+Angelo "Qaomen"
+Siem "siem3141"
+Matias "Sanguinary"
+Mitchell "Sodaman"
+Tristan "Venlious"
+My family
+
+//
+
+Music:
+Epic Mountain - All Kurzgesagt arrangements
+
+//
+
+Thanks from the bottom of my heart. I'm extremely grateful for this opportunity.
+
+<3

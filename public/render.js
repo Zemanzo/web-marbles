@@ -157,6 +157,8 @@ function animate() {
 	renderer.render( scene, camera );
 }
 
+var mapMesh;
+
 // Stuff that can only be rendered after network data has been received
 function renderInit(){ 
 	for (i = 0; i < net.marblePositions.length/3; i++){
@@ -171,9 +173,31 @@ function renderInit(){
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
+	
+		var manager = new THREE.LoadingManager();
+		manager.onProgress = function ( item, loaded, total ) {
+			console.log( item, loaded, total );
+		};
+		
+		var loader = new THREE.OBJLoader( manager );
+		loader.load( '/resources/map4v2_optimized.obj', function ( object ) {
+			object.traverse( function ( child ) {
+				if ( child.name.indexOf("Terrain") !== -1) {
+					mapMesh = child;
+					
+					scene.add( child );
+					
+					child.setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
+					
+					child.geometry.computeBoundingBox();
+					child.geometry.center();
+					child.material = createMapMaterial();
+				}
+			} );
+		}, ()=>{}, ()=>{} );
+		
 		console.log(response);
 		getXMLDoc("/resources/map4v2_optimized.obj",(response)=>{
-		/* getXMLDoc("https://a.safe.moe/XuTQTmy.obj",(response)=>{ */
 			map = new OBJHeightfield(response);
 			map.centerOrigin("xyz");
 			spawnMap(map);
@@ -206,6 +230,7 @@ function spawnMap(map){
 	let geometry = new THREE.BufferGeometry();
 	let vertices = vertexObjectArrayToFloat32Array(model.vertices);
 	let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
+	let uvs = textureCoordsArrayToFloat32Array(model.textureCoords);
 	let indices = [];
 	for (let index of model.faces){
 		indices.push(
@@ -215,11 +240,12 @@ function spawnMap(map){
 		);
 	}
 	
-	console.log(indices.length,vertices.length,normals.length,30560);
+	console.log(indices.length,vertices.length,normals.length,uvs.length);
 	
 	geometry.setIndex(indices);
 	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
 	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
+	geometry.addAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
 	geometry.scale(1,1,-1); // Faces are flipped so flip them back by negative scaling
 	geometry.computeVertexNormals(true); // Recompute vertex normals
 
@@ -233,24 +259,18 @@ function spawnMap(map){
     var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x33c49a, roughness: .9 } );
     var wireframeMaterial = new THREE.MeshLambertMaterial( { color: 0xff00ff, wireframe:true } );
 	
-	mesh = new THREE.Mesh( geometry);
-	scene.add( mesh );
-	mesh.material = mapMaterial;
+	var texture = new THREE.TextureLoader().load( "threejs/textures/brick_diffuse.jpg" );
+		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+		
+	var textureMaterial = new THREE.MeshPhongMaterial( { 
+		color: 0xffffff,
+		map: texture
+	} );
+	
+	mesh = new THREE.Mesh( geometry, textureMaterial);
+	/* scene.add( mesh ); */
+	/* mesh.material = mapMaterial; */
 	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
-	
-	var box = new THREE.Mesh( new THREE.BoxGeometry(5,5,5) );
-	scene.add( box );
-	box.position.x = 50;
-	box.position.y = 30;
-	box.position.z = -50;
-	box.material = mapMaterial;
-	
-	var sphere = new THREE.Mesh( new THREE.SphereBufferGeometry(2.5,32,32) );
-	scene.add( sphere );
-	sphere.position.x = 43;
-	sphere.position.y = 30;
-	sphere.position.z = -50;
-	sphere.material = mapMaterial;
 	
 	/* undermesh = new THREE.Mesh( geometry, wireframeMaterial );
 	scene.add( undermesh );
@@ -258,7 +278,6 @@ function spawnMap(map){
 	undermesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) ); */
 }
 
-var rtTexture, rtMaterial;
 var library = {};
 var textures = {
 	brick: { url: 'threejs/textures/brick_diffuse.jpg' },
@@ -266,6 +285,7 @@ var textures = {
 	grass: { url: 'threejs/textures/grasslight-big.jpg' },
 	grassNormal: { url: 'threejs/textures/grasslight-big-nm.jpg' },
 	decalDiffuse: { url: 'threejs/textures/decal-diffuse.png' },
+	mask: { url: 'threejs/textures/mask_alpha.png' },
 	cloud: { url: 'threejs/textures/lava/cloud.png' },
 	spherical: { url: 'threejs/textures/envmap.png' }
 };
@@ -300,11 +320,12 @@ function createMapMaterial(){
 	var mtl;
 	
 	// MATERIAL
-	mtl = new THREE.PhongNodeMaterial();
-	var tex1 = new THREE.TextureNode( getTexture( "grass" ) );
-	var tex2 = new THREE.TextureNode( getTexture( "dirt" ) );
+	mtl = new THREE.StandardNodeMaterial();
+	mtl.roughness = new THREE.FloatNode( .9 );
+	mtl.metalness = new THREE.FloatNode( 0 );
+	
 	var offset = new THREE.FloatNode( 0 );
-	var scale = new THREE.FloatNode( 1 );
+	var scale = new THREE.FloatNode( 20 );
 	var uv = new THREE.UVNode();
 	var uvOffset = new THREE.OperatorNode(
 		offset,
@@ -316,7 +337,24 @@ function createMapMaterial(){
 		scale,
 		THREE.OperatorNode.MUL
 	);
-	var mask = new THREE.TextureNode( getTexture( "decalDiffuse" ), uvScale );
+	var tex1 = new THREE.TextureNode( getTexture( "grass" ), uvScale );
+	var tex2 = new THREE.TextureNode( getTexture( "dirt" ), uvScale );
+	
+	var maskUvOffset = new THREE.FloatNode( 0 );
+	var maskUvScale = new THREE.FloatNode( 1 );
+	var maskUv = new THREE.UVNode();
+	var maskUvOffsetNode = new THREE.OperatorNode(
+		maskUvOffset,
+		maskUv,
+		THREE.OperatorNode.ADD
+	);
+	var maskUvScale = new THREE.OperatorNode(
+		maskUvOffsetNode,
+		maskUvScale,
+		THREE.OperatorNode.MUL
+	);
+	console.log(maskUvScale);
+	var mask = new THREE.TextureNode( getTexture( "mask" ), maskUvScale );
 	var maskAlphaChannel = new THREE.SwitchNode( mask, 'w' );
 	var blend = new THREE.Math3Node(
 		tex1,
@@ -342,6 +380,20 @@ function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
 		f32array[i*3+0] = vertex.x;
 		f32array[i*3+1] = vertex.z;
 		f32array[i*3+2] = vertex.y;
+		i++;
+	}
+	return f32array;
+}
+
+function textureCoordsArrayToFloat32Array(array){ //
+	
+	// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
+	let f32array = new Float32Array(array.length*2 + 10);
+	let i = 5;
+	
+	for (let vertex of array){
+		f32array[i*2+0] = vertex.u;
+		f32array[i*2+1] = vertex.v;
 		i++;
 	}
 	return f32array;
