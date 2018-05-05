@@ -173,14 +173,17 @@ function renderInit(){
 	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
 	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
-	
+		
+		var mapName = response.substr(0,response.lastIndexOf("."));
+		
+		console.log(mapName);
 		var manager = new THREE.LoadingManager();
 		manager.onProgress = function ( item, loaded, total ) {
 			console.log( item, loaded, total );
 		};
 		
 		var loader = new THREE.OBJLoader( manager );
-		loader.load( '/resources/map4v2_optimized.obj', function ( object ) {
+		loader.load( "/resources/"+mapName+"_optimized.obj", function ( object ) {
 			object.traverse( function ( child ) {
 				if ( child.name.indexOf("Terrain") !== -1) {
 					mapMesh = child;
@@ -195,13 +198,6 @@ function renderInit(){
 				}
 			} );
 		}, ()=>{}, ()=>{} );
-		
-		console.log(response);
-		getXMLDoc("/resources/map4v2_optimized.obj",(response)=>{
-			map = new OBJHeightfield(response);
-			map.centerOrigin("xyz");
-			spawnMap(map);
-		});
 	});
 	
 	animate();
@@ -225,98 +221,24 @@ function spawnMarble(tags){
 	nameSprite.parent = marbleMeshes[marbleMeshes.length-1];
 }
 
-function spawnMap(map){
-	let model = map.parsed.models[1];
-	let geometry = new THREE.BufferGeometry();
-	let vertices = vertexObjectArrayToFloat32Array(model.vertices);
-	let normals = vertexObjectArrayToFloat32Array(model.vertexNormals);
-	let uvs = textureCoordsArrayToFloat32Array(model.textureCoords);
-	let indices = [];
-	for (let index of model.faces){
-		indices.push(
-			index.vertices[0].vertexIndex,
-			index.vertices[1].vertexIndex,
-			index.vertices[2].vertexIndex
-		);
-	}
-	
-	console.log(indices.length,vertices.length,normals.length,uvs.length);
-	
-	geometry.setIndex(indices);
-	geometry.addAttribute("position", new THREE.Float32BufferAttribute(vertices, 3));
-	geometry.addAttribute("normal", new THREE.Float32BufferAttribute(normals, 3));
-	geometry.addAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
-	geometry.scale(1,1,-1); // Faces are flipped so flip them back by negative scaling
-	geometry.computeVertexNormals(true); // Recompute vertex normals
-
-	//
-	
-	var mapMaterial = createMapMaterial();
-	console.log(mapMaterial);
-	
-	//
-	
-    var solidMaterial = new THREE.MeshStandardMaterial( { color: 0x33c49a, roughness: .9 } );
-    var wireframeMaterial = new THREE.MeshLambertMaterial( { color: 0xff00ff, wireframe:true } );
-	
-	var texture = new THREE.TextureLoader().load( "threejs/textures/brick_diffuse.jpg" );
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-		
-	var textureMaterial = new THREE.MeshPhongMaterial( { 
-		color: 0xffffff,
-		map: texture
-	} );
-	
-	mesh = new THREE.Mesh( geometry, textureMaterial);
-	/* scene.add( mesh ); */
-	/* mesh.material = mapMaterial; */
-	mesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) );
-	
-	/* undermesh = new THREE.Mesh( geometry, wireframeMaterial );
-	scene.add( undermesh );
-	undermesh.position.y = .05;
-	undermesh.setRotationFromEuler( new THREE.Euler( 0, Math.PI*.5, 0, 'XYZ' ) ); */
-}
-
-var library = {};
 var textures = {
-	brick: { url: 'threejs/textures/brick_diffuse.jpg' },
 	dirt: { url: 'threejs/textures/dirt.jpg' },
+	dirtNormal: { url: 'threejs/textures/dirt_n.jpg' },
 	grass: { url: 'threejs/textures/grasslight-big.jpg' },
 	grassNormal: { url: 'threejs/textures/grasslight-big-nm.jpg' },
-	decalDiffuse: { url: 'threejs/textures/decal-diffuse.png' },
-	mask: { url: 'threejs/textures/mask_alpha.png' },
-	cloud: { url: 'threejs/textures/lava/cloud.png' },
-	spherical: { url: 'threejs/textures/envmap.png' }
+	mask: { url: 'threejs/textures/mask_alpha.png' }
 };
-var param = { example: 'standard' };
 
 function getTexture( name ) {
 	var texture = textures[ name ].texture;
 	if ( ! texture ) {
 		texture = textures[ name ].texture = new THREE.TextureLoader().load( textures[ name ].url );
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-		library[ texture.uuid ] = texture;
 	}
 	return texture;
 }
 
-var cubemap = function () {
-	var path = "threejs/textures/cube/";
-	var format = '.jpg';
-	var urls = [
-		path + 'posx' + format, path + 'negx' + format,
-		path + 'posy' + format, path + 'negy' + format,
-		path + 'posz' + format, path + 'negz' + format
-	];
-	var textureCube = new THREE.CubeTextureLoader().load( urls );
-	textureCube.format = THREE.RGBFormat;
-	library[ textureCube.uuid ] = textureCube;
-	return textureCube;
-}();
-
 function createMapMaterial(){
-	var name = param.example;
 	var mtl;
 	
 	// MATERIAL
@@ -324,155 +246,53 @@ function createMapMaterial(){
 	mtl.roughness = new THREE.FloatNode( .9 );
 	mtl.metalness = new THREE.FloatNode( 0 );
 	
-	var offset = new THREE.FloatNode( 0 );
-	var scale = new THREE.FloatNode( 20 );
-	var uv = new THREE.UVNode();
-	var uvOffset = new THREE.OperatorNode(
-		offset,
-		uv,
-		THREE.OperatorNode.ADD
-	);
-	var uvScale = new THREE.OperatorNode(
-		uvOffset,
-		scale,
-		THREE.OperatorNode.MUL
-	);
-	var tex1 = new THREE.TextureNode( getTexture( "grass" ), uvScale );
-	var tex2 = new THREE.TextureNode( getTexture( "dirt" ), uvScale );
+	function createUv(scale,offset){
+		
+		var uvOffset = new THREE.FloatNode( offset || 0 );
+		var uvScale = new THREE.FloatNode( scale || 1 );
+		
+		var uvNode = new THREE.UVNode();
+		var offsetNode = new THREE.OperatorNode(
+			uvOffset,
+			uvNode,
+			THREE.OperatorNode.ADD
+		);
+		var scaleNode = new THREE.OperatorNode(
+			offsetNode,
+			uvScale,
+			THREE.OperatorNode.MUL
+		);
+		
+		return scaleNode;
+	}
 	
-	var maskUvOffset = new THREE.FloatNode( 0 );
-	var maskUvScale = new THREE.FloatNode( 1 );
-	var maskUv = new THREE.UVNode();
-	var maskUvOffsetNode = new THREE.OperatorNode(
-		maskUvOffset,
-		maskUv,
-		THREE.OperatorNode.ADD
-	);
-	var maskUvScale = new THREE.OperatorNode(
-		maskUvOffsetNode,
-		maskUvScale,
-		THREE.OperatorNode.MUL
-	);
-	console.log(maskUvScale);
-	var mask = new THREE.TextureNode( getTexture( "mask" ), maskUvScale );
+	var grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
+	var dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
+	var mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
 	var maskAlphaChannel = new THREE.SwitchNode( mask, 'w' );
 	var blend = new THREE.Math3Node(
-		tex1,
-		tex2,
+		grass,
+		dirt,
 		maskAlphaChannel,
 		THREE.Math3Node.MIX
 	);
 	mtl.color = blend;
+	mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
+
+	var normalScale = new THREE.FloatNode( 1 );
+	var normalMask = new THREE.OperatorNode(
+		new THREE.TextureNode( getTexture( "mask" ), createUv() ),
+		normalScale,
+		THREE.OperatorNode.MUL
+	);
+	
+	mtl.normalScale = normalMask;
 	
 	// build shader
 	mtl.build();
+	
 	// set material
 	return mtl;
-}
-
-function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
-	
-	// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
-	let f32array = new Float32Array(array.length*3 + 15);
-	let i = 5;
-	
-	for (let vertex of array){
-		f32array[i*3+0] = vertex.x;
-		f32array[i*3+1] = vertex.z;
-		f32array[i*3+2] = vertex.y;
-		i++;
-	}
-	return f32array;
-}
-
-function textureCoordsArrayToFloat32Array(array){ //
-	
-	// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
-	let f32array = new Float32Array(array.length*2 + 10);
-	let i = 5;
-	
-	for (let vertex of array){
-		f32array[i*2+0] = vertex.u;
-		f32array[i*2+1] = vertex.v;
-		i++;
-	}
-	return f32array;
-}
-
-function vertexObjectArrayToArray(array){ // Also converts z up to y up
-	let newArray = [];
-	for (let vertex of array){
-		newArray.push(
-			vertex.x,
-			vertex.z,
-			vertex.y
-		);
-	}
-	return newArray;
-}
-
-// Duplicate code, find a better way to get this in.
-
-class OBJHeightfield {
-	constructor(file) {
-		this.obj = new OBJFile( file );
-		this.parsed = this.obj.parse();
-		
-		// Clone & sort vertices
-		this.vertices = this.parsed.models[1].vertices.slice(0).sort(
-			function(a, b) {
-				return b.x - a.x || b.y - a.y 
-			}
-		);
-		
-		this.centerOrigin = function(axes){
-			if (axes.indexOf("x") !== -1){
-				let diff = this.maxX - this.minX;
-				let half = diff * .5;
-				for ( let verts of this.vertices ){
-					verts.x = 0 - (this.maxX - verts.x) + half;
-				}
-			}
-			if (axes.indexOf("y") !== -1){
-				let diff = this.maxY - this.minY;
-				let half = diff * .5;
-				for ( let verts of this.vertices ){
-					verts.y = 0 - (this.maxY - verts.y) + half;
-				}
-			}
-			if (axes.indexOf("z") !== -1){
-				let diff = this.maxZ - this.minZ;
-				let half = diff * .5;
-				for ( let verts of this.vertices ){
-					verts.z = 0 - (this.maxZ - verts.z) + half;
-				}
-			}
-			
-			// Update arrays after modifying origin
-			this.updateVertexArrays();
-			
-			return this.vertices;
-		}
-		
-		this.updateVertexArrays = function(){
-			this.xArray = Array.from( this.vertices, a => a.x );
-			this.yArray = Array.from( this.vertices, a => a.y );
-			this.zArray = Array.from( this.vertices, a => a.z );
-		
-			this.minX = this.xArray.reduce(function(a, b) {return Math.min(a, b);});
-			this.maxX = this.xArray.reduce(function(a, b) {return Math.max(a, b);});
-			this.minY = this.yArray.reduce(function(a, b) {return Math.min(a, b);});
-			this.maxY = this.yArray.reduce(function(a, b) {return Math.max(a, b);});
-			this.minZ = this.zArray.reduce(function(a, b) {return Math.min(a, b);});
-			this.maxZ = this.zArray.reduce(function(a, b) {return Math.max(a, b);});
-		}
-		
-		this.updateVertexArrays();
-		
-		/* this.width = this.depth = Math.sqrt(this.zArray.length);
-		
-		this.gridDistance = Math.abs( this.vertices[0].y - this.vertices[1].y ); */
-	}
 }
 
 //
