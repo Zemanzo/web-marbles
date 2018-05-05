@@ -150,7 +150,7 @@ app.get("/client", function (req, res) {
 		if (req.query.marble){ // Add new marble
 			
 			// Create physics body
-			var size = (Math.random() > .9 ? .5 : false) || req.query.size || 0.2
+			var size = (Math.random() > .95 ? (.3 + Math.random() * .5) : false) || req.query.size || 0.2;
 			var sphereShape =  new Ammo.btSphereShape(size);
 			sphereShape.setMargin( 0.05 );
 			var mass = (req.query.size || 0.5) * 5;
@@ -170,6 +170,7 @@ app.get("/client", function (req, res) {
 			}
 			body.tags.color = "#"+req.query.color || "#00ff00";
 			body.tags.size = size;
+			body.tags.useFancy = (Math.random() > .98);
 			body.tags.name = req.query.name || "Nightbot";
 			
 			// Add to physics world

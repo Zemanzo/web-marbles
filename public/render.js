@@ -96,6 +96,13 @@ updateSun();
 
 //
 
+var uniforms = {
+	time: { value: 1.0 }
+};
+var clock = new THREE.Clock();
+
+//
+
 /* var blueLight = new THREE.PointLight(0x0099ff);
 scene.add( blueLight );
 blueLight.position.x = 5;
@@ -142,17 +149,16 @@ function animate() {
 		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better base it on real time.
 	}
 	
-	/* // If there's marbleMeshes missing, add new ones.
-	if (marbleMeshes.length*3 < net.marblePositions.length){
-		for (i = 0; i < (net.marblePositions.length/3 - marbleMeshes.length); i++){
-			
-		}
-	} */
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
 	
+	// Update stats in top left corner
 	stats.update();
+
+	var delta = clock.getDelta();
+
+	uniforms.time.value += delta * 5;
 	
 	renderer.render( scene, camera );
 }
@@ -207,13 +213,22 @@ function spawnMarble(tags){
 	let size = tags.size;
 	let color = tags.color;
 	let name = tags.name;
+	let useFancy = tags.useFancy;
+
+	let fancyMaterial = new THREE.ShaderMaterial( {
+
+		uniforms: uniforms,
+		vertexShader: document.getElementById( 'vertexShader' ).textContent,
+		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+
+	} );
 	
 	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	/* console.log(materialColor); */
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
-	let sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+	let sphereMesh = new THREE.Mesh(sphereGeometry, (useFancy ? fancyMaterial : sphereMaterial));
 	let nameSprite = makeTextSprite(name);
 	marbleMeshes.push(sphereMesh);
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
