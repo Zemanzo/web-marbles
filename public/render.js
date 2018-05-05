@@ -1,9 +1,22 @@
+var settings = {
+	graphics: {
+		castShadow: {
+			marbles: true
+		},
+		receiveShadow: {
+			marbles: false
+		}
+	}
+}
+
 var map;
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
 
 var renderer = new THREE.WebGLRenderer();
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 renderer.setSize( window.innerWidth, window.innerHeight );
 document.body.appendChild( renderer.domElement );
 
@@ -25,8 +38,9 @@ scene.add( axesHelper );
 //
 
 light = new THREE.DirectionalLight( 0xffffff, 0.8 );
+light.castShadow = true;
 scene.add( light );
-				
+
 // Water
 var waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
 
@@ -86,6 +100,16 @@ function updateSun() {
 	light.position.z = parameters.distance * Math.sin( phi ) * Math.cos( theta );
 
 	sky.material.uniforms.sunPosition.value = light.position.copy( light.position );
+/* 	light.shadow.camera.position.copy(light.position);
+	light.shadow.camera.rotation.copy(light.rotation); */
+	light.shadow.mapSize.width = 2048;  // default
+	light.shadow.mapSize.height = 2048; // default
+	light.shadow.camera.near = 3500;
+	light.shadow.camera.far = 4200;
+	light.shadow.camera.left = -60;
+	light.shadow.camera.right = 60;
+	light.shadow.camera.top = 50;
+	light.shadow.camera.bottom = -30;
 	water.material.uniforms.sunDirection.value.copy( light.position ).normalize();
 
 	cubeCamera.update( renderer, scene );
@@ -95,6 +119,9 @@ function updateSun() {
 updateSun();
 
 //
+
+var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
+scene.add( shadowHelper );
 
 var uniforms = {
 	time: { value: 1.0 }
@@ -171,13 +198,6 @@ function renderInit(){
 		spawnMarble(marbleData[i].tags);
 	}
 	
-	/* var cubeGeometry = new THREE.BoxGeometry(.3, .3, .3);
-	var red = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-	cube = new THREE.Mesh(cubeGeometry, red);	
-	scene.add( cube ); */
-	
-	// var controls = new THREE.OrbitControls(camera, renderer.domElement);
-	
 	getXMLDoc("/client?dlmap=map2",(response)=>{
 		
 		var mapName = response.substr(0,response.lastIndexOf("."));
@@ -194,13 +214,14 @@ function renderInit(){
 				if ( child.name.indexOf("Terrain") !== -1) {
 					mapMesh = child;
 					
-					scene.add( child );
+					scene.add( mapMesh );
 					
-					child.setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
+					mapMesh.setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
 					
-					child.geometry.computeBoundingBox();
-					child.geometry.center();
-					child.material = createMapMaterial();
+					mapMesh.geometry.computeBoundingBox();
+					mapMesh.geometry.center();
+					mapMesh.material = createMapMaterial();
+					mapMesh.receiveShadow = true;
 				}
 			} );
 		}, ()=>{}, ()=>{} );
@@ -226,14 +247,23 @@ function spawnMarble(tags){
 	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
-	/* console.log(materialColor); */
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
 	let sphereMesh = new THREE.Mesh(sphereGeometry, (useFancy ? fancyMaterial : sphereMaterial));
+	
+	// Shadows
+	sphereMesh.castShadow = settings.graphics.castShadow.marbles;
+	sphereMesh.receiveShadow = settings.graphics.receiveShadow.marbles;
+	
+	// Add name sprite
 	let nameSprite = makeTextSprite(name);
+	
+	// Add to collection
 	marbleMeshes.push(sphereMesh);
+	
+	// Add objects to the scene
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
 	scene.add(nameSprite);
-	nameSprite.parent = marbleMeshes[marbleMeshes.length-1];
+	marbleMeshes[marbleMeshes.length-1].add(nameSprite);
 }
 
 var textures = {

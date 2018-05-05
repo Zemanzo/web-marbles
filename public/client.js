@@ -28,8 +28,9 @@ socket.on("initial data", function(obj){
 	socket.on("clear", function(obj){
 		console.log("Clearning mah marbles?",obj)
 		for (let mesh of marbleMeshes){
-			for (var i = mesh.children.length - 1; i >= 0; i--) {
-				mesh.remove(mesh.children[i]);
+			console.log(mesh.children);
+			for (i = mesh.children.length; i >= 0; i--) {
+				scene.remove(mesh.children[i]);
 			}
 			scene.remove(mesh);
 		}
