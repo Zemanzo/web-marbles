@@ -21,14 +21,14 @@ socket.on("initial data", function(obj){
 	marbleData = obj;
 	
 	socket.on("new marble", function(obj){
-		/* console.log(obj); */
+		console.log(obj);
 		spawnMarble(obj);
+		
 	});
 	
 	socket.on("clear", function(obj){
 		console.log("Clearning mah marbles?",obj)
 		for (let mesh of marbleMeshes){
-			console.log(mesh.children);
 			for (i = mesh.children.length; i >= 0; i--) {
 				scene.remove(mesh.children[i]);
 			}

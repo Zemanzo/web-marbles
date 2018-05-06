@@ -31,5 +31,82 @@ canvas {
 
 #overlayControls > * {
 	pointer-events:initial;
-	min-width:100px;
 }
+
+#menu {
+	margin:8px;
+	padding-bottom:8px;
+	background-color:rgba(255,255,255,.8);
+	opacity:.3;
+	transition:opacity .25s;
+	max-width:28vw;
+	min-width:460px;
+}
+
+#menu:hover {
+	opacity:1;
+}
+
+	h1 {
+		background-color:#BA0069;
+		color:#fff;
+		text-align:center;
+		padding:8px 0px;
+	}
+
+	#menuButtons {
+		margin:8px;
+	}
+	
+	.separator {
+		display:flex;
+		align-items:center;
+		margin:12px 8px 0px 8px;
+	}
+	
+	.separator hr {
+		border:none;
+		border-top:2px solid #000;
+		margin:0px 8px;
+		flex:1;
+	}
+	
+	p {
+		margin:0px 8px 4px 8px;
+	}
+	
+	#marbleList {
+		max-height:450px;
+		overflow:auto;
+	}
+	
+	#marbleListTemplate {
+		display:none;
+	}
+	
+	.marbleListEntry {
+		margin:0px 8px;
+		display:flex;
+	}
+	
+		.marbleListEntry .rank {
+			min-width:2.5em;
+			margin-right:8px;
+			text-align:right;
+		}
+	
+		.marbleListEntry .color {
+			min-width:1em;
+			display:inline-block;
+			margin-right:4px;
+		}
+		
+		.marbleListEntry .id {
+			min-width:2.5em;
+			margin-left:8px;
+			text-align:right;
+		}
+		
+		.marbleListEntry .name {
+			flex:1;
+		}

@@ -4,8 +4,8 @@
 		<!-- Meta -->
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-		<title>WebMarble Client</title>
-		<link href="favicon.ico?" rel="shortcut icon" type="image/x-icon">
+		<title>Client - Manzo's Marbles</title>
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 		
 		<!-- Stylesheets -->
 		<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
@@ -156,11 +156,31 @@
 		
 		<script src="render.js"></script>
 		<div id="overlayControls">
-			<input type="color" id="color" value="#ffffff"/>
-			<input type="text" maxlength="30" placeholder="Name your marble..." id="name"/>
-			<button id="marble">!marble</button>
-			<button id="clear">!clear</button>
-			<button id="start">Start race</button>
+			<div id="menu">
+				<h1>Manzo's Marbles</h1>
+				<div class="separator"><h2>Introduction</h2></div>
+				<div id="intro">
+					<p>Hey! Welcome to Manzo's Marbles. This is a game where you roll a marble down a hill together with some other people. It's pretty chill. Come join!<p>
+					<p>Based on and created as a tribute to the original <a href="https://www.twitch.tv/marbleracing">Marble Racing</a>.</p>
+				</div>
+				<div class="separator"><h2>Controls</h2></div>
+				<div id="menuButtons">
+					<input type="color" id="color" value="#000000"/>
+					<input type="text" maxlength="30" placeholder="Name your marble..." id="name"/>
+					<button id="marble">!marble</button>
+					<button id="clear">!clear</button>
+					<button id="start">Start race</button>
+				</div>
+				<div class="separator"><h2>Marbles</h2></div>
+				<div id="marbleList">
+					<div class="marbleListEntry" id="marbleListTemplate">
+						<span class="rank">#</span>
+						<span class="color">&nbsp;</span>
+						<span class="name">Zemanzo</span>
+						<span class="id">...</span>
+					</div>
+				</div>
+			</div>
 		</div>
 	</body>
 </html>

@@ -1,0 +1,25 @@
+* {
+	margin:0;
+}
+
+body {
+	font-family:monospace;
+	width:100vw;
+	height:100vh;
+	overflow:hidden;
+	background:#BA0069;
+	color:#fff;
+	display:flex;
+	justify-content:center;
+	align-items:center;
+	font-size:3em;
+	text-shadow:1px 1px #000;
+}
+
+a, a:visited {
+	color:#ff61ba;
+	margin-left:.5em;
+}
+a:hover {
+	color:#23f9b0;
+}

@@ -29,7 +29,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.25;
 controls.enableZoom = true;
 
-var ambientLight = new THREE.AmbientLight( 0xb49090 );
+var ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
 
 var axesHelper = new THREE.AxesHelper( 3 );
@@ -37,7 +37,7 @@ scene.add( axesHelper );
 
 //
 
-light = new THREE.DirectionalLight( 0xffffff, 0.8 );
+light = new THREE.DirectionalLight( 0xf5d0d0, 1.5 );
 light.castShadow = true;
 scene.add( light );
 
@@ -120,8 +120,10 @@ updateSun();
 
 //
 
-var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
-scene.add( shadowHelper );
+/* var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
+scene.add( shadowHelper ); */
+
+//
 
 var uniforms = {
 	time: { value: 1.0 }
@@ -264,6 +266,15 @@ function spawnMarble(tags){
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
 	scene.add(nameSprite);
 	marbleMeshes[marbleMeshes.length-1].add(nameSprite);
+		
+	// Add UI stuff
+	var listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
+	listEntry.removeAttribute("id");
+	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
+	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
+	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length-1;
+	
+	document.getElementById("marbleList").appendChild(listEntry);
 }
 
 var textures = {
