@@ -166,12 +166,12 @@ function animate() {
 		
 		
 		marbleMeshes[i].quaternion.set(
-			net.marbleRotations[i*3+0],
-			net.marbleRotations[i*3+1],
-			net.marbleRotations[i*3+2],
-			net.marbleRotations[i*3+3]
+			net.marbleRotations[i*4+0],
+			net.marbleRotations[i*4+1],
+			net.marbleRotations[i*4+2],
+			net.marbleRotations[i*4+3]
 		);
-		marbleMeshes[i].quaternion.normalize();
+		/* marbleMeshes[i].quaternion.normalize(); */
 	}
 	
 	if (net.lastUpdate < 1.5){

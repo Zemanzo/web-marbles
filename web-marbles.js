@@ -232,7 +232,7 @@ var server = http.listen(config.express.port, function () {
 });
 
 /* Sockets */
-let pos;
+let pos, rot;
 io.on("connection", function(socket){
 	console.log("A user connected!".green);
 	
