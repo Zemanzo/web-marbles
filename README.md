@@ -1,4 +1,7 @@
 # web-marbles
+
+![Cinematic shot of the environment so far](https://i.imgur.com/bUGES4s.jpg)
+
 Aims to recreate Marble Racing from the ground up, as a fully web based game. The goal is to make it cost-effective, being able to run it on a relatively low-cost server leaving all rendering to the client. Inspired by the original Marble Racing Twitch game:  
 - Twitch: http://twitch.tv/marbleracing  
 - Discord: https://discord.gg/MarbleRacing  
