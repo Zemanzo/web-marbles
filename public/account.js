@@ -3,25 +3,8 @@ let parsedHash = parseHash(twitchHash);
 let id_token = localStorage.id_token = parsedHash.id_token;
 let access_token = localStorage.access_token = parsedHash.access_token;
 let scope = localStorage.scope = parsedHash.scope;
-
-getXMLDoc("https://id.twitch.tv/oauth2/keys",(response)=>{
-	let isValid = KJUR.jws.JWS.verifyJWT(
-		id_token,
-		KEYUTIL.getKey(response.keys[0]),
-		{alg: ['RS256']}
-	);
 	
-	/* Log validity */
-	console.log(isValid);
-	
-	let result;
-	if (isValid){
-		let jws = new KJUR.jws.JWS();
-		jws.parseJWS(id_token);
-		localStorage.parsedJWT = jws.parsedJWS.payloadS;
-		result = JSON.parse(jws.parsedJWS.payloadS);
-	}
-	
+verifyAndParseJWT(id_token,true,(isValid,result)=>{
 	function feedbackValidation(validity){
 		if (validity){
 			document.getElementById("load").style.display = "none";
@@ -49,20 +32,6 @@ getXMLDoc("https://id.twitch.tv/oauth2/keys",(response)=>{
 		},false);
 	}
 });
-
-function getXMLDoc(doc,callback){
-	var xmlhttp;
-	xmlhttp=new XMLHttpRequest();
-	xmlhttp.onreadystatechange=function() {
-		if (xmlhttp.readyState==4 && xmlhttp.status==200) {
-			callback(xmlhttp.response);
-  		}
-	}
-	xmlhttp.open("GET",doc,true);
-	xmlhttp.responseType = "json";
-	xmlhttp.setRequestHeader("Accept", "application/json");
-	xmlhttp.send();
-}
 
 function parseHash(hash){
 	var arr = hash.split("&");

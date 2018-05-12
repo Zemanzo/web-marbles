@@ -31,3 +31,13 @@ a, a:visited {
 a:hover {
 	color:#23f9b0;
 }
+
+p {
+	font-size:.5em;
+	max-width:70ch;
+	margin:0px 16px 16px 16px;
+}
+
+p:last-of-type {
+	margin-bottom:64px;
+}

@@ -64,29 +64,41 @@ canvas {
 }
 
 #menu {
+	position:absolute;
+	bottom:0px;
+	left:0px;
+	display:grid;
+	grid-template-columns:auto 200px;
+	grid-template-rows:2em auto;
 	margin:8px;
 	padding-bottom:8px;
 	background-color:rgba(255,255,255,.8);
 	opacity:.3;
 	transition:opacity .25s;
-	max-width:28vw;
-	min-width:460px;
+	max-width:60vw;
+	min-width:400px;
+	max-height:380px;
 }
 
 #menu:hover {
 	opacity:1;
 }
-
-	h1 {
-		background-color:#BA0069;
-		color:#fff;
-		text-align:center;
-		padding:8px 0px;
+	
+	#hide {
+		position:absolute;
+		top:-2em;
+		min-height:2em;
+		min-width:2em;
+		background:rgba(255,255,255,.8);
+		display:flex;
+		justify-content:center;
+		align-items:center;
 	}
 
 	#menuButtons {
 		margin:8px;
 		display:none;
+		align-self:end;
 	}
 	
 	.separator {

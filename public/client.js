@@ -59,7 +59,7 @@ socket.on("initial data", function(obj){
 		net.marbleRotations = new Float64Array(data.rot);
 		net.lastUpdate = 0;
 		net.ready--;
-		if (!renderInitFired && (document.readyState === "interactive" || document.readyState === "complete")){
+		if (!renderInitFired && docReady){
 			renderInitFired = true;
 			renderInit();
 		} else {
@@ -68,13 +68,30 @@ socket.on("initial data", function(obj){
 	});
 });
 
-let parsedJWT;
+let jwtValid = null;
+let jwtDOMChanged = false;
+if (localStorage.id_token){
+	verifyAndParseJWT(localStorage.id_token,false,(valid)=>{
+		jwtValid = valid;
+		if (docReady()){
+			jwtDOMChanged = true;
+			if (valid){
+				document.getElementById("menuButtons").style.display = "block";
+			} else {
+				document.getElementById("twitchConnect").style.display = "flex";
+			}
+		}
+	});
+}
+
 window.addEventListener("DOMContentLoaded", function(){
 	
-	if (localStorage.id_token){
-		document.getElementById("menuButtons").style.display = "block";
-	} else {
-		document.getElementById("twitchConnect").style.display = "flex";
+	if ((jwtValid !== null && !jwtDOMChanged) || !localStorage.id_token){
+		if (jwtValid){
+			document.getElementById("menuButtons").style.display = "block";
+		} else {
+			document.getElementById("twitchConnect").style.display = "flex";
+		}
 	}
 	
 	if (localStorage.parsedJWT){
@@ -85,7 +102,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("marble").addEventListener("click", function(){
 		if (localStorage.id_token){
 			let str = "/client?marble=true";
-			str += "&id_token="+localStorage.id_token;
+			str += "&jwt="+localStorage.id_token;
 			str += "&color="+document.getElementById("color").value.substr(1);
 			str += "&name="+parsedJWT.preferred_username;
 			/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
@@ -126,3 +143,6 @@ function getXMLDoc(doc,callback){
 	xmlhttp.send();
 }
 
+function docReady(){
+	return (document.readyState === "interactive" || document.readyState === "complete");
+}

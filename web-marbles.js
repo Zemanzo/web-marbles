@@ -144,42 +144,53 @@ app.get("/", function (req, res) {
 	res.render("index");
 });
 
+var enteredJWTs = [];
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		
 		if (req.query.marble){ // Add new marble
-			
-			// Create physics body
-			var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || req.query.size || 0.2;
-			var sphereShape =  new Ammo.btSphereShape(size);
-			sphereShape.setMargin( 0.05 );
-			var mass = (req.query.size || 0.5) * 5;
-			var localInertia = new Ammo.btVector3( 0, 0, 0 );
-			sphereShape.calculateLocalInertia( mass, localInertia );
-			var transform = new Ammo.btTransform();
-			transform.setIdentity();
-			transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
-			var motionState = new Ammo.btDefaultMotionState( transform );
-			var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-			var ammoBody = new Ammo.btRigidBody( bodyInfo );
-			
-			// Add metadata
-			var body = {
-				ammoBody: ammoBody,
-				tags: {}
-			}
-			body.tags.color = "#"+req.query.color || "#00ff00";
-			body.tags.size = size;
-			body.tags.useFancy = (Math.random() > .98);
-			body.tags.name = req.query.name || "Nightbot";
-			
-			// Add to physics world
-			marbles.push(body);
-			physicsWorld.addRigidBody( body.ammoBody );
-			
-			// Send client info on new marble
-			io.sockets.emit("new marble", body.tags);
-			res.send("ok");
+			jwt.verify(req.query.jwt, config.twitch.pem, (error, decoded) => {
+				if (error){
+					res.send("JWT invalid");
+				} else if (!enteredJWTs.includes(req.query.jwt)){
+					// Add jwt to list of people that entered
+					enteredJWTs.push(req.query.jwt);
+					
+					// Create physics body
+					var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || req.query.size || 0.2;
+					var sphereShape =  new Ammo.btSphereShape(size);
+					sphereShape.setMargin( 0.05 );
+					var mass = (req.query.size || 0.5) * 5;
+					var localInertia = new Ammo.btVector3( 0, 0, 0 );
+					sphereShape.calculateLocalInertia( mass, localInertia );
+					var transform = new Ammo.btTransform();
+					transform.setIdentity();
+					transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
+					var motionState = new Ammo.btDefaultMotionState( transform );
+					var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+					var ammoBody = new Ammo.btRigidBody( bodyInfo );
+					
+					// Add metadata
+					var body = {
+						ammoBody: ammoBody,
+						tags: {}
+					}
+					body.tags.color = "#"+req.query.color || "#00ff00";
+					body.tags.size = size;
+					body.tags.useFancy = (Math.random() > .98);
+					body.tags.name = req.query.name || "Nightbot";
+					
+					// Add to physics world
+					marbles.push(body);
+					physicsWorld.addRigidBody( body.ammoBody );
+					
+					// Send client info on new marble
+					io.sockets.emit("new marble", body.tags);
+					res.send("ok");
+				} else {
+					res.send("Already entered");
+				}
+			});
 			
 		} else if (req.query.clear){ // Clear all marbles
 		
@@ -192,6 +203,9 @@ app.get("/client", function (req, res) {
 			for (i = marbles.length - 1; i >= 0; --i){
 				physicsWorld.removeRigidBody(marbles[i].ammoBody);
 			}
+			
+			// Clear the jwt array
+			enteredJWTs = [];
 			
 			// Clear the marble array
 			marbles = [];
@@ -209,7 +223,7 @@ app.get("/client", function (req, res) {
 			res.send(config.marbles.mapRotation[0].name);
 			
 		} else {
-			res.send("???");
+			res.send("You probably can't do that. Nice try tho gg.");
 		}
 	} else {
 		res.render("client",{
@@ -233,6 +247,10 @@ request.get({url:"https://id.twitch.tv/oauth2/keys", json:true}, function (error
 		config.twitch.pem = jwkToPem(config.twitch.jwk);
 	}
 })
+
+function verifyAndParseJWT(jwt,callback){
+	jwt.verify(jwt, config.twitch.pem, callback(error, decoded));
+}
 
 // Redirect URI, users land here after Twitch authorization
 app.get("/"+config.twitch.redirectUri, function (req, res) {

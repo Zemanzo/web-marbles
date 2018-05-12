@@ -13,8 +13,10 @@
 		
 		<!-- Scripts -->
 		<script src="socket.io.js"></script>
-		<script src="client.js"></script>
 		<script src="lib/OBJFile.js"></script>
+		<script src="lib/jsrsasign-all-min.js"></script>
+		<script src="jwt.js"></script>
+		<script src="client.js"></script>
 	</head>
 	<body>
 		<!-- THREEJS -->
@@ -162,20 +164,17 @@
 				</div>
 			</a>
 			<div id="menu">
-				<h1>Manzo's Marbles</h1>
-				<div class="separator"><h2>Introduction</h2></div>
-				<div id="intro">
-					<p>Hey! Welcome to Manzo's Marbles. This is a game where you roll a marble down a hill together with some other people. It's pretty chill. Come join!<p>
-					<p>Based on and created as a tribute to the original <a href="https://www.twitch.tv/marbleracing">Marble Racing</a>.</p>
-				</div>
-				<div class="separator"><h2>Controls</h2></div>
+				<div id="hide">V</div>
+				
+				<div class="separator"><h2>Chat</h2></div>
+				<div class="separator"><h2>Marbles</h2></div>
+				
 				<div id="menuButtons">
 					<input type="color" id="color" value="#000000"/>
 					<button id="marble">!marble</button>
 					<button id="clear">!clear</button>
 					<button id="start">Start race</button>
 				</div>
-				<div class="separator"><h2>Marbles</h2></div>
 				<div id="marbleList">
 					<div class="marbleListEntry" id="marbleListTemplate">
 						<span class="rank">#</span>
@@ -184,6 +183,7 @@
 						<span class="id">...</span>
 					</div>
 				</div>
+				
 			</div>
 		</div>
 	</body>

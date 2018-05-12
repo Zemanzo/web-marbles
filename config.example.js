@@ -13,7 +13,7 @@ config.marbles.mapRotation = [
 	}
 ];
 // Bots
-config.marbles.bots = {}
+config.marbles.bots = {};
 config.marbles.bots.names = [
 	{
 		name: "LAIKA bot",
