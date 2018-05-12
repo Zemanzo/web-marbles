@@ -2,22 +2,30 @@
 	margin:0;
 }
 
+html {
+	--border-margin:40px;
+	background:#111;
+}
+
 body {
 	font-family:monospace;
-	width:100vw;
-	height:100vh;
+	width:calc(100vw - var(--border-margin));
+	height:calc(100vh - var(--border-margin));
+	margin:calc(var(--border-margin) * 0.5);
 	overflow:hidden;
-	background:#BA0069;
+	border:12px solid #BA0069;
+	box-sizing:border-box;
 	color:#fff;
 	display:flex;
 	justify-content:center;
 	align-items:center;
+	flex-direction:column;
 	font-size:3em;
 	text-shadow:1px 1px #000;
 }
 
 a, a:visited {
-	color:#ff61ba;
+	color:#BA0069;
 	margin-left:.5em;
 }
 a:hover {

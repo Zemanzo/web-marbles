@@ -150,7 +150,7 @@ app.get("/client", function (req, res) {
 		if (req.query.marble){ // Add new marble
 			
 			// Create physics body
-			var size = (Math.random() > .95 ? (.3 + Math.random() * .5) : false) || req.query.size || 0.2;
+			var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || req.query.size || 0.2;
 			var sphereShape =  new Ammo.btSphereShape(size);
 			sphereShape.setMargin( 0.05 );
 			var mass = (req.query.size || 0.5) * 5;
@@ -208,16 +208,64 @@ app.get("/client", function (req, res) {
 		} else if (req.query.dlmap){ // Send map id
 			res.send(config.marbles.mapRotation[0].name);
 			
-		}  else if (req.query.interpreted){ // Send interpreted map
-			res.send(JSON.stringify(mapObj.vertices));
-			
 		} else {
 			res.send("???");
 		}
 	} else {
-		res.render("client");
+		res.render("client",{
+			clientId: config.twitch.clientId,
+			redirectUri: config.twitch.root + config.twitch.redirectUri
+		});
 	}
 });
+
+//
+
+/* Twitch */
+var request = require('request');
+var jwt = require('jsonwebtoken');
+var jwkToPem = require('jwk-to-pem');
+
+// Get the public JSON Web Key from twitch to use for JWT reponse verification
+request.get({url:"https://id.twitch.tv/oauth2/keys", json:true}, function (error, response, body) {
+	if (!error && response.statusCode === 200) {
+		config.twitch.jwk = body.keys[0];
+		config.twitch.pem = jwkToPem(config.twitch.jwk);
+	}
+})
+
+// Redirect URI, users land here after Twitch authorization
+app.get("/"+config.twitch.redirectUri, function (req, res) {
+	/* request.post(
+		'https://id.twitch.tv/oauth2/token',
+		{ 
+			json: {
+				client_id: config.twitch.clientId,
+				client_secret: config.twitch.clientSecret,
+				code: req.query.code,
+				grant_type: "authorization_code",
+				redirect_uri: config.twitch.root + config.twitch.redirectUri
+			}
+		},
+		function (error, response, body) {
+			if (!error && response.statusCode === 200) {
+				jwt.verify(body.id_token, config.twitch.pem, function (error, decoded) {
+					console.log(decoded);
+					res.render("account",{
+						name: decoded.preferred_username,
+						jwt: JSON.stringify(body)
+					});
+				});
+			} else if (response.statusCode === 200 || response.statusCode === 400){
+				console.log(error, body, response)
+				res.send("rip");
+			}
+		}
+	); */
+	res.render("account");
+});
+
+//
 
 app.get("/debug", function (req, res) {
 	res.render("ammo",{
@@ -277,7 +325,7 @@ io.on("connection", function(socket){
 	});
 });
 
-io.on("disconnect", function(socket){
+io.on("disconnected", function(socket){
 	console.log("A user disconnected...".red);
 });
 

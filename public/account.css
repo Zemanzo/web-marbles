@@ -1,0 +1,29 @@
+@keyframes spin {
+	0% {transform:rotate(0deg);}
+	100% {transform:rotate(360deg);}
+}
+
+body {
+	justify-content:flex-start;
+}
+
+#load {
+	animation:spin 10s linear infinite;
+	margin:32px 0px;
+}
+
+#verificationContainer {
+	margin:32px 0px;
+}
+
+	.dancer { 
+		color:#444;
+	}
+
+	#verify {
+		color:#eee;
+	}
+	
+#result { 
+	display:none;
+}

@@ -68,16 +68,32 @@ socket.on("initial data", function(obj){
 	});
 });
 
+let parsedJWT;
 window.addEventListener("DOMContentLoaded", function(){
+	
+	if (localStorage.id_token){
+		document.getElementById("menuButtons").style.display = "block";
+	} else {
+		document.getElementById("twitchConnect").style.display = "flex";
+	}
+	
+	if (localStorage.parsedJWT){
+		parsedJWT = JSON.parse(localStorage.parsedJWT);
+	}
 	
 	// !marble
 	document.getElementById("marble").addEventListener("click", function(){
-		let str = "/client?marble=true";
-		str += "&color="+document.getElementById("color").value.substr(1);
-		str += "&name="+document.getElementById("name").value;
-		/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
-		str += "&size=.2";
-		getXMLDoc(str);
+		if (localStorage.id_token){
+			let str = "/client?marble=true";
+			str += "&id_token="+localStorage.id_token;
+			str += "&color="+document.getElementById("color").value.substr(1);
+			str += "&name="+parsedJWT.preferred_username;
+			/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
+			str += "&size=.2";
+			getXMLDoc(str);
+		} else {
+			console.log("No id_token found, login with Twitch first!");
+		}
 	},false);
 	
 	// !clear

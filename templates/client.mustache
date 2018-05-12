@@ -156,6 +156,11 @@
 		
 		<script src="render.js"></script>
 		<div id="overlayControls">
+			<a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
+				<div id="twitchConnect">
+					<img src="images/Glitch_White_RGB.svg" alt="Glitch Logo"> Login with Twitch!
+				</div>
+			</a>
 			<div id="menu">
 				<h1>Manzo's Marbles</h1>
 				<div class="separator"><h2>Introduction</h2></div>
@@ -166,7 +171,6 @@
 				<div class="separator"><h2>Controls</h2></div>
 				<div id="menuButtons">
 					<input type="color" id="color" value="#000000"/>
-					<input type="text" maxlength="30" placeholder="Name your marble..." id="name"/>
 					<button id="marble">!marble</button>
 					<button id="clear">!clear</button>
 					<button id="start">Start race</button>

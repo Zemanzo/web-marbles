@@ -8,6 +8,8 @@ body {
 	width:100vw;
 	height:100vh;
 	overflow:hidden;
+	--twitch-purple:#6441A4;
+	--twitch-purple-hover:rgb(125, 91, 190);
 }
 
 canvas {
@@ -33,6 +35,34 @@ canvas {
 	pointer-events:initial;
 }
 
+#twitchLink {
+	text-decoration:none;
+}
+
+
+#twitchConnect {
+	font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+	background-color:var(--twitch-purple);
+	padding:8px;
+	display:none;
+	justify-content:center;
+	align-items:center;
+	color:#fff;
+	font-size:.8em;
+	font-weight:600;
+	margin:8px;
+	width:25ch;
+	cursor:pointer;
+}
+	#twitchConnect:hover {
+		background-color:var(--twitch-purple-hover);
+	}
+
+	#twitchConnect img {
+		max-height:1.8em;
+		margin-right:12px;
+}
+
 #menu {
 	margin:8px;
 	padding-bottom:8px;
@@ -56,6 +86,7 @@ canvas {
 
 	#menuButtons {
 		margin:8px;
+		display:none;
 	}
 	
 	.separator {
