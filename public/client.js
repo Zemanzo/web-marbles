@@ -33,6 +33,7 @@ socket.on("initial data", function(obj){
 				scene.remove(mesh.children[i]);
 			}
 			scene.remove(mesh);
+			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
 		}
 		marbleMeshes = [];
 	});
@@ -44,6 +45,7 @@ socket.on("initial data", function(obj){
 			socket.emit("request physics", Date.now(), (data) => {
 				net.marblePositions = new Float32Array(data.pos);
 				net.marbleRotations = new Float64Array(data.rot);
+				console.log(data.startGate);
 				net.lastUpdate = 0;
 				net.ready--;
 			});
@@ -107,10 +109,16 @@ window.addEventListener("DOMContentLoaded", function(){
 			str += "&name="+parsedJWT.preferred_username;
 			/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
 			str += "&size=.2";
-			getXMLDoc(str);
+			getXMLDoc(str,(r)=>{console.log(r)});
 		} else {
 			console.log("No id_token found, login with Twitch first!");
 		}
+	},false);
+	
+	// !bot
+	document.getElementById("bot").addEventListener("click", function(){
+		let str = "/client?bot=true";
+		getXMLDoc(str);
 	},false);
 	
 	// !clear

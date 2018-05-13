@@ -272,7 +272,7 @@ function spawnMarble(tags){
 	listEntry.removeAttribute("id");
 	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
 	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
-	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length-1;
+	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length;
 	
 	document.getElementById("marbleList").appendChild(listEntry);
 }

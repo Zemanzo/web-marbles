@@ -17,6 +17,7 @@ var collisionConfiguration,
 	terrainBody;
 var dynamicObjects = [];
 var transformAux1 = new Ammo.btTransform();
+var transformAux2 = new Ammo.btTransform();
 
 // Physics configuration
 collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
@@ -87,6 +88,14 @@ var OBJHeightfield = require('./src/model-import/obj-heightfield');
 var mapObj = new OBJHeightfield(config.marbles.mapRotation[0].name); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
+
+
+// Collision flags
+  // BODYFLAG_STATIC_OBJECT: 1,
+  // BODYFLAG_KINEMATIC_OBJECT: 2,
+  // BODYFLAG_NORESPONSE_OBJECT: 4,
+
+
 /* Create the terrain body */
 groundShape = createTerrainShape( mapObj );
 var groundTransform = new Ammo.btTransform();
@@ -97,6 +106,7 @@ var groundMass = 0;
 var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
 var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
 var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+groundBody.setCollisionFlags(1); // Set static
 physicsWorld.addRigidBody( groundBody );
 
 /* Add start gate */
@@ -115,6 +125,8 @@ gateShape.calculateLocalInertia(gateMass, gatelocalInertia);
 var gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
 var gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
 var gateBody = new Ammo.btRigidBody(gateRbInfo);
+gateBody.setCollisionFlags(2); // Set kinematic
+console.log(gateBody.getCollisionFlags());
 
 physicsWorld.addRigidBody(gateBody);
 
@@ -153,44 +165,26 @@ app.get("/client", function (req, res) {
 				if (error){
 					res.send("JWT invalid");
 				} else if (!enteredJWTs.includes(req.query.jwt)){
-					// Add jwt to list of people that entered
-					enteredJWTs.push(req.query.jwt);
-					
-					// Create physics body
-					var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || req.query.size || 0.2;
-					var sphereShape =  new Ammo.btSphereShape(size);
-					sphereShape.setMargin( 0.05 );
-					var mass = (req.query.size || 0.5) * 5;
-					var localInertia = new Ammo.btVector3( 0, 0, 0 );
-					sphereShape.calculateLocalInertia( mass, localInertia );
-					var transform = new Ammo.btTransform();
-					transform.setIdentity();
-					transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
-					var motionState = new Ammo.btDefaultMotionState( transform );
-					var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-					var ammoBody = new Ammo.btRigidBody( bodyInfo );
-					
-					// Add metadata
-					var body = {
-						ammoBody: ammoBody,
-						tags: {}
-					}
-					body.tags.color = "#"+req.query.color || "#00ff00";
-					body.tags.size = size;
-					body.tags.useFancy = (Math.random() > .98);
-					body.tags.name = req.query.name || "Nightbot";
-					
-					// Add to physics world
-					marbles.push(body);
-					physicsWorld.addRigidBody( body.ammoBody );
-					
-					// Send client info on new marble
-					io.sockets.emit("new marble", body.tags);
+					spawnMarble(
+						req.query.jwt,
+						req.query.size,
+						req.query.color,
+						req.query.name
+					);
 					res.send("ok");
 				} else {
 					res.send("Already entered");
 				}
 			});
+			
+		} else if (req.query.bot){ // Add new marble
+			spawnMarble(
+				false,
+				.2,
+				"000000",
+				"nightbot"
+			);
+			res.send("ok");
 			
 		} else if (req.query.clear){ // Clear all marbles
 		
@@ -218,6 +212,7 @@ app.get("/client", function (req, res) {
 			var origin = gateBody.getWorldTransform().getOrigin();
 			origin.setZ(0);
 			gateBody.activate();
+			res.send("ok");
 			
 		} else if (req.query.dlmap){ // Send map id
 			res.send(config.marbles.mapRotation[0].name);
@@ -232,6 +227,46 @@ app.get("/client", function (req, res) {
 		});
 	}
 });
+
+//
+
+function spawnMarble(jwt,radius,color,name){
+	if (jwt){
+		// Add jwt to list of people that entered
+		enteredJWTs.push(jwt);
+	}
+	
+	// Create physics body
+	var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || radius || 0.2;
+	var sphereShape =  new Ammo.btSphereShape(size);
+	sphereShape.setMargin( 0.05 );
+	var mass = (size || 0.5) * 5;
+	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	sphereShape.calculateLocalInertia( mass, localInertia );
+	var transform = new Ammo.btTransform();
+	transform.setIdentity();
+	transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
+	var motionState = new Ammo.btDefaultMotionState( transform );
+	var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+	var ammoBody = new Ammo.btRigidBody( bodyInfo );
+	
+	// Add metadata
+	var body = {
+		ammoBody: ammoBody,
+		tags: {}
+	}
+	body.tags.color = "#"+color || "#00ff00";
+	body.tags.size = size;
+	body.tags.useFancy = (Math.random() > .99);
+	body.tags.name = name || "Nightbot";
+	
+	// Add to physics world
+	marbles.push(body);
+	physicsWorld.addRigidBody( body.ammoBody );
+	
+	// Send client info on new marble
+	io.sockets.emit("new marble", body.tags);
+}
 
 //
 
@@ -335,8 +370,17 @@ io.on("connection", function(socket){
 					rot[i*4+3] = q.w();
 				}
 			}
-			//console.log(rot[0],rot[1],rot[2],rot[3]);
-			callback({pos:pos.buffer,rot:rot.buffer});
+			
+			var ms = gateBody.getMotionState();
+			var swOrig, swPos;
+			if (ms){
+				ms.getWorldTransform( transformAux2 );
+				swOrig = transformAux2.getOrigin();
+				swPos = [swOrig.x(),swOrig.y(),swOrig.z()];
+				console.log(swOrig,swPos);
+			}
+			
+			callback({pos:pos.buffer,rot:rot.buffer,startGate:swPos});
 		} else {
 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
 		}
