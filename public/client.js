@@ -12,6 +12,12 @@ var net = {
 	ready: 0,
 	requestsSkipped: 0 // Helps detect network issues
 };
+var game = {
+	audio: {
+		start: new Audio("resources/audio/start.mp3"),
+		end: new Audio("resources/audio/end.mp3")
+	}
+}
 var marbleData;
 var renderInitFired = false;
 
@@ -20,14 +26,22 @@ socket.on("initial data", function(obj){
 	
 	marbleData = obj;
 	
+	/* Socket RPCs */
+	
+	// New marble
 	socket.on("new marble", function(obj){
 		console.log(obj);
 		spawnMarble(obj);
-		
 	});
 	
+	// Start game
+	socket.on("start", function(obj){
+		game.audio.start.play();
+	});
+	
+	// End game, and start next round
 	socket.on("clear", function(obj){
-		console.log("Clearning mah marbles?",obj)
+		game.audio.end.play();
 		for (let mesh of marbleMeshes){
 			for (i = mesh.children.length; i >= 0; i--) {
 				scene.remove(mesh.children[i]);
@@ -37,6 +51,8 @@ socket.on("initial data", function(obj){
 		}
 		marbleMeshes = [];
 	});
+	
+	/* Physics syncing */
 
 	// Once connection is acknowledged, start requesting physics updates
 	net.getServerDataInterval = setInterval(function(){
@@ -45,7 +61,7 @@ socket.on("initial data", function(obj){
 			socket.emit("request physics", Date.now(), (data) => {
 				net.marblePositions = new Float32Array(data.pos);
 				net.marbleRotations = new Float64Array(data.rot);
-				console.log(data.startGate);
+				/* console.log(data.startGate); */
 				net.lastUpdate = 0;
 				net.ready--;
 			});
@@ -126,10 +142,10 @@ window.addEventListener("DOMContentLoaded", function(){
 		getXMLDoc("/client?clear=true");
 	},false);
 	
-	// Start race
+	/* // Start race
 	document.getElementById("start").addEventListener("click", function(){
 		getXMLDoc("/client?start=true");
-	},false);
+	},false); */
 },false);
 
 window.addEventListener("load", function(){

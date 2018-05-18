@@ -12,6 +12,7 @@ config.marbles.mapRotation = [
 		}
 	}
 ];
+
 // Bots
 config.marbles.bots = {};
 config.marbles.bots.names = [
@@ -30,6 +31,12 @@ config.marbles.bots.names = [
 		color: "#000000"
 	}
 ];
+
+// Game rules -- Move this to the mapRotation and have it set per map.
+config.marbles.rules = {};
+config.marbles.rules.enterPeriod = 40; // Time in seconds
+config.marbles.rules.maxRoundLength = 240; // Time in seconds
+config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 
 /* Twitch connection */
 config.twitch = {};

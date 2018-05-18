@@ -15,7 +15,6 @@ var collisionConfiguration,
 	solver,
 	physicsWorld,
 	terrainBody;
-var dynamicObjects = [];
 var transformAux1 = new Ammo.btTransform();
 var transformAux2 = new Ammo.btTransform();
 
@@ -130,6 +129,95 @@ console.log(gateBody.getCollisionFlags());
 
 physicsWorld.addRigidBody(gateBody);
 
+/* Game logic */
+var game = {
+	logic: {
+		state: "started" // "enter", "started"
+	},
+	startDelay: 2825, // length in ms of audio
+	enteredJWTs: []
+};
+
+game.marbleRequest = function(userJWT,name,color,res){
+	// Only allow marbles during entering phase
+	if (game.logic.state === "enter"){
+		
+		// Verify JWT
+		jwt.verify(userJWT, config.twitch.pem, (error, decoded) => {
+			if (error){
+				res.send("JWT invalid");
+			} else if (!game.enteredJWTs.includes(userJWT)){
+				if (userJWT){
+					// Add jwt to list of people that entered
+					game.enteredJWTs.push(userJWT);
+				}
+				spawnMarble(name,color);
+				res.send("ok");
+			} else {
+				res.send("already entered");
+			}
+		});
+	}
+}
+
+game.end = function(){
+	if (game.logic.state === "started"){
+		game.logic.state = "enter";
+		console.log("Current state: ".magenta,game.logic.state);
+	
+		// Set starting gate to original position
+		var origin = gateBody.getWorldTransform().getOrigin();
+		console.log(origin.z());
+		origin.setZ(config.marbles.mapRotation[0].startGate.position.y);
+		console.log(origin.z());
+		gateBody.activate();
+		
+		// Remove marble physics bodies
+		for (i = marbles.length - 1; i >= 0; --i){
+			physicsWorld.removeRigidBody(marbles[i].ammoBody);
+		}
+		
+		// Clear the jwt array
+		game.enteredJWTs = [];
+		
+		// Clear the marble array
+		marbles = [];
+		
+		// Send clients game restart so they can clean up on their side
+		io.sockets.emit("clear", true);
+		
+		// Start the game after the entering period is over
+		setTimeout(function(){
+			game.start();
+		},config.marbles.rules.enterPeriod * 1000);
+		
+		return true;
+	} else {
+		return false;
+	}
+}
+
+game.start = function(){
+	if (game.logic.state === "enter"){
+		game.logic.state = "started";
+		console.log("Current state: ".magenta,game.logic.state);
+		io.sockets.emit("start", true);
+		
+		setTimeout(function(){
+			// Lower starting gate
+			var origin = gateBody.getWorldTransform().getOrigin();
+			origin.setZ(0);
+			gateBody.activate();
+			
+			// Add bot marble to ensure physics not freezing
+			spawnMarble("Nightbot","000000");
+		},game.startDelay);
+		
+		return true;
+	} else {
+		return false;
+	}
+}
 /* Express connections */
 var express = require('express');
 var mustacheExpress = require('mustache-express');
@@ -156,68 +244,58 @@ app.get("/", function (req, res) {
 	res.render("index");
 });
 
-var enteredJWTs = [];
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		
-		if (req.query.marble){ // Add new marble
-			jwt.verify(req.query.jwt, config.twitch.pem, (error, decoded) => {
-				if (error){
-					res.send("JWT invalid");
-				} else if (!enteredJWTs.includes(req.query.jwt)){
-					spawnMarble(
-						req.query.jwt,
-						req.query.size,
-						req.query.color,
-						req.query.name
-					);
-					res.send("ok");
-				} else {
-					res.send("Already entered");
-				}
-			});
-			
-		} else if (req.query.bot){ // Add new marble
-			spawnMarble(
-				false,
-				.2,
-				"000000",
-				"nightbot"
-			);
-			res.send("ok");
-			
-		} else if (req.query.clear){ // Clear all marbles
+		// Add new marble
+		if (
+			req.query.marble &&
+			req.query.jwt &&
+			req.query.name &&
+			req.query.color
+		){
+			game.marbleRequest(
+				req.query.jwt,
+				req.query.name,
+				req.query.color
+			);	
+		} 
 		
-			// Set starting gate to original position
-			var origin = gateBody.getWorldTransform().getOrigin();
-			origin.setZ(config.marbles.mapRotation[0].startGate.position.z);
-			gateBody.activate();
-			
-			// Remove marble physics bodies
-			for (i = marbles.length - 1; i >= 0; --i){
-				physicsWorld.removeRigidBody(marbles[i].ammoBody);
-			}
-			
-			// Clear the jwt array
-			enteredJWTs = [];
-			
-			// Clear the marble array
-			marbles = [];
-			
-			// Send clients game restart so they can clean up on their side
-			io.sockets.emit("clear", true);
+		// Add bot marble
+		else if ( 
+			req.query.bot &&
+			game.logic.state === "enter"
+		){
+			spawnMarble("nightbot","000000");
 			res.send("ok");
+		}
+		
+		// Clear all marbles
+		else if (req.query.clear){ 
 			
-		} else if (req.query.start){ // Start the game, move the startGate out of the way
-			var origin = gateBody.getWorldTransform().getOrigin();
-			origin.setZ(0);
-			gateBody.activate();
-			res.send("ok");
+			res.send(
+				game.end() ? "ok" : "already waiting for start"
+			);
 			
-		} else if (req.query.dlmap){ // Send map id
+		}
+		
+		// Start the game, move the startGate out of the way
+		else if (req.query.start){ 
+			
+			res.send(
+				game.start() ? "ok" : "already started"
+			);
+			
+		}
+		
+		// Send map id
+		else if (req.query.dlmap){
 			res.send(config.marbles.mapRotation[0].name);
 			
-		} else {
+		}
+		
+		// Got nothing for ya.
+		else {
 			res.send("You probably can't do that. Nice try tho gg.");
 		}
 	} else {
@@ -230,14 +308,10 @@ app.get("/client", function (req, res) {
 
 //
 
-function spawnMarble(jwt,radius,color,name){
-	if (jwt){
-		// Add jwt to list of people that entered
-		enteredJWTs.push(jwt);
-	}
+function spawnMarble(name,color){
 	
 	// Create physics body
-	var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || radius || 0.2;
+	var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
 	var sphereShape =  new Ammo.btSphereShape(size);
 	sphereShape.setMargin( 0.05 );
 	var mass = (size || 0.5) * 5;
@@ -281,40 +355,10 @@ request.get({url:"https://id.twitch.tv/oauth2/keys", json:true}, function (error
 		config.twitch.jwk = body.keys[0];
 		config.twitch.pem = jwkToPem(config.twitch.jwk);
 	}
-})
-
-function verifyAndParseJWT(jwt,callback){
-	jwt.verify(jwt, config.twitch.pem, callback(error, decoded));
-}
+});
 
 // Redirect URI, users land here after Twitch authorization
 app.get("/"+config.twitch.redirectUri, function (req, res) {
-	/* request.post(
-		'https://id.twitch.tv/oauth2/token',
-		{ 
-			json: {
-				client_id: config.twitch.clientId,
-				client_secret: config.twitch.clientSecret,
-				code: req.query.code,
-				grant_type: "authorization_code",
-				redirect_uri: config.twitch.root + config.twitch.redirectUri
-			}
-		},
-		function (error, response, body) {
-			if (!error && response.statusCode === 200) {
-				jwt.verify(body.id_token, config.twitch.pem, function (error, decoded) {
-					console.log(decoded);
-					res.render("account",{
-						name: decoded.preferred_username,
-						jwt: JSON.stringify(body)
-					});
-				});
-			} else if (response.statusCode === 200 || response.statusCode === 400){
-				console.log(error, body, response)
-				res.send("rip");
-			}
-		}
-	); */
 	res.render("account");
 });
 
@@ -370,15 +414,10 @@ io.on("connection", function(socket){
 					rot[i*4+3] = q.w();
 				}
 			}
-			
-			var ms = gateBody.getMotionState();
-			var swOrig, swPos;
-			if (ms){
-				ms.getWorldTransform( transformAux2 );
-				swOrig = transformAux2.getOrigin();
-				swPos = [swOrig.x(),swOrig.y(),swOrig.z()];
-				console.log(swOrig,swPos);
-			}
+				
+			var gorig = gateBody.getWorldTransform().getOrigin();
+			var swPos = [gorig.x(),gorig.y(),gorig.z()];
+			/* console.log(swPos); */
 			
 			callback({pos:pos.buffer,rot:rot.buffer,startGate:swPos});
 		} else {
@@ -404,21 +443,6 @@ function updatePhysics( deltaTime ) {
 
 	physicsWorld.stepSimulation( deltaTime, 10 );
 
-	// Update objects
-	for ( var i = 0, il = dynamicObjects.length; i < il; i++ ) {
-		var objThree = dynamicObjects[ i ];
-		var objPhys = objThree.userData.physicsBody;
-		var ms = objPhys.getMotionState();
-		if ( ms ) {
-
-			ms.getWorldTransform( transformAux1 );
-			var p = transformAux1.getOrigin();
-			var q = transformAux1.getRotation();
-			objThree.position.set( p.x(), p.y(), p.z() );
-			objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
-
-		}
-	}
 }
 
 /* Other */
@@ -431,3 +455,6 @@ function currentHourString() {
 	var date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
 }
+
+// Start the game loop
+game.end();
