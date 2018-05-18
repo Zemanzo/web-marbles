@@ -257,7 +257,8 @@ app.get("/client", function (req, res) {
 			game.marbleRequest(
 				req.query.jwt,
 				req.query.name,
-				req.query.color
+				req.query.color,
+				res
 			);	
 		} 
 		
