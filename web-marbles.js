@@ -125,7 +125,7 @@ var gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
 var gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
 var gateBody = new Ammo.btRigidBody(gateRbInfo);
 gateBody.setCollisionFlags(2); // Set kinematic
-console.log(gateBody.getCollisionFlags());
+/* console.log(gateBody.getCollisionFlags()); */
 
 physicsWorld.addRigidBody(gateBody);
 
@@ -167,9 +167,9 @@ game.end = function(){
 	
 		// Set starting gate to original position
 		var origin = gateBody.getWorldTransform().getOrigin();
-		console.log(origin.z());
+		/* console.log(origin.z()); */
 		origin.setZ(config.marbles.mapRotation[0].startGate.position.y);
-		console.log(origin.z());
+		/* console.log(origin.z()); */
 		gateBody.activate();
 		
 		// Remove marble physics bodies
@@ -187,9 +187,10 @@ game.end = function(){
 		io.sockets.emit("clear", true);
 		
 		// Start the game after the entering period is over
-		game.enterTimeout = setTimeout(function(){
-			game.start();
-		},config.marbles.rules.enterPeriod * 1000);
+		game.enterTimeout = setTimeout(
+			game.start,
+			config.marbles.rules.enterPeriod * 1000
+		);
 		
 		return true;
 	} else {
@@ -212,6 +213,12 @@ game.start = function(){
 			// Add bot marble to ensure physics not freezing
 			spawnMarble("Nightbot","000000");
 		},game.startDelay);
+		
+		
+		game.gameplayTimeout = setTimeout(
+			game.end,
+			config.marbles.rules.maxRoundLength * 1000
+		);
 		
 		return true;
 	} else {
@@ -289,11 +296,12 @@ app.get("/client", function (req, res) {
 			
 		}
 		
-		// Start the game, move the startGate out of the way
+		// Send over the gamestate when a new connection is made
 		else if (req.query.gamestate){ 
 			
 			res.send(
 				{
+					gameState: game.logic.state,
 					timeToEnter: getTimeout(game.enterTimeout),
 					mapId: config.marbles.mapRotation[0].name
 				}

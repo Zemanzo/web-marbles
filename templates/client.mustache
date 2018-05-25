@@ -8,8 +8,12 @@
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 		
 		<!-- Stylesheets -->
-		<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
-		<link href="client.css" rel="stylesheet" type="text/css">
+			<!-- Webfont -->
+			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon" rel="stylesheet">
+			
+			<!-- Own styles -->
+			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
+			<link href="client.css" rel="stylesheet" type="text/css">
 		
 		<!-- Scripts -->
 		<script src="socket.io.js"></script>
@@ -157,41 +161,64 @@
 			</script>
 		
 		<script src="render.js"></script>
-		<div id="overlayControls">
+		<div id="sidebar">
+		
+			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
+			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
+			
+			<hr/>
+			
 			<a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
 				<div id="twitchConnect">
 					<img src="images/Glitch_White_RGB.svg" alt="Glitch Logo"> Login with Twitch!
 				</div>
 			</a>
-			<div id="gameInfo">			
-				<div id="timer">
-					...
+			
+			<h3 id="welcomeMessage">Welcome back, fellow marble friend!</h3>
+			
+			<hr/>
+			
+			<div id="gameInfo">
+				<div id="gameState">
+					<h2 id="state">Enter marbles now!</h2>
+					<div id="timer" class="themeNumber">
+						...
+					</div>
+				</div>
+				
+				<hr/>
+				
+				<div>
+					<div class="separator">
+						<h2>
+							Marbles - <span id="entries" class="themeNumber">0</span> entries
+						</h2>
+					</div>
+					<div id="marbleList">
+						<div class="marbleListEntry" id="marbleListTemplate">
+							<span class="rank">#</span>
+							<span class="color">&nbsp;</span>
+							<span class="name">Zemanzo</span>
+							<span class="id">...</span>
+						</div>
+					</div>
+					
 				</div>
 			</div>
+			
+			<hr/>
+			
 			<div id="menu">
-				<div id="hide">V</div>
-				
+			
 				<div class="separator"><h2>Chat</h2></div>
 				
 				<div id="menuButtons">
 					<input type="color" id="color" value="#000000"/>
 					<button id="marble">!marble</button>
 					<button id="bot">!bot</button>
-					<button id="clear">!clear</button>
+					<!-- <button id="clear">!clear</button> -->
 					<!-- <button id="start">Start race</button> -->
 				</div>
-			</div>
-			<div>
-				<div class="separator"><h2>Marbles</h2></div>
-				<div id="marbleList">
-					<div class="marbleListEntry" id="marbleListTemplate">
-						<span class="rank">#</span>
-						<span class="color">&nbsp;</span>
-						<span class="name">Zemanzo</span>
-						<span class="id">...</span>
-					</div>
-				</div>
-				
 			</div>
 		</div>
 	</body>

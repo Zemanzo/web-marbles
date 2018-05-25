@@ -275,6 +275,7 @@ function spawnMarble(tags){
 	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length;
 	
 	document.getElementById("marbleList").appendChild(listEntry);
+	document.getElementById("entries").innerHTML = marbleMeshes.length;
 }
 
 var textures = {

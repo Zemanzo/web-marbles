@@ -1,3 +1,50 @@
+// Cool fucntion yo
+var whenDocReady = {
+	lookup: {},
+	add: function(callback,id,...args){
+		this.lookup[id] = {
+			callback: callback,
+			id: id,
+			fired: false,
+			args: args
+		}
+	},
+	args: function(id,...args){
+		this.lookup[id].args = args;
+		this.fire(id,true);
+	},
+	fire: function(id,withArguments){
+		if (
+			this.lookup[id] &&	// This id exists AND
+			!this.lookup[id].fired && // It hasn't been fired yet AND
+			this.docReady() && // The document is ready AND
+			( !withArguments || (this.lookup[id].args && this.lookup[id].args.length > 0) ) // In case it's being called with arguments, there are arguments
+		){
+			this.lookup[id].fired = true;
+			if (withArguments){
+				return this.lookup[id].callback(...this.lookup[id].args);
+			} else {
+				return this.lookup[id].callback;
+			}
+		} else {
+			if (!this.lookup[id])
+				console.warn("No such ID:",id);
+			return (withArguments ? null : ()=>{return null});
+		}
+	},
+	runAll: function(){
+		for (id in this.lookup){
+			if (!this.lookup[id].fired){
+				this.lookup[id].fired = true;
+				this.lookup[id].callback();
+			}
+		}
+	},
+	docReady: function(){
+		return (document.readyState === "interactive" || document.readyState === "complete");
+	}
+}
+
 var socket = io({
 	transports: ["websocket"]
 });
@@ -21,10 +68,15 @@ var game = {
 var marbleData;
 var renderInitFired = false;
 
+whenDocReady.add(function(entries){
+	document.getElementById("entries").innerHTML = entries;
+},"initialMarbles");
+
 // Once connected, client receives initial data
 socket.on("initial data", function(obj){
 	
 	marbleData = obj;
+	whenDocReady.args("initialMarbles",marbleData.length);
 	
 	/* Socket RPCs */
 	
@@ -49,6 +101,7 @@ socket.on("initial data", function(obj){
 			scene.remove(mesh);
 			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
 		}
+		document.getElementById("entries").innerHTML = "0";
 		marbleMeshes = [];
 	});
 	
@@ -86,93 +139,48 @@ socket.on("initial data", function(obj){
 	});
 });
 
-// Cool fucntion yo
-var whenDocReady = {
-	lookup: {},
-	add: function(callback,id,...args){
-		this.lookup[id] = {
-			callback: callback,
-			id: id,
-			fired: false,
-			args: args
-		}
-	},
-	args: function(id,...args){
-		this.lookup[id].args = args;
-	},
-	fire: function(id,withArguments){
-		if (
-			this.lookup[id] &&	// This id exists AND
-			!this.lookup[id].fired && // It hasn't been fired yet AND
-			this.docReady() && // The document is ready AND
-			( !withArguments || (this.lookup[id].args && this.lookup[id].args.length > 0) ) // In case it's being called with arguments, there are arguments
-		){
-			this.lookup[id].fired = true;
-			if (withArguments){
-				return this.lookup[id].callback(...this.lookup[id].args);
-			} else {
-				return this.lookup[id].callback;
-			}
-		} else {
-			if (!this.lookup[id])
-				console.warn("No such ID:",id);
-			return (withArguments ? null : ()=>{return null});
-		}
-	},
-	runAll: function(){
-		for (id in this.lookup){
-			if (!this.lookup[id].fired){
-				this.lookup[id].fired = true;
-				this.lookup[id].callback();
-			}
-		}
-	},
-	docReady: function(){
-		return (document.readyState === "interactive" || document.readyState === "complete");
-	}
-}
-
 // Get gamestate
 var gamestate = {
 	timeToEnter: null
 };
 
-whenDocReady.add(function(time){
-	document.getElementById("timer").innerHTML = time;
-},"timer");
+whenDocReady.add(function(response){
+	let parsed = gamestate = JSON.parse(response);
+	document.getElementById("timer").innerHTML = parsed.timeToEnter.toString().substr(0,2);
+},"getGamestate");
 
 getXMLDoc("/client?gamestate=true",(response)=>{
-	let parsed = gamestate = JSON.parse(response);
-	whenDocReady.args("timer",parsed.timeToEnter);
-	whenDocReady.fire("timer",false)(parsed.timeToEnter);
+	whenDocReady.args("getGamestate",response);
 });
 	
 
 let jwtValid = null;
 let jwtDOMChanged = false;
+whenDocReady.add(function(valid,result){
+	console.log("it works!",valid,result);
+	jwtValid = valid;
+	if (valid){
+		document.getElementById("welcomeMessage").innerHTML = "Welcome back, "+result.preferred_username;
+		document.getElementById("welcomeMessage").style.display = "block";
+	} else {
+		document.getElementById("twitchConnect").style.display = "flex";
+	}
+},"jwtvalid");
+
 if (localStorage.id_token){
-	
-	whenDocReady.add(function(valid){
-		console.log("it works!");
-		jwtValid = valid;
-		
-		if (docReady()){
-			jwtDOMChanged = true;
-			if (valid){
-				document.getElementById("menuButtons").style.display = "block";
-			} else {
-				document.getElementById("twitchConnect").style.display = "flex";
-			}
-		}
-	},"jwtvalid");
-	
-	verifyAndParseJWT( localStorage.id_token, false, whenDocReady.fire("jwtvalid") );
+	verifyAndParseJWT( localStorage.id_token, false, function(valid,result){
+		whenDocReady.args("jwtvalid",valid,result);
+	});
+} else {
+	whenDocReady.args("jwtvalid",false);
 }
 
 window.addEventListener("DOMContentLoaded", function(){
 	
-	whenDocReady.fire("jwtvalid",false)(jwtValid);
-	whenDocReady.fire("timer",true);
+	// When document is ready
+	whenDocReady.fire("jwtvalid",true);
+	whenDocReady.fire("getGamestate",true);
+	whenDocReady.fire("initialMarbles",true);
 	
 	if (localStorage.parsedJWT){
 		parsedJWT = JSON.parse(localStorage.parsedJWT);
@@ -200,9 +208,9 @@ window.addEventListener("DOMContentLoaded", function(){
 	},false);
 	
 	// !clear
-	document.getElementById("clear").addEventListener("click", function(){
+	/* document.getElementById("clear").addEventListener("click", function(){
 		getXMLDoc("/client?clear=true");
-	},false);
+	},false); */
 	
 	/* // Start race
 	document.getElementById("start").addEventListener("click", function(){
