@@ -187,7 +187,7 @@ game.end = function(){
 		io.sockets.emit("clear", true);
 		
 		// Start the game after the entering period is over
-		setTimeout(function(){
+		game.enterTimeout = setTimeout(function(){
 			game.start();
 		},config.marbles.rules.enterPeriod * 1000);
 		
@@ -289,7 +289,19 @@ app.get("/client", function (req, res) {
 			
 		}
 		
-		// Send map id
+		// Start the game, move the startGate out of the way
+		else if (req.query.gamestate){ 
+			
+			res.send(
+				{
+					timeToEnter: getTimeout(game.enterTimeout),
+					mapId: config.marbles.mapRotation[0].name
+				}
+			);
+			
+		}
+		
+		// Send map id -- DEPRECATED
 		else if (req.query.dlmap){
 			res.send(config.marbles.mapRotation[0].name);
 			
@@ -456,6 +468,28 @@ function currentHourString() {
 	var date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
 }
+
+// https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
+// THIS MIGHT BREAK THINGS
+var getTimeout = (function() { // IIFE
+    var _setTimeout = setTimeout, // Reference to the original setTimeout
+        map = {}; // Map of all timeouts with their start date and delay
+
+    setTimeout = function(callback, delay) { // Modify setTimeout
+        var id = _setTimeout(callback, delay); // Run the original, and store the id
+
+        map[id] = [Date.now(), delay]; // Store the start date and delay
+
+        return id; // Return the id
+    };
+
+    return function(id) { // The actual getTimeLeft function
+        var m = map[id]; // Find the timeout in map
+
+        // If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
+        return m ? Math.max(m[1] - Date.now() + m[0], 0) : NaN;
+    }
+})();
 
 // Start the game loop
 game.end();

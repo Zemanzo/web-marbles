@@ -2,7 +2,7 @@ var socket = io({
 	transports: ["websocket"]
 });
 var net = {
-	tickrate: 20, // Cannot be 0
+	tickrate: 10, // Cannot be 0
 	ticksToLerp: 2, // Cannot be 0
 	
 	// Initialize, do not configure these values.
@@ -86,11 +86,76 @@ socket.on("initial data", function(obj){
 	});
 });
 
+// Cool fucntion yo
+var whenDocReady = {
+	lookup: {},
+	add: function(callback,id,...args){
+		this.lookup[id] = {
+			callback: callback,
+			id: id,
+			fired: false,
+			args: args
+		}
+	},
+	args: function(id,...args){
+		this.lookup[id].args = args;
+	},
+	fire: function(id,withArguments){
+		if (
+			this.lookup[id] &&	// This id exists AND
+			!this.lookup[id].fired && // It hasn't been fired yet AND
+			this.docReady() && // The document is ready AND
+			( !withArguments || (this.lookup[id].args && this.lookup[id].args.length > 0) ) // In case it's being called with arguments, there are arguments
+		){
+			this.lookup[id].fired = true;
+			if (withArguments){
+				return this.lookup[id].callback(...this.lookup[id].args);
+			} else {
+				return this.lookup[id].callback;
+			}
+		} else {
+			if (!this.lookup[id])
+				console.warn("No such ID:",id);
+			return (withArguments ? null : ()=>{return null});
+		}
+	},
+	runAll: function(){
+		for (id in this.lookup){
+			if (!this.lookup[id].fired){
+				this.lookup[id].fired = true;
+				this.lookup[id].callback();
+			}
+		}
+	},
+	docReady: function(){
+		return (document.readyState === "interactive" || document.readyState === "complete");
+	}
+}
+
+// Get gamestate
+var gamestate = {
+	timeToEnter: null
+};
+
+whenDocReady.add(function(time){
+	document.getElementById("timer").innerHTML = time;
+},"timer");
+
+getXMLDoc("/client?gamestate=true",(response)=>{
+	let parsed = gamestate = JSON.parse(response);
+	whenDocReady.args("timer",parsed.timeToEnter);
+	whenDocReady.fire("timer",false)(parsed.timeToEnter);
+});
+	
+
 let jwtValid = null;
 let jwtDOMChanged = false;
 if (localStorage.id_token){
-	verifyAndParseJWT(localStorage.id_token,false,(valid)=>{
+	
+	whenDocReady.add(function(valid){
+		console.log("it works!");
 		jwtValid = valid;
+		
 		if (docReady()){
 			jwtDOMChanged = true;
 			if (valid){
@@ -99,18 +164,15 @@ if (localStorage.id_token){
 				document.getElementById("twitchConnect").style.display = "flex";
 			}
 		}
-	});
+	},"jwtvalid");
+	
+	verifyAndParseJWT( localStorage.id_token, false, whenDocReady.fire("jwtvalid") );
 }
 
 window.addEventListener("DOMContentLoaded", function(){
 	
-	if ((jwtValid !== null && !jwtDOMChanged) || !localStorage.id_token){
-		if (jwtValid){
-			document.getElementById("menuButtons").style.display = "block";
-		} else {
-			document.getElementById("twitchConnect").style.display = "flex";
-		}
-	}
+	whenDocReady.fire("jwtvalid",false)(jwtValid);
+	whenDocReady.fire("timer",true);
 	
 	if (localStorage.parsedJWT){
 		parsedJWT = JSON.parse(localStorage.parsedJWT);
@@ -167,8 +229,4 @@ function getXMLDoc(doc,callback){
 	}
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
-}
-
-function docReady(){
-	return (document.readyState === "interactive" || document.readyState === "complete");
 }

@@ -20,24 +20,31 @@ canvas {
 
 #overlayControls {
 	position:absolute;
-	width:100vw;
+	right:0px;
+	width:360px;
 	height:100vh;
-	pointer-events:none;
-	padding-left:100px;
 	box-sizing:border-box;
 	display:flex;
 	flex-direction:column;
 	justify-content:flex-start;
 	align-items:flex-end;
+	background:#222;
+	color:#eee;
+	padding:8px;
 }
 
 #overlayControls > * {
-	pointer-events:initial;
+	width:100%;
+	box-sizing:border-box;
 }
 
-#twitchLink {
-	text-decoration:none;
-}
+	#twitchLink {
+		text-decoration:none;
+	}
+
+	#gameInfo {
+		flex:1;
+	}
 
 
 #twitchConnect {
@@ -64,24 +71,6 @@ canvas {
 }
 
 #menu {
-	position:absolute;
-	bottom:0px;
-	left:0px;
-	display:grid;
-	grid-template-columns:auto 200px;
-	grid-template-rows:2em auto;
-	margin:8px;
-	padding-bottom:8px;
-	background-color:rgba(255,255,255,.8);
-	opacity:.3;
-	transition:opacity .25s;
-	max-width:60vw;
-	min-width:400px;
-	max-height:380px;
-}
-
-#menu:hover {
-	opacity:1;
 }
 	
 	#hide {
@@ -119,7 +108,8 @@ canvas {
 	}
 	
 	#marbleList {
-		max-height:340px;
+		min-height:240px;
+		max-height:240px;
 		overflow:auto;
 	}
 	
