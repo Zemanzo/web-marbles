@@ -63,6 +63,45 @@ var game = {
 	audio: {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
+	},
+	start: function(){
+		game.audio.start.play();
+		document.getElementById("state").innerHTML = "Race started!";
+		document.getElementById("timer").style.display = "none";
+	},
+	end: function(){
+		game.audio.end.play();
+		for (let mesh of marbleMeshes){
+			for (i = mesh.children.length; i >= 0; i--) {
+				scene.remove(mesh.children[i]);
+			}
+			scene.remove(mesh);
+			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
+		}
+		document.getElementById("entries").innerHTML = "0";
+		marbleMeshes = [];
+		document.getElementById("state").innerHTML = "Enter marbles now!";
+		document.getElementById("timer").style.display = "block";
+		game.startTimerInterval(10000); // This has to be the server value... :thinking;
+	},
+	startTimerInterval: function(ms){
+		let s = ms/1000;
+		let timerElement = document.getElementById("timer");
+		timerElement.innerHTML = Math.ceil(s);
+		setTimeout(function(){
+			let timeLeft = Math.ceil(s);
+			console.log(s,timeLeft);
+			let timerInterval = setInterval(function(){
+				timeLeft--;
+				if (timeLeft === 0){
+					clearInterval(timerInterval);
+				} else {
+					timerElement.innerHTML = timeLeft;
+				}
+			},1000);
+			timerElement.innerHTML = timeLeft;
+			timeLeft--;
+		}, ms - Math.floor(s)*1000); // milliseconds only, i.e. 23941 becomes 941
 	}
 }
 var marbleData;
@@ -88,21 +127,12 @@ socket.on("initial data", function(obj){
 	
 	// Start game
 	socket.on("start", function(obj){
-		game.audio.start.play();
+		game.start();
 	});
 	
 	// End game, and start next round
 	socket.on("clear", function(obj){
-		game.audio.end.play();
-		for (let mesh of marbleMeshes){
-			for (i = mesh.children.length; i >= 0; i--) {
-				scene.remove(mesh.children[i]);
-			}
-			scene.remove(mesh);
-			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
-		}
-		document.getElementById("entries").innerHTML = "0";
-		marbleMeshes = [];
+		game.end();
 	});
 	
 	/* Physics syncing */
@@ -145,8 +175,15 @@ var gamestate = {
 };
 
 whenDocReady.add(function(response){
-	let parsed = gamestate = JSON.parse(response);
-	document.getElementById("timer").innerHTML = parsed.timeToEnter.toString().substr(0,2);
+	gamestate = JSON.parse(response);
+	console.log(gamestate);
+	if (gamestate.gameState === "started"){
+		document.getElementById("timer").style.display = "none";
+		document.getElementById("state").innerHTML = "Race started!";
+	} else {
+		game.startTimerInterval(gamestate.timeToEnter);
+		document.getElementById("timer").innerHTML = gamestate.timeToEnter.toString().substr(0,2);
+	}
 },"getGamestate");
 
 getXMLDoc("/client?gamestate=true",(response)=>{
@@ -160,7 +197,7 @@ whenDocReady.add(function(valid,result){
 	console.log("it works!",valid,result);
 	jwtValid = valid;
 	if (valid){
-		document.getElementById("welcomeMessage").innerHTML = "Welcome back, "+result.preferred_username;
+		document.getElementById("welcomeMessage").innerHTML = "Welcome back "+result.preferred_username+"!";
 		document.getElementById("welcomeMessage").style.display = "block";
 	} else {
 		document.getElementById("twitchConnect").style.display = "flex";

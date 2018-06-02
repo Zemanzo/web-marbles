@@ -132,6 +132,10 @@ a:hover {
 		margin-top:12px;
 	}
 	
+	#welcomeMessage {
+		text-align:center;
+	}
+	
 .themeNumber {
 	color:var(--theme-color);
 	text-shadow:2px 2px var(--theme-color-dark);

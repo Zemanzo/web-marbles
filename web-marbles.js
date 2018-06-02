@@ -5,7 +5,24 @@ console.log(" Webbased Marble Racing".cyan);
 console.log("   by "+"Z".green+"emanz"+"o".green);
 console.log(" "+(new Date()).toLocaleString('nl').cyan);
 
-/* set up physics world */
+// Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
+var timeoutMap = {};
+function setTrackableTimeout(callback, delay) { // Modify setTimeout
+	var id = setTimeout(callback, delay); // Run the original, and store the id
+
+	timeoutMap[id] = [Date.now(), delay]; // Store the start date and delay
+
+	return id; // Return the id
+};
+
+function getTimeout(id) { // The actual getTimeLeft function
+	var m = timeoutMap[id]; // Find the timeout in map
+
+	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
+	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
+}
+
+/* Set up physics world */
 var Ammo = require('ammo-node');
 
 // Physics variables
@@ -26,7 +43,7 @@ solver = new Ammo.btSequentialImpulseConstraintSolver();
 physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
 physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
 
-/* list of marble physics bodies */
+// List of marble physics bodies
 var marbles = [];
 
 function createTerrainShape() {
@@ -187,10 +204,17 @@ game.end = function(){
 		io.sockets.emit("clear", true);
 		
 		// Start the game after the entering period is over
-		game.enterTimeout = setTimeout(
+		clearTimeout(game.enterTimeout);
+		game.enterTimeout = setTrackableTimeout(
 			game.start,
 			config.marbles.rules.enterPeriod * 1000
 		);
+		
+		/* setInterval(
+			function(){
+				console.log(getTimeout(game.enterTimeout));
+			},1000
+		); */
 		
 		return true;
 	} else {
@@ -214,8 +238,8 @@ game.start = function(){
 			spawnMarble("Nightbot","000000");
 		},game.startDelay);
 		
-		
-		game.gameplayTimeout = setTimeout(
+		clearTimeout(game.gameplayTimeout);
+		game.gameplayTimeout = setTrackableTimeout(
 			game.end,
 			config.marbles.rules.maxRoundLength * 1000
 		);
@@ -476,28 +500,6 @@ function currentHourString() {
 	var date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
 }
-
-// https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
-// THIS MIGHT BREAK THINGS
-var getTimeout = (function() { // IIFE
-    var _setTimeout = setTimeout, // Reference to the original setTimeout
-        map = {}; // Map of all timeouts with their start date and delay
-
-    setTimeout = function(callback, delay) { // Modify setTimeout
-        var id = _setTimeout(callback, delay); // Run the original, and store the id
-
-        map[id] = [Date.now(), delay]; // Store the start date and delay
-
-        return id; // Return the id
-    };
-
-    return function(id) { // The actual getTimeLeft function
-        var m = map[id]; // Find the timeout in map
-
-        // If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
-        return m ? Math.max(m[1] - Date.now() + m[0], 0) : NaN;
-    }
-})();
 
 // Start the game loop
 game.end();
