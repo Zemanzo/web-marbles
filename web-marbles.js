@@ -326,6 +326,8 @@ app.get("/client", function (req, res) {
 			res.send(
 				{
 					gameState: game.logic.state,
+					enterPeriod: config.marbles.rules.enterPeriod,
+					maxRoundLength: config.marbles.rules.maxRoundLength,
 					timeToEnter: getTimeout(game.enterTimeout),
 					mapId: config.marbles.mapRotation[0].name
 				}

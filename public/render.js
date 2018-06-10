@@ -10,24 +10,125 @@ var settings = {
 }
 
 var map;
+var viewport = document.getElementById("viewport");
+console.log(viewport.clientWidth,viewport.clientHeight);
 
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 5000 );
+var camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-renderer.setSize( window.innerWidth, window.innerHeight );
-document.body.appendChild( renderer.domElement );
+renderer.setSize( viewport.clientWidth, viewport.clientHeight );
+viewport.appendChild( renderer.domElement );
 
 var stats = new Stats();
 stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild( stats.dom );
 
-var controls = new THREE.OrbitControls( camera, renderer.domElement );
+/* CONTROLS */
+
+var element = viewport;
+var controlsEnabled = false;
+var moveForward = false;
+var moveBackward = false;
+var moveLeft = false;
+var moveRight = false;
+
+var prevTime = performance.now();
+var velocity = new THREE.Vector3();
+var direction = new THREE.Vector3();
+var vertex = new THREE.Vector3();
+var color = new THREE.Color();
+
+// Hook pointer lock state change events
+document.addEventListener('pointerlockchange', function(event){
+	if (document.pointerLockElement === element) {
+		controlsEnabled = true;
+		controls.enabled = true;
+	} else {
+		controls.enabled = false;
+	}
+}, false );
+
+document.addEventListener('pointerlockerror', function(event){}, false);
+
+viewport.addEventListener('mousedown', function (event) {
+	element.requestPointerLock();
+}, false );
+
+viewport.addEventListener('mouseup', function (event) {
+	document.exitPointerLock();
+}, false );
+
+var onKeyDown = function(event){
+	switch(event.keyCode){
+		case 38: // up
+		case 87: // w
+			moveForward = true;
+			break;
+
+		case 37: // left
+		case 65: // a
+			moveLeft = true;
+			break;
+
+		case 40: // down
+		case 83: // s
+			moveBackward = true;
+			break;
+
+		case 39: // right
+		case 68: // d
+			moveRight = true;
+			break;
+	}
+};
+
+var onKeyUp = function(event){
+	switch(event.keyCode){
+		case 38: // up
+		case 87: // w
+			moveForward = false;
+			break;
+
+		case 37: // left
+		case 65: // a
+			moveLeft = false;
+			break;
+
+		case 40: // down
+		case 83: // s
+			moveBackward = false;
+			break;
+
+		case 39: // right
+		case 68: // d
+			moveRight = false;
+			break;
+	}
+};
+
+document.addEventListener('keydown',onKeyDown,false);
+document.addEventListener('keyup',onKeyUp,false);
+
+/* camera.position.x = 40;
+camera.position.y = 80;
+camera.position.z = 40;
+
+camera.rotation.x = -.6;
+camera.rotation.y = .3;
+camera.rotation.z = 0;
+ */
+var controls = new THREE.PointerLockControls(camera);
+scene.add(controls.getObject());
+
+/* var controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
-controls.enableZoom = true;
+controls.enableZoom = true; */
+
+/* CONTROLS END */
 
 var ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
@@ -35,7 +136,7 @@ scene.add( ambientLight );
 var axesHelper = new THREE.AxesHelper( 3 );
 scene.add( axesHelper );
 
-//
+// Sun
 
 light = new THREE.DirectionalLight( 0xf5d0d0, 1.5 );
 light.castShadow = true;
@@ -49,7 +150,7 @@ water = new THREE.Water(
 	{
 		textureWidth: 512,
 		textureHeight: 512,
-		waterNormals: new THREE.TextureLoader().load( "threejs/textures/waternormals.jpg", function ( texture ) {
+		waterNormals: new THREE.TextureLoader().load( "lib/threejs/textures/waternormals.jpg", function ( texture ) {
 			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		}),
 		alpha: 1.0,
@@ -144,14 +245,7 @@ orangeLight.position.x = 5;
 orangeLight.position.y = 70;
 orangeLight.position.z = -500; */
 
-camera.position.x = 40;
-camera.position.y = 80;
-camera.position.z = 40;
-
-camera.rotation.x = -.6;
-camera.rotation.y = .3;
-camera.rotation.z = 0;
-controls.update();
+/* controls.update(); */
 
 var marbleMeshes = [];
 
@@ -175,9 +269,34 @@ function animate() {
 	}
 	
 	if (net.lastUpdate < 1.5){
-		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better base it on real time.
+		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
 	}
 	
+	// Update controls
+	if ( controlsEnabled === true ) {
+		var time = performance.now();
+		var delta = ( time - prevTime ) / 1000;
+
+		velocity.x -= velocity.x * 10.0 * delta;
+		velocity.y -= velocity.y * 10.0 * delta;
+		velocity.z -= velocity.z * 10.0 * delta;
+
+		direction.z = Number( moveForward ) - Number( moveBackward );
+		direction.y = Number( moveForward ) - Number( moveBackward );
+		direction.x = Number( moveLeft ) - Number( moveRight );
+		direction.normalize(); // this ensures consistent movements in all directions
+
+		if ( moveForward || moveBackward ) velocity.z -= direction.z * config.controls.camera.speed * delta;
+		if ( moveForward || moveBackward ) velocity.y -= direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI*.5);
+		if ( moveLeft || moveRight ) velocity.x -= direction.x * config.controls.camera.speed* delta;
+
+		/* console.log(velocity.x * delta, controlsEnabled); */
+		controls.getObject().translateX( velocity.x * delta );
+		controls.getObject().translateY( velocity.y * delta );
+		controls.getObject().translateZ( velocity.z * delta );
+
+		prevTime = time;
+	}	
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
@@ -189,6 +308,7 @@ function animate() {
 
 	uniforms.time.value += delta * 5;
 	
+	// Render the darn thing
 	renderer.render( scene, camera );
 }
 
@@ -279,11 +399,11 @@ function spawnMarble(tags){
 }
 
 var textures = {
-	dirt: { url: 'threejs/textures/dirt.jpg' },
-	dirtNormal: { url: 'threejs/textures/dirt_n.jpg' },
-	grass: { url: 'threejs/textures/grasslight-big.jpg' },
-	grassNormal: { url: 'threejs/textures/grasslight-big-nm.jpg' },
-	mask: { url: 'threejs/textures/mask_alpha.png' }
+	dirt: { url: 'lib/threejs/textures/dirt.jpg' },
+	dirtNormal: { url: 'lib/threejs/textures/dirt_n.jpg' },
+	grass: { url: 'lib/threejs/textures/grasslight-big.jpg' },
+	grassNormal: { url: 'lib/threejs/textures/grasslight-big-nm.jpg' },
+	mask: { url: 'lib/threejs/textures/mask_alpha.png' }
 };
 
 function getTexture( name ) {

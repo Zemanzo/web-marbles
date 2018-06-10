@@ -12,6 +12,7 @@ body {
 	--theme-color-dark:#4B002A;
 	--twitch-purple:#6441A4;
 	--twitch-purple-hover:rgb(125, 91, 190);
+	display:flex;
 }
 
 canvas {
@@ -28,11 +29,13 @@ a:hover {
 	color:#3df;
 }
 
+#viewport {
+	flex:1;
+}
+
 #sidebar {
-	position:absolute;
 	right:0px;
 	width:360px;
-	height:100vh;
 	box-sizing:border-box;
 	display:flex;
 	flex-direction:column;

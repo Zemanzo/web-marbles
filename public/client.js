@@ -1,53 +1,7 @@
-// Cool fucntion yo
-var whenDocReady = {
-	lookup: {},
-	add: function(callback,id,...args){
-		this.lookup[id] = {
-			callback: callback,
-			id: id,
-			fired: false,
-			args: args
-		}
-	},
-	args: function(id,...args){
-		this.lookup[id].args = args;
-		this.fire(id,true);
-	},
-	fire: function(id,withArguments){
-		if (
-			this.lookup[id] &&	// This id exists AND
-			!this.lookup[id].fired && // It hasn't been fired yet AND
-			this.docReady() && // The document is ready AND
-			( !withArguments || (this.lookup[id].args && this.lookup[id].args.length > 0) ) // In case it's being called with arguments, there are arguments
-		){
-			this.lookup[id].fired = true;
-			if (withArguments){
-				return this.lookup[id].callback(...this.lookup[id].args);
-			} else {
-				return this.lookup[id].callback;
-			}
-		} else {
-			if (!this.lookup[id])
-				console.warn("No such ID:",id);
-			return (withArguments ? null : ()=>{return null});
-		}
-	},
-	runAll: function(){
-		for (id in this.lookup){
-			if (!this.lookup[id].fired){
-				this.lookup[id].fired = true;
-				this.lookup[id].callback();
-			}
-		}
-	},
-	docReady: function(){
-		return (document.readyState === "interactive" || document.readyState === "complete");
-	}
-}
-
 var socket = io({
 	transports: ["websocket"]
 });
+
 var net = {
 	tickrate: 10, // Cannot be 0
 	ticksToLerp: 2, // Cannot be 0
@@ -59,10 +13,14 @@ var net = {
 	ready: 0,
 	requestsSkipped: 0 // Helps detect network issues
 };
+
 var game = {
 	audio: {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
+	},
+	state: {
+		timeToEnter: null
 	},
 	start: function(){
 		game.audio.start.play();
@@ -82,7 +40,7 @@ var game = {
 		marbleMeshes = [];
 		document.getElementById("state").innerHTML = "Enter marbles now!";
 		document.getElementById("timer").style.display = "block";
-		game.startTimerInterval(10000); // This has to be the server value... :thinking;
+		game.startTimerInterval(this.state.enterPeriod*1000); // This has to be the server value... :thinking;
 	},
 	startTimerInterval: function(ms){
 		let s = ms/1000;
@@ -93,7 +51,7 @@ var game = {
 			console.log(s,timeLeft);
 			let timerInterval = setInterval(function(){
 				timeLeft--;
-				if (timeLeft === 0){
+				if (timeLeft < 0){
 					clearInterval(timerInterval);
 				} else {
 					timerElement.innerHTML = timeLeft;
@@ -105,17 +63,26 @@ var game = {
 	}
 }
 var marbleData;
-var renderInitFired = false;
 
 whenDocReady.add(function(entries){
 	document.getElementById("entries").innerHTML = entries;
 },"initialMarbles");
+
+whenDocReady.add(
+	function(){renderInit()},
+	"renderInit",
+	{
+		type:1,
+		readyState:"complete"
+	}
+);
 
 // Once connected, client receives initial data
 socket.on("initial data", function(obj){
 	
 	marbleData = obj;
 	whenDocReady.args("initialMarbles",marbleData.length);
+	
 	
 	/* Socket RPCs */
 	
@@ -134,6 +101,7 @@ socket.on("initial data", function(obj){
 	socket.on("clear", function(obj){
 		game.end();
 	});
+	
 	
 	/* Physics syncing */
 
@@ -160,29 +128,19 @@ socket.on("initial data", function(obj){
 		net.marbleRotations = new Float64Array(data.rot);
 		net.lastUpdate = 0;
 		net.ready--;
-		if (!renderInitFired && document.readyState === "complete"){
-			renderInitFired = true;
-			renderInit();
-		} else {
-			renderInitFired = "tried";
-		}
+		whenDocReady.fire("renderInit");
 	});
 });
 
-// Get gamestate
-var gamestate = {
-	timeToEnter: null
-};
-
 whenDocReady.add(function(response){
-	gamestate = JSON.parse(response);
-	console.log(gamestate);
-	if (gamestate.gameState === "started"){
+	game.state = JSON.parse(response);
+	console.log(game.state);
+	if (game.state.gameState === "started"){
 		document.getElementById("timer").style.display = "none";
 		document.getElementById("state").innerHTML = "Race started!";
 	} else {
-		game.startTimerInterval(gamestate.timeToEnter);
-		document.getElementById("timer").innerHTML = gamestate.timeToEnter.toString().substr(0,2);
+		game.startTimerInterval(game.state.timeToEnter);
+		document.getElementById("timer").innerHTML = game.state.timeToEnter.toString().substr(0,2);
 	}
 },"getGamestate");
 
@@ -194,7 +152,6 @@ getXMLDoc("/client?gamestate=true",(response)=>{
 let jwtValid = null;
 let jwtDOMChanged = false;
 whenDocReady.add(function(valid,result){
-	console.log("it works!",valid,result);
 	jwtValid = valid;
 	if (valid){
 		document.getElementById("welcomeMessage").innerHTML = "Welcome back "+result.preferred_username+"!";
@@ -212,12 +169,13 @@ if (localStorage.id_token){
 	whenDocReady.args("jwtvalid",false);
 }
 
+let parsedJWT = false;
 window.addEventListener("DOMContentLoaded", function(){
 	
 	// When document is ready
-	whenDocReady.fire("jwtvalid",true);
+	/* whenDocReady.fire("jwtvalid",true);
 	whenDocReady.fire("getGamestate",true);
-	whenDocReady.fire("initialMarbles",true);
+	whenDocReady.fire("initialMarbles",true); */
 	
 	if (localStorage.parsedJWT){
 		parsedJWT = JSON.parse(localStorage.parsedJWT);
@@ -253,13 +211,6 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("start").addEventListener("click", function(){
 		getXMLDoc("/client?start=true");
 	},false); */
-},false);
-
-window.addEventListener("load", function(){
-	if (renderInitFired === "tried"){
-		renderInitFired = true;
-		renderInit();
-	}
 },false);
 
 function getXMLDoc(doc,callback){
