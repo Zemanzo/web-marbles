@@ -50,12 +50,12 @@ var game = {
 			let timeLeft = Math.ceil(s);
 			console.log(s,timeLeft);
 			let timerInterval = setInterval(function(){
-				timeLeft--;
 				if (timeLeft < 0){
 					clearInterval(timerInterval);
 				} else {
 					timerElement.innerHTML = timeLeft;
 				}
+				timeLeft--;
 			},1000);
 			timerElement.innerHTML = timeLeft;
 			timeLeft--;

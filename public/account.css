@@ -27,3 +27,8 @@ body {
 #result { 
 	display:none;
 }
+
+#failedResult {
+	display:none;
+	font-size:1rem;
+}

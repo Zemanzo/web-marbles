@@ -21,6 +21,7 @@ verifyAndParseJWT(id_token,true,(isValid,result)=>{
 			document.getElementById("load").style.display = "none";
 			document.getElementById("verify").style.color = "#d00";
 			document.getElementById("verify").innerHTML = "Failed to verify D:";
+			document.getElementById("failedResult").style.display = "block";
 		}
 	}
 	

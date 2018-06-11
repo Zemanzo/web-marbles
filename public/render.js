@@ -112,15 +112,13 @@ var onKeyUp = function(event){
 document.addEventListener('keydown',onKeyDown,false);
 document.addEventListener('keyup',onKeyUp,false);
 
-/* camera.position.x = 40;
-camera.position.y = 80;
-camera.position.z = 40;
-
-camera.rotation.x = -.6;
-camera.rotation.y = .3;
-camera.rotation.z = 0;
- */
 var controls = new THREE.PointerLockControls(camera);
+controls.getObject().position.x = -25.3;
+controls.getObject().position.y = 55;
+controls.getObject().position.z = 19.7;
+
+camera.parent.rotation.x = -.3;
+controls.getObject().rotation.z = 0;
 scene.add(controls.getObject());
 
 /* var controls = new THREE.OrbitControls( camera, renderer.domElement );
