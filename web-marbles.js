@@ -417,6 +417,10 @@ app.get("/debug", function (req, res) {
 	});
 });
 
+app.get("/editor", function (req, res) {
+	res.render("editor",{});
+});
+
 /* Express listener */
 var server = http.listen(config.express.port, function () {
   var port = server.address().port;

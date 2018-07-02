@@ -148,7 +148,7 @@ water = new THREE.Water(
 	{
 		textureWidth: 512,
 		textureHeight: 512,
-		waterNormals: new THREE.TextureLoader().load( "lib/threejs/textures/waternormals.jpg", function ( texture ) {
+		waterNormals: new THREE.TextureLoader().load( "scripts/lib/threejs/textures/waternormals.jpg", function ( texture ) {
 			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		}),
 		alpha: 1.0,
@@ -397,11 +397,11 @@ function spawnMarble(tags){
 }
 
 var textures = {
-	dirt: { url: 'lib/threejs/textures/dirt.jpg' },
-	dirtNormal: { url: 'lib/threejs/textures/dirt_n.jpg' },
-	grass: { url: 'lib/threejs/textures/grasslight-big.jpg' },
-	grassNormal: { url: 'lib/threejs/textures/grasslight-big-nm.jpg' },
-	mask: { url: 'lib/threejs/textures/mask_alpha.png' }
+	dirt: { url: 'scripts/lib/threejs/textures/dirt.jpg' },
+	dirtNormal: { url: 'scripts/lib/threejs/textures/dirt_n.jpg' },
+	grass: { url: 'scripts/lib/threejs/textures/grasslight-big.jpg' },
+	grassNormal: { url: 'scripts/lib/threejs/textures/grasslight-big-nm.jpg' },
+	mask: { url: 'scripts/lib/threejs/textures/mask_alpha.png' }
 };
 
 function getTexture( name ) {

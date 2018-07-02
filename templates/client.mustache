@@ -13,156 +13,84 @@
 			
 			<!-- Own styles -->
 			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
-			<link href="common.css" rel="stylesheet" type="text/css">
-			<link href="client.css" rel="stylesheet" type="text/css">
+			<link href="styles/common.css" rel="stylesheet" type="text/css">
+			<link href="styles/client.css" rel="stylesheet" type="text/css">
 		
 		<!-- Scripts -->
 		<script src="config.js"></script>
-		<script src="lib/socket.io.js"></script>
-		<script src="lib/OBJFile.js"></script>
-		<script src="lib/jsrsasign-all-min.js"></script> <!-- for JTW -->
-		<script src="src/VerifyJWT.js"></script>
-		<script src="src/WhenDocReady.js"></script>
-		<script src="client.js"></script>
+		<script src="scripts/lib/socket.io.js"></script>
+		<script src="scripts/lib/OBJFile.js"></script>
+		<script src="scripts/lib/jsrsasign-all-min.js"></script> <!-- for JTW -->
+		<script src="scripts/verifyJWT.js"></script>
+		<script src="scripts/whenDocReady.js"></script>
+		<script src="scripts/client/client.js"></script>
 	</head>
 	<body>
 		<!-- THREEJS -->
-		
-			<script src="lib/threejs/three.js"></script>
-			<script src="lib/threejs/OrbitControls.js"></script>
-			<script src="lib/threejs/PointerLockControls.js"></script>
-			<script src="lib/threejs/stats.min.js"></script>
-			<script src="lib/threejs/Water.js"></script>
-			<script src="lib/threejs/Sky.js"></script>
+		{{>partials/scripts/ThreeJS}}
 		
 		<!-- NODE MATERIALS -->
-		
-			<!-- NodeLibrary -->
-			<script src="lib/threejs/nodes/GLNode.js"></script>
-			<script src="lib/threejs/nodes/RawNode.js"></script>
-			<script src="lib/threejs/nodes/TempNode.js"></script>
-			<script src="lib/threejs/nodes/InputNode.js"></script>
-			<script src="lib/threejs/nodes/ConstNode.js"></script>
-			<script src="lib/threejs/nodes/VarNode.js"></script>
-			<script src="lib/threejs/nodes/FunctionNode.js"></script>
-			<script src="lib/threejs/nodes/FunctionCallNode.js"></script>
-			<script src="lib/threejs/nodes/AttributeNode.js"></script>
-			<script src="lib/threejs/nodes/NodeBuilder.js"></script>
-			<script src="lib/threejs/nodes/NodeLib.js"></script>
-			<script src="lib/threejs/nodes/NodeFrame.js"></script>
-			<script src="lib/threejs/nodes/NodeMaterial.js"></script>
-
-			<!-- Accessors -->
-			<script src="lib/threejs/nodes/accessors/PositionNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/NormalNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/UVNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/ScreenUVNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/ColorsNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/CameraNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/ReflectNode.js"></script>
-			<script src="lib/threejs/nodes/accessors/LightNode.js"></script>
-
-			<!-- Inputs -->
-			<script src="lib/threejs/nodes/inputs/IntNode.js"></script>
-			<script src="lib/threejs/nodes/inputs/FloatNode.js"></script>
-			<script src="lib/threejs/nodes/inputs/ColorNode.js"></script>
-			<script src="lib/threejs/nodes/inputs/Vector2Node.js"></script>
-			<script src="lib/threejs/nodes/inputs/Vector3Node.js"></script>
-			<script src="lib/threejs/nodes/inputs/Vector4Node.js"></script>
-			<script src="lib/threejs/nodes/inputs/TextureNode.js"></script>
-			<script src="lib/threejs/nodes/inputs/Matrix3Node.js"></script>
-			<script src="lib/threejs/nodes/inputs/Matrix4Node.js"></script>
-			<script src="lib/threejs/nodes/inputs/CubeTextureNode.js"></script>
-
-			<!-- Math -->
-			<script src="lib/threejs/nodes/math/Math1Node.js"></script>
-			<script src="lib/threejs/nodes/math/Math2Node.js"></script>
-			<script src="lib/threejs/nodes/math/Math3Node.js"></script>
-			<script src="lib/threejs/nodes/math/OperatorNode.js"></script>
-
-			<!-- Utils -->
-			<script src="lib/threejs/nodes/utils/SwitchNode.js"></script>
-			<script src="lib/threejs/nodes/utils/JoinNode.js"></script>
-			<script src="lib/threejs/nodes/utils/TimerNode.js"></script>
-			<script src="lib/threejs/nodes/utils/RoughnessToBlinnExponentNode.js"></script>
-			<script src="lib/threejs/nodes/utils/VelocityNode.js"></script>
-			<script src="lib/threejs/nodes/utils/LuminanceNode.js"></script>
-			<script src="lib/threejs/nodes/utils/ColorAdjustmentNode.js"></script>
-			<script src="lib/threejs/nodes/utils/NoiseNode.js"></script>
-			<script src="lib/threejs/nodes/utils/ResolutionNode.js"></script>
-			<script src="lib/threejs/nodes/utils/BumpNode.js"></script>
-			<script src="lib/threejs/nodes/utils/BlurNode.js"></script>
-			<script src="lib/threejs/nodes/utils/UVTransformNode.js"></script>
-
-			<!-- Phong Material -->
-			<script src="lib/threejs/nodes/materials/PhongNode.js"></script>
-			<script src="lib/threejs/nodes/materials/PhongNodeMaterial.js"></script>
-
-			<!-- Standard Material -->
-			<script src="lib/threejs/nodes/materials/StandardNode.js"></script>
-			<script src="lib/threejs/nodes/materials/StandardNodeMaterial.js"></script>
+		{{>partials/scripts/NodeMaterials}}
 		
 		<!-- LOADERS -->
+		<!-- NodeMaterial Loader -->
+		<script src="scripts/lib/threejs/loaders/NodeMaterialLoader.js"></script>
 		
-			<!-- NodeMaterial Loader -->
-			<script src="lib/threejs/loaders/NodeMaterialLoader.js"></script>
-			
-			<!-- OBJ Loaders -->
-			<script src="lib/threejs/loaders/LoaderSupport.js"></script>
-			<script src="lib/threejs/loaders/OBJLoader.js"></script>
+		<!-- OBJ Loaders -->
+		<script src="scripts/lib/threejs/loaders/LoaderSupport.js"></script>
+		<script src="scripts/lib/threejs/loaders/OBJLoader.js"></script>
 			
 		<!-- FANCY SHADERS -->
+		<script id="vertexShader" type="x-shader/x-vertex">
 
-			<script id="vertexShader" type="x-shader/x-vertex">
+			varying vec2 vUv;
 
-				varying vec2 vUv;
+			void main()
+			{
+				vUv = uv;
+				vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+				gl_Position = projectionMatrix * mvPosition;
+			}
 
-				void main()
-				{
-					vUv = uv;
-					vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-					gl_Position = projectionMatrix * mvPosition;
-				}
+		</script>
 
-			</script>
+		<script id="fragmentShader" type="x-shader/x-fragment">
 
-			<script id="fragmentShader" type="x-shader/x-fragment">
+			uniform float time;
 
-				uniform float time;
+			varying vec2 vUv;
 
-				varying vec2 vUv;
+			void main(void) {
 
-				void main(void) {
+				vec2 p = - 1.0 + 2.0 * vUv;
+				float a = time * 40.0;
+				float d, e, f, g = 1.0 / 40.0 ,h ,i ,r ,q;
 
-					vec2 p = - 1.0 + 2.0 * vUv;
-					float a = time * 40.0;
-					float d, e, f, g = 1.0 / 40.0 ,h ,i ,r ,q;
+				e = 400.0 * ( p.x * 0.5 + 0.5 );
+				f = 400.0 * ( p.y * 0.5 + 0.5 );
+				i = 200.0 + sin( e * g + a / 150.0 ) * 20.0;
+				d = 200.0 + cos( f * g / 2.0 ) * 18.0 + cos( e * g ) * 7.0;
+				r = sqrt( pow( abs( i - e ), 2.0 ) + pow( abs( d - f ), 2.0 ) );
+				q = f / r;
+				e = ( r * cos( q ) ) - a / 2.0;
+				f = ( r * sin( q ) ) - a / 2.0;
+				d = sin( e * g ) * 176.0 + sin( e * g ) * 164.0 + r;
+				h = ( ( f + d ) + a / 2.0 ) * g;
+				i = cos( h + r * p.x / 1.3 ) * ( e + e + a ) + cos( q * g * 6.0 ) * ( r + h / 3.0 );
+				h = sin( f * g ) * 144.0 - sin( e * g ) * 212.0 * p.x;
+				h = ( h + ( f - e ) * q + sin( r - ( a + h ) / 7.0 ) * 10.0 + i / 4.0 ) * g;
+				i += cos( h * 2.3 * sin( a / 350.0 - q ) ) * 184.0 * sin( q - ( r * 4.3 + a / 12.0 ) * g ) + tan( r * g + h ) * 184.0 * cos( r * g + h );
+				i = mod( i / 5.6, 256.0 ) / 64.0;
+				if ( i < 0.0 ) i += 4.0;
+				if ( i >= 2.0 ) i = 4.0 - i;
+				d = r / 350.0;
+				d += sin( d * d * 8.0 ) * 0.52;
+				f = ( sin( a * g ) + 1.0 ) / 2.0;
+				gl_FragColor = vec4( vec3( f * i / 1.6, i / 2.0 + d / 13.0, i ) * d * p.x + vec3( i / 1.3 + d / 8.0, i / 2.0 + d / 18.0, i ) * d * ( 1.0 - p.x ), 1.0 );
 
-					e = 400.0 * ( p.x * 0.5 + 0.5 );
-					f = 400.0 * ( p.y * 0.5 + 0.5 );
-					i = 200.0 + sin( e * g + a / 150.0 ) * 20.0;
-					d = 200.0 + cos( f * g / 2.0 ) * 18.0 + cos( e * g ) * 7.0;
-					r = sqrt( pow( abs( i - e ), 2.0 ) + pow( abs( d - f ), 2.0 ) );
-					q = f / r;
-					e = ( r * cos( q ) ) - a / 2.0;
-					f = ( r * sin( q ) ) - a / 2.0;
-					d = sin( e * g ) * 176.0 + sin( e * g ) * 164.0 + r;
-					h = ( ( f + d ) + a / 2.0 ) * g;
-					i = cos( h + r * p.x / 1.3 ) * ( e + e + a ) + cos( q * g * 6.0 ) * ( r + h / 3.0 );
-					h = sin( f * g ) * 144.0 - sin( e * g ) * 212.0 * p.x;
-					h = ( h + ( f - e ) * q + sin( r - ( a + h ) / 7.0 ) * 10.0 + i / 4.0 ) * g;
-					i += cos( h * 2.3 * sin( a / 350.0 - q ) ) * 184.0 * sin( q - ( r * 4.3 + a / 12.0 ) * g ) + tan( r * g + h ) * 184.0 * cos( r * g + h );
-					i = mod( i / 5.6, 256.0 ) / 64.0;
-					if ( i < 0.0 ) i += 4.0;
-					if ( i >= 2.0 ) i = 4.0 - i;
-					d = r / 350.0;
-					d += sin( d * d * 8.0 ) * 0.52;
-					f = ( sin( a * g ) + 1.0 ) / 2.0;
-					gl_FragColor = vec4( vec3( f * i / 1.6, i / 2.0 + d / 13.0, i ) * d * p.x + vec3( i / 1.3 + d / 8.0, i / 2.0 + d / 18.0, i ) * d * ( 1.0 - p.x ), 1.0 );
+			}
 
-				}
-
-			</script>
+		</script>
 			
 		<!-- Actual document stuff -->
 		<section id="viewport">
@@ -223,11 +151,10 @@
 					<input type="color" id="color" value="#000000"/>
 					<button id="marble">!marble</button>
 					<button id="bot">!bot</button>
-					<!-- <button id="clear">!clear</button> -->
-					<!-- <button id="start">Start race</button> -->
+					<button id="fixCam">Fix camera</button>
 				</div>
 			</div>
 		</section>
-		<script src="render.js"></script>
+		<script src="scripts/client/render.js"></script>
 	</body>
 </html>

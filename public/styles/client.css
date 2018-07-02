@@ -1,20 +1,21 @@
 * {
 	margin:0;
+	box-sizing:border-box;
+}
+
+html {
+	background:#111;
+	padding:1px;
 }
 
 body {
 	font-family:"Do Hyeon",monospace;
-	background:#000;
-	width:100vw;
-	height:100vh;
+	background:#111;
+	height:calc(100vh - 2px);
 	overflow:hidden;
 	display:flex;
-}
-
-canvas {
-	position:absolute;
-	width:100vw;
-	height:100vh;
+	/* padding:1px; */
+	border:1px solid var(--theme-color);
 }
 
 a {
@@ -27,6 +28,7 @@ a:hover {
 
 #viewport {
 	flex:1;
+	margin:1px;
 }
 
 #sidebar {
@@ -39,7 +41,8 @@ a:hover {
 	align-items:center;
 	background:#161616;
 	color:#eee;
-	padding:8px;
+	padding:9px;
+	border-left:1px solid var(--theme-color);
 }
 
 	#sidebar > *:not(a) {
@@ -50,13 +53,14 @@ a:hover {
 	#sidebar > h4 {
 		text-align:center;
 		color:#444;
+		margin-bottom:1em;
 	}
 
 	hr {
 		border-top:none;
 		border-left:none;
 		border-right:none;
-		border-bottom:2px dashed #444;
+		border-bottom:2px dashed var(--theme-color-dark);
 		margin-bottom:12px;
 	}
 

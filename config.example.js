@@ -27,6 +27,8 @@ config.marbles.bots.names = [
 	},{
 		name: "Kcaz95 bot"
 	},{
+		name: "Rhyjohnson bot"
+	},{
 		name: "Nightbot",
 		color: "#000000"
 	}

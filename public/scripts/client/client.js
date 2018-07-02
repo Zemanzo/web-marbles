@@ -202,6 +202,13 @@ window.addEventListener("DOMContentLoaded", function(){
 		getXMLDoc(str);
 	},false);
 	
+	// Fix camera
+	document.getElementById("fixCam").addEventListener("click", function(){
+		controls.getObject().position.x = 0;
+		controls.getObject().position.y = 0;
+		controls.getObject().position.z = 0;
+	},false);
+	
 	// !clear
 	/* document.getElementById("clear").addEventListener("click", function(){
 		getXMLDoc("/client?clear=true");

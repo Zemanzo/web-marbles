@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Meta -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Editor - Manzo's Marbles</title>
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+		
+		<!-- Stylesheets -->
+			<!-- Webfont -->
+			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon" rel="stylesheet">
+			
+			<!-- Own styles -->
+			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
+			<link href="styles/common.css" rel="stylesheet" type="text/css">
+			<link href="styles/client.css" rel="stylesheet" type="text/css">
+			<link href="styles/editor.css" rel="stylesheet" type="text/css">
+		
+		<!-- Scripts -->
+		<script src="config.js"></script>
+		<script src="scripts/lib/OBJFile.js"></script>
+		<script src="scripts/whenDocReady.js"></script>
+		<script src="scripts/editor/editor.js"></script>
+	</head>
+	<body>
+		<!-- THREEJS -->
+		{{>partials/scripts/ThreeJS}}
+		
+		<!-- NODE MATERIALS -->
+		{{>partials/scripts/NodeMaterials}}
+		
+		<!-- LOADERS -->
+		<!-- NodeMaterial Loader -->
+		<script src="scripts/lib/threejs/loaders/NodeMaterialLoader.js"></script>
+		
+		<!-- OBJ Loaders -->
+		<script src="scripts/lib/threejs/loaders/LoaderSupport.js"></script>
+		<script src="scripts/lib/threejs/loaders/OBJLoader.js"></script>
+			
+		<!-- Actual document stuff -->
+		<section id="viewport">
+			<!-- Things are rendered here -->
+		</section>
+		<section id="sidebar">
+		
+			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
+			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
+			
+			<hr/> 
+
+			<h2 id="mode">EDITOR MODE</h2>
+			<div>
+				<button id="fixCam">Fix camera</button>
+			</div>
+			
+			<hr/>
+			
+			<div class="properties">
+				<h3>Terrain</h3>
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								Physics mesh
+							</td>
+							<td>
+								<input type="file" id="terPhysics"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Optimized visual mesh
+							</td>
+							<td>
+								<input type="file" id="terVisual"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				
+				<h3>Environment</h3>
+				<table>
+					<tbody>
+						<tr>
+							<td>
+								Water height
+							</td>
+							<td>
+								<input type="number" value="-9" id="envWaterHeight"/>
+							</td>
+						</tr>
+						<tr>
+							<td>
+								Sun inclination
+							</td>
+							<td>
+								<input type="number" value=".49" id="envSunInclination"/>
+							</td>
+						</tr>
+					</tbody>
+				</table>
+				
+			</div>
+			
+		</section>
+		<script src="scripts/editor/render.js"></script>
+	</body>
+</html>
