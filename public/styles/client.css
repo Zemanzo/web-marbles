@@ -29,7 +29,27 @@ a:hover {
 #viewport {
 	flex:1;
 	margin:1px;
+	position:relative;
 }
+
+	#viewportOverlay {
+		position:absolute;
+		left:0px;
+		top:0px;
+		height:100%;
+		width:100%;
+		display:flex;
+		flex-direction:row-reverse;
+		pointer-events: none;
+	}
+	
+	#viewportOverlay > * {
+		pointer-events: all;
+	}
+	
+	#viewportOverlay button {
+		height: 2em;
+	}
 
 #sidebar {
 	right:0px;

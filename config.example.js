@@ -40,6 +40,10 @@ config.marbles.rules.enterPeriod = 40; // Time in seconds
 config.marbles.rules.maxRoundLength = 160; // Time in seconds
 config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 
+/* Editor */
+config.editor = {};
+config.editor.enabled = false;
+
 /* Twitch connection */
 config.twitch = {};
 config.twitch.clientId = "<your-client-id-here>";

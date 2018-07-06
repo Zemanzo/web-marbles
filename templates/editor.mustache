@@ -30,17 +30,13 @@
 		<!-- NODE MATERIALS -->
 		{{>partials/scripts/NodeMaterials}}
 		
-		<!-- LOADERS -->
-		<!-- NodeMaterial Loader -->
-		<script src="scripts/lib/threejs/loaders/NodeMaterialLoader.js"></script>
-		
-		<!-- OBJ Loaders -->
-		<script src="scripts/lib/threejs/loaders/LoaderSupport.js"></script>
-		<script src="scripts/lib/threejs/loaders/OBJLoader.js"></script>
-			
 		<!-- Actual document stuff -->
 		<section id="viewport">
 			<!-- Things are rendered here -->
+			<div id="viewportOverlay">
+				<button id="fixCam">Fix camera</button>
+				<button id="togglePhysics">Toggle physics</button>
+			</div>
 		</section>
 		<section id="sidebar">
 		
@@ -50,57 +46,77 @@
 			<hr/> 
 
 			<h2 id="mode">EDITOR MODE</h2>
-			<div>
-				<button id="fixCam">Fix camera</button>
+			<div id="editorMode">
+				<div class="selected">PREFABS</div>
+				<div>WORLD</div>
 			</div>
 			
-			<hr/>
-			
-			<div class="properties">
-				<h3>Terrain</h3>
-				<table>
-					<tbody>
-						<tr>
-							<td>
-								Physics mesh
-							</td>
-							<td>
-								<input type="file" id="terPhysics"/>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Optimized visual mesh
-							</td>
-							<td>
-								<input type="file" id="terVisual"/>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				
-				<h3>Environment</h3>
-				<table>
-					<tbody>
-						<tr>
-							<td>
-								Water height
-							</td>
-							<td>
-								<input type="number" value="-9" id="envWaterHeight"/>
-							</td>
-						</tr>
-						<tr>
-							<td>
-								Sun inclination
-							</td>
-							<td>
-								<input type="number" value=".49" id="envSunInclination"/>
-							</td>
-						</tr>
-					</tbody>
-				</table>
-				
+			<div id="properties">
+				<div id="prefabs">
+					
+					<div class="prefab" id="prefabTemplate">
+						<div class="prefabHeader">
+							<input type="text" class="prefabName"/>
+							<button>X</button>
+						</div>
+						<div class="">
+							
+						</div>
+						
+					</div>
+					
+					<div id="addPrefab">
+						<b>+</b>
+						New prefab
+					</div>
+					
+				</div>
+				<div id="world">
+					<h3>Terrain</h3>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									Physics mesh
+								</td>
+								<td>
+									<input type="file" id="terPhysics"/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Optimized visual mesh
+								</td>
+								<td>
+									<input type="file" id="terVisual"/>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					
+					<h3>Environment</h3>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									Water height
+								</td>
+								<td>
+									<input type="number" value="-9" id="envWaterHeight"/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Sun inclination
+								</td>
+								<td>
+									<input type="number" value=".49" id="envSunInclination"/>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					
+				</div>
 			</div>
 			
 		</section>

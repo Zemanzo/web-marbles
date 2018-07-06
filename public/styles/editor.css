@@ -8,18 +8,79 @@ body {
 	font-size:2em;
 	color:var(--theme-color-dark);
 }
-.properties {
-	font-family: sans-serif;
-	font-size: .8em;
+
+#properties {
+	display:flex;
+	overflow:hidden;
 }
 
-.properties h3 {
-	font-family:"Do Hyeon",monospace;
-	font-size:1.3em;
+	#properties > div {
+		font-family:sans-serif;
+		font-size:.8em;
+		min-width:100%;
+		transition:margin-left .4s;
+	}
+
+	#properties > div h3 {
+		font-family:"Do Hyeon",monospace;
+		font-size:1.3em;
+		text-transform:uppercase;
+		margin:.7em 0 0 0;
+	}
+
+	#properties > div table {
+		min-width:100%;
+	}
+
+#editorMode {
+	display:flex;
+	text-align:center;
+}
+
+	#editorMode > * {
+		flex:1;
+		cursor:pointer;
+		background:var(--theme-color-dark);
+	}
+	#editorMode > *:hover,
+	#editorMode > *.selected {
+		background:var(--theme-color);
+		color:#111;
+	}
+	
+#addPrefab {
+	font-size:2.3em;
+	display:flex;
+	flex-direction:column;
+	justify-content:center;
+	align-items:center;
+	text-align:center;
+	min-height:200px;
+	border:2px dashed var(--theme-color-dark);
+	color:var(--theme-color-dark);
+	margin:12px;
 	text-transform:uppercase;
-	margin:.7em 0 0 0;
+	cursor:pointer;
 }
+	#addPrefab:hover {
+		border:2px dashed var(--theme-color);
+		color:var(--theme-color);
+	}
 
-.properties table {
-	min-width: 100%;
+	#addPrefab b {
+		font-size:2.3em;
+	}
+	
+.prefab {
+	border:1px solid var(--theme-color);
+	background:#262626;
+	margin-top:12px;
 }
+	.prefabHeader {
+		display:flex;
+	}
+	
+	.prefabName {
+		margin:4px;
+		flex:1;
+	}

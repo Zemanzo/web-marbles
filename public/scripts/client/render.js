@@ -53,11 +53,11 @@ document.addEventListener('pointerlockchange', function(event){
 
 document.addEventListener('pointerlockerror', function(event){}, false);
 
-viewport.addEventListener('mousedown', function (event) {
+renderer.domElement.addEventListener('mousedown', function (event) {
 	element.requestPointerLock();
 }, false );
 
-viewport.addEventListener('mouseup', function (event) {
+document.body.addEventListener('mouseup', function (event) {
 	document.exitPointerLock();
 }, false );
 

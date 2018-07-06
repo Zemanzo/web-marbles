@@ -418,7 +418,10 @@ app.get("/debug", function (req, res) {
 });
 
 app.get("/editor", function (req, res) {
-	res.render("editor",{});
+	if (config.editor.enabled)
+		res.render("editor",{});
+	else 
+		res.render("editorDisabled",{});
 });
 
 /* Express listener */
