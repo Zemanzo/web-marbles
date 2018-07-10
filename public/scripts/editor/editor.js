@@ -6,6 +6,10 @@ whenDocReady.add(
 		readyState:"complete"
 	}
 );
+
+let editor = {
+	models: []
+};
 	
 window.addEventListener("DOMContentLoaded", function(){
 	
@@ -51,14 +55,14 @@ window.addEventListener("DOMContentLoaded", function(){
 	
 	// Import map
     document.getElementById('terPhysics').addEventListener('change', function(e) {
-		var file = this.files[0];
-		var reader = new FileReader();
-		var loader = new THREE.OBJLoader();
+		let file = this.files[0];
+		let reader = new FileReader();
+		let loader = new THREE.OBJLoader();
 		reader.onload = function(e) {
-			var result = reader.result;
+			let result = reader.result;
 			// parse using your corresponding loader
-			var object3d = loader.parse( result );
-			var wireframeMaterial = new THREE.MeshStandardMaterial( {
+			let object3d = loader.parse( result );
+			let wireframeMaterial = new THREE.MeshStandardMaterial( {
 				color: 0x000000,
 				emissive: 0xff00ff,
 				roughness: 1,
@@ -71,12 +75,69 @@ window.addEventListener("DOMContentLoaded", function(){
 			scene.add( object3d );
 		}
 		reader.readAsText(file, "utf-8");
-
     },false);
+	
+	// Add models
+	let GLTFLoader = new THREE.GLTFLoader();
+    document.getElementById('addModelFile').addEventListener('change', function(e) {
+		for (file of this.files){
+			let reader = new FileReader();
+			reader.onload = function(e) {
+				let result = reader.result;
+				// parse using your corresponding loader
+				GLTFLoader.parse( result, null, function(object3d){
+						console.log(object3d);
+						scene.add( object3d.scene);
+					}, function(error){
+						console.log(error);
+					}
+				);
+			}
+			reader.readAsText(file, "utf-8");
+		}
+    },false);
+	
+	// New prefab
+	let collapse = function(){
+		let parent = this.closest(".prefab");
+		if ( parent.className.indexOf("collapsed") === -1 ){
+			this.children[0].className = "icofont-caret-right"
+			parent.className = "prefab collapsed";
+		} else {
+			this.children[0].className = "icofont-caret-right rotated"
+			parent.className = "prefab";
+		}
+	}
+	
+	// Delete prefab
+	let deletePrefab = function(){
+		let parent = this.closest(".prefab");
+		let name = parent.getElementsByClassName("prefabName")[0].value;
+		if ( confirm("Are you sure you want to delete this prefab? ("+name+") ("+parent.id+")") ) {
+			parent.parentNode.removeChild(parent);
+		}
+	}
+	
+	document.getElementById("addPrefab").addEventListener("click",function(){
+		let clone = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
+		let uuid = generateTinyUUID();
+		clone.id = "prefab-"+uuid;
+		clone.dataset.uuid = uuid;
+		clone.getElementsByClassName("collapse")[0].addEventListener("click",collapse,false);
+		clone.getElementsByClassName("delete")[0].addEventListener("click",deletePrefab,false);
+		clone.getElementsByClassName("detailsID")[0].innerHTML = uuid;
+		
+		let prefabList = document.getElementById("prefabsList");
+		clone = prefabList.insertBefore(clone,document.getElementById("addPrefab"));
+		
+		// Focus to name input so user can start typing right away
+		clone.getElementsByClassName("prefabName")[0].focus();
+	},false);
+	
 },false);
 
 function getXMLDoc(doc,callback){
-	var xmlhttp;
+	let xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
@@ -87,4 +148,24 @@ function getXMLDoc(doc,callback){
 	}
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
+}
+
+let TUUIDs = [];
+let charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function generateTinyUUID(){
+	let l = 4;
+	let possibilities = Math.pow(charset.length,l);
+	let timeString = (new Date()).getTime().toString();
+	let decimal = parseInt(timeString.substr(timeString.length - possibilities.toString().length)) % possibilities;
+	while(TUUIDs.indexOf(decimal) !== -1){
+		decimal++;
+	}
+	TUUIDs.push(decimal);
+	let tUUID = "";
+	for (let i = 0; i < l; i++){
+		let remain = decimal % charset.length;
+		decimal = (decimal - remain) / charset.length;
+		tUUID += charset.substr(remain,1);
+	}
+	return tUUID.split("").reverse().join("");
 }

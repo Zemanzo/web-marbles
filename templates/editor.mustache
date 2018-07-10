@@ -12,7 +12,7 @@
 			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon" rel="stylesheet">
 			
 			<!-- Own styles -->
-			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
+			<link href="icofont/css/icofont.css" rel="stylesheet">
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
@@ -47,30 +47,130 @@
 
 			<h2 id="mode">EDITOR MODE</h2>
 			<div id="editorMode">
-				<div class="selected">PREFABS</div>
+				<div class="selected">MODELS</div>
+				<div>PREFABS</div>
 				<div>WORLD</div>
+				<div>SETTINGS</div>
 			</div>
 			
 			<div id="properties">
-				<div id="prefabs">
-					
-					<div class="prefab" id="prefabTemplate">
-						<div class="prefabHeader">
-							<input type="text" class="prefabName"/>
-							<button>X</button>
+				
+				<div>
+					<h3>Models</h3>
+					<div id="models">
+						<div class="model">
+							<i class="icofont-tree"></i>
+							tree1a_lod0.gltf
 						</div>
-						<div class="">
-							
+						<div class="model">
+							<i class="icofont-tree"></i>
+							tree1b_lod2.gltf
+						</div>
+					</div>
+					<div id="addModel" class="add" onclick="document.getElementById('addModelFile').click();">
+						<input type="file" id="addModelFile" multiple />
+						<b>+</b>
+						Add model(s)
+					</div>
+				</div>
+			
+				<div id="prefabs">
+					<h3>Inspector</h3>
+					<div id="inspector">
+						<table>
+							<tbody>
+								<tr>
+									<td>
+										Object name
+									</td>
+									<td>
+										<input type="text" id="inspectorName"/>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										Model
+									</td>
+									<td>
+										<select id="inspectorModel">
+											<option value="Tree01">&lt; Select model &gt;</option>
+											<option value="Tree01">Tree01</option>
+											<option value="Tree02">Tree02</option>
+											<option value="Tree03">Tree03</option>
+											<option value="Tree04">Tree04</option>
+										</select> 
+									</td>
+								</tr>
+							</tbody>
+						</table>
+						<div class="transform">
+							<div class="translation">
+								<div>Position</div>
+								<div><span class="x">X</span><input type="number" value="0" step=".1"/></div>
+								<div><span class="y">Y</span><input type="number" value="0" step=".1"/></div>
+								<div><span class="z">Z</span><input type="number" value="0" step=".1"/></div>
+							</div>
+							<div class="rotation">
+								<div>Rotation</div>
+								<div><span class="x">X</span><input type="number" value="0" step="1"/></div>
+								<div><span class="y">Y</span><input type="number" value="0" step="1"/></div>
+								<div><span class="z">Z</span><input type="number" value="0" step="1"/></div>
+							</div>
+							<div class="scale">
+								<div>Scale</div>
+								<div><span class="x">X</span><input type="number" value="1"/></div>
+								<div><span class="y">Y</span><input type="number" value="1"/></div>
+								<div><span class="z">Z</span><input type="number" value="1"/></div>
+							</div>
+						</div>
+					</div>
+					<h3>List</h3>
+					<div id="prefabsList">
+						<div class="prefab collapsed" id="prefabTemplate">
+							<div class="prefabHeader">
+								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye-blocked"></i></button>
+								<button class="collapse" title="Collapse"><i class="icofont-caret-right"></i></button>
+								<input type="text" class="prefabName" placeholder="Add a name..." required />
+								<button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button>
+								<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
+							</div>
+							<div class="prefabDetails">
+								<div class="detailsID">
+									LMAO
+								</div>
+								<div class="detailsObjects">
+									Objects: 0
+								</div>
+								<div class="detailsColliders">
+									Colliders: 0
+								</div>
+								<div class="detailsTotal">
+									Total: 0
+								</div>
+							</div>
+							<div class="objectList">
+								<div class="object">
+									<i class="icofont-cube"></i> TreeModel
+								</div>
+								<div class="collider">
+									<i class="icofont-barricade"></i> Collideryada
+								</div>
+							</div>
+							<div class="prefabActions">
+								<button>+ Add object</button>
+								<button>+ Add collider</button>
+							</div>
+						
 						</div>
 						
-					</div>
+						<div id="addPrefab" class="add">
+							<b>+</b>
+							New prefab
+						</div>
 					
-					<div id="addPrefab">
-						<b>+</b>
-						New prefab
 					</div>
-					
 				</div>
+				
 				<div id="world">
 					<h3>Terrain</h3>
 					<table>
@@ -117,6 +217,31 @@
 					</table>
 					
 				</div>
+				
+				<div id="settings">
+					<h3>Settings</h3>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									Confirm prefab deletion
+								</td>
+								<td>
+									<input type="checkbox" id="editorConfirmDeletion" checked/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Prevent accidental navigation
+								</td>
+								<td>
+									<input type="checkbox" id="editorPreventUnsaved" checked/>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				
 			</div>
 			
 		</section>

@@ -138,12 +138,12 @@ var gridHelper = new THREE.GridHelper( 20, 20 );
 scene.add( gridHelper );
 gridHelper.position.y = -.01;
 
-var box = new THREE.BoxGeometry( 20,20,20 );
+/* var box = new THREE.BoxGeometry( 20,20,20 );
 var materialColor = new THREE.Color(0x228822);
 var boxMaterial = new THREE.MeshStandardMaterial({ color: materialColor, roughness: 1 });
 var boxMesh = new THREE.Mesh(box, boxMaterial);
 scene.add( boxMesh );
-boxMesh.position.y = -10.02;
+boxMesh.position.y = -10.02; */
 
 // Sun
 

@@ -31,3 +31,16 @@ body {
 		max-height:1.8em;
 		margin-right:12px;
 	}
+
+button {
+	color:var(--theme-color);
+	background:#111;
+	border:none;
+	cursor:pointer;
+	padding:4px;
+	font-weight:600;
+}
+
+button:hover {
+	text-decoration:underline;
+}
