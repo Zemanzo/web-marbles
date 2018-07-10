@@ -58,19 +58,15 @@
 				<div>
 					<h3>Models</h3>
 					<div id="models">
-						<div class="model">
-							<i class="icofont-tree"></i>
-							tree1a_lod0.gltf
-						</div>
-						<div class="model">
-							<i class="icofont-tree"></i>
-							tree1b_lod2.gltf
+						<div class="model" id="modelTemplate">
+							<div class="name">tree1a_lod0.gltf</div>
+							<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
 						</div>
 					</div>
 					<div id="addModel" class="add" onclick="document.getElementById('addModelFile').click();">
-						<input type="file" id="addModelFile" multiple />
-						<b>+</b>
-						Add model(s)
+						<input type="file" id="addModelFile" multiple accept=".gltf,.glb" />
+						<i class="icofont-plus"></i>
+						<span>Add model(s)</span>
 					</div>
 				</div>
 			
@@ -164,8 +160,8 @@
 						</div>
 						
 						<div id="addPrefab" class="add">
-							<b>+</b>
-							New prefab
+							<i class="icofont-plus"></i>
+							<span>New prefab</span>
 						</div>
 					
 					</div>
@@ -241,6 +237,12 @@
 						</tbody>
 					</table>
 				</div>
+				
+			</div>
+				
+			<hr/> 
+			
+			<div id="log">
 				
 			</div>
 			

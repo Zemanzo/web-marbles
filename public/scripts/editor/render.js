@@ -254,6 +254,13 @@ orangeLight.position.x = 5;
 orangeLight.position.y = 70;
 orangeLight.position.z = -500; */
 
+// Editor groups
+
+for (key in editor.groups){
+	editor.groups[key] = new THREE.Group();
+	scene.add(editor.groups[key]);
+}
+
 //
 
 function animate() {
@@ -302,7 +309,10 @@ function animate() {
 
 // Stuff that can only be rendered after network data has been received
 function renderInit(){ 
+
 	
+	
+	editorLog("Renderer loaded");
 	animate();
 }
 

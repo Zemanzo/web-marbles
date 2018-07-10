@@ -16,6 +16,7 @@ body {
 #properties {
 	display:flex;
 	overflow:hidden;
+	flex:1;
 }
 
 	#properties > div {
@@ -61,19 +62,19 @@ body {
 	justify-content:space-around;
 	align-items:center;
 	text-align:center;
-	border:2px dashed var(--theme-color-dark);
 	color:var(--theme-color-dark);
 	margin:12px;
 	text-transform:uppercase;
 	cursor:pointer;
 }
+	.add i {
+		font-size:1.3em;
+	}
 	.add:hover {
-		border:2px dashed var(--theme-color);
 		color:var(--theme-color);
 	}
-
-	.add b {
-		font-size:2.3em;
+	.add:hover span {
+		text-decoration:underline;
 	}
 	
 #addModel {
@@ -91,10 +92,30 @@ body {
 		font-family:monospace;
 	}
 	
+	#modelTemplate {
+		display:none;
+	}
+	
 	.model {
 		cursor:pointer;
 		margin:2px 0px;
+		padding-left:2px;
 		background:#262626;
+		display:flex;
+	}
+	
+	.model:hover {
+		background:#333333;
+	}
+	
+	.model.selected {
+		background:#444;
+	}
+	
+	.model .name {
+		flex:1;
+		display:flex;
+		align-items:center;
 	}
 
 #prefabs {
@@ -179,12 +200,12 @@ body {
 	.prefab .showPrefab {
 		color:#666;
 	}
-	.prefab .delete {
+	.delete {
 		background:transparent;
 		color:#f00;
 		border:none;
 	}
-	.prefab .delete:hover {
+	.delete:hover {
 		background:#f00;
 		color:#fff;
 	}
@@ -283,6 +304,20 @@ body {
 	.rotation input[type=number]::after {
 		content:"&deg;";
 	}
+	
+#log {
+	background:#111;
+	display:flex;
+	flex-direction:column;
+	justify-content: flex-end;
+	height:60px;
+	font-family:monospace;
+	overflow-y:auto;
+}
+
+#log .error {
+	color: #d00;
+}
 
 input[type=number] {
 	max-width:50px;

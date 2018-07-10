@@ -8,10 +8,18 @@ whenDocReady.add(
 );
 
 let editor = {
-	models: []
+	log: undefined,
+	groups: {
+		models: undefined,
+		prefabs: undefined
+	},
+	models: {},
+	prefabs: {},
+	selectedModel: null
 };
 	
 window.addEventListener("DOMContentLoaded", function(){
+	editor.log = document.getElementById("log");
 	
 	// Menu
 	let childValue = 0;
@@ -79,22 +87,52 @@ window.addEventListener("DOMContentLoaded", function(){
 	
 	// Add models
 	let GLTFLoader = new THREE.GLTFLoader();
-    document.getElementById('addModelFile').addEventListener('change', function(e) {
-		for (file of this.files){
-			let reader = new FileReader();
-			reader.onload = function(e) {
-				let result = reader.result;
+    document.getElementById("addModelFile").addEventListener("change", function(e) {
+		Array.from(this.files).forEach(function(file){
+			file.reader = new FileReader();
+			file.reader.onload = function(e) {
+				let result = file.reader.result;
 				// parse using your corresponding loader
-				GLTFLoader.parse( result, null, function(object3d){
-						console.log(object3d);
-						scene.add( object3d.scene);
+				GLTFLoader.parse( result, null, function(model){
+						model.userData.name = file.name;
+						if (!Object.keys(editor.models).some((key)=>{ // Check if model is already loaded
+							return key === file.name;
+						})){
+							// Add to model list
+							let clone = document.getElementById("modelTemplate").cloneNode(true); // deep clone
+							clone.id = file.name;
+							clone.getElementsByClassName("name")[0].innerHTML = file.name;
+							clone.getElementsByClassName("name")[0].addEventListener("mousedown",function(){
+								if (editor.selectedModel){
+									editor.models[editor.selectedModel].scene.visible = false;
+									document.getElementById(editor.selectedModel).className = "model";
+								}
+								editor.selectedModel = this.parentNode.id;
+								editor.models[editor.selectedModel].scene.visible = true;
+								document.getElementById(editor.selectedModel).className = "model selected";
+								
+							},false);
+							
+							// Add to DOM
+							let modelList = document.getElementById("models");
+							clone = modelList.appendChild(clone);
+							
+							// Add to scene
+							editor.groups.models.add(model.scene);
+							model.scene.visible = false;
+							
+							editor.models[file.name] = model;
+							editorLog("Loaded model: "+file.name,"info");
+						} else {
+							editorLog("Model already loaded. ("+file.name+")","error");
+						}						
 					}, function(error){
 						console.log(error);
 					}
 				);
 			}
-			reader.readAsText(file, "utf-8");
-		}
+			file.reader.readAsText(file, "utf-8");
+		});
     },false);
 	
 	// New prefab
@@ -148,6 +186,25 @@ function getXMLDoc(doc,callback){
 	}
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
+}
+function editorLog(message,type){
+	let date = new Date();
+	let hrs = date.getHours();
+	let min = date.getMinutes();
+	let sec = date.getSeconds();
+	if (hrs < 10){
+		hrs = "0"+hrs;
+	}
+	if (min < 10){
+		min = "0"+min;
+	}
+	if (sec < 10){
+		sec = "0"+sec;
+	}
+	editor.log.insertAdjacentHTML(
+		"beforeend",
+		"<div class='"+type+"'>["+hrs+":"+min+":"+sec+"] "+message+"</div>"
+	);
 }
 
 let TUUIDs = [];
