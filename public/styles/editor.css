@@ -146,6 +146,7 @@ body {
 }
 	.prefabHeader {
 		display:flex;
+		min-height:calc(1.4em + 12px);
 	}
 		.prefabHeader i {
 			display:inline-block;
@@ -200,14 +201,17 @@ body {
 	.prefab .showPrefab {
 		color:#666;
 	}
+	.prefab .delete,
 	.delete {
 		background:transparent;
 		color:#f00;
 		border:none;
 	}
+	.prefab .delete:hover,
 	.delete:hover {
 		background:#f00;
 		color:#fff;
+		text-decoration:none;
 	}
 	
 	.prefab .objectList {
@@ -223,10 +227,37 @@ body {
 	
 	.prefab .objectList > div {
 		cursor:pointer;
+		display:flex;
+		align-items:center;
 	}
 	.prefab .objectList > div:hover {
-		background:#333;
+		background:#222;
 	}
+	
+		.prefab .objectList > div.selected {
+			background:#333;
+		}
+		.prefab .objectList > div .name {
+			flex:1;
+			padding-left:3px;
+		}
+		.prefab .objectList > div .uuid {
+			font-family:monospace;
+			padding-right:3px;
+			color:#666;
+		}
+		/* wow so optimized omg no layout recalculation */
+		.prefab .objectList > div .delete {
+			visibility:hidden;
+		}
+		.prefab .objectList > div:hover .delete {
+			visibility:visible;
+		}
+	
+		#prefabObjectTemplate,
+		#prefabColliderTemplate {
+			display:none;
+		}
 	
 	.prefabActions {
 		display:flex;
@@ -247,48 +278,57 @@ body {
 	}
 
 /* INSPECTOR */
+#inspector {
+	height:170px;
+	overflow-y:auto;
+}
+
 #inspector.noSelection {
 	opacity:.5;
 	filter:grayscale(100%);
-	cursor:not-allowed;
 }
 
-.transform {}
-
-	.transform .title i.icon-down-open {
-		color:#222;
-	}
-	.transform .title i:not(.cIcon) {
-		cursor:pointer;
-	}
-	.transform .title i:not(.cIcon):hover {
-		color:var(--theme-color);
+	#inspector input:disabled {
+		cursor:not-allowed;
 	}
 
-	.transform > div {
-		flex:1;
-		display:flex;
-		margin-bottom:1px;
-		font-size:1em;
+	#inspector .objectProperty,
+	#inspector .colliderProperty {
+		display:none;
 	}
-
-	.transform > div {
-		padding:1px 0px 1px 2px;
+	#inspector.objectSelection .objectProperty,
+	#inspector.colliderSelection .colliderProperty {
+		display:table-row;
 	}
+	#inspector h3:after {
+		content:"";
+		text-transform: uppercase;
+		color:#999;
+	}
+	#inspector.objectSelection h3:after { content:" - Object" }
+	#inspector.colliderSelection h3:after { content:" - Collider" }
 
-	.transform > div:hover {
+	#inspector table {
+		border-collapse:collapse;
+	}
+	
+	#inspector table tr:hover {
 		background:#363636;
 	}
+	
+.transform {}
 
-	.transform > div > div:first-child {
+	.transform > tr > td:first-child {
 		flex:3;
 		min-width:75px;
 	}
 
-	.transform > div > div {
-		display:flex;
-		max-height:18px;
+	.transform > tr > td:not(:first-child) {
 		margin-right:2px;
+	}
+
+	.transform > tr > td > div {
+		display:inline-flex;
 	}
 
 	.transform span {
@@ -305,6 +345,7 @@ body {
 		content:"&deg;";
 	}
 	
+/* LOG */
 #log {
 	background:#111;
 	display:flex;
@@ -312,18 +353,23 @@ body {
 	justify-content: flex-end;
 	height:60px;
 	font-family:monospace;
-	overflow-y:auto;
+	font-size:.9em;
+	overflow-y:auto; /* fuck u */
 }
 
 #log .error {
 	color: #d00;
 }
 
+#log .warn {
+	color: #dd0;
+}
+
 input[type=number] {
 	max-width:50px;
 	min-width:30px;
 	width: 100%;
-	max-height:18px;
+	max-height:19px;
 	padding:1px 2px 1px 3px;
 	-webkit-appearance: textfield;
 	-moz-appearance:    textfield;
@@ -342,7 +388,7 @@ select {
 input[type=number]:focus {
 	background:#262626;
 }
-input[type=number]:hover {
+input[type=number]:hover:not(:disabled) {
 	-webkit-appearance: initial;
 	-moz-appearance:    initial;
 	appearance:         initial;

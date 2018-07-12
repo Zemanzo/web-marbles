@@ -261,6 +261,26 @@ for (key in editor.groups){
 	scene.add(editor.groups[key]);
 }
 
+// Default model
+
+let GLTFLoader = new THREE.GLTFLoader();
+GLTFLoader.load(
+	// resource URL
+	'resources/models/default.gltf',
+	// called when the resource is loaded
+	function ( gltf ) {
+
+		editor.defaultModel = gltf.scene;
+
+	},
+	null,
+	function ( error ) {
+
+		console.log( 'An error happened', error );
+
+	}
+);
+
 //
 
 function animate() {
@@ -268,30 +288,29 @@ function animate() {
 	
 	
 	// Update controls
-	if ( controlsEnabled === true ) {
-		var time = performance.now();
-		var delta = ( time - prevTime ) / 1000;
+	var time = performance.now();
+	var delta = ( time - prevTime ) / 1000;
 
-		velocity.x -= velocity.x * 10.0 * delta;
-		velocity.y -= velocity.y * 10.0 * delta;
-		velocity.z -= velocity.z * 10.0 * delta;
+	velocity.x -= velocity.x * 10.0 * delta;
+	velocity.y -= velocity.y * 10.0 * delta;
+	velocity.z -= velocity.z * 10.0 * delta;
 
-		direction.z = Number( moveForward ) - Number( moveBackward );
-		direction.y = Number( moveForward ) - Number( moveBackward );
-		direction.x = Number( moveLeft ) - Number( moveRight );
-		direction.normalize(); // this ensures consistent movements in all directions
+	direction.z = Number( moveForward ) - Number( moveBackward );
+	direction.y = Number( moveForward ) - Number( moveBackward );
+	direction.x = Number( moveLeft ) - Number( moveRight );
+	direction.normalize(); // this ensures consistent movements in all directions
 
+	if ( controls.enabled === true ) {
 		if ( moveForward || moveBackward ) velocity.z -= direction.z * config.controls.camera.speed * delta;
 		if ( moveForward || moveBackward ) velocity.y -= direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI*.5);
 		if ( moveLeft || moveRight ) velocity.x -= direction.x * config.controls.camera.speed* delta;
+	}
+	/* console.log(velocity.x * delta, controlsEnabled); */
+	controls.getObject().translateX( velocity.x * delta );
+	controls.getObject().translateY( velocity.y * delta );
+	controls.getObject().translateZ( velocity.z * delta );
 
-		/* console.log(velocity.x * delta, controlsEnabled); */
-		controls.getObject().translateX( velocity.x * delta );
-		controls.getObject().translateY( velocity.y * delta );
-		controls.getObject().translateZ( velocity.z * delta );
-
-		prevTime = time;
-	}	
+	prevTime = time;
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
@@ -309,9 +328,6 @@ function animate() {
 
 // Stuff that can only be rendered after network data has been received
 function renderInit(){ 
-
-	
-	
 	editorLog("Renderer loaded");
 	animate();
 }

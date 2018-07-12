@@ -47,9 +47,9 @@
 
 			<h2 id="mode">EDITOR MODE</h2>
 			<div id="editorMode">
-				<div class="selected">MODELS</div>
-				<div>PREFABS</div>
-				<div>WORLD</div>
+				<div class="selected" data-scene-group="models">MODELS</div>
+				<div data-scene-group="prefabs">PREFABS</div>
+				<div data-scene-group="world">WORLD</div>
 				<div>SETTINGS</div>
 			</div>
 			
@@ -71,8 +71,8 @@
 				</div>
 			
 				<div id="prefabs">
-					<h3>Inspector</h3>
-					<div id="inspector">
+					<div id="inspector" class="noSelection">
+						<h3>Inspector</h3>
 						<table>
 							<tbody>
 								<tr>
@@ -80,45 +80,71 @@
 										Object name
 									</td>
 									<td>
-										<input type="text" id="inspectorName"/>
+										<input type="text" id="inspectorName" disabled />
 									</td>
 								</tr>
-								<tr>
+							</tbody>
+							<tbody class="transform">
+								<tr class="translation">
+									<td>Position</td>
+									<td>
+										<div><span class="x">X</span><input type="number" value="0" step=".1" disabled /></div>
+										<div><span class="y">Y</span><input type="number" value="0" step=".1" disabled /></div>
+										<div><span class="z">Z</span><input type="number" value="0" step=".1" disabled /></div>
+									</td>
+								</tr>
+								<tr class="rotation">
+									<td>Rotation</td>
+									<td>
+										<div><span class="x">X</span><input type="number" value="0" step="1" disabled /></div>
+										<div><span class="y">Y</span><input type="number" value="0" step="1" disabled /></div>
+										<div><span class="z">Z</span><input type="number" value="0" step="1" disabled /></div>
+									</td>
+								</tr>
+								<tr class="scale">
+									<td>Scale</td>
+									<td>
+										<div><span class="x">X</span><input type="number" value="1" disabled /></div>
+										<div><span class="y">Y</span><input type="number" value="1" disabled /></div>
+										<div><span class="z">Z</span><input type="number" value="1" disabled /></div>
+									</td>
+								</tr>
+							</tbody>
+							<tbody>
+								<tr class="objectProperty">
 									<td>
 										Model
 									</td>
 									<td>
-										<select id="inspectorModel">
-											<option value="Tree01">&lt; Select model &gt;</option>
-											<option value="Tree01">Tree01</option>
-											<option value="Tree02">Tree02</option>
-											<option value="Tree03">Tree03</option>
-											<option value="Tree04">Tree04</option>
+										<select id="inspectorModel" disabled >
+											<option value="null" selected >&lt; Select model &gt;</option>
+										</select> 
+									</td>
+								</tr>
+								<tr class="objectProperty">
+									<td>
+										LODs
+									</td>
+									<td>
+										fuck idk
+									</td>
+								</tr>
+								<tr class="colliderProperty">
+									<td>
+										Collider shape
+									</td>
+									<td>
+										<select id="inspectorModel" disabled >
+											<option value="box" selected >Box</option>
+											<option value="sphere">Sphere</option>
+											<option value="cylinder">Cylinder</option>
+											<option value="cone">Cone</option>
+											<option value="capsule">Capsule</option>
 										</select> 
 									</td>
 								</tr>
 							</tbody>
 						</table>
-						<div class="transform">
-							<div class="translation">
-								<div>Position</div>
-								<div><span class="x">X</span><input type="number" value="0" step=".1"/></div>
-								<div><span class="y">Y</span><input type="number" value="0" step=".1"/></div>
-								<div><span class="z">Z</span><input type="number" value="0" step=".1"/></div>
-							</div>
-							<div class="rotation">
-								<div>Rotation</div>
-								<div><span class="x">X</span><input type="number" value="0" step="1"/></div>
-								<div><span class="y">Y</span><input type="number" value="0" step="1"/></div>
-								<div><span class="z">Z</span><input type="number" value="0" step="1"/></div>
-							</div>
-							<div class="scale">
-								<div>Scale</div>
-								<div><span class="x">X</span><input type="number" value="1"/></div>
-								<div><span class="y">Y</span><input type="number" value="1"/></div>
-								<div><span class="z">Z</span><input type="number" value="1"/></div>
-							</div>
-						</div>
 					</div>
 					<h3>List</h3>
 					<div id="prefabsList">
@@ -134,7 +160,7 @@
 								<div class="detailsID">
 									LMAO
 								</div>
-								<div class="detailsObjects">
+							<!-- 	<div class="detailsObjects">
 									Objects: 0
 								</div>
 								<div class="detailsColliders">
@@ -142,19 +168,25 @@
 								</div>
 								<div class="detailsTotal">
 									Total: 0
-								</div>
+								</div> -->
 							</div>
 							<div class="objectList">
-								<div class="object">
-									<i class="icofont-cube"></i> TreeModel
+								<div class="object" id="prefabObjectTemplate">
+									<i class="icofont-cube"></i>
+									<div class="name">objectName</div>
+									<div class="uuid">1337</div>
+									<i class="icofont-close delete"></i>
 								</div>
-								<div class="collider">
-									<i class="icofont-barricade"></i> Collideryada
+								<div class="collider" id="prefabColliderTemplate">
+									<i class="icofont-barricade"></i>
+									<div class="name">colliderName</div>
+									<div class="uuid">dank</div>
+									<i class="icofont-close delete"></i>
 								</div>
 							</div>
 							<div class="prefabActions">
-								<button>+ Add object</button>
-								<button>+ Add collider</button>
+								<button class="addObject">+ Add object</button>
+								<button class="addCollider">+ Add collider</button>
 							</div>
 						
 						</div>
