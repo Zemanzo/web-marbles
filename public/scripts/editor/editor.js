@@ -116,7 +116,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	editor.inspector.elements.name.addEventListener("change",inspectorChangeName,false);
 	editor.inspector.elements.name.addEventListener("input",inspectorChangeName,false);
 	
-	// Change model
+	// Change model (OBJECT)
 	let inspectorChangeModel = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
@@ -136,6 +136,35 @@ window.addEventListener("DOMContentLoaded", function(){
 		}
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
+	
+	// Change shape (COLLIDER)
+	let inspectorChangeShape = function(){
+		if (editor.inspector.selected){
+			let uuid = editor.inspector.selected.dataset.uuid;
+			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			let newGeometry;
+			switch(this.value){
+				case "sphere":
+					newGeometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
+					break;
+				case "cylinder":
+					newGeometry = new THREE.CylinderBufferGeometry( 1, 1, 4, 12 );
+					break;
+				case "cone":
+					newGeometry = new THREE.ConeBufferGeometry( 1, 4, 12 );
+					break;
+				/* case "capsule":
+					newGeometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+					break; */
+				case "box":
+				default:
+					newGeometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+					break;
+			}
+			editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry = newGeometry;
+		}
+	}
+	editor.inspector.elements.shape.addEventListener("change",inspectorChangeShape,false);
 	
 	//
 	
@@ -272,15 +301,9 @@ window.addEventListener("DOMContentLoaded", function(){
 			let result = reader.result;
 			// parse using your corresponding loader
 			let object3d = loader.parse( result );
-			let wireframeMaterial = new THREE.MeshStandardMaterial( {
-				color: 0x000000,
-				emissive: 0xff00ff,
-				roughness: 1,
-				wireframe:true
-			} );
 			object3d.children[0].geometry.computeBoundingBox();
 			object3d.children[0].geometry.center();
-			object3d.children[0].material = wireframeMaterial;
+			object3d.children[0].material = editor.physicsMaterial;
 			object3d.children[0].setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
 			scene.add( object3d );
 		}
@@ -419,6 +442,10 @@ window.addEventListener("DOMContentLoaded", function(){
 	let addCollider = function(){
 		let parent = this.closest(".prefab");
 		let uuid = addTemplateElement.call(this,"Collider",parent);
+		let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+		let box = new THREE.Mesh( geometry, editor.physicsMaterial );
+		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
+		editor.prefabs[parent.dataset.uuid].group.add(box);
 	}
 	
 	document.getElementById("addPrefab").addEventListener("click",function(){

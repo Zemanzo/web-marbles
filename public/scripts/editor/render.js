@@ -283,6 +283,13 @@ GLTFLoader.load(
 	}
 );
 
+// Default physics material
+editor.physicsMaterial = new THREE.MeshStandardMaterial( {
+	color: 0x000000,
+	emissive: 0xff00ff,
+	roughness: 1,
+	wireframe:true
+} );
 //
 
 function animate() {
