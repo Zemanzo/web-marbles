@@ -135,6 +135,8 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
 	
+	//
+	
 	// Change transform
 	let transformElements = editor.inspector.elements.transform;
 	let transformFunctions = {};
@@ -145,43 +147,6 @@ window.addEventListener("DOMContentLoaded", function(){
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
 		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
 	}
-	for (key in transformElements.label.translate){ // Label
-		let el = transformElements.label.translate[key];
-		el.addEventListener("mousedown",function(e){
-			this.requestPointerLock();
-			editor.inspector.dragValue = {
-				x: e.clientX,
-				y: e.clientY,
-				value: parseFloat(this.nextElementSibling.value),
-				element: this.nextElementSibling,
-				func: transformFunctions.translate
-			}
-		}, false);
-	}
-	
-	// Rotation
-	/* let translate = function(axis,value){
-		let uuid = editor.inspector.selected.dataset.uuid;
-		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
-	}
-	for (key in transformElements.input.translation){ // Input
-		let el = transformElements.input.translation[key];
-		el.addEventListener("change",function(){translate(this.dataset.axis,this.value)}, false);
-		el.addEventListener("input",function(){translate(this.dataset.axis,this.value)}, false);
-	}
-	for (key in transformElements.label.translation){ // Label
-		let el = transformElements.label.translation[key];
-		el.addEventListener("mousedown",function(e){
-			this.requestPointerLock();
-			editor.inspector.dragValue = {
-				x: e.clientX,
-				y: e.clientY,
-				value: parseFloat(this.nextElementSibling.value),
-				element: this.nextElementSibling
-			}
-		}, false);
-	} */
 	
 	// Scale
 	transformFunctions.scale = function(axis,value){
@@ -189,29 +154,50 @@ window.addEventListener("DOMContentLoaded", function(){
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
 		editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale[axis] = parseFloat(value);
 	}
-	for (key in transformElements.label.scale){ // Label
-		let el = transformElements.label.scale[key];
-		el.addEventListener("mousedown",function(e){
-			this.requestPointerLock();
-			editor.inspector.dragValue = {
-				x: e.clientX,
-				y: e.clientY,
-				value: parseFloat(this.nextElementSibling.value),
-				element: this.nextElementSibling,
-				func: transformFunctions.scale
-			}
-		}, false);
+	
+	// Rotate
+	transformFunctions.rotate = function(axis,value){
+		let uuid = editor.inspector.selected.dataset.uuid;
+		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+		editor.prefabs[prefabUuid].entities[uuid].sceneObject.setRotationFromEuler(
+			new THREE.Euler( 
+				parseFloat(editor.inspector.elements.transform.input.rotate.x.value) * Math.PI / 180,
+				parseFloat(editor.inspector.elements.transform.input.rotate.y.value) * Math.PI / 180,
+				parseFloat(editor.inspector.elements.transform.input.rotate.z.value) * Math.PI / 180,
+				'XYZ'
+			)
+		);
 	}
 	
 	// Attach event listeners to inputs and labels
+	// Input
 	for (transform in transformElements.input){
-		for (key in transformElements.input[transform]){ // Input
+		for (key in transformElements.input[transform]){
 			let el = transformElements.input[transform][key];
 			let func = transformFunctions[transform];
 			el.addEventListener("change",function(){func(this.dataset.axis,this.value)}, false);
 			el.addEventListener("input",function(){func(this.dataset.axis,this.value)}, false);
 		}
 	}
+	// Label
+	for (transform in transformElements.label){
+		for (key in transformElements.label[transform]){ 
+			let el = transformElements.label[transform][key];
+			let func = transformFunctions[transform];
+			el.addEventListener("mousedown",function(e){
+				this.requestPointerLock();
+				editor.inspector.dragValue = {
+					x: e.clientX,
+					y: e.clientY,
+					value: parseFloat(this.nextElementSibling.value),
+					element: this.nextElementSibling,
+					func: func
+				}
+			}, false);
+		}
+	}
+	
+	//
 	
 	// Inspector drag events
 	document.body.addEventListener('mousemove', function(event) {
