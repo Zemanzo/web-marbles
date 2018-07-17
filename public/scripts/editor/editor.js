@@ -129,6 +129,8 @@ window.addEventListener("DOMContentLoaded", function(){
 			let clone = editor.models[this.value].scene.clone();
 			clone.visible = true;
 			clone.position.copy(old.position);
+			clone.rotation.copy(old.rotation);
+			clone.scale.copy(old.scale);
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject = clone;
 			editor.prefabs[prefabUuid].group.add(clone);
 		}
