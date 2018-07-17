@@ -51,13 +51,15 @@ document.addEventListener('pointerlockchange', function(event){
 	}
 }, false );
 
-document.addEventListener('pointerlockerror', function(event){}, false);
+document.addEventListener('pointerlockerror', function(event){
+	console.log("Pointer lock error:",event);
+}, false);
 
-renderer.domElement.addEventListener('mousedown', function (event) {
+renderer.domElement.addEventListener('mousedown', function(event){
 	element.requestPointerLock();
 }, false );
 
-document.body.addEventListener('mouseup', function (event) {
+document.body.addEventListener('mouseup', function(event){
 	document.exitPointerLock();
 }, false );
 

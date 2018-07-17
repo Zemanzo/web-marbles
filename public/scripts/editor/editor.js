@@ -19,6 +19,7 @@ let editor = {
 	selectedModel: null,
 	inspector: {
 		selected: null,
+		selectedEntity: null,
 		select: function(){
 			let insp = editor.inspector;
 			if (insp.selected === null){ // Nothing selected so inspector is in disabled state
@@ -29,19 +30,34 @@ let editor = {
 				insp.selected.className = insp.selected.className.split(" ")[0]; // ew
 			}
 			insp.element.className = this.className+"Selection";
-			document.getElementById("inspectorName").value = this.getElementsByClassName("name")[0].innerHTML;
+			let name = document.getElementById("inspectorName").value = this.getElementsByClassName("name")[0].innerHTML;
+			let uuid = document.getElementById("inspectorUUID").value = this.dataset.uuid;
+			let prefabUuid = this.dataset.prefabUuid;
 			insp.selected = this;
+			
+			let transformElements = editor.inspector.elements.transform;
+			transformElements.input.translation.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.x;
+			transformElements.input.translation.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.y;
+			transformElements.input.translation.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.z;
+			
 			this.className += " selected";
 		},
 		deselect: function(){
+			let selected = editor.inspector.selected;
+			if (selected) selected.className = selected.className.split(" ")[0]; // ew
 			editor.inspector.selected = null;
 			editor.inspector.element.className = "noSelection";
 			for (let el of editor.inspector.inputs){
 				el.disabled = true;
+				if (el.tagName === "INPUT"){
+					el.value = el.defaultValue;
+				} else {
+					el.selectedIndex = "0"; 
+				}
 			}
 		}
 	},
-	objectCount: 0
+	entityCount: 0
 };
 	
 window.addEventListener("DOMContentLoaded", function(){
@@ -54,13 +70,112 @@ window.addEventListener("DOMContentLoaded", function(){
 		...editor.inspector.element.getElementsByTagName("select")
 	];
 	editor.inspector.deselect();
+	
+	// Inspector elements
+	editor.inspector.elements = {
+		name: document.getElementById("inspectorName"),
+		model: document.getElementById("inspectorModel"),
+		shape: document.getElementById("inspectorShape"),
+		transform: {
+			input: {
+				translation: {},
+				rotation: {},
+				scale: {}
+			},
+			label: {
+				translation: {},
+				rotation: {},
+				scale: {}
+			}
+		}
+	};
+	
+	for (key in editor.inspector.elements.transform.input){
+		let elements = document.getElementsByClassName(key)[0].getElementsByTagName("input");
+		editor.inspector.elements.transform.input[key].x = elements[0];
+		editor.inspector.elements.transform.input[key].y = elements[1];
+		editor.inspector.elements.transform.input[key].z = elements[2];
+	}
+	for (key in editor.inspector.elements.transform.label){
+		let elements = document.getElementsByClassName(key)[0].getElementsByTagName("span");
+		editor.inspector.elements.transform.label[key].x = elements[0];
+		editor.inspector.elements.transform.label[key].y = elements[1];
+		editor.inspector.elements.transform.label[key].z = elements[2];
+	}
+	
+	// Inspector event listeners & functions
+	// Change name
 	let inspectorChangeName = function(){
 		if (editor.inspector.selected){
-			editor.inspector.selected.getElementsByClassName("name")[0].innerHTML = this.value;
+			editor.inspector.selected.getElementsByClassName("name")[0].innerText = this.value;
 		}
 	}
-	document.getElementById("inspectorName").addEventListener("change",inspectorChangeName,false);
-	document.getElementById("inspectorName").addEventListener("input",inspectorChangeName,false);
+	editor.inspector.elements.name.addEventListener("change",inspectorChangeName,false);
+	editor.inspector.elements.name.addEventListener("input",inspectorChangeName,false);
+	
+	// Change model
+	let inspectorChangeModel = function(){
+		if (editor.inspector.selected){
+			let uuid = editor.inspector.selected.dataset.uuid;
+			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			let old = editor.prefabs[prefabUuid].entities[uuid].sceneObject;
+			// remove old model
+			editor.prefabs[prefabUuid].group.remove(old);
+			
+			// add new model
+			let clone = editor.models[this.value].scene.clone();
+			clone.visible = true;
+			clone.position.copy(old.position);
+			editor.prefabs[prefabUuid].entities[uuid].sceneObject = clone;
+			editor.prefabs[prefabUuid].group.add(clone);
+		}
+	}
+	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
+	
+	// Change transform
+	let transformElements = editor.inspector.elements.transform;
+	// Translation
+	let translate = function(axis,value){
+		let uuid = editor.inspector.selected.dataset.uuid;
+		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
+	}
+	for (key in transformElements.input.translation){
+		let el = transformElements.input.translation[key];
+		el.addEventListener("change",function(){translate(this.dataset.axis,this.value)}, false);
+		el.addEventListener("input",function(){translate(this.dataset.axis,this.value)}, false);
+	}
+	for (key in transformElements.label.translation){
+		let el = transformElements.label.translation[key];
+		el.addEventListener("mousedown",function(e){
+			this.requestPointerLock();
+			editor.inspector.dragValue = {
+				x: e.clientX,
+				y: e.clientY,
+				value: parseFloat(this.nextElementSibling.value),
+				element: this.nextElementSibling
+			}
+		}, false);
+	}
+	
+	// Inspector drag events
+	document.body.addEventListener('mousemove', function(event) {
+		let dragValue = editor.inspector.dragValue;
+		if (dragValue){
+			let x = event.movementX;
+			let y = event.movementY;
+			let newValue = dragValue.value += x * .1 ;
+			dragValue.element.value = newValue.toFixed(2);
+			editor.inspector.dragValue.x = x;
+			editor.inspector.dragValue.y = y;
+			translate(dragValue.element.dataset.axis,dragValue.element.value);
+		}
+	}, false);
+	document.body.addEventListener('mouseup', function(event) {
+		editor.inspector.dragValue = null;
+	}, false);
+	
+	//
 	
 	// Menu
 	let childValue = 0;
@@ -77,7 +192,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			}
 			if (this.dataset.sceneGroup) editor.groups[this.dataset.sceneGroup].visible = true;
 			this.className = "selected";
-		},false);
+		}, false);
 	}
 	
 	// Fix camera
@@ -96,7 +211,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		moveBackward = false;
 		moveLeft = false;
 		moveRight = false;
-	},false);
+	}, false);
 	
 	// Change water level
 	let changeWaterLevel = function(e){
@@ -127,7 +242,9 @@ window.addEventListener("DOMContentLoaded", function(){
 			scene.add( object3d );
 		}
 		reader.readAsText(file, "utf-8");
-    },false);
+    }, false);
+	
+	//
 	
 	// Add models
 	let GLTFLoader = new THREE.GLTFLoader();
@@ -156,7 +273,7 @@ window.addEventListener("DOMContentLoaded", function(){
 								editor.selectedModel = this.parentNode.id;
 								editor.models[editor.selectedModel].scene.visible = true;
 								document.getElementById(editor.selectedModel).className = "model selected";
-							},false);
+							}, false);
 							
 							// Delete model
 							clone.getElementsByClassName("delete")[0].addEventListener("click",function(){
@@ -169,12 +286,12 @@ window.addEventListener("DOMContentLoaded", function(){
 									let select = document.getElementById("inspectorModel");
 									let index = Array.from(select.children).findIndex((el)=>{
 										return el.value === id;
-									},false);
+									}, false);
 									select.remove(index);
 									parent.parentNode.removeChild(parent); // oofies
 									editorLog("Removed model ("+id+")","warn");
 								}					
-							},false);
+							}, false);
 							
 							// Add to select drop-down
 							let select = document.getElementById("inspectorModel");
@@ -203,7 +320,9 @@ window.addEventListener("DOMContentLoaded", function(){
 			}
 			file.reader.readAsText(file, "utf-8");
 		});
-    },false);
+    }, false);
+	
+	//
 	
 	// New prefab:
 	// Collapse prefab
@@ -232,24 +351,31 @@ window.addEventListener("DOMContentLoaded", function(){
 		let clone = document.getElementById("prefab"+type+"Template").cloneNode(true);
 		let uuid = generateTinyUUID();
 		clone.removeAttribute("id");
+		clone.dataset.prefabUuid = parent.dataset.uuid;
 		clone.dataset.uuid = uuid;
-		clone.getElementsByClassName("name")[0].innerHTML = type+editor.objectCount++;
+		clone.getElementsByClassName("name")[0].innerHTML = type+editor.entityCount++;
 		clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
 		clone.addEventListener("click",editor.inspector.select,false);
-		parent.getElementsByClassName("objectList")[0].appendChild(clone);
+		clone = parent.getElementsByClassName("objectList")[0].appendChild(clone);
+		editor.prefabs[parent.dataset.uuid].entities[uuid] = {
+			element: clone
+		};
+		return uuid;
 	}
 	
 	// Add object to prefab
 	let addObject = function(){
 		let parent = this.closest(".prefab");
-		addTemplateElement.call(this,"Object",parent);
-		editor.prefabs[parent.dataset.uuid].group.add(editor.defaultModel.clone());
+		let uuid = addTemplateElement.call(this,"Object",parent);
+		let clone = editor.defaultModel.clone();
+		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
+		editor.prefabs[parent.dataset.uuid].group.add(clone);
 	}
 	
 	// Add collider to prefab
 	let addCollider = function(){
 		let parent = this.closest(".prefab");
-		addTemplateElement.call(this,"Collider",parent);
+		let uuid = addTemplateElement.call(this,"Collider",parent);
 	}
 	
 	document.getElementById("addPrefab").addEventListener("click",function(){
@@ -268,7 +394,8 @@ window.addEventListener("DOMContentLoaded", function(){
 		// Add to editor object
 		editor.prefabs[uuid] = {
 			uuid: uuid,
-			group: new THREE.Group()
+			group: new THREE.Group(),
+			entities: {}
 		};
 		
 		// Add threejs group to scene
@@ -280,9 +407,9 @@ window.addEventListener("DOMContentLoaded", function(){
 		
 		// Focus to name input so user can start typing right away
 		clone.getElementsByClassName("prefabName")[0].focus();
-	},false);
+	}, false);
 	
-},false);
+}, false);
 
 function getXMLDoc(doc,callback){
 	let xmlhttp;

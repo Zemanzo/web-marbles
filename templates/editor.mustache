@@ -77,10 +77,18 @@
 							<tbody>
 								<tr>
 									<td>
+										UUID
+									</td>
+									<td>
+										<input type="text" id="inspectorUUID" value="" readonly />
+									</td>
+								</tr>
+								<tr>
+									<td>
 										Object name
 									</td>
 									<td>
-										<input type="text" id="inspectorName" disabled />
+										<input type="text" id="inspectorName" value="" disabled />
 									</td>
 								</tr>
 							</tbody>
@@ -88,25 +96,25 @@
 								<tr class="translation">
 									<td>Position</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="0" step=".1" disabled /></div>
-										<div><span class="y">Y</span><input type="number" value="0" step=".1" disabled /></div>
-										<div><span class="z">Z</span><input type="number" value="0" step=".1" disabled /></div>
+										<div><span class="x">X</span><input type="number" value="0" step=".01" disabled data-axis="x" /></div>
+										<div><span class="y">Y</span><input type="number" value="0" step=".01" disabled data-axis="y" /></div>
+										<div><span class="z">Z</span><input type="number" value="0" step=".01" disabled data-axis="z" /></div>
 									</td>
 								</tr>
 								<tr class="rotation">
 									<td>Rotation</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="0" step="1" disabled /></div>
-										<div><span class="y">Y</span><input type="number" value="0" step="1" disabled /></div>
-										<div><span class="z">Z</span><input type="number" value="0" step="1" disabled /></div>
+										<div><span class="x">X</span><input type="number" value="0" step="1" disabled data-axis="x" /></div>
+										<div><span class="y">Y</span><input type="number" value="0" step="1" disabled data-axis="y" /></div>
+										<div><span class="z">Z</span><input type="number" value="0" step="1" disabled data-axis="z" /></div>
 									</td>
 								</tr>
 								<tr class="scale">
 									<td>Scale</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="1" disabled /></div>
-										<div><span class="y">Y</span><input type="number" value="1" disabled /></div>
-										<div><span class="z">Z</span><input type="number" value="1" disabled /></div>
+										<div><span class="x">X</span><input type="number" value="1" disabled data-axis="x" /></div>
+										<div><span class="y">Y</span><input type="number" value="1" disabled data-axis="y" /></div>
+										<div><span class="z">Z</span><input type="number" value="1" disabled data-axis="z" /></div>
 									</td>
 								</tr>
 							</tbody>
@@ -134,7 +142,7 @@
 										Collider shape
 									</td>
 									<td>
-										<select id="inspectorModel" disabled >
+										<select id="inspectorShape" disabled >
 											<option value="box" selected >Box</option>
 											<option value="sphere">Sphere</option>
 											<option value="cylinder">Cylinder</option>

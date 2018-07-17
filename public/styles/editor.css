@@ -385,7 +385,18 @@ select {
 	border:none;
 }
 
-input[type=number]:focus {
+input:read-only {
+	color:#999;
+	font-style:italic;
+}
+input:-moz-read-only { /* little disappointed here */
+	color:#999;
+	font-style:italic;
+}
+input[type=number]:focus,
+span.x:active ~ input[type=number],
+span.y:active ~ input[type=number],
+span.z:active ~ input[type=number] {
 	background:#262626;
 }
 input[type=number]:hover:not(:disabled) {
@@ -401,13 +412,21 @@ table {
 td:last-child {
 	text-align:right;
 }
+span.x, span.y, span.z {
+	cursor:e-resize;
+	-webkit-user-select:none;
+	-moz-user-select:none;
+	-ms-user-select:none;
+	user-select:none;
+	text-shadow: 1px 1px 1px #333;
+}
 
-.x {
-	background:#c00;
+span.x:active,
+span.y:active,
+span.z:active {
+	opacity:.6;
 }
-.y {
-	background:#0a0;
-}
-.z {
-	background:#00c;
-}
+
+span.x {background:#c00;}
+span.y {background:#2a2;}
+span.z {background:#33f;}
