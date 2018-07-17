@@ -36,9 +36,12 @@ let editor = {
 			insp.selected = this;
 			
 			let transformElements = editor.inspector.elements.transform;
-			transformElements.input.translation.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.x;
-			transformElements.input.translation.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.y;
-			transformElements.input.translation.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.z;
+			transformElements.input.translate.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.x;
+			transformElements.input.translate.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.y;
+			transformElements.input.translate.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.z;
+			transformElements.input.scale.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.x;
+			transformElements.input.scale.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.y;
+			transformElements.input.scale.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.z;
 			
 			this.className += " selected";
 		},
@@ -78,13 +81,13 @@ window.addEventListener("DOMContentLoaded", function(){
 		shape: document.getElementById("inspectorShape"),
 		transform: {
 			input: {
-				translation: {},
-				rotation: {},
+				translate: {},
+				rotate: {},
 				scale: {}
 			},
 			label: {
-				translation: {},
-				rotation: {},
+				translate: {},
+				rotate: {},
 				scale: {}
 			}
 		}
@@ -134,18 +137,40 @@ window.addEventListener("DOMContentLoaded", function(){
 	
 	// Change transform
 	let transformElements = editor.inspector.elements.transform;
+	let transformFunctions = {};
+	
 	// Translation
-	let translate = function(axis,value){
+	transformFunctions.translate = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
 		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
 	}
-	for (key in transformElements.input.translation){
+	for (key in transformElements.label.translate){ // Label
+		let el = transformElements.label.translate[key];
+		el.addEventListener("mousedown",function(e){
+			this.requestPointerLock();
+			editor.inspector.dragValue = {
+				x: e.clientX,
+				y: e.clientY,
+				value: parseFloat(this.nextElementSibling.value),
+				element: this.nextElementSibling,
+				func: transformFunctions.translate
+			}
+		}, false);
+	}
+	
+	// Rotation
+	/* let translate = function(axis,value){
+		let uuid = editor.inspector.selected.dataset.uuid;
+		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
+	}
+	for (key in transformElements.input.translation){ // Input
 		let el = transformElements.input.translation[key];
 		el.addEventListener("change",function(){translate(this.dataset.axis,this.value)}, false);
 		el.addEventListener("input",function(){translate(this.dataset.axis,this.value)}, false);
 	}
-	for (key in transformElements.label.translation){
+	for (key in transformElements.label.translation){ // Label
 		let el = transformElements.label.translation[key];
 		el.addEventListener("mousedown",function(e){
 			this.requestPointerLock();
@@ -156,6 +181,36 @@ window.addEventListener("DOMContentLoaded", function(){
 				element: this.nextElementSibling
 			}
 		}, false);
+	} */
+	
+	// Scale
+	transformFunctions.scale = function(axis,value){
+		let uuid = editor.inspector.selected.dataset.uuid;
+		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+		editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale[axis] = parseFloat(value);
+	}
+	for (key in transformElements.label.scale){ // Label
+		let el = transformElements.label.scale[key];
+		el.addEventListener("mousedown",function(e){
+			this.requestPointerLock();
+			editor.inspector.dragValue = {
+				x: e.clientX,
+				y: e.clientY,
+				value: parseFloat(this.nextElementSibling.value),
+				element: this.nextElementSibling,
+				func: transformFunctions.scale
+			}
+		}, false);
+	}
+	
+	// Attach event listeners to inputs and labels
+	for (transform in transformElements.input){
+		for (key in transformElements.input[transform]){ // Input
+			let el = transformElements.input[transform][key];
+			let func = transformFunctions[transform];
+			el.addEventListener("change",function(){func(this.dataset.axis,this.value)}, false);
+			el.addEventListener("input",function(){func(this.dataset.axis,this.value)}, false);
+		}
 	}
 	
 	// Inspector drag events
@@ -168,7 +223,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			dragValue.element.value = newValue.toFixed(2);
 			editor.inspector.dragValue.x = x;
 			editor.inspector.dragValue.y = y;
-			translate(dragValue.element.dataset.axis,dragValue.element.value);
+			dragValue.func(dragValue.element.dataset.axis,dragValue.element.value);
 		}
 	}, false);
 	document.body.addEventListener('mouseup', function(event) {
