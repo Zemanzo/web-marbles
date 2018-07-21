@@ -9,6 +9,7 @@ whenDocReady.add(
 
 let editor = {
 	log: undefined,
+	menu: {},
 	groups: {
 		models: undefined,
 		prefabs: undefined,
@@ -36,12 +37,26 @@ let editor = {
 			insp.selected = this;
 			
 			let transformElements = editor.inspector.elements.transform;
-			transformElements.input.translate.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.x;
-			transformElements.input.translate.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.y;
-			transformElements.input.translate.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.position.z;
-			transformElements.input.scale.x.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.x;
-			transformElements.input.scale.y.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.y;
-			transformElements.input.scale.z.value = editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale.z;
+			let sceneObject = editor.prefabs[prefabUuid].entities[uuid].sceneObject;
+			
+			transformElements.input.translate.x.value = sceneObject.position.x;
+			transformElements.input.translate.y.value = sceneObject.position.y;
+			transformElements.input.translate.z.value = sceneObject.position.z;
+			
+			transformElements.input.scale.x.value = sceneObject.scale.x;
+			transformElements.input.scale.y.value = sceneObject.scale.y;
+			transformElements.input.scale.z.value = sceneObject.scale.z;
+			
+			transformElements.input.rotate.x.value = (sceneObject.rotation.x * (180 / Math.PI)).toFixed(1);
+			transformElements.input.rotate.y.value = (sceneObject.rotation.y * (180 / Math.PI)).toFixed(1);
+			transformElements.input.rotate.z.value = (sceneObject.rotation.z * (180 / Math.PI)).toFixed(1);
+			
+			// let euler = (new THREE.Euler()).setFromQuaternion(
+			// 	editor.prefabs[prefabUuid].entities[uuid].sceneObject.rotation, "XYZ"
+			// );
+			// transformElements.input.rotate.x.value = euler.x;
+			// transformElements.input.rotate.y.value = euler.y;
+			// transformElements.input.rotate.z.value = euler.z;
 			
 			this.className += " selected";
 		},
@@ -254,16 +269,33 @@ window.addEventListener("DOMContentLoaded", function(){
 	for (let child of document.getElementById("editorMode").children){
 		child.dataset.nthChild = childValue++;
 		child.addEventListener("click",function(){
-			document.getElementById("properties").firstElementChild.style.marginLeft =
-				"-"+parseInt(this.dataset.nthChild) * 100 +"%";
+			let firstElement = document.getElementById("properties").firstElementChild;
+			firstElement.style.marginLeft = "-"+parseInt(this.dataset.nthChild) * 100 +"%";
+			
 			for (let c of this.parentNode.children){
 				c.className = "";
 			}
+			
 			for (let key in editor.groups){
 				editor.groups[key].visible = false;
 			}
+			
+			if (parseInt(this.dataset.nthChild) >= 2){
+				editor.inspector.deselect();
+				editor.inspector.element.style.transform = "translateX(100%)";
+				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
+				document.getElementById("prefabs").style.overflow = "visible";
+			} else {
+				editor.inspector.element.style.transform = "translateX(0%)";
+				editor.menu.overflowTimeout = setTimeout(function(){
+					document.getElementById("prefabs").style.overflow = "auto";
+				},400);
+			}
+			
 			if (this.dataset.sceneGroup) editor.groups[this.dataset.sceneGroup].visible = true;
+			
 			this.className = "selected";
+			
 		}, false);
 	}
 	
@@ -403,12 +435,51 @@ window.addEventListener("DOMContentLoaded", function(){
 		}
 	}
 	
+	// Delete entity
+	let deleteEntity = function(event){
+		if (event) event.stopPropagation();		
+		let parent = this.closest(".objectList > div");
+		let prefabUuid = parent.dataset.prefabUuid;
+		let uuid = parent.dataset.uuid;
+		let name = parent.getElementsByClassName("name")[0].innerHTML;
+		if ( !event || confirm("Are you sure you want to delete this entity? ("+name+") ("+uuid+")") ) {
+			// Deselect inspector if it shows currently selected object
+			if (editor.inspector.selected === parent)
+				editor.inspector.deselect();
+			
+			// Remove element
+			parent.parentNode.removeChild(parent);
+			
+			// Remove threejs object
+			editor.prefabs[prefabUuid].group.remove(
+				editor.prefabs[prefabUuid].entities[uuid].sceneObject
+			);
+			
+			delete editor.prefabs[prefabUuid].entities[uuid];
+			
+		}
+	}
+	
 	// Delete prefab
 	let deletePrefab = function(){
 		let parent = this.closest(".prefab");
+		let prefabUuid = parent.dataset.prefabUuid;
 		let name = parent.getElementsByClassName("prefabName")[0].value;
 		if ( confirm("Are you sure you want to delete this prefab? ("+name+") ("+parent.dataset.uuid+")") ) {
+			// Deselect inspector
+			// TODO: add deselect condition (only need to deselect when selected object is in prefab)
+			editor.inspector.deselect();
+			
+			let children = parent.getElementsByClassName("objectList")[0].children;
+			for (let i = children.length; i > 0; i--){
+				let child = children[i - 1];
+				deleteEntity.call(child);
+			}
+			
+			// Remove element
 			parent.parentNode.removeChild(parent);
+			
+			delete editor.prefabs[prefabUuid];
 		}
 	}
 	
@@ -416,11 +487,13 @@ window.addEventListener("DOMContentLoaded", function(){
 	let addTemplateElement = function(type,parent){
 		let clone = document.getElementById("prefab"+type+"Template").cloneNode(true);
 		let uuid = generateTinyUUID();
+		
 		clone.removeAttribute("id");
 		clone.dataset.prefabUuid = parent.dataset.uuid;
 		clone.dataset.uuid = uuid;
 		clone.getElementsByClassName("name")[0].innerHTML = type+editor.entityCount++;
 		clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
+		clone.getElementsByClassName("delete")[0].addEventListener("click",deleteEntity,false);
 		clone.addEventListener("click",editor.inspector.select,false);
 		clone = parent.getElementsByClassName("objectList")[0].appendChild(clone);
 		editor.prefabs[parent.dataset.uuid].entities[uuid] = {
@@ -433,6 +506,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	let addObject = function(){
 		let parent = this.closest(".prefab");
 		let uuid = addTemplateElement.call(this,"Object",parent);
+		
 		let clone = editor.defaultModel.clone();
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
 		editor.prefabs[parent.dataset.uuid].group.add(clone);
@@ -442,6 +516,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	let addCollider = function(){
 		let parent = this.closest(".prefab");
 		let uuid = addTemplateElement.call(this,"Collider",parent);
+		
 		let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 		let box = new THREE.Mesh( geometry, editor.physicsMaterial );
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;

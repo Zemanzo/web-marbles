@@ -119,12 +119,18 @@ body {
 	}
 
 #prefabs {
+	display:flex;
+	flex-direction:column;
 	overflow-y:auto;
 }
+		
+	#prefabTemplate {
+		display:none;
+	}
 	
-#prefabTemplate {
-	display:none;
-}
+	#prefabsList {
+		overflow:auto;
+	}
 
 .prefab {
 	/* border:1px solid var(--theme-color-dark); */
@@ -279,8 +285,9 @@ body {
 
 /* INSPECTOR */
 #inspector {
-	height:170px;
+	min-height:170px;
 	overflow-y:auto;
+	transition:transform .4s;
 }
 
 #inspector.noSelection {
@@ -363,6 +370,11 @@ body {
 
 #log .warn {
 	color: #dd0;
+}
+
+/* WORLD */
+#world {
+	padding-top:170px;
 }
 
 input[type=number] {
