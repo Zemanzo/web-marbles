@@ -109,7 +109,7 @@
 										<div><span class="z">Z</span><input type="number" value="0" step=".1" disabled data-axis="z" /></div>
 									</td>
 								</tr>
-								<tr class="scale">
+								<tr class="scale objectProperty">
 									<td>Scale</td>
 									<td>
 										<div><span class="x">X</span><input type="number" value="1" step=".01" disabled data-axis="x" /></div>
@@ -129,14 +129,14 @@
 										</select> 
 									</td>
 								</tr>
-								<tr class="objectProperty">
+								<!-- <tr class="objectProperty">
 									<td>
 										LODs
 									</td>
 									<td>
 										fuck idk
 									</td>
-								</tr>
+								</tr> -->
 								<tr class="colliderProperty">
 									<td>
 										Collider shape
@@ -148,7 +148,20 @@
 											<option value="cylinder">Cylinder</option>
 											<option value="cone">Cone</option>
 											<option value="capsule" disabled>Capsule</option>
+											<option value="terrain">Terrain</option>
 										</select> 
+									</td>
+								</tr>
+							</tbody>
+							<tbody class="transform">
+								<tr id="shapeProperties" class="shapeProperties colliderProperty box">
+									<td>Shape properties</td>
+									<td>
+										<div class="sphere cylinder cone capsule"><span class="q">RADIUS</span><input type="number" value="1" step=".01" disabled /></div>
+										<div class="box"><span class="q">WIDTH</span><input type="number" value="1" step=".01" disabled /></div>
+										<div class="box cylinder cone capsule"><span class="q">HEIGHT</span><input type="number" value="1" step=".01" disabled /></div>
+										<div class="box"><span class="q">DEPTH</span><input type="number" value="1" step=".01" disabled /></div>
+										<div class="terrain"><input type="file" id="terPhysics"/></div>
 									</td>
 								</tr>
 							</tbody>
@@ -158,10 +171,10 @@
 					<div id="prefabsList">
 						<div class="prefab collapsed" id="prefabTemplate">
 							<div class="prefabHeader">
-								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye-blocked"></i></button>
+								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye"></i></button>
 								<button class="collapse" title="Collapse"><i class="icofont-caret-right"></i></button>
 								<input type="text" class="prefabName" placeholder="Add a name..." required />
-								<button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button>
+								<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
 								<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
 							</div>
 							<div class="prefabDetails">
@@ -208,28 +221,7 @@
 				</div>
 				
 				<div id="world">
-					<h3>Terrain</h3>
-					<table>
-						<tbody>
-							<tr>
-								<td>
-									Physics mesh
-								</td>
-								<td>
-									<input type="file" id="terPhysics"/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Optimized visual mesh
-								</td>
-								<td>
-									<input type="file" id="terVisual"/>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-					
+				
 					<h3>Environment</h3>
 					<table>
 						<tbody>

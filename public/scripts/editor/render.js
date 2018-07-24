@@ -11,7 +11,6 @@ var settings = {
 
 var map;
 var viewport = document.getElementById("viewport");
-console.log(viewport.clientWidth,viewport.clientHeight);
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
@@ -115,23 +114,23 @@ document.addEventListener('keydown',onKeyDown,false);
 document.addEventListener('keyup',onKeyUp,false);
 
 var controls = new THREE.PointerLockControls(camera);
+
 controls.getObject().position.x = -2.3;
 controls.getObject().position.y = 12;
 controls.getObject().position.z = 19.7;
 
-camera.parent.rotation.x = -.3;
 controls.getObject().rotation.z = 0;
-scene.add(controls.getObject());
 
-/* var controls = new THREE.OrbitControls( camera, renderer.domElement );
-controls.enableDamping = true;
-controls.dampingFactor = 0.25;
-controls.enableZoom = true; */
+camera.parent.rotation.x = -.3;
+
+scene.add(controls.getObject());
 
 /* CONTROLS END */
 
 var ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
+
+// Default grid & axes
 
 var axesHelper = new THREE.AxesHelper( 3 );
 scene.add( axesHelper );
@@ -139,13 +138,6 @@ scene.add( axesHelper );
 var gridHelper = new THREE.GridHelper( 20, 20 );
 scene.add( gridHelper );
 gridHelper.position.y = -.01;
-
-/* var box = new THREE.BoxGeometry( 20,20,20 );
-var materialColor = new THREE.Color(0x228822);
-var boxMaterial = new THREE.MeshStandardMaterial({ color: materialColor, roughness: 1 });
-var boxMesh = new THREE.Mesh(box, boxMaterial);
-scene.add( boxMesh );
-boxMesh.position.y = -10.02; */
 
 // Sun
 
@@ -232,29 +224,10 @@ updateSun();
 
 //
 
-/* var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
-scene.add( shadowHelper ); */
-
-//
-
 var uniforms = {
 	time: { value: 1.0 }
 };
 var clock = new THREE.Clock();
-
-//
-
-/* var blueLight = new THREE.PointLight(0x0099ff);
-scene.add( blueLight );
-blueLight.position.x = 5;
-blueLight.position.y = 70;
-blueLight.position.z = 500;
-
-var orangeLight = new THREE.PointLight(0xff9900);
-scene.add( orangeLight );
-orangeLight.position.x = 5;
-orangeLight.position.y = 70;
-orangeLight.position.z = -500; */
 
 // Editor groups
 
@@ -339,79 +312,4 @@ function animate() {
 function renderInit(){ 
 	editorLog("Renderer loaded");
 	animate();
-}
-
-
-var textures = {
-	dirt: { url: 'scripts/lib/threejs/textures/dirt.jpg' },
-	dirtNormal: { url: 'scripts/lib/threejs/textures/dirt_n.jpg' },
-	grass: { url: 'scripts/lib/threejs/textures/grasslight-big.jpg' },
-	grassNormal: { url: 'scripts/lib/threejs/textures/grasslight-big-nm.jpg' },
-	mask: { url: 'scripts/lib/threejs/textures/mask_alpha.png' }
-};
-
-function getTexture( name ) {
-	var texture = textures[ name ].texture;
-	if ( ! texture ) {
-		texture = textures[ name ].texture = new THREE.TextureLoader().load( textures[ name ].url );
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	}
-	return texture;
-}
-
-function createMapMaterial(){
-	var mtl;
-	
-	// MATERIAL
-	mtl = new THREE.StandardNodeMaterial();
-	mtl.roughness = new THREE.FloatNode( .9 );
-	mtl.metalness = new THREE.FloatNode( 0 );
-	
-	function createUv(scale,offset){
-		
-		var uvOffset = new THREE.FloatNode( offset || 0 );
-		var uvScale = new THREE.FloatNode( scale || 1 );
-		
-		var uvNode = new THREE.UVNode();
-		var offsetNode = new THREE.OperatorNode(
-			uvOffset,
-			uvNode,
-			THREE.OperatorNode.ADD
-		);
-		var scaleNode = new THREE.OperatorNode(
-			offsetNode,
-			uvScale,
-			THREE.OperatorNode.MUL
-		);
-		
-		return scaleNode;
-	}
-	
-	var grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
-	var dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
-	var mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
-	var maskAlphaChannel = new THREE.SwitchNode( mask, 'w' );
-	var blend = new THREE.Math3Node(
-		grass,
-		dirt,
-		maskAlphaChannel,
-		THREE.Math3Node.MIX
-	);
-	mtl.color = blend;
-	mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
-
-	var normalScale = new THREE.FloatNode( 1 );
-	var normalMask = new THREE.OperatorNode(
-		new THREE.TextureNode( getTexture( "mask" ), createUv() ),
-		normalScale,
-		THREE.OperatorNode.MUL
-	);
-	
-	mtl.normalScale = normalMask;
-	
-	// build shader
-	mtl.build();
-	
-	// set material
-	return mtl;
 }

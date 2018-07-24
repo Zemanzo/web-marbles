@@ -17,6 +17,7 @@ let editor = {
 	},
 	models: {},
 	prefabs: {},
+	world: {},
 	selectedModel: null,
 	inspector: {
 		selected: null,
@@ -37,7 +38,8 @@ let editor = {
 			insp.selected = this;
 			
 			let transformElements = editor.inspector.elements.transform;
-			let sceneObject = editor.prefabs[prefabUuid].entities[uuid].sceneObject;
+			let entity = editor.prefabs[prefabUuid].entities[uuid];
+			let sceneObject = entity.sceneObject;
 			
 			transformElements.input.translate.x.value = sceneObject.position.x;
 			transformElements.input.translate.y.value = sceneObject.position.y;
@@ -50,6 +52,19 @@ let editor = {
 			transformElements.input.rotate.x.value = (sceneObject.rotation.x * (180 / Math.PI)).toFixed(1);
 			transformElements.input.rotate.y.value = (sceneObject.rotation.y * (180 / Math.PI)).toFixed(1);
 			transformElements.input.rotate.z.value = (sceneObject.rotation.z * (180 / Math.PI)).toFixed(1);
+			
+			if (entity.model) document.getElementById("inspectorModel").value = entity.model;
+			
+			if (entity.shape){
+				editor.inspector.elements.shape.value = entity.shape;
+				editor.inspector.element.getElementsByClassName("shapeProperties")[0].className = 
+					"shapeProperties colliderProperty "+entity.shape;
+					
+				editor.inspector.elements.shapeProperties.input.radius.value = sceneObject.userData.radius;
+				editor.inspector.elements.shapeProperties.input.width.value  = sceneObject.userData.width;
+				editor.inspector.elements.shapeProperties.input.height.value = sceneObject.userData.height;
+				editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;
+			}
 			
 			// let euler = (new THREE.Euler()).setFromQuaternion(
 			// 	editor.prefabs[prefabUuid].entities[uuid].sceneObject.rotation, "XYZ"
@@ -68,7 +83,7 @@ let editor = {
 			for (let el of editor.inspector.inputs){
 				el.disabled = true;
 				if (el.tagName === "INPUT"){
-					el.value = el.defaultValue;
+					el.value = el.defaultValue || "";
 				} else {
 					el.selectedIndex = "0"; 
 				}
@@ -105,9 +120,24 @@ window.addEventListener("DOMContentLoaded", function(){
 				rotate: {},
 				scale: {}
 			}
+		},
+		shapeProperties: {
+			input: {
+				radius: null,
+				width: null,
+				height: null,
+				depth: null
+			},
+			label: {
+				radius: null,
+				width: null,
+				height: null,
+				depth: null
+			}
 		}
 	};
 	
+	// Transform input & label elements
 	for (key in editor.inspector.elements.transform.input){
 		let elements = document.getElementsByClassName(key)[0].getElementsByTagName("input");
 		editor.inspector.elements.transform.input[key].x = elements[0];
@@ -121,6 +151,21 @@ window.addEventListener("DOMContentLoaded", function(){
 		editor.inspector.elements.transform.label[key].z = elements[2];
 	}
 	
+	// Physics shape label & elements
+	let physicsShapeElements, i;
+	
+	physicsShapeElements = document.getElementById("shapeProperties").getElementsByTagName("input");
+	i = 0;
+	for (key in editor.inspector.elements.shapeProperties.input){
+		editor.inspector.elements.shapeProperties.input[key] = physicsShapeElements[i++];
+	}
+	
+	physicsShapeElements = document.getElementById("shapeProperties").getElementsByTagName("span");
+	i = 0;
+	for (key in editor.inspector.elements.shapeProperties.label){
+		editor.inspector.elements.shapeProperties.label[key] = physicsShapeElements[i++];
+	}
+	
 	// Inspector event listeners & functions
 	// Change name
 	let inspectorChangeName = function(){
@@ -131,7 +176,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	editor.inspector.elements.name.addEventListener("change",inspectorChangeName,false);
 	editor.inspector.elements.name.addEventListener("input",inspectorChangeName,false);
 	
-	// Change model (OBJECT)
+	// Change object model
 	let inspectorChangeModel = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
@@ -146,41 +191,89 @@ window.addEventListener("DOMContentLoaded", function(){
 			clone.position.copy(old.position);
 			clone.rotation.copy(old.rotation);
 			clone.scale.copy(old.scale);
+			editor.prefabs[prefabUuid].entities[uuid].model = this.value;
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject = clone;
 			editor.prefabs[prefabUuid].group.add(clone);
 		}
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
 	
-	// Change shape (COLLIDER)
+	// Change collider shape (except terrain)
 	let inspectorChangeShape = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
 			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			
+			let shape = editor.inspector.elements.shape.value;
+			let entity = editor.prefabs[prefabUuid].entities[uuid];
+			let userData = entity.sceneObject.userData;
+			let terrainGeometry = entity.terrainGeometry;
+				
+			let radius = userData.radius = parseFloat(editor.inspector.elements.shapeProperties.input.radius.value);
+			let width  = userData.width  = parseFloat(editor.inspector.elements.shapeProperties.input.width.value);
+			let height = userData.height = parseFloat(editor.inspector.elements.shapeProperties.input.height.value);
+			let depth  = userData.depth  = parseFloat(editor.inspector.elements.shapeProperties.input.depth.value);
+			
 			let newGeometry;
-			switch(this.value){
+			switch(shape){
 				case "sphere":
-					newGeometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
+					newGeometry = new THREE.SphereBufferGeometry( radius, 12, 10 );
 					break;
 				case "cylinder":
-					newGeometry = new THREE.CylinderBufferGeometry( 1, 1, 4, 12 );
+					newGeometry = new THREE.CylinderBufferGeometry( radius, radius, height, 12 );
 					break;
 				case "cone":
-					newGeometry = new THREE.ConeBufferGeometry( 1, 4, 12 );
+					newGeometry = new THREE.ConeBufferGeometry( radius, height, 12 );
 					break;
 				/* case "capsule":
 					newGeometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 					break; */
+				case "terrain":
+					if (terrainGeometry){
+						newGeometry = terrainGeometry;
+					} else {
+						newGeometry = new THREE.PlaneBufferGeometry( 1, 1 );
+					}
+					break;
 				case "box":
 				default:
-					newGeometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+					newGeometry = new THREE.BoxBufferGeometry( width, height, depth );
 					break;
 			}
+			
+			editor.prefabs[prefabUuid].entities[uuid].shape = shape;
+			document.getElementById("shapeProperties").className = "shapeProperties colliderProperty "+shape;
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry = newGeometry;
 		}
 	}
 	editor.inspector.elements.shape.addEventListener("change",inspectorChangeShape,false);
 	
+	// Change collider shape to terrain
+	let inspectorShapeTerrain = function(){
+		if (editor.inspector.selected){
+			let uuid = editor.inspector.selected.dataset.uuid;
+			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			
+			let file = this.files[0];
+			let reader = new FileReader();
+			let loader = new THREE.OBJLoader();
+			
+			reader.onload = function(e) {
+				let result = reader.result;
+				let object3d = loader.parse( result );
+				object3d.children[0].geometry.computeBoundingBox();
+				object3d.children[0].geometry.center();
+				
+				editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry =
+					editor.prefabs[prefabUuid].entities[uuid].terrainGeometry = 
+					object3d.children[0].geometry;
+			}
+			
+			reader.readAsText(file, "utf-8");
+		}
+	}
+	document.getElementById('terPhysics').addEventListener("change",inspectorShapeTerrain,false);
+
 	//
 	
 	// Change transform
@@ -216,6 +309,8 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 	
 	// Attach event listeners to inputs and labels
+	
+	// Transform
 	// Input
 	for (transform in transformElements.input){
 		for (key in transformElements.input[transform]){
@@ -241,6 +336,29 @@ window.addEventListener("DOMContentLoaded", function(){
 				}
 			}, false);
 		}
+	}
+	
+	// Shape properties
+	// Input
+	for (key in editor.inspector.elements.shapeProperties.input){
+		let el = editor.inspector.elements.shapeProperties.input[key];
+		el.addEventListener("change", inspectorChangeShape, false);
+		el.addEventListener("input", inspectorChangeShape, false);
+	}
+	
+	// Label
+	for (key in editor.inspector.elements.shapeProperties.label){
+		let el = editor.inspector.elements.shapeProperties.label[key];
+		el.addEventListener("mousedown",function(e){
+			this.requestPointerLock();
+			editor.inspector.dragValue = {
+				x: e.clientX,
+				y: e.clientY,
+				value: parseFloat(this.nextElementSibling.value),
+				element: this.nextElementSibling,
+				func: inspectorChangeShape
+			}
+		}, false);
 	}
 	
 	//
@@ -324,7 +442,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
 	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
 	
-	// Import map
+/* 	// Import map
     document.getElementById('terPhysics').addEventListener('change', function(e) {
 		let file = this.files[0];
 		let reader = new FileReader();
@@ -340,7 +458,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			scene.add( object3d );
 		}
 		reader.readAsText(file, "utf-8");
-    }, false);
+    }, false); */
 	
 	//
 	
@@ -508,6 +626,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		let uuid = addTemplateElement.call(this,"Object",parent);
 		
 		let clone = editor.defaultModel.clone();
+		editor.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
 		editor.prefabs[parent.dataset.uuid].group.add(clone);
 	}
@@ -519,8 +638,29 @@ window.addEventListener("DOMContentLoaded", function(){
 		
 		let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 		let box = new THREE.Mesh( geometry, editor.physicsMaterial );
-		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
+		editor.prefabs[parent.dataset.uuid].entities[uuid].shape = "box";
+		let sceneObject = editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
+		sceneObject.userData.radius = 1;
+		sceneObject.userData.width = 1;
+		sceneObject.userData.height = 1;
+		sceneObject.userData.depth = 1;
 		editor.prefabs[parent.dataset.uuid].group.add(box);
+	}
+	
+	// Toggle prefab visibility
+	let showPrefab = function(){
+		let parent = this.closest(".prefab");
+		let prefabUuid = parent.dataset.uuid;
+		let prefabGroup = editor.prefabs[prefabUuid].group;
+		let icon = this.getElementsByTagName("i")[0];
+		
+		if (prefabGroup.visible){
+			prefabGroup.visible = false;
+			icon.className = "icofont-eye-blocked";
+		} else {
+			prefabGroup.visible = true;
+			icon.className = "icofont-eye";
+		}
 	}
 	
 	document.getElementById("addPrefab").addEventListener("click",function(){
@@ -528,6 +668,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		let uuid = generateTinyUUID();
 		clone.removeAttribute("id");
 		clone.dataset.uuid = uuid;
+		clone.getElementsByClassName("showPrefab")[0].addEventListener("click",showPrefab,false);
 		clone.getElementsByClassName("collapse")[0].addEventListener("click",collapse,false);
 		clone.getElementsByClassName("delete")[0].addEventListener("click",deletePrefab,false);
 		clone.getElementsByClassName("objectList")[0].innerHTML = ""; // Remove templates from clone

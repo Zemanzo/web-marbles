@@ -204,9 +204,10 @@ body {
 			color:#666;
 		}
 	
-	.prefab .showPrefab {
+	.prefab .showPrefab .icofont-eye-blocked {
 		color:#666;
 	}
+	
 	.prefab .delete,
 	.delete {
 		background:transparent;
@@ -285,7 +286,7 @@ body {
 
 /* INSPECTOR */
 #inspector {
-	min-height:170px;
+	height:192px;
 	overflow-y:auto;
 	transition:transform .4s;
 }
@@ -323,11 +324,12 @@ body {
 		background:#363636;
 	}
 	
-.transform {}
+/* transform */
 
 	.transform > tr > td:first-child {
 		flex:3;
 		min-width:75px;
+		vertical-align:top;
 	}
 
 	.transform > tr > td:not(:first-child) {
@@ -351,7 +353,23 @@ body {
 	.rotation input[type=number]::after {
 		content:"&deg;";
 	}
+
+/* shapeProperties */
+
+	.transform > tr.shapeProperties > td > div {
+		display:none;
+		justify-content:right;
+		margin-bottom:1px;
+	}
 	
+	.shapeProperties.box div.box,
+	.shapeProperties.sphere div.sphere,
+	.shapeProperties.cylinder div.cylinder,
+	.shapeProperties.cone div.cone,
+	.shapeProperties.capsule div.capsule,
+	.shapeProperties.terrain div.terrain {
+		display:flex;
+	}
 /* LOG */
 #log {
 	background:#111;
@@ -408,7 +426,8 @@ input:-moz-read-only { /* little disappointed here */
 input[type=number]:focus,
 span.x:active ~ input[type=number],
 span.y:active ~ input[type=number],
-span.z:active ~ input[type=number] {
+span.z:active ~ input[type=number],
+span.q:active ~ input[type=number] {
 	background:#262626;
 }
 input[type=number]:hover:not(:disabled) {
@@ -424,7 +443,7 @@ table {
 td:last-child {
 	text-align:right;
 }
-span.x, span.y, span.z {
+span.x, span.y, span.z, span.q {
 	cursor:e-resize;
 	-webkit-user-select:none;
 	-moz-user-select:none;
@@ -435,10 +454,12 @@ span.x, span.y, span.z {
 
 span.x:active,
 span.y:active,
-span.z:active {
+span.z:active,
+span.q:active {
 	opacity:.6;
 }
 
 span.x {background:#c00;}
 span.y {background:#2a2;}
 span.z {background:#33f;}
+span.q {background:#666;}
