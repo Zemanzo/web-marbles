@@ -94,7 +94,10 @@ let editor = {
 };
 	
 window.addEventListener("DOMContentLoaded", function(){
-	editor.log = document.getElementById("log");
+	editor.elements = {
+		log: document.getElementById("log"),
+		worldPrefab: document.getElementById("worldPrefab")
+	};
 	
 	// Inspector
 	editor.inspector.element = document.getElementById("inspector");
@@ -434,32 +437,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		moveLeft = false;
 		moveRight = false;
 	}, false);
-	
-	// Change water level
-	let changeWaterLevel = function(e){
-		water.position.y = this.value;
-	}
-	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
-	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
-	
-/* 	// Import map
-    document.getElementById('terPhysics').addEventListener('change', function(e) {
-		let file = this.files[0];
-		let reader = new FileReader();
-		let loader = new THREE.OBJLoader();
-		reader.onload = function(e) {
-			let result = reader.result;
-			// parse using your corresponding loader
-			let object3d = loader.parse( result );
-			object3d.children[0].geometry.computeBoundingBox();
-			object3d.children[0].geometry.center();
-			object3d.children[0].material = editor.physicsMaterial;
-			object3d.children[0].setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
-			scene.add( object3d );
-		}
-		reader.readAsText(file, "utf-8");
-    }, false); */
-	
+
 	//
 	
 	// Add models
@@ -581,7 +559,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	// Delete prefab
 	let deletePrefab = function(){
 		let parent = this.closest(".prefab");
-		let prefabUuid = parent.dataset.prefabUuid;
+		let prefabUuid = parent.dataset.uuid;
 		let name = parent.getElementsByClassName("prefabName")[0].value;
 		if ( confirm("Are you sure you want to delete this prefab? ("+name+") ("+parent.dataset.uuid+")") ) {
 			// Deselect inspector
@@ -592,6 +570,13 @@ window.addEventListener("DOMContentLoaded", function(){
 			for (let i = children.length; i > 0; i--){
 				let child = children[i - 1];
 				deleteEntity.call(child);
+			}
+			
+			// Remove world select option element
+			editor.elements.worldPrefab.removeChild(editor.prefabs[prefabUuid].option);
+			
+			if (editor.elements.worldPrefab.children.length == 1){
+				editor.elements.worldPrefab.disabled = true;
 			}
 			
 			// Remove element
@@ -663,26 +648,55 @@ window.addEventListener("DOMContentLoaded", function(){
 		}
 	}
 	
+	// Change prefab name
+	let namePrefab = function(){
+		let parent = this.closest(".prefab");
+		let prefabUuid = parent.dataset.uuid;
+		editor.prefabs[prefabUuid].option.text = this.value+" ("+prefabUuid+")";
+		for ( key of Object.keys(editor.prefabs[prefabUuid].instances) ){
+			let instance = editor.prefabs[prefabUuid].instances[key];
+			instance.element.getElementsByClassName("name")[0].innerHTML = this.value+" ("+prefabUuid+")";
+		}
+	}
+	
+	// Actually add the prefab
 	document.getElementById("addPrefab").addEventListener("click",function(){
 		let clone = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
 		let uuid = generateTinyUUID();
 		clone.removeAttribute("id");
 		clone.dataset.uuid = uuid;
+		
+		// Add events
 		clone.getElementsByClassName("showPrefab")[0].addEventListener("click",showPrefab,false);
+		clone.getElementsByClassName("prefabName")[0].addEventListener("input",namePrefab,false);
+		clone.getElementsByClassName("prefabName")[0].addEventListener("change",namePrefab,false);
 		clone.getElementsByClassName("collapse")[0].addEventListener("click",collapse,false);
 		clone.getElementsByClassName("delete")[0].addEventListener("click",deletePrefab,false);
-		clone.getElementsByClassName("objectList")[0].innerHTML = ""; // Remove templates from clone
 		clone.getElementsByClassName("addObject")[0].addEventListener("click",addObject,false);
 		clone.getElementsByClassName("addCollider")[0].addEventListener("click",addCollider,false);
+		
+		// Remove entity templates from clone
+		clone.getElementsByClassName("objectList")[0].innerHTML = "";
+		
+		// Display UUID
 		clone.getElementsByClassName("detailsID")[0].innerHTML = uuid;
-
 		
 		// Add to editor object
 		editor.prefabs[uuid] = {
 			uuid: uuid,
 			group: new THREE.Group(),
-			entities: {}
+			entities: {},
+			instances: {}
 		};
+		
+		// Add option to prefab world list
+		let select = editor.elements.worldPrefab;
+		let option = document.createElement("option");
+		option.text = "("+uuid+")";
+		option.value = uuid;
+		editor.prefabs[uuid].option = select.appendChild(option);
+		
+		if (select.disabled) select.disabled = false;
 		
 		// Add threejs group to scene
 		editor.groups.prefabs.add(editor.prefabs[uuid].group);
@@ -694,6 +708,53 @@ window.addEventListener("DOMContentLoaded", function(){
 		// Focus to name input so user can start typing right away
 		clone.getElementsByClassName("prefabName")[0].focus();
 	}, false);
+	
+	// World
+	
+	// Change water level
+	let changeWaterLevel = function(e){
+		water.position.y = this.value;
+	}
+	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
+	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
+	
+	// Add world prefab
+	let addWorldPrefab = function(){
+		let prefabUuid = editor.elements.worldPrefab.value;
+		if (
+			!editor.elements.worldPrefab.disabled &&
+			prefabUuid !== "null"
+		) {
+			let clone = document.getElementById("worldPrefabTemplate").cloneNode(true); // deep clone
+			let uuid = generateTinyUUID();
+			clone.removeAttribute("id");
+			clone.dataset.uuid = uuid;
+			
+			// Add name
+			clone.getElementsByClassName("name")[0].innerHTML = 
+				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabName")[0].value+" ("+prefabUuid+")";
+			
+			// Add uuid
+			clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
+		
+			// Add threejs group to scene
+			let groupClone = editor.prefabs[prefabUuid].group.clone();
+			let sceneObject = editor.groups.world.add( groupClone );
+			
+			// Add to DOM
+			let hierarchy = document.getElementById("worldHierarchy");
+			let element = hierarchy.insertBefore(clone,document.getElementById("worldPrefabTemplate"));
+			
+			// Add instance reference to parent prefab
+			editor.prefabs[prefabUuid].instances[uuid] = {
+				uuid: uuid,
+				sceneObject: sceneObject,
+				element: element
+			};
+			
+		}
+	}
+	document.getElementById("worldAddPrefabButton").addEventListener("click",addWorldPrefab,false);
 	
 }, false);
 
@@ -724,7 +785,7 @@ function editorLog(message,type){
 	if (sec < 10){
 		sec = "0"+sec;
 	}
-	editor.log.insertAdjacentHTML(
+	editor.elements.log.insertAdjacentHTML(
 		"beforeend",
 		"<div class='"+type+"'>["+hrs+":"+min+":"+sec+"] "+message+"</div>"
 	);

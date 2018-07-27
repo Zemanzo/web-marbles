@@ -60,7 +60,7 @@
 					<div id="models">
 						<div class="model" id="modelTemplate">
 							<div class="name">tree1a_lod0.gltf</div>
-							<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
+							<button class="delete" title="Delete model"><i class="icofont-ui-delete"></i></button>
 						</div>
 					</div>
 					<div id="addModel" class="add" onclick="document.getElementById('addModelFile').click();">
@@ -85,7 +85,7 @@
 								</tr>
 								<tr>
 									<td>
-										Object name
+										Name
 									</td>
 									<td>
 										<input type="text" id="inspectorName" value="" disabled />
@@ -181,7 +181,7 @@
 								<div class="detailsID">
 									LMAO
 								</div>
-							<!-- 	<div class="detailsObjects">
+							<!-- <div class="detailsObjects">
 									Objects: 0
 								</div>
 								<div class="detailsColliders">
@@ -222,6 +222,28 @@
 				
 				<div id="world">
 				
+					<h3>Hierarchy</h3>
+					<div id="worldHierarchy">
+					
+						<div class="worldPrefab" id="worldPrefabTemplate">
+							<div class="name"></div>
+							<div class="uuid"></div>
+							<button class="delete" title="Remove prefab"><i class="icofont-close delete"></i></button>
+						</div>
+						
+						<div id="worldAddPrefab">
+							<select id="worldPrefab" disabled >
+								<option value="null" selected >&lt; Select prefab &gt;</option>
+							</select> 
+							<div id="worldAddPrefabButton" class="add">
+								<i class="icofont-plus"></i>
+								<span>Add prefab</span>
+							</div>
+						</div>
+						
+					</div>
+					
+					
 					<h3>Environment</h3>
 					<table>
 						<tbody>

@@ -283,6 +283,32 @@ body {
 		flex:1;
 		margin:0px 4px;
 	}
+	
+/* WORLD */
+
+#worldAddPrefab {
+	display:flex;
+	justify-content:space-around;
+}
+
+	#worldPrefab {
+		width:190px;
+	}
+
+	#worldAddPrefabButton {
+		flex:1;
+		font-size:1.3em;
+		margin:0px;
+	}
+
+	#worldPrefab:disabled ~ #worldAddPrefabButton {
+		color:#666;
+		cursor:not-allowed;
+	}
+
+	#worldPrefab:disabled ~ #worldAddPrefabButton:hover span {
+		text-decoration:none;
+	}
 
 /* INSPECTOR */
 #inspector {
@@ -392,8 +418,61 @@ body {
 
 /* WORLD */
 #world {
-	padding-top:170px;
+	padding-top:170px; /* For the inspector */
 }
+
+	#worldHierarchy {
+		background:#111;
+		border:3px solid #262626;
+		padding:2px;
+		
+	}
+	
+	#worldPrefabTemplate {
+		display:none;
+	}
+	
+	.worldPrefab {
+		cursor:pointer;
+		margin:2px 0px;
+		padding-left:2px;
+		display:flex;
+		align-items:center;
+	}
+	
+	.worldPrefab:hover {
+		background:#333333;
+	}
+	
+	.worldPrefab.selected {
+		background:#444;
+	}
+	
+	.worldPrefab .uuid {
+		font-family:monospace;
+		padding-right:3px;
+		color:#666;
+	}
+
+	.worldPrefab .delete {
+		padding:0px;
+		visibility:hidden;
+	}
+
+	.worldPrefab:hover .delete {
+		visibility:visible;
+	}
+	.worldPrefab:hover .delete:hover i {
+		color:#eee;
+	}
+
+	.worldPrefab .name {
+		flex:1;
+		display:flex;
+		align-items:center;
+	}
+
+/* Other things */
 
 input[type=number] {
 	max-width:50px;
