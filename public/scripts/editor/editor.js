@@ -35,10 +35,11 @@ let editor = {
 			let name = document.getElementById("inspectorName").value = this.getElementsByClassName("name")[0].innerHTML;
 			let uuid = document.getElementById("inspectorUUID").value = this.dataset.uuid;
 			let prefabUuid = this.dataset.prefabUuid;
+			let type = this.dataset.type;
 			insp.selected = this;
 			
 			let transformElements = editor.inspector.elements.transform;
-			let entity = editor.prefabs[prefabUuid].entities[uuid];
+			let entity = editor.prefabs[prefabUuid][type][uuid];
 			let sceneObject = entity.sceneObject;
 			
 			transformElements.input.translate.x.value = sceneObject.position.x;
@@ -197,6 +198,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			editor.prefabs[prefabUuid].entities[uuid].model = this.value;
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject = clone;
 			editor.prefabs[prefabUuid].group.add(clone);
+			editor.prefabs[prefabUuid].changed = true;
 		}
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
@@ -247,6 +249,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			editor.prefabs[prefabUuid].entities[uuid].shape = shape;
 			document.getElementById("shapeProperties").className = "shapeProperties colliderProperty "+shape;
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry = newGeometry;
+			editor.prefabs[prefabUuid].changed = true;
 		}
 	}
 	editor.inspector.elements.shape.addEventListener("change",inspectorChangeShape,false);
@@ -287,21 +290,26 @@ window.addEventListener("DOMContentLoaded", function(){
 	transformFunctions.translate = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-		editor.prefabs[prefabUuid].entities[uuid].sceneObject.position[axis] = parseFloat(value);
+		let type = editor.inspector.selected.dataset.type;
+		editor.prefabs[prefabUuid][type][uuid].sceneObject.position[axis] = parseFloat(value);
+		editor.prefabs[prefabUuid].changed = true;
 	}
 	
 	// Scale
 	transformFunctions.scale = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-		editor.prefabs[prefabUuid].entities[uuid].sceneObject.scale[axis] = parseFloat(value);
+		let type = editor.inspector.selected.dataset.type;
+		editor.prefabs[prefabUuid][type][uuid].sceneObject.scale[axis] = parseFloat(value);
+		editor.prefabs[prefabUuid].changed = true;
 	}
 	
 	// Rotate
 	transformFunctions.rotate = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-		editor.prefabs[prefabUuid].entities[uuid].sceneObject.setRotationFromEuler(
+		let type = editor.inspector.selected.dataset.type;
+		editor.prefabs[prefabUuid][type][uuid].sceneObject.setRotationFromEuler(
 			new THREE.Euler( 
 				parseFloat(editor.inspector.elements.transform.input.rotate.x.value) * Math.PI / 180,
 				parseFloat(editor.inspector.elements.transform.input.rotate.y.value) * Math.PI / 180,
@@ -309,6 +317,7 @@ window.addEventListener("DOMContentLoaded", function(){
 				'XYZ'
 			)
 		);
+		editor.prefabs[prefabUuid].changed = true;
 	}
 	
 	// Attach event listeners to inputs and labels
@@ -401,8 +410,9 @@ window.addEventListener("DOMContentLoaded", function(){
 				editor.groups[key].visible = false;
 			}
 			
+			editor.inspector.deselect();
+			
 			if (parseInt(this.dataset.nthChild) >= 2){
-				editor.inspector.deselect();
 				editor.inspector.element.style.transform = "translateX(100%)";
 				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
 				document.getElementById("prefabs").style.overflow = "visible";
@@ -411,6 +421,32 @@ window.addEventListener("DOMContentLoaded", function(){
 				editor.menu.overflowTimeout = setTimeout(function(){
 					document.getElementById("prefabs").style.overflow = "auto";
 				},400);
+			}
+			
+			if (parseInt(this.dataset.nthChild) === 2){ // World
+				for (uuid in editor.prefabs){
+					if (editor.prefabs[uuid].changed){
+						// update prefab
+						
+						for (key in editor.prefabs[uuid].instances){
+							let instance = editor.prefabs[uuid].instances[key];
+							let old = instance.sceneObject;
+							
+							let clone = editor.prefabs[uuid].group.clone();
+							clone.position.copy(old.position);
+							clone.rotation.copy(old.rotation);
+							
+							old.parent.add(clone);
+							
+							old.parent.remove(old);
+							
+							instance.sceneObject = clone;
+						}
+						
+						// world instances are updated
+						editor.prefabs[uuid].changed = false;
+					}
+				}
 			}
 			
 			if (this.dataset.sceneGroup) editor.groups[this.dataset.sceneGroup].visible = true;
@@ -554,6 +590,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			delete editor.prefabs[prefabUuid].entities[uuid];
 			
 		}
+		editor.prefabs[prefabUuid].changed = true;
 	}
 	
 	// Delete prefab
@@ -579,6 +616,13 @@ window.addEventListener("DOMContentLoaded", function(){
 				editor.elements.worldPrefab.disabled = true;
 			}
 			
+			// Remove world instances
+			for (key in editor.prefabs[prefabUuid].instances){
+				let instance = editor.prefabs[prefabUuid].instances[key];
+				instance.element.parentNode.removeChild(instance.element);
+				instance.sceneObject.parent.remove(instance.sceneObject);
+			}
+			
 			// Remove element
 			parent.parentNode.removeChild(parent);
 			
@@ -594,6 +638,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		clone.removeAttribute("id");
 		clone.dataset.prefabUuid = parent.dataset.uuid;
 		clone.dataset.uuid = uuid;
+		clone.dataset.type = "entities";
 		clone.getElementsByClassName("name")[0].innerHTML = type+editor.entityCount++;
 		clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
 		clone.getElementsByClassName("delete")[0].addEventListener("click",deleteEntity,false);
@@ -602,6 +647,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		editor.prefabs[parent.dataset.uuid].entities[uuid] = {
 			element: clone
 		};
+		editor.prefabs[parent.dataset.uuid].changed = true;
 		return uuid;
 	}
 	
@@ -655,7 +701,17 @@ window.addEventListener("DOMContentLoaded", function(){
 		editor.prefabs[prefabUuid].option.text = this.value+" ("+prefabUuid+")";
 		for ( key of Object.keys(editor.prefabs[prefabUuid].instances) ){
 			let instance = editor.prefabs[prefabUuid].instances[key];
-			instance.element.getElementsByClassName("name")[0].innerHTML = this.value+" ("+prefabUuid+")";
+			instance.element.getElementsByClassName("prefabName")[0].innerText = this.value;
+		}
+	}
+	
+	// Change prefab color
+	let colorPrefab = function(){
+		let parent = this.closest(".prefab");
+		let prefabUuid = parent.dataset.uuid;
+		for ( key of Object.keys(editor.prefabs[prefabUuid].instances) ){
+			let instance = editor.prefabs[prefabUuid].instances[key];
+			instance.element.getElementsByClassName("prefabName")[0].style.background = this.value;
 		}
 	}
 	
@@ -670,10 +726,18 @@ window.addEventListener("DOMContentLoaded", function(){
 		clone.getElementsByClassName("showPrefab")[0].addEventListener("click",showPrefab,false);
 		clone.getElementsByClassName("prefabName")[0].addEventListener("input",namePrefab,false);
 		clone.getElementsByClassName("prefabName")[0].addEventListener("change",namePrefab,false);
+		clone.getElementsByClassName("prefabColor")[0].addEventListener("change",colorPrefab,false);
 		clone.getElementsByClassName("collapse")[0].addEventListener("click",collapse,false);
 		clone.getElementsByClassName("delete")[0].addEventListener("click",deletePrefab,false);
 		clone.getElementsByClassName("addObject")[0].addEventListener("click",addObject,false);
 		clone.getElementsByClassName("addCollider")[0].addEventListener("click",addCollider,false);
+		
+		// Set random color
+		clone.getElementsByClassName("prefabColor")[0].value = hslToHex(
+			Math.random()*360,
+			100,
+			Math.random()*20 + 20
+		);
 		
 		// Remove entity templates from clone
 		clone.getElementsByClassName("objectList")[0].innerHTML = "";
@@ -709,6 +773,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		clone.getElementsByClassName("prefabName")[0].focus();
 	}, false);
 	
+	
 	// World
 	
 	// Change water level
@@ -729,17 +794,29 @@ window.addEventListener("DOMContentLoaded", function(){
 			let uuid = generateTinyUUID();
 			clone.removeAttribute("id");
 			clone.dataset.uuid = uuid;
+			clone.dataset.prefabUuid = prefabUuid;
+			clone.dataset.type = "instances";
 			
-			// Add name
-			clone.getElementsByClassName("name")[0].innerHTML = 
-				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabName")[0].value+" ("+prefabUuid+")";
+			// Add select event
+			clone.addEventListener("click",editor.inspector.select,false);
+			
+			// Add name & prefab name
+			clone.getElementsByClassName("name")[0].innerText = 
+			clone.getElementsByClassName("prefabName")[0].innerText = 
+				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabName")[0].value;
+			
+			clone.getElementsByClassName("prefabName")[0].style.background = 
+				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabColor")[0].value;
 			
 			// Add uuid
 			clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
+			
+			// Add prefab uuid
+			clone.getElementsByClassName("prefabName")[0].title = prefabUuid;
 		
 			// Add threejs group to scene
 			let groupClone = editor.prefabs[prefabUuid].group.clone();
-			let sceneObject = editor.groups.world.add( groupClone );
+			editor.groups.world.add( groupClone );
 			
 			// Add to DOM
 			let hierarchy = document.getElementById("worldHierarchy");
@@ -748,7 +825,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			// Add instance reference to parent prefab
 			editor.prefabs[prefabUuid].instances[uuid] = {
 				uuid: uuid,
-				sceneObject: sceneObject,
+				sceneObject: groupClone,
 				element: element
 			};
 			
@@ -809,6 +886,37 @@ function generateTinyUUID(){
 		tUUID += charset.substr(remain,1);
 	}
 	return tUUID.split("").reverse().join("");
+}
+
+// hslToHex courtesy of icl7126 and Abel Rodríguez at
+// https://stackoverflow.com/questions/36721830/convert-hsl-to-rgb-and-hex
+function hslToHex(h, s, l) {
+  h /= 360;
+  s /= 100;
+  l /= 100;
+  let r, g, b;
+  if (s === 0) {
+    r = g = b = l; // achromatic
+  } else {
+    const hue2rgb = (p, q, t) => {
+      if (t < 0) t += 1;
+      if (t > 1) t -= 1;
+      if (t < 1 / 6) return p + (q - p) * 6 * t;
+      if (t < 1 / 2) return q;
+      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+      return p;
+    };
+    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+    const p = 2 * l - q;
+    r = hue2rgb(p, q, h + 1 / 3);
+    g = hue2rgb(p, q, h);
+    b = hue2rgb(p, q, h - 1 / 3);
+  }
+  const toHex = x => {
+    const hex = Math.round(x * 255).toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  };
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 window.onbeforeunload = function(e) {

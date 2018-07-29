@@ -9,7 +9,7 @@
 		
 		<!-- Stylesheets -->
 			<!-- Webfont -->
-			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon" rel="stylesheet">
+			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon|BenchNine:300" rel="stylesheet">
 			
 			<!-- Own styles -->
 			<link href="icofont/css/icofont.css" rel="stylesheet">
@@ -173,11 +173,14 @@
 							<div class="prefabHeader">
 								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye"></i></button>
 								<button class="collapse" title="Collapse"><i class="icofont-caret-right"></i></button>
-								<input type="text" class="prefabName" placeholder="Add a name..." required />
+								<input type="text" class="prefabName" placeholder="Add a name..."/>
 								<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
 								<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
 							</div>
 							<div class="prefabDetails">
+								<div class="detailsColor">
+									<input type="color" class="prefabColor"/>
+								</div>
 								<div class="detailsID">
 									LMAO
 								</div>
@@ -226,6 +229,8 @@
 					<div id="worldHierarchy">
 					
 						<div class="worldPrefab" id="worldPrefabTemplate">
+							<!-- <div class="prefabUuid"></div> -->
+							<div class="prefabName"></div>
 							<div class="name"></div>
 							<div class="uuid"></div>
 							<button class="delete" title="Remove prefab"><i class="icofont-close delete"></i></button>
