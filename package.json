@@ -4,6 +4,7 @@
   "description": "Aims to recreate Marble Racing from the ground up, as a fully web based game ",
   "main": "web-marbles.js",
   "scripts": {
+    "start": "node web-marbles.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Merlijn van der Kamp",
