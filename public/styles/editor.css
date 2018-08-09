@@ -517,7 +517,8 @@ input[type=number] {
 	box-sizing:border-box;
 }
 
-.disabled input[type=number] {
+input[type=number]:disabled,
+select:disabled {
 	opacity:.5;
 }
 

@@ -55,6 +55,9 @@ let editor = {
 			transformElements.input.rotate.y.value = (sceneObject.rotation.y * (180 / Math.PI)).toFixed(1);
 			transformElements.input.rotate.z.value = (sceneObject.rotation.z * (180 / Math.PI)).toFixed(1);
 			
+			// Reset any disabled inputs. Will be disabled again when necessary.
+			editor.inspector.enable.all();
+			
 			if (entity.model) document.getElementById("inspectorModel").value = entity.model;
 			
 			if (entity.shape){
@@ -65,30 +68,28 @@ let editor = {
 				editor.inspector.elements.shapeProperties.input.radius.value = sceneObject.userData.radius;
 				editor.inspector.elements.shapeProperties.input.width.value  = sceneObject.userData.width;
 				editor.inspector.elements.shapeProperties.input.height.value = sceneObject.userData.height;
-				editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;
+				editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;	
 			}
 			
+			// Set functionality if the object has it.
 			if (sceneObject.userData.functionality){
 				document.getElementById("inspectorFunction").value = sceneObject.userData.functionality;
-				
-				if (sceneObject.userData.functionality === "startarea"){
-					transformElements.input.rotate.x.disabled = true;
-					transformElements.input.rotate.y.disabled = true;
-					transformElements.input.rotate.z.disabled = true;
-				} else {
-					transformElements.input.rotate.x.disabled = false;
-					transformElements.input.rotate.y.disabled = false;
-					transformElements.input.rotate.z.disabled = false;
+				if (sceneObject.userData.functionality === "startarea"){ // Disable rotations for startarea
+					editor.inspector.disable.rotation();
+					editor.inspector.disable.shape();
 				}
-				
 			}
 			
-			// let euler = (new THREE.Euler()).setFromQuaternion(
-			// 	editor.prefabs[prefabUuid].entities[uuid].sceneObject.rotation, "XYZ"
-			// );
-			// transformElements.input.rotate.x.value = euler.x;
-			// transformElements.input.rotate.y.value = euler.y;
-			// transformElements.input.rotate.z.value = euler.z;
+			// Check if the root prefab contains a starting area, and disable the rotation based on that.
+			if (type === "instances"){
+				let containsStart = Object.keys( editor.prefabs[prefabUuid].entities ).some(
+					(key)=>{
+						let userData = editor.prefabs[prefabUuid].entities[key].sceneObject.userData;
+						return (userData.functionality && userData.functionality === "startarea");
+					}
+				);
+				if (containsStart) editor.inspector.disable.rotation();
+			}
 			
 			this.className += " selected";
 		},
@@ -104,6 +105,52 @@ let editor = {
 				} else {
 					el.selectedIndex = "0"; 
 				}
+			}
+		},
+		disable: {
+			position: function(){
+				editor.inspector.elements.transform.input.translate.x.disabled = true;
+				editor.inspector.elements.transform.input.translate.y.disabled = true;
+				editor.inspector.elements.transform.input.translate.z.disabled = true;
+			},
+			rotation: function(){
+				editor.inspector.elements.transform.input.rotate.x.disabled = true;
+				editor.inspector.elements.transform.input.rotate.y.disabled = true;
+				editor.inspector.elements.transform.input.rotate.z.disabled = true;
+			},
+			scale: function(){
+				editor.inspector.elements.transform.input.scale.x.disabled = true;
+				editor.inspector.elements.transform.input.scale.y.disabled = true;
+				editor.inspector.elements.transform.input.scale.z.disabled = true;
+			},
+			shape: function(){
+				editor.inspector.elements.shape.disabled = true;
+			}
+		},
+		enable: {
+			position: function(){
+				editor.inspector.elements.transform.input.translate.x.disabled = false;
+				editor.inspector.elements.transform.input.translate.y.disabled = false;
+				editor.inspector.elements.transform.input.translate.z.disabled = false;
+			},
+			rotation: function(){
+				editor.inspector.elements.transform.input.rotate.x.disabled = false;
+				editor.inspector.elements.transform.input.rotate.y.disabled = false;
+				editor.inspector.elements.transform.input.rotate.z.disabled = false;
+			},
+			scale: function(){
+				editor.inspector.elements.transform.input.scale.x.disabled = false;
+				editor.inspector.elements.transform.input.scale.y.disabled = false;
+				editor.inspector.elements.transform.input.scale.z.disabled = false;
+			},
+			shape: function(){
+				editor.inspector.elements.shape.disabled = false;
+			},
+			all: function(){
+				editor.inspector.enable.position();
+				editor.inspector.enable.rotation();
+				editor.inspector.enable.scale();
+				editor.inspector.enable.shape();
 			}
 		}
 	},
@@ -233,16 +280,24 @@ window.addEventListener("DOMContentLoaded", function(){
 			rotationInputs.x.disabled = false;
 			rotationInputs.y.disabled = false;
 			rotationInputs.z.disabled = false;
+			editor.inspector.elements.shape.disabled = false;
 					
 			switch(functionality){
 				case "startarea":
 					entity.sceneObject.material = editor.startMaterial;
+					
 					rotationInputs.x.value = entity.sceneObject.rotation.x = 0;
 					rotationInputs.y.value = entity.sceneObject.rotation.y = 0;
 					rotationInputs.z.value = entity.sceneObject.rotation.z = 0;
+					
 					rotationInputs.x.disabled = true;
 					rotationInputs.y.disabled = true;
 					rotationInputs.z.disabled = true;
+					
+					editor.inspector.elements.shape.value = "box";
+					editor.inspector.elements.shape.disabled = true;
+					inspectorChangeShape();
+					
 					break;
 				case "endarea":
 					entity.sceneObject.material = editor.endMaterial;
@@ -842,6 +897,14 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
 	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
+	
+	// Change sun inclination
+	let changeSunInclination = function(e){
+		parameters.inclination = this.value;
+		updateSun();
+	}
+	document.getElementById("envSunInclination").addEventListener("change",changeSunInclination,false);
+	document.getElementById("envSunInclination").addEventListener("input",changeSunInclination,false);
 	
 	// Add world prefab
 	let addWorldPrefab = function(){
