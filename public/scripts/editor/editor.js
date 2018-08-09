@@ -73,13 +73,26 @@ window.addEventListener("DOMContentLoaded", function(){
 					if (editor.prefabs[uuid].changed){
 						// update prefab
 						
+						let containsStart = Object.keys( editor.prefabs[uuid].entities ).some(
+							(key)=>{
+								let userData = editor.prefabs[uuid].entities[key].sceneObject.userData;
+								return (userData.functionality && userData.functionality === "startarea");
+							}
+						);
+						
 						for (key in editor.prefabs[uuid].instances){
 							let instance = editor.prefabs[uuid].instances[key];
 							let old = instance.sceneObject;
 							
 							let clone = editor.prefabs[uuid].group.clone();
+							
 							clone.position.copy(old.position);
-							clone.rotation.copy(old.rotation);
+							
+							if (containsStart) {
+								clone.rotation.setFromVector3( new THREE.Vector3(0,0,0) );
+							} else {
+								clone.rotation.copy(old.rotation);
+							}
 							
 							old.parent.add(clone);
 							
