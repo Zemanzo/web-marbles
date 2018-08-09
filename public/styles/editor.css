@@ -377,6 +377,7 @@ body {
 
 	.transform > tr > td > div {
 		display:inline-flex;
+		flex-direction:row-reverse; /* sort-of hack to use the '~' selector for preceding elements */
 	}
 
 	.transform span {
@@ -397,7 +398,7 @@ body {
 
 	.transform > tr.shapeProperties > td > div {
 		display:none;
-		justify-content:right;
+		justify-content:flex-start;
 		margin-bottom:1px;
 	}
 	
@@ -516,6 +517,10 @@ input[type=number] {
 	box-sizing:border-box;
 }
 
+.disabled input[type=number] {
+	opacity:.5;
+}
+
 input[type=number],
 input[type=text],
 select {
@@ -552,6 +557,7 @@ table {
 td:last-child {
 	text-align:right;
 }
+
 span.x, span.y, span.z, span.q {
 	cursor:e-resize;
 	-webkit-user-select:none;
@@ -559,6 +565,15 @@ span.x, span.y, span.z, span.q {
 	-ms-user-select:none;
 	user-select:none;
 	text-shadow: 1px 1px 1px #333;
+}
+
+input:disabled ~ span.x,
+input:disabled ~ span.y,
+input:disabled ~ span.z,
+input:disabled ~ span.q {
+	filter: grayscale(100%);
+	opacity: .5;
+	cursor: not-allowed;
 }
 
 span.x:active,

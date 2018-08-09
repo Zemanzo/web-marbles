@@ -96,25 +96,25 @@
 								<tr class="translate">
 									<td>Position</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="0" step=".01" disabled data-axis="x" /></div>
-										<div><span class="y">Y</span><input type="number" value="0" step=".01" disabled data-axis="y" /></div>
-										<div><span class="z">Z</span><input type="number" value="0" step=".01" disabled data-axis="z" /></div>
+										<div><input type="number" value="0" step=".01" disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="0" step=".01" disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="0" step=".01" disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 								<tr class="rotate">
 									<td>Rotation</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="0" step=".1" disabled data-axis="x" /></div>
-										<div><span class="y">Y</span><input type="number" value="0" step=".1" disabled data-axis="y" /></div>
-										<div><span class="z">Z</span><input type="number" value="0" step=".1" disabled data-axis="z" /></div>
+										<div><input type="number" value="0" step=".1" disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="0" step=".1" disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="0" step=".1" disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 								<tr class="scale objectProperty">
 									<td>Scale</td>
 									<td>
-										<div><span class="x">X</span><input type="number" value="1" step=".01" disabled data-axis="x" /></div>
-										<div><span class="y">Y</span><input type="number" value="1" step=".01" disabled data-axis="y" /></div>
-										<div><span class="z">Z</span><input type="number" value="1" step=".01" disabled data-axis="z" /></div>
+										<div><input type="number" value="1" step=".01" disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="1" step=".01" disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="1" step=".01" disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 							</tbody>
@@ -139,6 +139,19 @@
 								</tr> -->
 								<tr class="colliderProperty">
 									<td>
+										Collider function
+									</td>
+									<td>
+										<select id="inspectorFunction" disabled >
+											<option value="collider" selected >Collider</option>
+											<option value="startarea" >Starting area</option>
+											<option value="startgate" disabled >Starting gate</option>
+											<option value="endarea" >Finish area</option>
+										</select> 
+									</td>
+								</tr>
+								<tr class="colliderProperty">
+									<td>
 										Collider shape
 									</td>
 									<td>
@@ -157,10 +170,10 @@
 								<tr id="shapeProperties" class="shapeProperties colliderProperty box">
 									<td>Shape properties</td>
 									<td>
-										<div class="sphere cylinder cone capsule"><span class="q">RADIUS</span><input type="number" value="1" step=".01" disabled /></div>
-										<div class="box"><span class="q">WIDTH</span><input type="number" value="1" step=".01" disabled /></div>
-										<div class="box cylinder cone capsule"><span class="q">HEIGHT</span><input type="number" value="1" step=".01" disabled /></div>
-										<div class="box"><span class="q">DEPTH</span><input type="number" value="1" step=".01" disabled /></div>
+										<div class="sphere cylinder cone capsule"><input type="number" value="1" step=".01" disabled /><span class="q">RADIUS</span></div>
+										<div class="box"><input type="number" value="1" step=".01" disabled /><span class="q">WIDTH</span></div>
+										<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" disabled /><span class="q">HEIGHT</span></div>
+										<div class="box"><input type="number" value="1" step=".01" disabled /><span class="q">DEPTH</span></div>
 										<div class="terrain"><input type="file" id="terPhysics"/></div>
 									</td>
 								</tr>
@@ -227,9 +240,8 @@
 				
 					<h3>Hierarchy</h3>
 					<div id="worldHierarchy">
-					
+						
 						<div class="worldPrefab" id="worldPrefabTemplate">
-							<!-- <div class="prefabUuid"></div> -->
 							<div class="prefabName"></div>
 							<div class="name"></div>
 							<div class="uuid"></div>

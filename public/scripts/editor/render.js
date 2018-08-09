@@ -230,14 +230,13 @@ var uniforms = {
 var clock = new THREE.Clock();
 
 // Editor groups
-
 for (key in editor.groups){
 	editor.groups[key] = new THREE.Group();
 	scene.add(editor.groups[key]);
+	if (key !== "models") editor.groups[key].visible = false;
 }
 
 // Default model
-
 let GLTFLoader = new THREE.GLTFLoader();
 GLTFLoader.load(
 	// resource URL
@@ -263,6 +262,27 @@ editor.physicsMaterial = new THREE.MeshStandardMaterial( {
 	roughness: 1,
 	wireframe:true
 } );
+
+// Start area material
+editor.startMaterial = new THREE.MeshPhongMaterial( {
+	color: 0x000000,
+	specular: 0x333333,
+	emissive: 0x00cc00,
+	shininess: 10,
+	opacity: 0.5,
+	transparent: true 
+} );
+
+// End area material
+editor.endMaterial = new THREE.MeshPhongMaterial( {
+	color: 0x000000,
+	specular: 0x333333,
+	emissive: 0xcc0000,
+	shininess: 10,
+	opacity: 0.5,
+	transparent: true 
+} );
+
 //
 
 function animate() {

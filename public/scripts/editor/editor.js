@@ -39,9 +39,10 @@ let editor = {
 			insp.selected = this;
 			
 			let transformElements = editor.inspector.elements.transform;
+			
 			let entity = editor.prefabs[prefabUuid][type][uuid];
 			let sceneObject = entity.sceneObject;
-			
+				
 			transformElements.input.translate.x.value = sceneObject.position.x;
 			transformElements.input.translate.y.value = sceneObject.position.y;
 			transformElements.input.translate.z.value = sceneObject.position.z;
@@ -65,6 +66,21 @@ let editor = {
 				editor.inspector.elements.shapeProperties.input.width.value  = sceneObject.userData.width;
 				editor.inspector.elements.shapeProperties.input.height.value = sceneObject.userData.height;
 				editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;
+			}
+			
+			if (sceneObject.userData.functionality){
+				document.getElementById("inspectorFunction").value = sceneObject.userData.functionality;
+				
+				if (sceneObject.userData.functionality === "startarea"){
+					transformElements.input.rotate.x.disabled = true;
+					transformElements.input.rotate.y.disabled = true;
+					transformElements.input.rotate.z.disabled = true;
+				} else {
+					transformElements.input.rotate.x.disabled = false;
+					transformElements.input.rotate.y.disabled = false;
+					transformElements.input.rotate.z.disabled = false;
+				}
+				
 			}
 			
 			// let euler = (new THREE.Euler()).setFromQuaternion(
@@ -204,6 +220,45 @@ window.addEventListener("DOMContentLoaded", function(){
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
 	
 	// Change collider shape (except terrain)
+	let inspectorChangeFunction = function(){
+		if (editor.inspector.selected){
+			let uuid = editor.inspector.selected.dataset.uuid;
+			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			
+			let entity = editor.prefabs[prefabUuid].entities[uuid];
+			let functionality = entity.sceneObject.userData.functionality = this.value;
+			
+			let rotationInputs = editor.inspector.elements.transform.input.rotate;
+			
+			rotationInputs.x.disabled = false;
+			rotationInputs.y.disabled = false;
+			rotationInputs.z.disabled = false;
+					
+			switch(functionality){
+				case "startarea":
+					entity.sceneObject.material = editor.startMaterial;
+					rotationInputs.x.value = entity.sceneObject.rotation.x = 0;
+					rotationInputs.y.value = entity.sceneObject.rotation.y = 0;
+					rotationInputs.z.value = entity.sceneObject.rotation.z = 0;
+					rotationInputs.x.disabled = true;
+					rotationInputs.y.disabled = true;
+					rotationInputs.z.disabled = true;
+					break;
+				case "endarea":
+					entity.sceneObject.material = editor.endMaterial;
+					break;
+				case "collider":
+				default:
+					entity.sceneObject.material = editor.physicsMaterial;
+					break;
+			}
+			
+			editor.prefabs[prefabUuid].changed = true;
+		}
+	}
+	document.getElementById("inspectorFunction").addEventListener("change",inspectorChangeFunction,false);
+	
+	// Change collider shape (except terrain)
 	let inspectorChangeShape = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
@@ -338,13 +393,15 @@ window.addEventListener("DOMContentLoaded", function(){
 			let el = transformElements.label[transform][key];
 			let func = transformFunctions[transform];
 			el.addEventListener("mousedown",function(e){
-				this.requestPointerLock();
-				editor.inspector.dragValue = {
-					x: e.clientX,
-					y: e.clientY,
-					value: parseFloat(this.nextElementSibling.value),
-					element: this.nextElementSibling,
-					func: func
+				if (!this.previousElementSibling.disabled){
+					this.requestPointerLock();
+					editor.inspector.dragValue = {
+						x: e.clientX,
+						y: e.clientY,
+						value: parseFloat(this.previousElementSibling.value),
+						element: this.previousElementSibling,
+						func: func
+					}
 				}
 			}, false);
 		}
@@ -362,13 +419,15 @@ window.addEventListener("DOMContentLoaded", function(){
 	for (key in editor.inspector.elements.shapeProperties.label){
 		let el = editor.inspector.elements.shapeProperties.label[key];
 		el.addEventListener("mousedown",function(e){
-			this.requestPointerLock();
-			editor.inspector.dragValue = {
-				x: e.clientX,
-				y: e.clientY,
-				value: parseFloat(this.nextElementSibling.value),
-				element: this.nextElementSibling,
-				func: inspectorChangeShape
+			if (!this.previousElementSibling.disabled){
+				this.requestPointerLock();
+				editor.inspector.dragValue = {
+					x: e.clientX,
+					y: e.clientY,
+					value: parseFloat(this.previousElementSibling.value),
+					element: this.previousElementSibling,
+					func: inspectorChangeShape
+				}
 			}
 		}, false);
 	}
@@ -675,6 +734,7 @@ window.addEventListener("DOMContentLoaded", function(){
 		sceneObject.userData.width = 1;
 		sceneObject.userData.height = 1;
 		sceneObject.userData.depth = 1;
+		sceneObject.userData.functionality = "collider";
 		editor.prefabs[parent.dataset.uuid].group.add(box);
 	}
 	
@@ -817,6 +877,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			// Add threejs group to scene
 			let groupClone = editor.prefabs[prefabUuid].group.clone();
 			editor.groups.world.add( groupClone );
+			groupClone.visible = true;
 			
 			// Add to DOM
 			let hierarchy = document.getElementById("worldHierarchy");
