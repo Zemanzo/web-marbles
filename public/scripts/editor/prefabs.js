@@ -104,6 +104,7 @@ editor.initialize.prefabs = function(){
 		let clone = editor.defaultModel.clone();
 		editor.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
+		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject.userData.functionality = "static";
 		editor.prefabs[parent.dataset.uuid].group.add(clone);
 	}
 	
@@ -120,7 +121,7 @@ editor.initialize.prefabs = function(){
 		sceneObject.userData.width = 1;
 		sceneObject.userData.height = 1;
 		sceneObject.userData.depth = 1;
-		sceneObject.userData.functionality = "collider";
+		sceneObject.userData.functionality = "static";
 		editor.prefabs[parent.dataset.uuid].group.add(box);
 	}
 	

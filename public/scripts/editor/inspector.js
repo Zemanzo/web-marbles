@@ -35,7 +35,7 @@ editor.inspector = {
 		transformElements.input.rotate.z.value = (sceneObject.rotation.z * (180 / Math.PI)).toFixed(1);
 		
 		// Reset any disabled inputs. Will be disabled again when necessary.
-		editor.inspector.enable.all();
+		editor.inspector.disabled.all(false);
 		
 		if (entity.model) document.getElementById("inspectorModel").value = entity.model;
 		
@@ -54,8 +54,8 @@ editor.inspector = {
 		if (sceneObject.userData.functionality){
 			document.getElementById("inspectorFunction").value = sceneObject.userData.functionality;
 			if (sceneObject.userData.functionality === "startarea"){ // Disable rotations for startarea
-				editor.inspector.disable.rotation();
-				editor.inspector.disable.shape();
+				editor.inspector.disabled.rotation(true);
+				editor.inspector.disabled.shape(true);
 			}
 		}
 		
@@ -86,50 +86,30 @@ editor.inspector = {
 			}
 		}
 	},
-	disable: {
-		position: function(){
-			editor.inspector.elements.transform.input.translate.x.disabled = true;
-			editor.inspector.elements.transform.input.translate.y.disabled = true;
-			editor.inspector.elements.transform.input.translate.z.disabled = true;
+	disabled: {
+		position: function(bool = true){
+			editor.inspector.elements.transform.input.translate.x.disabled = bool;
+			editor.inspector.elements.transform.input.translate.y.disabled = bool;
+			editor.inspector.elements.transform.input.translate.z.disabled = bool;
 		},
-		rotation: function(){
-			editor.inspector.elements.transform.input.rotate.x.disabled = true;
-			editor.inspector.elements.transform.input.rotate.y.disabled = true;
-			editor.inspector.elements.transform.input.rotate.z.disabled = true;
+		rotation: function(bool = true){
+			editor.inspector.elements.transform.input.rotate.x.disabled = bool;
+			editor.inspector.elements.transform.input.rotate.y.disabled = bool;
+			editor.inspector.elements.transform.input.rotate.z.disabled = bool;
 		},
-		scale: function(){
-			editor.inspector.elements.transform.input.scale.x.disabled = true;
-			editor.inspector.elements.transform.input.scale.y.disabled = true;
-			editor.inspector.elements.transform.input.scale.z.disabled = true;
+		scale: function(bool = true){
+			editor.inspector.elements.transform.input.scale.x.disabled = bool;
+			editor.inspector.elements.transform.input.scale.y.disabled = bool;
+			editor.inspector.elements.transform.input.scale.z.disabled = bool;
 		},
-		shape: function(){
-			editor.inspector.elements.shape.disabled = true;
-		}
-	},
-	enable: {
-		position: function(){
-			editor.inspector.elements.transform.input.translate.x.disabled = false;
-			editor.inspector.elements.transform.input.translate.y.disabled = false;
-			editor.inspector.elements.transform.input.translate.z.disabled = false;
+		shape: function(bool = true){
+			editor.inspector.elements.shape.disabled = bool;
 		},
-		rotation: function(){
-			editor.inspector.elements.transform.input.rotate.x.disabled = false;
-			editor.inspector.elements.transform.input.rotate.y.disabled = false;
-			editor.inspector.elements.transform.input.rotate.z.disabled = false;
-		},
-		scale: function(){
-			editor.inspector.elements.transform.input.scale.x.disabled = false;
-			editor.inspector.elements.transform.input.scale.y.disabled = false;
-			editor.inspector.elements.transform.input.scale.z.disabled = false;
-		},
-		shape: function(){
-			editor.inspector.elements.shape.disabled = false;
-		},
-		all: function(){
-			editor.inspector.enable.position();
-			editor.inspector.enable.rotation();
-			editor.inspector.enable.scale();
-			editor.inspector.enable.shape();
+		all: function(bool = true){
+			editor.inspector.disabled.position(bool);
+			editor.inspector.disabled.rotation(bool);
+			editor.inspector.disabled.scale(bool);
+			editor.inspector.disabled.shape(bool);
 		}
 	}
 }
@@ -238,7 +218,7 @@ editor.initialize.inspector = function(){
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
 	
-	// Change collider shape (except terrain)
+	// Change functionality
 	let inspectorChangeFunction = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
@@ -271,10 +251,13 @@ editor.initialize.inspector = function(){
 					inspectorChangeShape();
 					
 					break;
+				case "startgate":
+					entity.sceneObject.material = editor.gateMaterial;
+					break;
 				case "endarea":
 					entity.sceneObject.material = editor.endMaterial;
 					break;
-				case "collider":
+				case "static":
 				default:
 					entity.sceneObject.material = editor.physicsMaterial;
 					break;

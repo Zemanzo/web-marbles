@@ -285,6 +285,18 @@ editor.endMaterial = new THREE.MeshPhongMaterial( {
 
 //
 
+// End area material
+editor.gateMaterial = new THREE.MeshPhongMaterial( {
+	color: 0x000000,
+	specular: 0x333333,
+	emissive: 0xcc7700,
+	shininess: 10,
+	opacity: 0.5,
+	transparent: true 
+} );
+
+//
+
 function animate() {
 	requestAnimationFrame( animate );
 	
