@@ -8,16 +8,15 @@ html {
 }
 
 body {
-	font-family:monospace;
+	font-family:sans-serif;
 	width:calc(100vw - var(--border-margin));
-	height:calc(100vh - var(--border-margin));
+	min-height:calc(100vh - var(--border-margin));
 	margin:calc(var(--border-margin) * 0.5);
-	overflow:hidden;
+	/* overflow:hidden; */
 	border:12px solid #BA0069;
 	box-sizing:border-box;
 	color:#fff;
 	display:flex;
-	justify-content:center;
 	align-items:center;
 	flex-direction:column;
 	font-size:3em;
@@ -40,4 +39,10 @@ p {
 
 p:last-of-type {
 	margin-bottom:64px;
+}
+
+#headerImage {
+	margin:.8em 0;
+	min-width:500px;
+	max-width:900px;
 }

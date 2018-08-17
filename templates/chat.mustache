@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Meta -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Chat - Manzo's Marbles</title>
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+		
+		<!-- Stylesheets -->
+		<link href="styles/common.css" rel="stylesheet" type="text/css">
+		<link href="styles/chat.css" rel="stylesheet" type="text/css">
+		
+		<!-- Scripts -->
+		{{#access_token}}
+		<script>
+			let access_token = "{{access_token}}";
+		</script>
+		{{/access_token}}
+		<script src="scripts/chat/chat.js"></script>
+		
+	</head>
+	<body>
+		{{#success}}
+		<div id="await">
+			<h1>(Spinny load icon here)</h1>
+			<p>Processing...</p>
+		</div>
+		<div id="success">
+			<h1>Success!</h1>
+			<p>You can now close this window, if it doesn't do so automatically.</p>
+		</div>
+		{{/success}}
+		{{^success}}
+		<div id="chatMessages">
+			<div class="message">
+				This is a message
+			</div>
+			<div class="message">
+				This is a message
+			</div>
+		</div>
+
+		<div id="chatInputContainer">
+			<div id="unauthenticated">
+				<div class="message">You are currently not logged in.</div>
+				<a id="discordLink" target="_blank" style="flex:3"
+					data-client_id="{{client_id}}"
+					data-scope="{{scope}}"
+					data-redirect_uri="{{redirect_uri}}"
+					{{#state}}data-state={{state}}{{/state}}
+				>Log in with Discord</a>
+				<a href="" target="_blank" style="flex:2">Play as guest</a>
+			</div>
+			<div id="authenticated">
+				<div id="user">
+					<img src="images/logo.png" id="userAvatar">
+					<div id="userName">
+						everyone#6969
+					</div>
+				</div>
+				<input type="text" placeholder="Message #game-chat" id="chatInput"/>
+			</div>
+		</div>
+		{{/success}}
+	</body>
+</html>

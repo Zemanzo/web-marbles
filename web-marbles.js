@@ -152,28 +152,18 @@ var game = {
 		state: "started" // "enter", "started"
 	},
 	startDelay: 2825, // length in ms of audio
-	enteredJWTs: []
+	entered: []
 };
 
-game.marbleRequest = function(userJWT,name,color,res){
+game.addMarble = function(id,name,color){
 	// Only allow marbles during entering phase
 	if (game.logic.state === "enter"){
 		
-		// Verify JWT
-		jwt.verify(userJWT, config.twitch.pem, (error, decoded) => {
-			if (error){
-				res.send("JWT invalid");
-			} else if (!game.enteredJWTs.includes(userJWT)){
-				if (userJWT){
-					// Add jwt to list of people that entered
-					game.enteredJWTs.push(userJWT);
-				}
-				spawnMarble(name,color);
-				res.send("ok");
-			} else {
-				res.send("already entered");
-			}
-		});
+		// Make sure this person hasn't entered in this round yet
+		if (!game.entered.includes(id)){
+			game.entered.push(id);
+			spawnMarble(name,color);
+		}
 	}
 }
 
@@ -194,8 +184,8 @@ game.end = function(){
 			physicsWorld.removeRigidBody(marbles[i].ammoBody);
 		}
 		
-		// Clear the jwt array
-		game.enteredJWTs = [];
+		// Clear the array of people that entered
+		game.entered = [];
 		
 		// Clear the marble array
 		marbles = [];
@@ -235,7 +225,7 @@ game.start = function(){
 			gateBody.activate();
 			
 			// Add bot marble to ensure physics not freezing
-			spawnMarble("Nightbot","000000");
+			spawnMarble("Nightbot","#000000");
 		},game.startDelay);
 		
 		clearTimeout(game.gameplayTimeout);
@@ -249,6 +239,54 @@ game.start = function(){
 		return false;
 	}
 }
+
+/* Discord integration */
+let discord, discordClient;
+discord = require("discord.js");
+botClient = new discord.Client();
+
+botClient.on("ready", function() {
+	console.log(currentHourString()+"DISCORD: "+"Discord bot is ready!".green);
+});
+
+botClient.on("message", function(message) {
+	if (message.channel.id == config.discord.gameplayChannelId){
+		if (message.content.startsWith("!marble")) {
+			
+			let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g
+			let match = message.content.match(colorRegEx);
+			
+			let color = (match === null ? undefined : match[0]);
+			
+			game.addMarble(
+				message.client.user.id,
+				message.client.user.discriminator,
+				color
+			);
+		}
+		
+		if (message.content === "!doot") {
+			message.reply("🎺");
+		}
+	}
+	if (message.client.user.id == 83010416610906112){ // Nightbutt
+		// RANK REQUEST
+		if (message.content.indexOf(" is rank ") != -1){
+			rankRequest(message.content);
+		} 
+		// RANK REQUEST - NO DATA
+		else if (message.content.indexOf("No record of") != -1){
+			rankRequestNoData(message.content);
+		}
+		// TOP 10
+		else if (message.content.indexOf("Ranked Top 10") != -1){
+			topRequest(message.content);
+		}
+	}
+});
+
+botClient.login(config.discord.botToken);
+
 /* Express connections */
 var express = require('express');
 var mustacheExpress = require('mustache-express');
@@ -278,27 +316,12 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
 		
-		// Add new marble
-		if (
-			req.query.marble &&
-			req.query.jwt &&
-			req.query.name &&
-			req.query.color
-		){
-			game.marbleRequest(
-				req.query.jwt,
-				req.query.name,
-				req.query.color,
-				res
-			);	
-		} 
-		
 		// Add bot marble
-		else if ( 
+		if ( 
 			req.query.bot &&
 			game.logic.state === "enter"
 		){
-			spawnMarble("nightbot","000000");
+			spawnMarble("nightbot","#000000");
 			res.send("ok");
 		}
 		
@@ -376,7 +399,7 @@ function spawnMarble(name,color){
 		ammoBody: ammoBody,
 		tags: {}
 	}
-	body.tags.color = "#"+color || "#00ff00";
+	body.tags.color = color || randomHexColor();
 	body.tags.size = size;
 	body.tags.useFancy = (Math.random() > .99);
 	body.tags.name = name || "Nightbot";
@@ -391,22 +414,61 @@ function spawnMarble(name,color){
 
 //
 
-/* Twitch */
-var request = require('request');
-var jwt = require('jsonwebtoken');
-var jwkToPem = require('jwk-to-pem');
-
-// Get the public JSON Web Key from twitch to use for JWT reponse verification
-request.get({url:"https://id.twitch.tv/oauth2/keys", json:true}, function (error, response, body) {
-	if (!error && response.statusCode === 200) {
-		config.twitch.jwk = body.keys[0];
-		config.twitch.pem = jwkToPem(config.twitch.jwk);
+let request = require('request');
+app.get("/chat", function (req, res) {
+	
+	if (req.query){
+		
+		if (req.query.code){
+			let options = {
+				url: "https://discordapp.com/api/oauth2/token",
+				form: {
+					client_id: config.discord.clientId,
+					client_secret: config.discord.clientSecret,
+					grant_type: "authorization_code",
+					code: req.query.code,
+					redirect_uri: config.discord.redirectUriRoot+"chat",
+					scope: config.discord.scope
+				}
+			};
+			
+			let callback = function (error, response, body) {
+				if (!error && response.statusCode === 200) {
+					
+					body = JSON.parse(body);
+					console.log(body);
+					
+					res.render("chat",{
+						access_token: body.access_token,
+						success: true
+					});
+					
+				} else {
+					
+					res.render("chat",{
+						success: false
+					});
+				}
+			};
+			
+			request.post(options,callback);
+			return;
+		}
+		
 	}
+	res.render("chat",{
+		client_id: config.discord.clientId,
+		redirect_uri: encodeURIComponent(config.discord.redirectUriRoot+"chat"),
+		scope: encodeURIComponent(config.discord.scope) // separated with spaces
+	});
+	
 });
 
-// Redirect URI, users land here after Twitch authorization
-app.get("/"+config.twitch.redirectUri, function (req, res) {
-	res.render("account");
+app.get("/editor", function (req, res) {
+	if (config.editor.enabled)
+		res.render("editor",{});
+	else 
+		res.render("editorDisabled",{});
 });
 
 //
@@ -415,13 +477,6 @@ app.get("/debug", function (req, res) {
 	res.render("ammo",{
 		map: JSON.stringify(mapObj.parsed)
 	});
-});
-
-app.get("/editor", function (req, res) {
-	if (config.editor.enabled)
-		res.render("editor",{});
-	else 
-		res.render("editorDisabled",{});
 });
 
 /* Express listener */
@@ -508,6 +563,10 @@ function pad(num,size) {
 function currentHourString() {
 	var date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
+}
+
+function randomHexColor(){
+	return '#'+(Math.random()*0xffffff|0).toString(16);
 }
 
 // Start the game loop

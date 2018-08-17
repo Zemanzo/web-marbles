@@ -147,77 +147,16 @@ whenDocReady.add(function(response){
 getXMLDoc("/client?gamestate=true",(response)=>{
 	whenDocReady.args("getGamestate",response);
 });
-	
 
-let jwtValid = null;
-let jwtDOMChanged = false;
-whenDocReady.add(function(valid,result){
-	jwtValid = valid;
-	if (valid){
-		document.getElementById("welcomeMessage").innerHTML = "Welcome back "+result.preferred_username+"!";
-		document.getElementById("welcomeMessage").style.display = "block";
-	} else {
-		document.getElementById("twitchConnect").style.display = "flex";
-	}
-},"jwtvalid");
-
-if (localStorage.id_token){
-	verifyAndParseJWT( localStorage.id_token, false, function(valid,result){
-		whenDocReady.args("jwtvalid",valid,result);
-	});
-} else {
-	whenDocReady.args("jwtvalid",false);
-}
-
-let parsedJWT = false;
 window.addEventListener("DOMContentLoaded", function(){
 	
-	// When document is ready
-	/* whenDocReady.fire("jwtvalid",true);
-	whenDocReady.fire("getGamestate",true);
-	whenDocReady.fire("initialMarbles",true); */
-	
-	if (localStorage.parsedJWT){
-		parsedJWT = JSON.parse(localStorage.parsedJWT);
-	}
-	
-	// !marble
-	document.getElementById("marble").addEventListener("click", function(){
-		if (localStorage.id_token){
-			let str = "/client?marble=true";
-			str += "&jwt="+localStorage.id_token;
-			str += "&color="+document.getElementById("color").value.substr(1);
-			str += "&name="+parsedJWT.preferred_username;
-			/* str += "&size="+(Math.floor(Math.random()*3)*.1+.1); */
-			str += "&size=.2";
-			getXMLDoc(str,(r)=>{console.log(r)});
-		} else {
-			console.log("No id_token found, login with Twitch first!");
-		}
-	},false);
-	
-	// !bot
-	document.getElementById("bot").addEventListener("click", function(){
-		let str = "/client?bot=true";
-		getXMLDoc(str);
-	},false);
-	
 	// Fix camera
-	document.getElementById("fixCam").addEventListener("click", function(){
+	/* document.getElementById("fixCam").addEventListener("click", function(){
 		controls.getObject().position.x = 0;
 		controls.getObject().position.y = 0;
 		controls.getObject().position.z = 0;
-	},false);
-	
-	// !clear
-	/* document.getElementById("clear").addEventListener("click", function(){
-		getXMLDoc("/client?clear=true");
 	},false); */
 	
-	/* // Start race
-	document.getElementById("start").addEventListener("click", function(){
-		getXMLDoc("/client?start=true");
-	},false); */
 },false);
 
 function getXMLDoc(doc,callback){

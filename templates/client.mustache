@@ -95,7 +95,7 @@
 			
 			<hr/> 
 			
-			<a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
+			<!-- <a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
 				<div id="twitchConnect">
 					<img src="images/Glitch_White_RGB.svg" alt="Glitch Logo"> Login with Twitch!
 				</div>
@@ -103,7 +103,7 @@
 			
 			<h3 id="welcomeMessage">Welcome back, fellow marble friend!</h3>
 			
-			<hr/>
+			<hr/> -->
 			
 			<div id="gameInfo">
 				<div id="gameState">
@@ -133,18 +133,10 @@
 				</div>
 			</div>
 			
-			<hr/>
-			
-			<div id="menu">
-			
-				<div class="separator"><h2>Chat</h2></div>
+			<div id="chat">
 				
-				<div id="menuButtons">
-					<input type="color" id="color" value="#000000"/>
-					<button id="marble">!marble</button>
-					<button id="bot">!bot</button>
-					<button id="fixCam">Fix camera</button>
-				</div>
+				<iframe src="/chat" frameborder="0"></iframe>
+				
 			</div>
 		</section>
 		<script src="scripts/client/render.js"></script>

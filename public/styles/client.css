@@ -61,7 +61,6 @@ a:hover {
 	align-items:center;
 	background:#161616;
 	color:#eee;
-	padding:9px;
 	border-left:1px solid var(--theme-color);
 }
 
@@ -92,7 +91,7 @@ a:hover {
 		text-decoration:none;
 	}
 	#gameInfo {
-		flex:1;
+		min-height:350px;
 	}
 	
 		#gameState {
@@ -137,66 +136,67 @@ a:hover {
 	text-shadow:2px 2px var(--theme-color-dark);
 }
 
-#menu {
+#chat {
 	flex:1;
+	display:flex;
+	flex-direction:column;
+	padding:9px;
 }
-	
-	#menuButtons {
-		margin:8px;
-		/* display:none; */
-		align-self:end;
-	}
-	
-	.separator {
-		display:flex;
-		align-items:center;
-		margin-top:12px;
-	}
-	
-	.separator hr {
-		border:none;
-		border-top:2px solid #000;
-		margin:0px 8px;
+
+	#chat > iframe {
 		flex:1;
 	}
 	
-	p {
-		margin:0px 8px 4px 8px;
+.separator {
+	display:flex;
+	align-items:center;
+	margin-top:12px;
+}
+
+.separator hr {
+	border:none;
+	border-top:2px solid #000;
+	margin:0px 8px;
+	flex:1;
+}
+
+p {
+	margin:0px 8px 4px 8px;
+}
+
+#marbleList {
+	min-height:240px;
+	max-height:240px;
+	overflow:auto;
+}
+
+#marbleListTemplate {
+	display:none;
+}
+
+.marbleListEntry {
+	margin:0px 8px;
+	display:flex;
+}
+
+	.marbleListEntry .rank {
+		min-width:2.5em;
+		margin-right:8px;
+		text-align:right;
+	}
+
+	.marbleListEntry .color {
+		min-width:1em;
+		display:inline-block;
+		margin-right:4px;
 	}
 	
-	#marbleList {
-		min-height:240px;
-		max-height:240px;
-		overflow:auto;
+	.marbleListEntry .id {
+		min-width:2.5em;
+		margin-left:8px;
+		text-align:right;
 	}
 	
-	#marbleListTemplate {
-		display:none;
+	.marbleListEntry .name {
+		flex:1;
 	}
-	
-	.marbleListEntry {
-		margin:0px 8px;
-		display:flex;
-	}
-	
-		.marbleListEntry .rank {
-			min-width:2.5em;
-			margin-right:8px;
-			text-align:right;
-		}
-	
-		.marbleListEntry .color {
-			min-width:1em;
-			display:inline-block;
-			margin-right:4px;
-		}
-		
-		.marbleListEntry .id {
-			min-width:2.5em;
-			margin-left:8px;
-			text-align:right;
-		}
-		
-		.marbleListEntry .name {
-			flex:1;
-		}

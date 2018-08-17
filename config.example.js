@@ -44,12 +44,15 @@ config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 config.editor = {};
 config.editor.enabled = false;
 
-/* Twitch connection */
-config.twitch = {};
-config.twitch.clientId = "<your-client-id-here>";
-config.twitch.clientSecret = "<your-client-secret-here>";
-config.twitch.root = "http://localhost:3004/"; // Be sure to add trailing slash
-config.twitch.redirectUri = "twitch"; // NO trailing or preceding slash here
+/* Discord integration */
+config.discord = {};
+config.discord.clientId = "<your-client-id-here>";
+config.discord.clientSecret = "<your-client-secret-here>";
+config.discord.botToken = "<your-bot-token-here>";
+config.discord.redirectUriRoot = "http://localhost:3004/"; // Be sure to add trailing slash
+config.discord.scope = "connections identify"; // Space separated
+config.discord.gameplayChannelId = "<channel-id-of-gameplay-chat>";
+config.discord.useOAuth2State = false; // More secure, but not implemented yet...
 
 /* Physics */
 config.physics = {};
