@@ -62,3 +62,6 @@ process
 
 # Config file (contains sensitive information)
 config.js
+
+# Database file
+*.db3

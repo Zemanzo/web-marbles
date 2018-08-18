@@ -18,6 +18,7 @@
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
 		
 		<!-- Scripts -->
+		{{>partials/scripts/global}}
 		<script src="config.js"></script>
 		<script src="scripts/lib/OBJFile.js"></script>
 		<script src="scripts/whenDocReady.js"></script>
@@ -280,6 +281,37 @@
 								</td>
 								<td>
 									<input type="number" value=".49" id="envSunInclination" step=".01"/>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					
+					
+					<h3>Gameplay parameters</h3>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									Default entering period
+								</td>
+								<td>
+									<input type="number" value="40" id="paramEnterPeriod" step="1"/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Maximum round length
+								</td>
+								<td>
+									<input type="number" value="160" id="paramMaxRoundLength" step="1"/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Maximum wait after first marble finish
+								</td>
+								<td>
+									<input type="number" value="40" id="paramWaitAfterFinish" step="1"/>
 								</td>
 							</tr>
 						</tbody>

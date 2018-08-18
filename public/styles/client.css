@@ -92,6 +92,7 @@ a:hover {
 	}
 	#gameInfo {
 		min-height:350px;
+		padding:9px;
 	}
 	
 		#gameState {

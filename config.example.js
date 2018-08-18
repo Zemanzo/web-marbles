@@ -40,19 +40,31 @@ config.marbles.rules.enterPeriod = 40; // Time in seconds
 config.marbles.rules.maxRoundLength = 160; // Time in seconds
 config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 
+/* Database */
+config.database = {};
+config.database.path = "web-marbles.db3";
+
 /* Editor */
 config.editor = {};
 config.editor.enabled = false;
 
 /* Discord integration */
 config.discord = {};
+
 config.discord.clientId = "<your-client-id-here>";
 config.discord.clientSecret = "<your-client-secret-here>";
+
 config.discord.botToken = "<your-bot-token-here>";
 config.discord.redirectUriRoot = "http://localhost:3004/"; // Be sure to add trailing slash
 config.discord.scope = "connections identify"; // Space separated
-config.discord.gameplayChannelId = "<channel-id-of-gameplay-chat>";
 config.discord.useOAuth2State = false; // More secure, but not implemented yet...
+
+// Server variables
+config.discord.inviteLink = "https://discord.gg/1234567";
+config.discord.gameplayChannelId = "<discord-channel-id-here>";
+
+config.discord.webhookId = "<webhook-id-here>"; // Create a default webhook to your gameplay channel
+config.discord.webhookToken = "<webhook-token-here>";
 
 /* Physics */
 config.physics = {};

@@ -20,15 +20,88 @@ body {
 	max-height:600px;
 }
 
+header {
+	display:flex;
+	font-size:.9rem;
+	padding:0 4px;
+	background:#060606;
+	align-items:center;
+	justify-content:space-between;
+}
+
+
+	header > * {
+		display:flex;
+		align-items:center;
+	}
+	header > a {
+		display:inline-block;
+		color:#09f;
+	}
+		header > a:hover {
+			color:#3df;
+		}
+
+	header > div {
+		font-style:italic;
+		font-weight:600;
+		color:#999;
+	}
+
+	header > div > img {
+		height:1.5rem;
+		margin-left:4px;
+	}
+
 #chatMessages {
 	flex:1;
-	display:flex;
+	/* display:flex;
 	flex-direction:column;
-	justify-content:flex-end;
+	justify-content:flex-end; */
 	overflow:auto;
-	padding-left:4px;
 	padding-bottom:4px;
+	line-height:1.3em;
 }
+
+	#messageTemplate {
+		display:none;
+	}
+
+	.message {
+		display:flex;
+		align-items:baseline;
+		max-width:100%;
+		overflow:hidden;
+	}
+		.message > .timestamp {
+			font-size:.7em;
+			font-family:"Droid Sans Mono", sans-serif;
+			color:#999;
+			margin-right:4px;
+			min-width:2rem;
+			padding:0 2px;
+			box-sizing:border-box;
+			text-align:center;
+		}
+	
+		.message > .username {
+			max-width:30%;
+			display:flex;
+			font-weight:600;
+			padding-right:4px;
+		}
+		
+			.message > .username > .discriminator {
+				display:none;
+			}
+			
+			.message > .username:hover > .discriminator {
+				display:block;
+			}
+	
+		.message > .message {
+			flex:1;
+		}
 
 #chatInputContainer {
 	display:flex;
@@ -55,7 +128,7 @@ body {
 		text-align:center;
 	}
 		
-		#unauthenticated > .message {
+		#unauthenticated > .info {
 			width:100%;
 			font-weight:600;
 		}
@@ -93,7 +166,7 @@ body {
 		}
 		
 			#user > img {
-				max-height:2em;
+				max-height:2rem;
 			}
 		
 			#user > div {
@@ -101,7 +174,11 @@ body {
 				margin:0 4px;
 			}
 		
-			#user > img:hover ~ div {
+			#user:hover {
+				border-radius:0px;			
+			}
+		
+			#user:hover > div {
 				display:block;				
 			}
 

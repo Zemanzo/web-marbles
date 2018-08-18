@@ -1,6 +1,50 @@
 /* Origin window variant */
+let socket, cookieData;
+
 function init(){
 	document.getElementById("discordLink").addEventListener("click",authenticationWindow,false);
+	
+	/* Check for former authentication */
+	cookieData = Cookies.getJSON('user_data');
+	if (cookieData) isAuthorized(cookieData);
+	
+	/* Listen for chat messages */
+	let chatMessages = document.getElementById("chatMessages");
+	let chatMessageTemplate = document.getElementById("messageTemplate");
+	socket.on("chat message", function(obj){
+		let clone = chatMessageTemplate.cloneNode(true);
+		clone.removeAttribute("id");
+		
+		let now = new Date();
+		let timestamp = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
+		clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
+		clone.getElementsByClassName("name")[0].innerText = obj.username;
+		clone.getElementsByClassName("name")[0].title = obj.username+"#"+obj.discriminator;
+		clone.getElementsByClassName("message")[0].innerText = obj.content;
+		
+		chatMessages.insertAdjacentElement("beforeend",clone);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
+	});
+	
+	/* Be able to send chat messages back */
+	let chatInput = document.getElementById("chatInput");
+	chatInput.addEventListener("keypress",function(event){
+		let message = this.value;
+		if (event.keyCode === 13 && this.checkValidity()) {
+			socket.emit("chat incoming",{
+				username: cookieData.username,
+				discriminator: cookieData.discriminator,
+				access_token: cookieData.access_token,
+				id: cookieData.id,
+				avatar: cookieData.avatar,
+				message: message
+			});
+			
+			// Clean input
+			this.value = ""; 
+		}
+		
+	},false);
 }
 
 let authWindow;
@@ -20,52 +64,34 @@ function authenticationWindow(){
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event){	
 	if (event.data && event.data.success && event.origin === window.location.origin){
-		let response = event.data.response;
-		document.getElementById("userAvatar").src = 
-			"https://cdn.discordapp.com/avatars/"+response.id+"/"+response.avatar+".jpg";
-		document.getElementById("userName").innerText = 
-			response.username+"#"+response.discriminator;
-		document.getElementById("chatInputContainer").className = "authorized";
+		isAuthorized(event.data.response);
+		cookieData = Cookies.getJSON('user_data');
 		authWindow.close();
 	}
 }
 
-/* Popout variant */
-let locationParameters = window.location.search.substr(1).split("=");
-
-if (locationParameters[0] === "code" && locationParameters[1]) {
-	getXHR(function(response){
-		let data;
-		if (response){
-			let parsed = JSON.parse(response);
-			console.log(parsed);
-			data = {
-				success: true,
-				response: parsed
-			};
-		} else {
-			data = {
-				success: false
-			};
-		}
-		window.opener.postMessage(data,window.location.origin);
-	});
-} else {
-	window.addEventListener("DOMContentLoaded",init,false);
+function isAuthorized(data){
+	document.getElementById("userAvatar").src = 
+		"https://cdn.discordapp.com/avatars/"+data.id+"/"+data.avatar+".jpg";
+	document.getElementById("userName").innerText = 
+		data.username+"#"+data.discriminator;
+	document.getElementById("chatInputContainer").className = "authorized";
 }
 
-function getXHR(callback){
-	var xhr = new XMLHttpRequest();
-	xhr.open("GET", "https://discordapp.com/api/users/@me", true);
-
-	xhr.setRequestHeader("Authorization", "Bearer "+access_token);
-
-	xhr.onreadystatechange = function() {
-		if(this.readyState === XMLHttpRequest.DONE && this.status === 200) {
-			callback(xhr.responseText);
-		} else if(this.readyState === XMLHttpRequest.DONE && this.status !== 200) {
-			callback(false); /* TODO: make proper error thing */
-		}
-	}
-	xhr.send(); 
+/* Popout variant */
+if (user_data) {
+	
+	let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
+	Cookies.set('user_data', user_data, { expires: days });
+	
+	window.opener.postMessage({
+		success: true,
+		response: user_data
+	},window.location.origin);
+	
+} else {
+	socket = io({
+		transports: ["websocket"]
+	});
+	window.addEventListener("DOMContentLoaded",init,false);
 }

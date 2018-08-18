@@ -12,11 +12,15 @@
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
 		
 		<!-- Scripts -->
-		{{#access_token}}
+		{{>partials/scripts/global}}
+		<script src="scripts/lib/socket.io.js"></script>
 		<script>
-			let access_token = "{{access_token}}";
+			let user_data;
+			{{#user_data}}
+			user_data = JSON.parse('{{{user_data}}}');
+			{{/user_data}}
 		</script>
-		{{/access_token}}
+		
 		<script src="scripts/chat/chat.js"></script>
 		
 	</head>
@@ -32,18 +36,27 @@
 		</div>
 		{{/success}}
 		{{^success}}
+		<header>
+			<div>Chat powered by <img src="images/discord_logo.svg" alt="Discord"/></div>
+			<a href="{{invitelink}}" target="_blank">Join the server!</a>
+		</header>
 		<div id="chatMessages">
-			<div class="message">
-				This is a message
-			</div>
-			<div class="message">
-				This is a message
+			<div class="message" id="messageTemplate">
+				<div class="timestamp">
+					00:00
+				</div>
+				<div class="username">
+					<span class="name">everyone</span>:
+				</div>
+				<div class="message">
+					Hey you! Looking foxy today! ;)
+				</div>
 			</div>
 		</div>
 
 		<div id="chatInputContainer">
 			<div id="unauthenticated">
-				<div class="message">You are currently not logged in.</div>
+				<div class="info">You are currently not logged in.</div>
 				<a id="discordLink" target="_blank" style="flex:3"
 					data-client_id="{{client_id}}"
 					data-scope="{{scope}}"
@@ -59,7 +72,7 @@
 						everyone#6969
 					</div>
 				</div>
-				<input type="text" placeholder="Message #game-chat" id="chatInput"/>
+				<input type="text" placeholder="Message #game-chat" id="chatInput" maxlength="2000"/>
 			</div>
 		</div>
 		{{/success}}
