@@ -369,10 +369,7 @@ app.get("/client", function (req, res) {
 			res.send("You probably can't do that. Nice try tho gg.");
 		}
 	} else {
-		res.render("client",{
-			clientId: config.twitch.clientId,
-			redirectUri: config.twitch.root + config.twitch.redirectUri
-		});
+		res.render("client");
 	}
 });
 
