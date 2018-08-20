@@ -73,6 +73,10 @@ header {
 		max-width:100%;
 		overflow:hidden;
 	}
+
+	.message:nth-child(odd) {
+		background-color:#0C0C0C;
+	}
 		.message > .timestamp {
 			font-size:.7em;
 			font-family:"Droid Sans Mono", sans-serif;
@@ -84,24 +88,22 @@ header {
 			text-align:center;
 		}
 	
-		.message > .username {
-			max-width:30%;
-			display:flex;
-			font-weight:600;
-			padding-right:4px;
-		}
-		
-			.message > .username > .discriminator {
-				display:none;
-			}
-			
-			.message > .username:hover > .discriminator {
-				display:block;
-			}
-	
-		.message > .message {
+		.message > .content {
 			flex:1;
+			margin-left:1ch;
 		}
+	
+			.message > .content > .username {
+				float:left;
+				margin-left:-1ch;
+				margin-right:4px;
+				max-width:80%;
+				display:inline-flex;
+				font-weight:600;
+				white-space:nowrap;
+				overflow:hidden;
+				text-overflow:ellipsis;
+			}
 
 #chatInputContainer {
 	display:flex;
@@ -153,40 +155,78 @@ header {
 			display:none;
 		}
 	
-	#authenticated {}
-	
-		#user {
+	#authenticated {
+		display:flex;
+		flex-direction:column;
+	}
+		#authenticated > div {
 			display:flex;
-			align-items:center;
-			margin-right:4px;
-			font-weight:600;
-			border-radius:1em;
-			background-color:#060606;
-			overflow:hidden;
+			margin:2px;
 		}
 		
-			#user > img {
-				max-height:2rem;
+			#user {
+				display:flex;
+				align-items:center;
+				margin-right:4px;
+				font-weight:600;
+				border-radius:1em;
+				background-color:#060606;
+				overflow:hidden;
 			}
-		
-			#user > div {
-				display:none;
-				margin:0 4px;
-			}
-		
-			#user:hover {
-				border-radius:0px;			
-			}
-		
-			#user:hover > div {
-				display:block;				
-			}
+			
+				#user > img {
+					max-height:2rem;
+				}
+			
+				#user > div {
+					display:none;
+					margin:0 4px;
+				}
+			
+				#user:hover {
+					border-radius:0px;			
+				}
+			
+				#user:hover > div {
+					display:block;				
+				}
 
-		#chatInput {
-			flex:1;
-			font-size:1rem;
-			padding-left:4px;
+			#chatInput {
+				flex:1;
+				font-size:1rem;
+				padding-left:4px;
+			}
+			
+		#chatButtons {
+			justify-content:flex-end;
 		}
+		
+			#chatButtons > button {
+				text-transform:uppercase;
+				margin:0px 4px;
+				padding:2px 4px;
+				background:var(--theme-color-dark);
+				color:#eee;
+				/* border:1px solid  */
+			}
+			
+			#chatButtons > button:first-child {
+				margin-left:0;
+			}
+			#chatButtons > button:last-child {
+				margin-right:0;
+			}
+			
+			#chatButtons > button:hover {
+				background:var(--theme-color);
+				/* border:1px solid var(--theme-color); */
+				color:#eee;
+				text-decoration:none;
+			}
+		
+			#chatButtons > #buttonSettings {
+				margin-right:auto;
+			}
 
 	input[type=number] {
 		max-width:50px;

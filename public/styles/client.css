@@ -100,6 +100,7 @@ a:hover {
 			justify-content:space-around;
 			align-items:center;
 			margin-bottom:12px;
+			height:2em;
 		}
 			#state {
 				margin:0px 8px;

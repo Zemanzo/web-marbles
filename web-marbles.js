@@ -9,7 +9,7 @@ console.log(" "+(new Date()).toLocaleString('nl').cyan);
 let sqlite3 = require('better-sqlite3');
 let db = new sqlite3(config.database.path);
 
-db.prepare("CREATE TABLE IF NOT EXISTS users ( id INTEGER UNIQUE, username TEXT, discriminator TEXT, avatar TEXT, access_token TEXT, refresh_token TEXT, refresh_last INTEGER, refresh_expire INTEGER, scope TEXT, PRIMARY KEY('id'))").run();
+db.prepare("CREATE TABLE IF NOT EXISTS users ( id INTEGER UNIQUE, username TEXT, discriminator TEXT, avatar TEXT, access_token TEXT, refresh_token TEXT, refresh_last INTEGER, refresh_expire INTEGER, scope TEXT, stat_rounds_entered INTEGER, stat_marbles_entered INTEGER, PRIMARY KEY('id'))").run();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
 var timeoutMap = {};
@@ -467,7 +467,7 @@ app.get("/chat", function (req, res) {
 								]);
 							} else {
 								db.prepare(
-									"INSERT OR ABORT INTO users VALUES (?,?,?,?,?,?,?,?,?)"
+									"INSERT OR ABORT INTO users (id, username, discriminator, avatar, access_token, refresh_token, refresh_last, refresh_expire, scope) VALUES (?,?,?,?,?,?,?,?,?)"
 								).run([
 									user_body.id,
 									user_body.username,

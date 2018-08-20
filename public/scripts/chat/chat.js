@@ -8,9 +8,25 @@ function init(){
 	cookieData = Cookies.getJSON('user_data');
 	if (cookieData) isAuthorized(cookieData);
 	
-	/* Listen for chat messages */
+	/* Add welcome message */
 	let chatMessages = document.getElementById("chatMessages");
 	let chatMessageTemplate = document.getElementById("messageTemplate");
+	
+	let clone = chatMessageTemplate.cloneNode(true);
+	clone.removeAttribute("id");
+	
+	let now = new Date();
+	let timestamp = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
+	clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
+	clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
+	clone.getElementsByClassName("content")[0].innerText = "Successfully connected to chat. Say !marble to join the race!";
+	clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
+	clone.getElementsByClassName("content")[0].style.color = "#999";
+	clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
+	
+	chatMessages.insertAdjacentElement("beforeend",clone);
+	
+	/* Listen for chat messages */
 	socket.on("chat message", function(obj){
 		let clone = chatMessageTemplate.cloneNode(true);
 		clone.removeAttribute("id");
@@ -20,7 +36,7 @@ function init(){
 		clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
 		clone.getElementsByClassName("name")[0].innerText = obj.username;
 		clone.getElementsByClassName("name")[0].title = obj.username+"#"+obj.discriminator;
-		clone.getElementsByClassName("message")[0].innerText = obj.content;
+		clone.getElementsByClassName("text")[0].innerText = obj.content;
 		
 		chatMessages.insertAdjacentElement("beforeend",clone);
 		chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -30,10 +46,8 @@ function init(){
 	let chatInput = document.getElementById("chatInput");
 	chatInput.addEventListener("keypress",function(event){
 		let message = this.value;
-		if (event.keyCode === 13 && this.checkValidity()) {
+		if (event.keyCode === 13 && this.checkValidity() && this.value != "") {
 			socket.emit("chat incoming",{
-				username: cookieData.username,
-				discriminator: cookieData.discriminator,
 				access_token: cookieData.access_token,
 				id: cookieData.id,
 				avatar: cookieData.avatar,

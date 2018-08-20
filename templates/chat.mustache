@@ -45,11 +45,13 @@
 				<div class="timestamp">
 					00:00
 				</div>
-				<div class="username">
-					<span class="name">everyone</span>:
-				</div>
-				<div class="message">
-					Hey you! Looking foxy today! ;)
+				<div class="content">
+					<div class="username">
+						<span class="name">everyone</span>:
+					</div>
+					<span class="text">
+						Hey you! Looking foxy today! ;)
+					</span>
 				</div>
 			</div>
 		</div>
@@ -66,13 +68,20 @@
 				<a href="" target="_blank" style="flex:2">Play as guest</a>
 			</div>
 			<div id="authenticated">
-				<div id="user">
-					<img src="images/logo.png" id="userAvatar">
-					<div id="userName">
-						everyone#6969
+				<div>
+					<div id="user">
+						<img src="images/logo.png" id="userAvatar">
+						<div id="userName">
+							everyone#6969
+						</div>
 					</div>
+					<input type="text" placeholder="Message #game-chat" id="chatInput" maxlength="2000"/>
 				</div>
-				<input type="text" placeholder="Message #game-chat" id="chatInput" maxlength="2000"/>
+				<div id="chatButtons">
+					<button id="buttonSettings">&#8997; Settings</button>
+					<button id="buttonMarble">!marble</button>
+					<button id="buttonSend">Send &#10173;</button>
+				</div>
 			</div>
 		</div>
 		{{/success}}
