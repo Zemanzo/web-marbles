@@ -14,9 +14,16 @@ function init(){
 	
 	let clone = chatMessageTemplate.cloneNode(true);
 	clone.removeAttribute("id");
+
+	let now = function(ms){
+		let date = new Date();
+		if (ms)
+			return date.getTime();
+		else
+			return date;
+	}
 	
-	let now = new Date();
-	let timestamp = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
+	let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
 	clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
 	clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
 	clone.getElementsByClassName("content")[0].innerText = "Successfully connected to chat. Say !marble to join the race!";
@@ -31,8 +38,7 @@ function init(){
 		let clone = chatMessageTemplate.cloneNode(true);
 		clone.removeAttribute("id");
 		
-		let now = new Date();
-		let timestamp = now.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
+		let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,'').toLowerCase();
 		clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
 		clone.getElementsByClassName("name")[0].innerText = obj.username;
 		clone.getElementsByClassName("name")[0].title = obj.username+"#"+obj.discriminator;
@@ -42,23 +48,54 @@ function init(){
 		chatMessages.scrollTop = chatMessages.scrollHeight;
 	});
 	
-	/* Be able to send chat messages back */
-	let chatInput = document.getElementById("chatInput");
-	chatInput.addEventListener("keypress",function(event){
-		let message = this.value;
-		if (event.keyCode === 13 && this.checkValidity() && this.value != "") {
+	let lastMessageSent = now(true);
+	let sendMessage = function(message){
+		// Check whether messages are not being spammed.
+		let messageTimestamp = now(true);
+		if (messageTimestamp > lastMessageSent + 500){
 			socket.emit("chat incoming",{
 				access_token: cookieData.access_token,
 				id: cookieData.id,
 				avatar: cookieData.avatar,
 				message: message
 			});
-			
+			lastMessageSent = messageTimestamp;
+			return true;
+		} else {
+			return false;
+		}
+	}
+	
+	// Be able to send chat messages back
+	let chatInput = document.getElementById("chatInput");
+	chatInput.addEventListener("keypress",function(event){
+		let message = this.value;
+		if (event.keyCode === 13 && this.checkValidity() && message != "") {
+			sendMessage(message);
+		
 			// Clean input
 			this.value = ""; 
 		}
 		
 	},false);
+	
+	// Make SEND button functional
+	let chatButtonSend = document.getElementById("buttonSend");
+	chatButtonSend.addEventListener("click",function(){
+		if (chatInput.checkValidity() && chatInput.value != ""){
+			sendMessage(chatInput.value);
+			
+			// Clean input
+			chatInput.value = "";
+		}
+	},false);
+	
+	// Make !MARBLE button functional
+	let chatButtonMarble = document.getElementById("buttonMarble");
+	chatButtonMarble.addEventListener("click",function(){
+		sendMessage("!marble");
+	},false);
+	
 }
 
 let authWindow;

@@ -597,7 +597,7 @@ io.on("connection", function(socket){
 	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken)
 	socket.on("chat incoming", (obj) => {
 		
-		let row = db.prepare("SELECT access_token, username, avatar FROM users WHERE id = ?").get(obj.id);
+		let row = db.prepare("SELECT access_token, username, avatar, discriminator FROM users WHERE id = ?").get(obj.id);
 		if (row && row.access_token == obj.access_token){
 			
 			chat.testMessage(obj.message, obj.id, row.username);
@@ -610,7 +610,7 @@ io.on("connection", function(socket){
 			
 			io.sockets.emit("chat message", {
 				username: row.username,
-				discriminator: obj.discriminator,
+				discriminator: row.discriminator,
 				content: obj.message
 			});
 		} else {
