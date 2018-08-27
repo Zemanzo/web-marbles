@@ -553,12 +553,15 @@ app.post("/chat", function (req, res){
 			let callback = function (error, response, token_body) {
 				if (!error && response.statusCode === 200) {
 					
+					token_body = JSON.parse(token_body);
+					token_body.access_granted = now();
+					
 					db.prepare(
 						"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
 					).run([
 						token_body.access_token,
 						token_body.refresh_token,
-						now(),
+						token_body.access_granted,
 						token_body.expires_in,
 						token_body.scope,
 						req.body.id
