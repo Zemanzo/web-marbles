@@ -13,6 +13,10 @@ body {
 	color:var(--theme-color-dark);
 }
 
+#sidebar {
+	padding:9px;
+}
+
 #properties {
 	display:flex;
 	overflow:hidden;

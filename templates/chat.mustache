@@ -38,7 +38,7 @@
 		{{^success}}
 		<header>
 			<div>Chat powered by <img src="images/discord_logo.svg" alt="Discord"/></div>
-			<a href="{{invitelink}}" target="_blank">Join the server!</a>
+			{{#invitelink}}<a href="{{invitelink}}" target="_blank">Join the server!</a>{{/invitelink}}
 		</header>
 		<div id="chatMessages">
 			<div class="message" id="messageTemplate">

@@ -39,6 +39,7 @@ editor.inspector = {
 		
 		if (entity.model) document.getElementById("inspectorModel").value = entity.model;
 		
+		// If a collider shape is selected, fill the inputs with the appropriate values
 		if (entity.shape){
 			editor.inspector.elements.shape.value = entity.shape;
 			editor.inspector.element.getElementsByClassName("shapeProperties")[0].className = 
@@ -67,7 +68,7 @@ editor.inspector = {
 					return (userData.functionality && userData.functionality === "startarea");
 				}
 			);
-			if (containsStart) editor.inspector.disable.rotation();
+			if (containsStart) editor.inspector.disabled.rotation();
 		}
 		
 		this.className += " selected";
