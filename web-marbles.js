@@ -454,13 +454,14 @@ app.get("/chat", function (req, res) {
 							user_body = JSON.parse(user_body);
 							
 							let exists = db.prepare("SELECT id FROM users WHERE id = ?").get(user_body.id);
+							let nowTimestamp = now();
 							if (exists){
 								db.prepare(
 									"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
 								).run([
 									token_body.access_token,
 									token_body.refresh_token,
-									now(),
+									nowTimestamp,
 									token_body.expires_in,
 									config.discord.scope,
 									user_body.id
@@ -475,7 +476,7 @@ app.get("/chat", function (req, res) {
 									user_body.avatar,
 									token_body.access_token,
 									token_body.refresh_token,
-									now(),
+									nowTimestamp,
 									token_body.expires_in,
 									config.discord.scope
 								]);
@@ -487,6 +488,7 @@ app.get("/chat", function (req, res) {
 									id: user_body.id,
 									username: user_body.username,
 									access_token: token_body.access_token,
+									access_granted: nowTimestamp,
 									expires_in: token_body.expires_in,
 									discriminator: user_body.discriminator,
 									avatar: user_body.avatar,
@@ -522,6 +524,75 @@ app.get("/chat", function (req, res) {
 	});
 	
 });
+
+app.post("/chat", function (req, res){
+	
+	if (req.body){
+		
+		// Request new access_token
+		if (
+			req.body.type == "refresh_token" &&
+			req.body.id &&
+			req.body.access_token &&
+			dbAuthenticated(req.body.id, req.body.access_token)
+		){
+			let row = db.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?").get(req.body.id);
+			
+			let options = {
+				url: "https://discordapp.com/api/oauth2/token",
+				form: {
+					client_id: config.discord.clientId,
+					client_secret: config.discord.clientSecret,
+					grant_type: "refresh_token",
+					refresh_token: row.refresh_token,
+					redirect_uri: config.discord.redirectUriRoot+"chat",
+					scope: row.scope
+				}
+			};
+			
+			let callback = function (error, response, token_body) {
+				if (!error && response.statusCode === 200) {
+					
+					db.prepare(
+						"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
+					).run([
+						token_body.access_token,
+						token_body.refresh_token,
+						now(),
+						token_body.expires_in,
+						token_body.scope,
+						req.body.id
+					]);
+					
+					res.send(token_body);
+				}
+			};
+			
+			request.post(options,callback);
+			
+		}
+		
+	}
+});
+
+function dbIdExists(id){
+	if (
+		db.prepare("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)").get(id)
+	)
+		return true;
+	else
+		return false;
+}
+
+function dbAuthenticated(id,access_token){
+	if (dbIdExists(id)){
+		let row = db.prepare("SELECT access_token FROM users WHERE id = ?").get(id);
+		if (row && row.access_token == access_token){
+			return true;
+		}
+	}
+	return false;
+}
 
 app.get("/editor", function (req, res) {
 	if (config.editor.enabled)

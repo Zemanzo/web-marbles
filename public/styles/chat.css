@@ -175,7 +175,8 @@ header {
 			}
 			
 				#user > img {
-					max-height:2rem;
+					height: 2rem;
+					width: 2rem;
 				}
 			
 				#user > div {
