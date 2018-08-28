@@ -38,6 +38,7 @@ function init(){
 					response.avatar = cookieData.avatar;
 					let days = (response.expires_in / 62400) - 0.1; // seconds to days minus some slack
 					Cookies.set('user_data', response, { expires: days });
+					cookieData = response;
 					
 					/* Add login message */
 					let clone = chatMessageTemplate.cloneNode(true);
