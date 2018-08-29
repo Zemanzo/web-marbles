@@ -26,6 +26,8 @@
 
 var whenDocReady = {
 	
+	timestamp: {},
+	
 	lookup: {},
 	
 	add: function(callback,id,options){
@@ -85,7 +87,7 @@ var whenDocReady = {
 				this.lookup[id].type !== 2 &&
 				this.lookup[id].readyState === readyState
 			){
-				console.log(id);
+				/* console.log(id); */
 				this.fire(id,(this.lookup[id].type === 0));
 			}
 		}
@@ -102,9 +104,11 @@ var whenDocReady = {
 }
 
 window.addEventListener("DOMContentLoaded", function(){
+	whenDocReady.timestamp.interactive = (new Date()).getTime();
 	whenDocReady.fireAll("interactive");
 },false);
 
 window.addEventListener("load", function(){
+	whenDocReady.timestamp.complete = (new Date()).getTime();
 	whenDocReady.fireAll("complete");
 },false);

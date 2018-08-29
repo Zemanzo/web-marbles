@@ -176,7 +176,7 @@ game.addMarble = function(id,name,color){
 game.end = function(){
 	if (game.logic.state === "started"){
 		game.logic.state = "enter";
-		console.log("Current state: ".magenta,game.logic.state);
+		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
 	
 		// Set starting gate to original position
 		var origin = gateBody.getWorldTransform().getOrigin();
@@ -221,7 +221,7 @@ game.end = function(){
 game.start = function(){
 	if (game.logic.state === "enter"){
 		game.logic.state = "started";
-		console.log("Current state: ".magenta,game.logic.state);
+		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
 		io.sockets.emit("start", true);
 		
 		setTimeout(function(){
@@ -597,6 +597,14 @@ function dbAuthenticated(id,access_token){
 	return false;
 }
 
+function dbUsernameById(id){
+	if (dbIdExists(id)){
+		let row = db.prepare("SELECT username FROM users WHERE id = ?").get(id);
+		if (row) return row.username;
+	}
+	return false;
+}
+
 app.get("/editor", function (req, res) {
 	if (config.editor.enabled)
 		res.render("editor",{});
@@ -621,7 +629,26 @@ var server = http.listen(config.express.port, function () {
 /* Sockets */
 let pos, rot;
 io.on("connection", function(socket){
-	console.log("A user connected!".green);
+	
+	// Get user if there is one
+	// Note: this is pretty unsafe code. Remove or improve.
+	let name = " [Guest]";
+	if (socket.handshake.headers && socket.handshake.headers.cookie){
+		let cookies = socket.handshake.headers.cookie.split("; ");
+		let user_data = cookies.find( element => { return element.startsWith("user_data"); } );
+		if (user_data){
+			user_data = decodeURIComponent(user_data);
+			user_data = user_data.substr(10);
+			user_data = JSON.parse(user_data);
+			if ( dbAuthenticated(user_data.id, user_data.access_token) ){
+				name = (" ("+dbUsernameById(user_data.id)+")").yellow;
+			} else {
+				name = " Hacker?!?".red
+			}
+		}
+	}
+	
+	console.log(currentHourString() + "A user connected!".green + name);
 	
 	var initialMarbleData = [];
 	for (i = 0; i < marbles.length; i++){

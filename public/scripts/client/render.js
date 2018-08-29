@@ -11,7 +11,6 @@ var settings = {
 
 var map;
 var viewport = document.getElementById("viewport");
-console.log(viewport.clientWidth,viewport.clientHeight);
 
 var scene = new THREE.Scene();
 var camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );

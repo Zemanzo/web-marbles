@@ -40,14 +40,14 @@ var game = {
 		marbleMeshes = [];
 		document.getElementById("state").innerHTML = "Enter marbles now!";
 		document.getElementById("timer").style.display = "block";
-		game.startTimerInterval(this.state.enterPeriod*1000); // This has to be the server value... :thinking;
+		game.startTimerInterval(this.state.enterPeriod * 1000);
 	},
 	startTimerInterval: function(ms){
 		let s = ms/1000;
 		let timerElement = document.getElementById("timer");
 		timerElement.innerHTML = Math.ceil(s);
 		setTimeout(function(){
-			let timeLeft = Math.ceil(s);
+			let timeLeft = Math.floor(s);
 			console.log(s,timeLeft);
 			let timerInterval = setInterval(function(){
 				if (timeLeft < 0){
@@ -60,6 +60,7 @@ var game = {
 			timerElement.innerHTML = timeLeft;
 			timeLeft--;
 		}, ms - Math.floor(s)*1000); // milliseconds only, i.e. 23941 becomes 941
+		console.log(ms - Math.floor(s)*1000);
 	}
 }
 var marbleData;
@@ -132,20 +133,32 @@ socket.on("initial data", function(obj){
 	});
 });
 
-whenDocReady.add(function(response){
+whenDocReady.add(function(response,requestStart,requestComplete){
 	game.state = JSON.parse(response);
-	console.log(game.state);
+	console.log(
+		game.state,
+		(requestComplete - requestStart) + (requestComplete - whenDocReady.timestamp.interactive)
+	);
 	if (game.state.gameState === "started"){
 		document.getElementById("timer").style.display = "none";
 		document.getElementById("state").innerHTML = "Race started!";
 	} else {
+		// Remove document load time & request time
+		game.state.timeToEnter -= 
+			(requestComplete - requestStart) + 
+			(requestComplete - whenDocReady.timestamp.interactive); 
+		
+		// Start timer interval
 		game.startTimerInterval(game.state.timeToEnter);
+		
+		// Show the timer
 		document.getElementById("timer").innerHTML = game.state.timeToEnter.toString().substr(0,2);
 	}
 },"getGamestate");
 
+let requestStart = (new Date()).getTime();
 getXMLDoc("/client?gamestate=true",(response)=>{
-	whenDocReady.args("getGamestate",response);
+	whenDocReady.args("getGamestate",response,requestStart,(new Date()).getTime());
 });
 
 window.addEventListener("DOMContentLoaded", function(){
