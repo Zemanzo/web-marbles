@@ -43,10 +43,13 @@ body {
 
 #editorMode {
 	display:flex;
+	flex-wrap:wrap;
+	justify-content:space-around;
 	text-align:center;
 }
 
 	#editorMode > * {
+		min-width:10ch;
 		flex:1;
 		cursor:pointer;
 		background:#666;

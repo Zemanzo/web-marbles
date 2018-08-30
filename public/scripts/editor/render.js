@@ -13,7 +13,6 @@ var map;
 var viewport = document.getElementById("viewport");
 
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
 
 var renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;
@@ -27,6 +26,16 @@ document.body.appendChild( stats.dom );
 
 /* CONTROLS */
 
+let flyCam = new THREE.webMarbles.cameraFlyControls(
+	scene,
+	renderer,
+	{
+		pointerLockElement: viewport
+		/* camera:camera */
+	}
+);
+
+/* 
 var element = viewport;
 var controlsEnabled = false;
 var moveForward = false;
@@ -123,7 +132,7 @@ controls.getObject().rotation.z = 0;
 
 camera.parent.rotation.x = -.3;
 
-scene.add(controls.getObject());
+scene.add(controls.getObject()); */
 
 /* CONTROLS END */
 
@@ -302,7 +311,8 @@ function animate() {
 	
 	
 	// Update controls
-	var time = performance.now();
+	flyCam.update();
+	/* var time = performance.now();
 	var delta = ( time - prevTime ) / 1000;
 
 	velocity.x -= velocity.x * 10.0 * delta;
@@ -319,12 +329,10 @@ function animate() {
 		if ( moveForward || moveBackward ) velocity.y -= direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI*.5);
 		if ( moveLeft || moveRight ) velocity.x -= direction.x * config.controls.camera.speed* delta;
 	}
-	/* console.log(velocity.x * delta, controlsEnabled); */
+	//console.log(velocity.x * delta, controlsEnabled);
 	controls.getObject().translateX( velocity.x * delta );
 	controls.getObject().translateY( velocity.y * delta );
-	controls.getObject().translateZ( velocity.z * delta );
-
-	prevTime = time;
+	controls.getObject().translateZ( velocity.z * delta ); */
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
@@ -337,7 +345,7 @@ function animate() {
 	uniforms.time.value += delta * 5;
 	
 	// Render the darn thing
-	renderer.render( scene, camera );
+	renderer.render( scene, flyCam.camera );
 }
 
 // Stuff that can only be rendered after network data has been received

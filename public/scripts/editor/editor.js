@@ -116,12 +116,12 @@ window.addEventListener("DOMContentLoaded", function(){
 	
 	// Fix camera
 	document.getElementById("fixCam").addEventListener("click", function(event){
-		controls.getObject().position.x = -2.3;
-		controls.getObject().position.y = 12;
-		controls.getObject().position.z = 19.7;
-		controls.getObject().rotation.z = 0;
-		controls.getObject().rotation.x = 0;
-		controls.getObject().rotation.y = 0;
+		flyCam.controls.getObject().position.x = -2.3;
+		flyCam.controls.getObject().position.y = 12;
+		flyCam.controls.getObject().position.z = 19.7;
+		flyCam.controls.getObject().rotation.z = 0;
+		flyCam.controls.getObject().rotation.x = 0;
+		flyCam.controls.getObject().rotation.y = 0;
 		camera.parent.rotation.x = -.3;
 		velocity.z = 0;
 		velocity.x = 0;
