@@ -1,4 +1,11 @@
 if (!THREE.webMarbles) THREE.webMarbles = {};
+
+let addRegisteredEventListener = function(scope, event, func, capture){
+	scope.addEventListener(event, func, capture);
+	return () => {
+		scope.removeEventListener(event, func, capture);    
+	};
+}
 	
 THREE.webMarbles.cameraFlyControls = function(
 	scene,
@@ -33,50 +40,42 @@ THREE.webMarbles.cameraFlyControls = function(
 	this.velocity = new THREE.Vector3();
 	this.direction = new THREE.Vector3();
 	
-	let listeners = {};
+	let listeners = [];
 	this.enable = function(){
 		this.enabled = true;
-		let l;
+		let func;
 		
-		// Hook pointer lock state change events
-		listeners.pointerLockChange = {};
-		listeners.pointerLockChange.func = function(event){
+		// Hook pointer lock state change events		
+		func = function(event){
 			// document.pointerLockElement is null if pointerlock is inactive
 			if (document.pointerLockElement === options.pointerLockElement) {
 				controls.enabled = true;
 			} else {
 				controls.enabled = false;
 			}
-		};
-		listeners.pointerLockChange.elem = document;
-		listeners.pointerLockChange.elem.addEventListener("pointerlockchange", listeners.pointerLockChange.func, false);
+		}
+		listeners.push( addRegisteredEventListener(document, "pointerlockchange", func, false) );
 
 		// Warn for pointerlock errors
-		listeners.pointerLockError = {};
-		listeners.pointerLockError.func = function(event){
+		func = function(event){
 			console.warn("Pointer lock error:",event);
 		};
-		listeners.pointerLockError.elem = document;
-		listeners.pointerLockError.elem.addEventListener("pointerlockerror", listeners.pointerLockError.func, false);
+		listeners.push( addRegisteredEventListener(document, "pointerlockerror", func, false) );
 
 		// Request pointerlock
-		listeners.requestPointerLock = {};
-		listeners.requestPointerLock.func = function(event){
+		func = function(event){
 			options.pointerLockElement.requestPointerLock();
 		};
-		listeners.requestPointerLock.elem = renderer.domElement;
-		listeners.requestPointerLock.elem.addEventListener("mousedown", listeners.requestPointerLock.func, false );
+		listeners.push( addRegisteredEventListener(renderer.domElement, "mousedown", func, false) );
 
 		// Release pointerlock
-		listeners.releasePointerLock = {};
-		listeners.releasePointerLock.func = function(event){
+		func = function(event){
 			document.exitPointerLock();
 		}
-		listeners.releasePointerLock.elem = document;
-		listeners.releasePointerLock.elem.addEventListener("mouseup", listeners.releasePointerLock.func, false );
+		listeners.push( addRegisteredEventListener(document, "mouseup", func, false) );
 
 		// Movement keys
-		listeners.movement = function(event){
+		func = function(event){
 			let bool;
 			if (event.type === "keydown") {
 				bool = true;
@@ -88,31 +87,31 @@ THREE.webMarbles.cameraFlyControls = function(
 			switch(event.keyCode){
 				case 38: // up
 				case 87: // w
-					moveForward = bool;
+					this.moveForward = bool;
 					break;
 
 				case 37: // left
 				case 65: // a
-					moveLeft = bool;
+					this.moveLeft = bool;
 					break;
 
 				case 40: // down
 				case 83: // s
-					moveBackward = bool;
+					this.moveBackward = bool;
 					break;
 
 				case 39: // right
 				case 68: // d
-					moveRight = bool;
+					this.moveRight = bool;
 					break;
 			}
 		};
 
-		document.addEventListener("keydown", listeners.movement.func, false);
-		document.addEventListener("keyup", listeners.movement.func, false);
+		listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
+		listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
 	
 		this.update = function(){ 
-			update();
+			update.bind(this)();
 		}
 	}
 	
@@ -120,9 +119,9 @@ THREE.webMarbles.cameraFlyControls = function(
 		this.enabled = false;
 		
 		// remove listeners
-		for (key in listenerFunctions){
-			listenerFunctions[key]
-		}
+		listeners.forEach((el)=>{
+			el();
+		});
 		
 		// null update function
 		this.update = () => void 0;
@@ -143,6 +142,7 @@ THREE.webMarbles.cameraFlyControls = function(
 	// Call this function in the update loop to update the controls.
 	let time, delta;
 	let update = function(){
+		/* console.log(this); */
 		time = performance.now();
 		delta = ( time - this.prevTime ) / 1000;
 
