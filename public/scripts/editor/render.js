@@ -27,114 +27,10 @@ document.body.appendChild( stats.dom );
 /* CONTROLS */
 
 let flyCam = new THREE.webMarbles.cameraFlyControls(
-	scene,
-	renderer,
-	{
+	scene, renderer, {
 		pointerLockElement: viewport
-		/* camera:camera */
 	}
 );
-
-/* 
-var element = viewport;
-var controlsEnabled = false;
-var moveForward = false;
-var moveBackward = false;
-var moveLeft = false;
-var moveRight = false;
-
-var prevTime = performance.now();
-var velocity = new THREE.Vector3();
-var direction = new THREE.Vector3();
-var vertex = new THREE.Vector3();
-var color = new THREE.Color();
-
-// Hook pointer lock state change events
-document.addEventListener('pointerlockchange', function(event){
-	if (document.pointerLockElement === element) {
-		controlsEnabled = true;
-		controls.enabled = true;
-	} else {
-		controls.enabled = false;
-	}
-}, false );
-
-document.addEventListener('pointerlockerror', function(event){
-	console.log("Pointer lock error:",event);
-}, false);
-
-renderer.domElement.addEventListener('mousedown', function(event){
-	element.requestPointerLock();
-}, false );
-
-document.body.addEventListener('mouseup', function(event){
-	document.exitPointerLock();
-}, false );
-
-var onKeyDown = function(event){
-	switch(event.keyCode){
-		case 38: // up
-		case 87: // w
-			moveForward = true;
-			break;
-
-		case 37: // left
-		case 65: // a
-			moveLeft = true;
-			break;
-
-		case 40: // down
-		case 83: // s
-			moveBackward = true;
-			break;
-
-		case 39: // right
-		case 68: // d
-			moveRight = true;
-			break;
-	}
-};
-
-var onKeyUp = function(event){
-	switch(event.keyCode){
-		case 38: // up
-		case 87: // w
-			moveForward = false;
-			break;
-
-		case 37: // left
-		case 65: // a
-			moveLeft = false;
-			break;
-
-		case 40: // down
-		case 83: // s
-			moveBackward = false;
-			break;
-
-		case 39: // right
-		case 68: // d
-			moveRight = false;
-			break;
-	}
-};
-
-document.addEventListener('keydown',onKeyDown,false);
-document.addEventListener('keyup',onKeyUp,false);
-
-var controls = new THREE.PointerLockControls(camera);
-
-controls.getObject().position.x = -2.3;
-controls.getObject().position.y = 12;
-controls.getObject().position.z = 19.7;
-
-controls.getObject().rotation.z = 0;
-
-camera.parent.rotation.x = -.3;
-
-scene.add(controls.getObject()); */
-
-/* CONTROLS END */
 
 var ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
@@ -309,30 +205,8 @@ editor.gateMaterial = new THREE.MeshPhongMaterial( {
 function animate() {
 	requestAnimationFrame( animate );
 	
-	
 	// Update controls
 	flyCam.update();
-	/* var time = performance.now();
-	var delta = ( time - prevTime ) / 1000;
-
-	velocity.x -= velocity.x * 10.0 * delta;
-	velocity.y -= velocity.y * 10.0 * delta;
-	velocity.z -= velocity.z * 10.0 * delta;
-
-	direction.z = Number( moveForward ) - Number( moveBackward );
-	direction.y = Number( moveForward ) - Number( moveBackward );
-	direction.x = Number( moveLeft ) - Number( moveRight );
-	direction.normalize(); // this ensures consistent movements in all directions
-
-	if ( controls.enabled === true ) {
-		if ( moveForward || moveBackward ) velocity.z -= direction.z * config.controls.camera.speed * delta;
-		if ( moveForward || moveBackward ) velocity.y -= direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI*.5);
-		if ( moveLeft || moveRight ) velocity.x -= direction.x * config.controls.camera.speed* delta;
-	}
-	//console.log(velocity.x * delta, controlsEnabled);
-	controls.getObject().translateX( velocity.x * delta );
-	controls.getObject().translateY( velocity.y * delta );
-	controls.getObject().translateZ( velocity.z * delta ); */
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
