@@ -50,9 +50,10 @@
 
 			<h2 id="mode">EDITOR MODE</h2>
 			<div id="editorMode">
-				<div class="selected" data-scene-group="models">MODELS</div>
+				<div data-scene-group="models" class="selected">MODELS</div>
 				<div data-scene-group="prefabs">PREFABS</div>
 				<div data-scene-group="world">WORLD</div>
+				<div data-scene-group="world">PORTATION</div>
 				<div>SETTINGS</div>
 			</div>
 			
@@ -292,6 +293,26 @@
 						<tbody>
 							<tr>
 								<td>
+									Map name
+								</td>
+								<td>
+									<input type="text" maxlength="40" id="paramMapName"/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Author name
+								</td>
+								<td>
+									<input type="text" maxlength="40" id="paramAuthorName"/>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<table>
+						<tbody>
+							<tr>
+								<td>
 									Default entering period
 								</td>
 								<td>
@@ -319,6 +340,33 @@
 					
 				</div>
 				
+				<div>
+					<p>It's a real word, I swear.</p>
+					<h3>IMPORT</h3>
+					<p></p>
+					<h3>EXPORT</h3>
+					<table>
+						<tbody>
+							<tr>
+								<td>
+									
+								</td>
+								<td>
+									<button id="exportBinary" value="" disabled />Binary (Compressed)</button>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									
+								</td>
+								<td>
+									<button id="exportJSON" value="" disabled />JSON (uncompressed)</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				
 				<div id="settings">
 					<h3>Settings</h3>
 					<table>
@@ -328,7 +376,7 @@
 									Confirm prefab deletion
 								</td>
 								<td>
-									<input type="checkbox" id="editorConfirmDeletion" checked/>
+									<input type="checkbox" id="editorConfirmDeletion" checked disabled/>
 								</td>
 							</tr>
 							<tr>
@@ -336,7 +384,15 @@
 									Prevent accidental navigation
 								</td>
 								<td>
-									<input type="checkbox" id="editorPreventUnsaved" checked/>
+									<input type="checkbox" id="editorPreventUnsaved" checked disabled/>
+								</td>
+							</tr>
+							<tr>
+								<td>
+									Show log
+								</td>
+								<td>
+									<input type="checkbox" id="editorShowLog" checked disabled/>
 								</td>
 							</tr>
 						</tbody>

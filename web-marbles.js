@@ -1,5 +1,5 @@
-var config = require("./config");
-var colors = require("colors");
+let config = require("./config");
+let colors = require("colors");
 
 console.log(" Webbased Marble Racing".cyan);
 console.log("   by "+"Z".green+"emanz"+"o".green);
@@ -12,9 +12,9 @@ let db = new sqlite3(config.database.path);
 db.prepare("CREATE TABLE IF NOT EXISTS users ( id INTEGER UNIQUE, username TEXT, discriminator TEXT, avatar TEXT, access_token TEXT, refresh_token TEXT, refresh_last INTEGER, refresh_expire INTEGER, scope TEXT, stat_rounds_entered INTEGER, stat_marbles_entered INTEGER, PRIMARY KEY('id'))").run();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
-var timeoutMap = {};
+let timeoutMap = {};
 function setTrackableTimeout(callback, delay) { // Modify setTimeout
-	var id = setTimeout(callback, delay); // Run the original, and store the id
+	let id = setTimeout(callback, delay); // Run the original, and store the id
 
 	timeoutMap[id] = [Date.now(), delay]; // Store the start date and delay
 
@@ -22,24 +22,24 @@ function setTrackableTimeout(callback, delay) { // Modify setTimeout
 };
 
 function getTimeout(id) { // The actual getTimeLeft function
-	var m = timeoutMap[id]; // Find the timeout in map
+	let m = timeoutMap[id]; // Find the timeout in map
 
 	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
 	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
 }
 
 /* Set up physics world */
-var Ammo = require('ammo-node');
+let Ammo = require('ammo-node');
 
-// Physics variables
-var collisionConfiguration,
+// Physics letiables
+let collisionConfiguration,
 	dispatcher,
 	broadphase,
 	solver,
 	physicsWorld,
 	terrainBody;
-var transformAux1 = new Ammo.btTransform();
-var transformAux2 = new Ammo.btTransform();
+let transformAux1 = new Ammo.btTransform();
+let transformAux2 = new Ammo.btTransform();
 
 // Physics configuration
 collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
@@ -50,27 +50,27 @@ physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver,
 physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
 
 // List of marble physics bodies
-var marbles = [];
+let marbles = [];
 
 function createTerrainShape() {
 	// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-	var upAxis = 1;
+	let upAxis = 1;
 
 	// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-	var hdt = "PHY_FLOAT";
+	let hdt = "PHY_FLOAT";
 
 	// Set this to your needs (inverts the triangles)
-	var flipQuadEdges = false;
+	let flipQuadEdges = false;
 
 	// Creates height data buffer in Ammo heap
-    var ammoHeightData = null;
+    let ammoHeightData = null;
 	ammoHeightData = Ammo._malloc( 4 * mapObj.width * mapObj.depth );
 
 	// Copy the javascript height data array to the Ammo one.
-	var p = 0;
-	var p2 = 0;
-	for ( var j = 0; j < mapObj.depth; j ++ ) {
-		for ( var i = 0; i < mapObj.width; i ++ ) {
+	let p = 0;
+	let p2 = 0;
+	for ( let j = 0; j < mapObj.depth; j ++ ) {
+		for ( let i = 0; i < mapObj.width; i ++ ) {
 
 			// write 32-bit float data to memory
 			Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[ p ];
@@ -82,7 +82,7 @@ function createTerrainShape() {
 	}
 
 	// Creates the heightfield physics shape
-	var heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+	let heightFieldShape = new Ammo.btHeightfieldTerrainShape(
 		mapObj.width,
 		mapObj.depth,
 		ammoHeightData,
@@ -95,8 +95,8 @@ function createTerrainShape() {
 	);
 
 	// Set horizontal scale
-	var scaleX = mapObj.gridDistance;
-	var scaleZ = mapObj.gridDistance;
+	let scaleX = mapObj.gridDistance;
+	let scaleZ = mapObj.gridDistance;
 	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
 
 	heightFieldShape.setMargin( 0.05 );
@@ -106,8 +106,10 @@ function createTerrainShape() {
 }
 
 /* Load obj as heightfield */
-var OBJHeightfield = require('./src/model-import/obj-heightfield');
-var mapObj = new OBJHeightfield(config.marbles.mapRotation[0].name); // X forward, Z up. Write normals & Objects as OBJ Objects.
+let OBJHeightfield = require("./src/model-import/obj-heightfield");
+let fs = require("fs");
+let file = fs.readFileSync( config.marbles.resources+config.marbles.mapRotation[0].name, "utf-8" );
+let mapObj = new OBJHeightfield(file); // X forward, Z up. Write normals & Objects as OBJ Objects.
 mapObj.centerOrigin("xyz");
 
 
@@ -120,40 +122,40 @@ mapObj.centerOrigin("xyz");
 
 /* Create the terrain body */
 groundShape = createTerrainShape( mapObj );
-var groundTransform = new Ammo.btTransform();
+let groundTransform = new Ammo.btTransform();
 groundTransform.setIdentity();
 // Shifts the terrain, since bullet re-centers it on its bounding box.
 //groundTransform.setOrigin( new Ammo.btVector3( 0, ( mapObj.maxHeight + mapObj.minHeight ) / 2, 0 ) );
-var groundMass = 0;
-var groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
-var groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
-var groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
+let groundMass = 0;
+let groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
+let groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
+let groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
 groundBody.setCollisionFlags(1); // Set static
 physicsWorld.addRigidBody( groundBody );
 
 /* Add start gate */
-var gateSize = config.marbles.mapRotation[0].startGate.size;
-var gateShape = new Ammo.btBoxShape(new Ammo.btVector3( gateSize[0], gateSize[1], gateSize[2] ));
+let gateSize = config.marbles.mapRotation[0].startGate.size;
+let gateShape = new Ammo.btBoxShape(new Ammo.btVector3( gateSize[0], gateSize[1], gateSize[2] ));
 
-var gateTransform = new Ammo.btTransform();
+let gateTransform = new Ammo.btTransform();
 gateTransform.setIdentity();
-var gatePosition = config.marbles.mapRotation[0].startGate.position;
+let gatePosition = config.marbles.mapRotation[0].startGate.position;
 gateTransform.setOrigin( new Ammo.btVector3( gatePosition.x,gatePosition.z,gatePosition.y ) );
 
-var gateMass = 0;
-var gatelocalInertia = new Ammo.btVector3(0, 0, 0);
+let gateMass = 0;
+let gatelocalInertia = new Ammo.btVector3(0, 0, 0);
 gateShape.calculateLocalInertia(gateMass, gatelocalInertia);
 
-var gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
-var gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
-var gateBody = new Ammo.btRigidBody(gateRbInfo);
+let gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
+let gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
+let gateBody = new Ammo.btRigidBody(gateRbInfo);
 gateBody.setCollisionFlags(2); // Set kinematic
 /* console.log(gateBody.getCollisionFlags()); */
 
 physicsWorld.addRigidBody(gateBody);
 
 /* Game logic */
-var game = {
+let game = {
 	logic: {
 		state: "started" // "enter", "started"
 	},
@@ -179,7 +181,7 @@ game.end = function(){
 		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
 	
 		// Set starting gate to original position
-		var origin = gateBody.getWorldTransform().getOrigin();
+		let origin = gateBody.getWorldTransform().getOrigin();
 		/* console.log(origin.z()); */
 		origin.setZ(config.marbles.mapRotation[0].startGate.position.y);
 		/* console.log(origin.z()); */
@@ -226,7 +228,7 @@ game.start = function(){
 		
 		setTimeout(function(){
 			// Lower starting gate
-			var origin = gateBody.getWorldTransform().getOrigin();
+			let origin = gateBody.getWorldTransform().getOrigin();
 			origin.setZ(0);
 			gateBody.activate();
 			
@@ -247,12 +249,12 @@ game.start = function(){
 }
 
 /* Express connections */
-var express = require('express');
-var mustacheExpress = require('mustache-express');
-var compression = require('compression');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
+let express = require('express');
+let mustacheExpress = require('mustache-express');
+let compression = require('compression');
+let app = express();
+let http = require('http').Server(app);
+let io = require('socket.io')(http);
 app.use(compression({
   filter: function () { return true; }
 }));
@@ -262,7 +264,7 @@ app.set('view engine', 'mustache');
 if (!config.express.cache) app.disable('view cache');
 app.set('views', __dirname + '/templates');
 
-var bodyParser = require('body-parser');
+let bodyParser = require('body-parser');
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
@@ -387,21 +389,21 @@ chat.testMessage = function(messageContent,id,username){
 function spawnMarble(name,color){
 	
 	// Create physics body
-	var size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
-	var sphereShape =  new Ammo.btSphereShape(size);
+	let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
+	let sphereShape =  new Ammo.btSphereShape(size);
 	sphereShape.setMargin( 0.05 );
-	var mass = (size || 0.5) * 5;
-	var localInertia = new Ammo.btVector3( 0, 0, 0 );
+	let mass = (size || 0.5) * 5;
+	let localInertia = new Ammo.btVector3( 0, 0, 0 );
 	sphereShape.calculateLocalInertia( mass, localInertia );
-	var transform = new Ammo.btTransform();
+	let transform = new Ammo.btTransform();
 	transform.setIdentity();
 	transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
-	var motionState = new Ammo.btDefaultMotionState( transform );
-	var bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-	var ammoBody = new Ammo.btRigidBody( bodyInfo );
+	let motionState = new Ammo.btDefaultMotionState( transform );
+	let bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+	let ammoBody = new Ammo.btRigidBody( bodyInfo );
 	
 	// Add metadata
-	var body = {
+	let body = {
 		ammoBody: ammoBody,
 		tags: {}
 	}
@@ -621,8 +623,8 @@ app.get("/debug", function (req, res) {
 });
 
 /* Express listener */
-var server = http.listen(config.express.port, function () {
-  var port = server.address().port;
+let server = http.listen(config.express.port, function () {
+  let port = server.address().port;
   console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
 });
 
@@ -650,7 +652,7 @@ io.on("connection", function(socket){
 	
 	console.log(currentHourString() + "A user connected!".green + name);
 	
-	var initialMarbleData = [];
+	let initialMarbleData = [];
 	for (i = 0; i < marbles.length; i++){
 		initialMarbleData.push({
 			pos: marbles[i].position,
@@ -667,11 +669,11 @@ io.on("connection", function(socket){
 			pos = new Float32Array(marbles.length*3);
 			rot = new Float64Array(marbles.length*4);
 			for (i = 0; i < marbles.length; i++){
-				var ms = marbles[i].ammoBody.getMotionState();
+				let ms = marbles[i].ammoBody.getMotionState();
 				if (ms){
 					ms.getWorldTransform( transformAux1 );
-					var p = transformAux1.getOrigin();
-					var q = transformAux1.getRotation();
+					let p = transformAux1.getOrigin();
+					let q = transformAux1.getRotation();
 					
 					pos[i*3+0] = p.x();
 					pos[i*3+1] = p.z();
@@ -684,8 +686,8 @@ io.on("connection", function(socket){
 				}
 			}
 				
-			var gorig = gateBody.getWorldTransform().getOrigin();
-			var swPos = [gorig.x(),gorig.y(),gorig.z()];
+			let gorig = gateBody.getWorldTransform().getOrigin();
+			let swPos = [gorig.x(),gorig.y(),gorig.z()];
 			/* console.log(swPos); */
 			
 			callback({pos:pos.buffer,rot:rot.buffer,startGate:swPos});
@@ -724,11 +726,11 @@ io.on("disconnected", function(socket){
 	console.log("A user disconnected...".red);
 });
 
-var lastPhysicsUpdate = Date.now();
+let lastPhysicsUpdate = Date.now();
 /* Physics interval */
 physStepInterval = setInterval(function(){
-    var now = Date.now();
-    var deltaTime = (now - lastPhysicsUpdate)/1000;
+    let now = Date.now();
+    let deltaTime = (now - lastPhysicsUpdate)/1000;
     lastPhysicsUpdate = now;
 	updatePhysics(deltaTime)
 },1000/config.physics.steps);
@@ -741,12 +743,12 @@ function updatePhysics( deltaTime ) {
 
 /* Other */
 function pad(num,size) {
-    var s = "000000000" + num;
+    let s = "000000000" + num;
     return s.substr(s.length-size);
 }
 
 function currentHourString() {
-	var date = new Date();
+	let date = new Date();
 	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
 }
 

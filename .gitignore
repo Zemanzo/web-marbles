@@ -65,3 +65,6 @@ config.js
 
 # Database file
 *.db3
+
+# Syncthing... yeah, I know.
+.stignore
