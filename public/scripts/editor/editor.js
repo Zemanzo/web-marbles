@@ -22,41 +22,41 @@ let editor = {
 	selectedModel: null,
 	entityCount: 0
 };
-	
+
 window.addEventListener("DOMContentLoaded", function(){
 	editor.elements = {
 		log: document.getElementById("log"),
 		worldPrefab: document.getElementById("worldPrefab")
 	};
-	
+
 	//
-	
+
 	editor.initialize.inspector();
-	
+
 	//
-	
+
 	editor.initialize.prefabs();
-	
+
 	//
-	
+
 	// Menu
 	let childValue = 0;
 	for (let child of document.getElementById("editorMode").children){
 		child.dataset.nthChild = childValue++;
-		child.addEventListener("click",function(){
+		child.addEventListener("click", function(){
 			let firstElement = document.getElementById("properties").firstElementChild;
 			firstElement.style.marginLeft = "-"+parseInt(this.dataset.nthChild) * 100 +"%";
-			
+
 			for (let c of this.parentNode.children){
 				c.className = "";
 			}
-			
+
 			for (let key in editor.groups){
 				editor.groups[key].visible = false;
 			}
-			
+
 			editor.inspector.deselect();
-			
+
 			if (parseInt(this.dataset.nthChild) >= 2){
 				editor.inspector.element.style.transform = "translateX(100%)";
 				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
@@ -67,53 +67,54 @@ window.addEventListener("DOMContentLoaded", function(){
 					document.getElementById("prefabs").style.overflow = "auto";
 				},400);
 			}
-			
+
 			if (parseInt(this.dataset.nthChild) === 2){ // World
 				for (uuid in editor.prefabs){
 					if (editor.prefabs[uuid].changed){
 						// update prefab
-						
+
 						let containsStart = Object.keys( editor.prefabs[uuid].entities ).some(
 							(key)=>{
 								let userData = editor.prefabs[uuid].entities[key].sceneObject.userData;
 								return (userData.functionality && userData.functionality === "startarea");
 							}
 						);
-						
+
 						for (key in editor.prefabs[uuid].instances){
 							let instance = editor.prefabs[uuid].instances[key];
 							let old = instance.sceneObject;
-							
+
 							let clone = editor.prefabs[uuid].group.clone();
-							
+
 							clone.position.copy(old.position);
-							
+
 							if (containsStart) {
 								clone.rotation.setFromVector3( new THREE.Vector3(0,0,0) );
 							} else {
 								clone.rotation.copy(old.rotation);
 							}
-							
+
 							old.parent.add(clone);
-							
+
 							old.parent.remove(old);
-							
+
 							instance.sceneObject = clone;
+							instance.sceneObject.visible = true; // Do not copy visibility setting from prefab
 						}
-						
+
 						// world instances are updated
 						editor.prefabs[uuid].changed = false;
 					}
 				}
 			}
-			
+
 			if (this.dataset.sceneGroup) editor.groups[this.dataset.sceneGroup].visible = true;
-			
+
 			this.className = "selected";
-			
+
 		}, false);
 	}
-	
+
 	// Fix camera
 	document.getElementById("fixCam").addEventListener("click", function(event){
 		flyCam.controls.getObject().position.x = -2.3;
@@ -133,7 +134,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	}, false);
 
 	//
-	
+
 	// Add models
 	let GLTFLoader = new THREE.GLTFLoader();
     document.getElementById("addModelFile").addEventListener("change", function(e) {
@@ -162,7 +163,7 @@ window.addEventListener("DOMContentLoaded", function(){
 								editor.models[editor.selectedModel].scene.visible = true;
 								document.getElementById(editor.selectedModel).className = "model selected";
 							}, false);
-							
+
 							// Delete model
 							clone.getElementsByClassName("delete")[0].addEventListener("click",function(){
 								let parent = this.parentNode;
@@ -178,29 +179,29 @@ window.addEventListener("DOMContentLoaded", function(){
 									select.remove(index);
 									parent.parentNode.removeChild(parent); // oofies
 									editorLog("Removed model ("+id+")","warn");
-								}					
+								}
 							}, false);
-							
+
 							// Add to select drop-down
 							let select = document.getElementById("inspectorModel");
 							let option = document.createElement("option");
 							option.text = file.name;
 							option.value = file.name;
 							select.add(option);
-							
+
 							// Add to DOM
 							let modelList = document.getElementById("models");
 							clone = modelList.appendChild(clone);
-							
+
 							// Add to scene
 							editor.groups.models.add(model.scene);
 							model.scene.visible = false;
-							
+
 							editor.models[file.name] = model;
 							editorLog("Loaded model: "+file.name,"info");
 						} else {
 							editorLog("Model already loaded. ("+file.name+")","error");
-						}						
+						}
 					}, function(error){
 						console.log(error);
 					}
@@ -209,16 +210,16 @@ window.addEventListener("DOMContentLoaded", function(){
 			file.reader.readAsText(file, "utf-8");
 		});
     }, false);
-	
+
 	// World
-	
+
 	// Change water level
 	let changeWaterLevel = function(e){
 		water.position.y = this.value;
 	}
 	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
 	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
-	
+
 	// Change sun inclination
 	let changeSunInclination = function(e){
 		parameters.inclination = this.value;
@@ -226,7 +227,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 	document.getElementById("envSunInclination").addEventListener("change",changeSunInclination,false);
 	document.getElementById("envSunInclination").addEventListener("input",changeSunInclination,false);
-	
+
 	// Add world prefab
 	let addWorldPrefab = function(){
 		let prefabUuid = editor.elements.worldPrefab.value;
@@ -240,47 +241,95 @@ window.addEventListener("DOMContentLoaded", function(){
 			clone.dataset.uuid = uuid;
 			clone.dataset.prefabUuid = prefabUuid;
 			clone.dataset.type = "instances";
-			
+
 			// Add select event
 			clone.addEventListener("click",editor.inspector.select,false);
-			
+
 			// Add name & prefab name
-			clone.getElementsByClassName("name")[0].innerText = 
-			clone.getElementsByClassName("prefabName")[0].innerText = 
+			clone.getElementsByClassName("name")[0].innerText =
+			clone.getElementsByClassName("prefabName")[0].innerText =
 				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabName")[0].value;
-			
-			clone.getElementsByClassName("prefabName")[0].style.background = 
+
+			clone.getElementsByClassName("prefabName")[0].style.background =
 				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabColor")[0].value;
-			
+
 			// Add uuid
 			clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
-			
+
 			// Add prefab uuid
 			clone.getElementsByClassName("prefabName")[0].title = prefabUuid;
-		
+
 			// Add threejs group to scene
 			let groupClone = editor.prefabs[prefabUuid].group.clone();
 			editor.groups.world.add( groupClone );
 			groupClone.visible = true;
-			
+
 			// Add to DOM
 			let hierarchy = document.getElementById("worldHierarchy");
 			let element = hierarchy.insertBefore(clone,document.getElementById("worldPrefabTemplate"));
-			
+
 			// Add instance reference to parent prefab
 			editor.prefabs[prefabUuid].instances[uuid] = {
 				uuid: uuid,
 				sceneObject: groupClone,
 				element: element
 			};
-			
+
 		}
 	}
-	document.getElementById("worldAddPrefabButton").addEventListener("click",addWorldPrefab,false);
-	
+	document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldPrefab, false);
+
+	let exportPublishBinary = function(){
+		editor.serialization.worker.postMessage({
+			type: 'exportPublishBinary',
+			payload: editor.serialization.preparePayload()
+		});
+	}
+	document.getElementById("exportPublishBinary").addEventListener("click", exportPublishBinary, false);
+
 }, false);
 
-function getXMLDoc(doc,callback){
+// Spawn serialization worker
+editor.serialization = {};
+editor.serialization.worker = new Worker('scripts/editor/serialize_worker.js');
+editor.serialization.preparePayload = function(){
+	let prefabs = {};
+	Object.keys(editor.prefabs).forEach(key => {
+		prefabs[key] = Object.assign({}, editor.prefabs[key]);
+		delete prefabs[key].element;
+		delete prefabs[key].option;
+		Object.keys(prefabs[key].entities).forEach(entity => {
+			delete prefabs[key].entities[entity].element;
+		});
+	});
+	console.log(prefabs);
+
+	return {
+		params: {
+			title: document.getElementById("paramMapName").value,
+			author: document.getElementById("paramAuthorName").value,
+			enterPeriod: document.getElementById("paramEnterPeriod").value,
+			maxRoundLength: document.getElementById("paramMaxRoundLength").value,
+			waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
+		},
+		models: editor.models,
+		prefabs: prefabs
+	};
+}
+editor.serialization.worker.onmessage = function(message){
+	switch(message.data.type){
+		case 'log':
+			editorLog(message.data.payload.message, message.data.payload.type);
+			break;
+		default:
+			console.log('Unknown worker message', message);
+			break;
+	}
+}
+
+
+// Classic XHR snippet
+function getXMLDoc(doc, callback){
 	let xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
@@ -293,7 +342,8 @@ function getXMLDoc(doc,callback){
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
 }
-function editorLog(message,type){
+
+function editorLog(message, type = 'info'){
 	let date = new Date();
 	let hrs = date.getHours();
 	let min = date.getMinutes();

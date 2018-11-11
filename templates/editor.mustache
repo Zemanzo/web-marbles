@@ -6,17 +6,17 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		<title>Editor - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
-		
+
 		<!-- Stylesheets -->
 			<!-- Webfont -->
 			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon|BenchNine:300" rel="stylesheet">
-			
+
 			<!-- Own styles -->
 			<link href="icofont/css/icofont.css" rel="stylesheet">
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
-		
+
 		<!-- Scripts -->
 		{{>partials/scripts/global}}
 		<script src="config.js"></script>
@@ -29,10 +29,10 @@
 	<body>
 		<!-- THREEJS -->
 		{{>partials/scripts/ThreeJS}}
-		
+
 		<!-- NODE MATERIALS -->
 		{{>partials/scripts/NodeMaterials}}
-		
+
 		<!-- Actual document stuff -->
 		<section id="viewport">
 			<!-- Things are rendered here -->
@@ -42,11 +42,11 @@
 			</div>
 		</section>
 		<section id="sidebar">
-		
+
 			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
 			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
-			
-			<hr/> 
+
+			<hr/>
 
 			<h2 id="mode">EDITOR MODE</h2>
 			<div id="editorMode">
@@ -56,9 +56,9 @@
 				<div data-scene-group="world">PORTATION</div>
 				<div>SETTINGS</div>
 			</div>
-			
+
 			<div id="properties">
-				
+
 				<div>
 					<h3>Models</h3>
 					<div id="models">
@@ -73,7 +73,7 @@
 						<span>Add model(s)</span>
 					</div>
 				</div>
-			
+
 				<div id="prefabs">
 					<div id="inspector" class="noSelection">
 						<h3>Inspector</h3>
@@ -133,7 +133,7 @@
 											<option value="startarea" class="colliderProperty">Starting area</option>
 											<option value="startgate">Starting gate</option>
 											<option value="endarea" class="colliderProperty">Finish area</option>
-										</select> 
+										</select>
 									</td>
 								</tr>
 								<tr class="objectProperty">
@@ -143,7 +143,12 @@
 									<td>
 										<select id="inspectorModel" disabled >
 											<option value="null" selected >&lt; Select model &gt;</option>
-										</select> 
+										</select>
+									</td>
+								</tr>
+								<tr class="objectProperty">
+									<td colspan="2">
+										<button id="inspectorCenterModelOrigin">Center model origin</button>
 									</td>
 								</tr>
 								<!-- <tr class="objectProperty">
@@ -166,7 +171,7 @@
 											<option value="cone">Cone</option>
 											<option value="capsule" disabled>Capsule</option>
 											<option value="terrain">Terrain</option>
-										</select> 
+										</select>
 									</td>
 								</tr>
 							</tbody>
@@ -229,42 +234,42 @@
 								<button class="addObject">+ Add object</button>
 								<button class="addCollider">+ Add collider</button>
 							</div>
-						
+
 						</div>
-						
+
 						<div id="addPrefab" class="add">
 							<i class="icofont-plus"></i>
 							<span>New prefab</span>
 						</div>
-					
+
 					</div>
 				</div>
-				
+
 				<div id="world">
-				
+
 					<h3>Hierarchy</h3>
 					<div id="worldHierarchy">
-						
+
 						<div class="worldPrefab" id="worldPrefabTemplate">
 							<div class="prefabName"></div>
 							<div class="name"></div>
 							<div class="uuid"></div>
 							<button class="delete" title="Remove prefab"><i class="icofont-close delete"></i></button>
 						</div>
-						
+
 						<div id="worldAddPrefab">
 							<select id="worldPrefab" disabled >
 								<option value="null" selected >&lt; Select prefab &gt;</option>
-							</select> 
+							</select>
 							<div id="worldAddPrefabButton" class="add">
 								<i class="icofont-plus"></i>
 								<span>Add prefab</span>
 							</div>
 						</div>
-						
+
 					</div>
-					
-					
+
+
 					<h3>Environment</h3>
 					<table>
 						<tbody>
@@ -286,8 +291,8 @@
 							</tr>
 						</tbody>
 					</table>
-					
-					
+
+
 					<h3>Gameplay parameters</h3>
 					<table>
 						<tbody>
@@ -337,36 +342,51 @@
 							</tr>
 						</tbody>
 					</table>
-					
+
 				</div>
-				
-				<div>
-					<p>It's a real word, I swear.</p>
-					<h3>IMPORT</h3>
-					<p></p>
-					<h3>EXPORT</h3>
+
+				<div id="portation">
+					<h2 id="mapTitle">
+						UNNAMED MAP
+					</h2>
+					<p id="mapAuthor">
+						by Zemanzo
+					</p>
+					<h3>EDITOR PROJECT</h3>
+					<p>With this you can save your project and continue with it later.</p>
+					<table>
+						<tbody>
+							<tr>
+								<th>
+									IMPORT
+								</th>
+								<th>
+									EXPORT
+								</th>
+							</tr>
+							<tr>
+								<td>
+									N/A
+								</td>
+								<td>
+									N/A
+								</td>
+							</tr>
+						</tbody>
+					</table>
+					<h3>PUBLISH</h3>
+					<p>This will generate a file that you can deploy on the web-marbles server.</p>
 					<table>
 						<tbody>
 							<tr>
 								<td>
-									
-								</td>
-								<td>
-									<button id="exportBinary" value="" disabled />Binary (Compressed)</button>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									
-								</td>
-								<td>
-									<button id="exportJSON" value="" disabled />JSON (uncompressed)</button>
+									<button id="exportPublishBinary" value="" />Download binary</button>
 								</td>
 							</tr>
 						</tbody>
 					</table>
 				</div>
-				
+
 				<div id="settings">
 					<h3>Settings</h3>
 					<table>
@@ -398,15 +418,15 @@
 						</tbody>
 					</table>
 				</div>
-				
+
 			</div>
-				
-			<hr/> 
-			
+
+			<hr/>
+
 			<div id="log">
-				
+
 			</div>
-			
+
 		</section>
 		<script src="scripts/render/cameraFlyControls.js"></script>
 		<script src="scripts/editor/render.js"></script>
