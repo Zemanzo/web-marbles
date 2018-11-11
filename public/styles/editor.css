@@ -420,9 +420,6 @@ body {
 /* LOG */
 #log {
 	background:#111;
-	display:flex;
-	flex-direction:column;
-	justify-content: flex-end;
 	height:60px;
 	font-family:monospace;
 	font-size:.9em;

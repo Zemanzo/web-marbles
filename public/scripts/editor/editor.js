@@ -292,29 +292,54 @@ window.addEventListener("DOMContentLoaded", function(){
 // Spawn serialization worker
 editor.serialization = {};
 editor.serialization.worker = new Worker('scripts/editor/serialize_worker.js');
+editor.serialization.asyncToJson = function(obj){
+	return new Promise(resolve => {
+		resolve(obj = obj.toJSON());
+	});
+}
 editor.serialization.preparePayload = function(){
+	let promises = [];
 	let prefabs = {};
 	Object.keys(editor.prefabs).forEach(key => {
 		prefabs[key] = Object.assign({}, editor.prefabs[key]);
 		delete prefabs[key].element;
 		delete prefabs[key].option;
+		prefabs[key].group = prefabs[key].group.toJSON();
 		Object.keys(prefabs[key].entities).forEach(entity => {
 			delete prefabs[key].entities[entity].element;
+			delete prefabs[key].entities[entity].terrainGeometry;
+			prefabs[key].entities[entity].sceneObject = prefabs[key].entities[entity].sceneObject.toJSON();
 		});
 	});
-	console.log(prefabs);
 
-	return {
-		params: {
-			title: document.getElementById("paramMapName").value,
-			author: document.getElementById("paramAuthorName").value,
-			enterPeriod: document.getElementById("paramEnterPeriod").value,
-			maxRoundLength: document.getElementById("paramMaxRoundLength").value,
-			waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
-		},
-		models: editor.models,
-		prefabs: prefabs
-	};
+	let models = {};
+	Object.keys(editor.models).forEach(key => {
+		models[key] = Object.assign({}, editor.models[key]);
+		delete models[key].animations;
+		delete models[key].asset;
+		delete models[key].cameras;
+		delete models[key].parser;
+		delete models[key].scenes;
+		promises.push(editor.serialization.asyncToJson(models[key].scene));
+	});
+
+	console.log(promises);
+	Promise.all(promises).then(()=>{
+		let payload = {
+			params: {
+				title: document.getElementById("paramMapName").value,
+				author: document.getElementById("paramAuthorName").value,
+				enterPeriod: document.getElementById("paramEnterPeriod").value,
+				maxRoundLength: document.getElementById("paramMaxRoundLength").value,
+				waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
+			},
+			models: models,
+			prefabs: prefabs
+		};
+		console.log(payload);
+
+		return payload;
+	})
 }
 editor.serialization.worker.onmessage = function(message){
 	switch(message.data.type){
