@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "ammo-node": "^1.0.0",
-    "better-sqlite3": "^4.1.4",
+    "better-sqlite3": "^5.0.1",
     "body-parser": "^1.18.2",
     "colors": "^1.2.1",
     "compression": "^1.7.2",
@@ -22,8 +22,8 @@
     "request": "^2.85.0",
     "socket.io": "^2.1.0"
   },
-    "repository": {
-    "type" : "git",
-    "url" : "https://github.com/Zemanzo/web-marbles.git"
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zemanzo/web-marbles.git"
   }
 }

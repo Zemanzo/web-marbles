@@ -1,11 +1,11 @@
-var socket = io({
+let socket = io({
 	transports: ["websocket"]
 });
 
-var net = {
+let net = {
 	tickrate: 10, // Cannot be 0
 	ticksToLerp: 2, // Cannot be 0
-	
+
 	// Initialize, do not configure these values.
 	marblePositions: new Float32Array(0),
 	marbleRotations: new Float32Array(0),
@@ -14,7 +14,7 @@ var net = {
 	requestsSkipped: 0 // Helps detect network issues
 };
 
-var game = {
+let game = {
 	audio: {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
@@ -63,74 +63,78 @@ var game = {
 		console.log(ms - Math.floor(s)*1000);
 	}
 }
-var marbleData;
+let marbleData;
 
 whenDocReady.add(function(entries){
 	document.getElementById("entries").innerHTML = entries;
 },"initialMarbles");
 
-whenDocReady.add(
-	function(){renderInit()},
-	"renderInit",
-	{
-		type:1,
-		readyState:"complete"
+let domReady = new Promise((resolve, reject) => {
+	if (document.readyState === "interactive" || document.readyState === "complete"){
+		resolve(true);
+	} else {
+		window.addEventListener("DOMContentLoaded", () => resolve(true), false);
 	}
-);
+});
 
-// Once connected, client receives initial data
-socket.on("initial data", function(obj){
-	
-	marbleData = obj;
-	whenDocReady.args("initialMarbles",marbleData.length);
-	
-	
-	/* Socket RPCs */
-	
-	// New marble
-	socket.on("new marble", function(obj){
-		console.log(obj);
-		spawnMarble(obj);
-	});
-	
-	// Start game
-	socket.on("start", function(obj){
-		game.start();
-	});
-	
-	// End game, and start next round
-	socket.on("clear", function(obj){
-		game.end();
-	});
-	
-	
-	/* Physics syncing */
+let netReady = new Promise((resolve, reject) => {
+	// Once connected, client receives initial data
+	socket.on("initial data", function(obj){
 
-	// Once connection is acknowledged, start requesting physics updates
-	net.getServerDataInterval = setInterval(function(){
-		if (net.ready < net.tickrate){
-			net.ready++;
-			socket.emit("request physics", Date.now(), (data) => {
-				net.marblePositions = new Float32Array(data.pos);
-				net.marbleRotations = new Float64Array(data.rot);
-				/* console.log(data.startGate); */
-				net.lastUpdate = 0;
-				net.ready--;
-			});
-		} else {
-			net.requestsSkipped++;
-		}
-	}, 1000 / net.tickrate);
-	
-	// Initial request to kick off rendering on the first physics update
-	net.ready++;
-	socket.emit("request physics", Date.now(), (data) => {
-		net.marblePositions = new Float32Array(data.pos);
-		net.marbleRotations = new Float64Array(data.rot);
-		net.lastUpdate = 0;
-		net.ready--;
-		whenDocReady.fire("renderInit");
+		marbleData = obj;
+		whenDocReady.args("initialMarbles",marbleData.length);
+
+		/* Socket RPCs */
+
+		// New marble
+		socket.on("new marble", function(obj){
+			console.log(obj);
+			spawnMarble(obj);
+		});
+
+		// Start game
+		socket.on("start", function(obj){
+			game.start();
+		});
+
+		// End game, and start next round
+		socket.on("clear", function(obj){
+			game.end();
+		});
+
+
+		/* Physics syncing */
+
+		// Once connection is acknowledged, start requesting physics updates
+		net.getServerDataInterval = setInterval(function(){
+			if (net.ready < net.tickrate){
+				net.ready++;
+				socket.emit("request physics", Date.now(), (data) => {
+					net.marblePositions = new Float32Array(data.pos);
+					net.marbleRotations = new Float64Array(data.rot);
+					/* console.log(data.startGate); */
+					net.lastUpdate = 0;
+					net.ready--;
+				});
+			} else {
+				net.requestsSkipped++;
+			}
+		}, 1000 / net.tickrate);
+
+		// Initial request to kick off rendering on the first physics update
+		net.ready++;
+		socket.emit("request physics", Date.now(), (data) => {
+			net.marblePositions = new Float32Array(data.pos);
+			net.marbleRotations = new Float64Array(data.rot);
+			net.lastUpdate = 0;
+			net.ready--;
+			resolve(true);
+		});
 	});
+});
+
+Promise.all([domReady, netReady]).then(function(){
+	renderInit();
 });
 
 whenDocReady.add(function(response,requestStart,requestComplete){
@@ -144,13 +148,13 @@ whenDocReady.add(function(response,requestStart,requestComplete){
 		document.getElementById("state").innerHTML = "Race started!";
 	} else {
 		// Remove document load time & request time
-		game.state.timeToEnter -= 
-			(requestComplete - requestStart) + 
-			(requestComplete - whenDocReady.timestamp.interactive); 
-		
+		game.state.timeToEnter -=
+			(requestComplete - requestStart) +
+			(requestComplete - whenDocReady.timestamp.interactive);
+
 		// Start timer interval
 		game.startTimerInterval(game.state.timeToEnter);
-		
+
 		// Show the timer
 		document.getElementById("timer").innerHTML = game.state.timeToEnter.toString().substr(0,2);
 	}
@@ -162,18 +166,18 @@ getXMLDoc("/client?gamestate=true",(response)=>{
 });
 
 window.addEventListener("DOMContentLoaded", function(){
-	
+
 	// Fix camera
 	/* document.getElementById("fixCam").addEventListener("click", function(){
 		controls.getObject().position.x = 0;
 		controls.getObject().position.y = 0;
 		controls.getObject().position.z = 0;
 	},false); */
-	
+
 },false);
 
 function getXMLDoc(doc,callback){
-	var xmlhttp;
+	let xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
