@@ -36,7 +36,7 @@ body {
 		text-transform:uppercase;
 		margin:.7em 0 0 0;
 	}
-	
+
 	#properties > div h3:first-child {
 		margin:.3em 0 0 0;
 	}
@@ -57,12 +57,12 @@ body {
 	#editorMode > *:hover {
 		background:var(--theme-color-dark);
 	}
-	
+
 	#editorMode > *.selected {
 		background:var(--theme-color);
 		color:#111;
 	}
-	
+
 .add {
 	font-size:2.3em;
 	display:flex;
@@ -83,7 +83,7 @@ body {
 	.add:hover span {
 		text-decoration:underline;
 	}
-	
+
 #addModel {
 	-webkit-appearance: none;
 	-moz-appearance:    none;
@@ -93,16 +93,16 @@ body {
 	#addModelFile {
 		display:none;
 	}
-	
+
 	#models {
 		font-size:1.3em;
 		font-family:monospace;
 	}
-	
+
 	#modelTemplate {
 		display:none;
 	}
-	
+
 	.model {
 		cursor:pointer;
 		margin:2px 0px;
@@ -110,15 +110,15 @@ body {
 		background:#262626;
 		display:flex;
 	}
-	
+
 	.model:hover {
 		background:#333333;
 	}
-	
+
 	.model.selected {
 		background:#444;
 	}
-	
+
 	.model .name {
 		flex:1;
 		display:flex;
@@ -130,11 +130,11 @@ body {
 	flex-direction:column;
 	overflow-y:auto;
 }
-		
+
 	#prefabTemplate {
 		display:none;
 	}
-	
+
 	#prefabsList {
 		overflow:auto;
 	}
@@ -179,7 +179,7 @@ body {
 			background:#eee;
 			color:#111;
 		}
-		
+
 		.prefab .prefabName {
 			margin:4px;
 			padding-left:2px;
@@ -191,7 +191,7 @@ body {
 			font-weight:600;
 			min-width:100px;
 		}
-	
+
 	.prefabDetails {
 		display:flex;
 		justify-content:space-around;
@@ -200,18 +200,18 @@ body {
 		padding:2px;
 		position:relative;
 	}
-	
+
 		.prefabDetails > * {
 			flex:1;
 			font-size:.8em;
 		}
-		
+
 		.detailsID {
 			font-family:monospace;
 			font-size:1.1em;
 			color:#666;
 		}
-		
+
 		.prefabColor {
 			border:none;
 			padding:0px;
@@ -223,11 +223,11 @@ body {
 			overflow:hidden;
 			clip:rect(1px,63px,13px,1px);
 		}
-	
+
 	.prefab .showPrefab .icofont-eye-blocked {
 		color:#666;
 	}
-	
+
 	.prefab .delete,
 	.delete {
 		background:transparent;
@@ -240,7 +240,7 @@ body {
 		color:#fff;
 		text-decoration:none;
 	}
-	
+
 	.prefab .objectList {
 		background:#111;
 		min-height:6em;
@@ -251,7 +251,7 @@ body {
 		display:flex;
 		flex-direction:column;
 	}
-	
+
 	.prefab .objectList > div {
 		cursor:pointer;
 		display:flex;
@@ -260,7 +260,7 @@ body {
 	.prefab .objectList > div:hover {
 		background:#222;
 	}
-	
+
 		.prefab .objectList > div.selected {
 			background:#333;
 		}
@@ -280,12 +280,12 @@ body {
 		.prefab .objectList > div:hover .delete {
 			visibility:visible;
 		}
-	
+
 		#prefabObjectTemplate,
 		#prefabColliderTemplate {
 			display:none;
 		}
-	
+
 	.prefabActions {
 		display:flex;
 		justify-content:space-around;
@@ -303,7 +303,7 @@ body {
 		flex:1;
 		margin:0px 4px;
 	}
-	
+
 /* WORLD */
 
 #worldAddPrefab {
@@ -365,11 +365,11 @@ body {
 	#inspector table {
 		border-collapse:collapse;
 	}
-	
+
 	#inspector table tr:hover {
 		background:#363636;
 	}
-	
+
 /* transform */
 
 	.transform > tr > td:first-child {
@@ -408,7 +408,7 @@ body {
 		justify-content:flex-start;
 		margin-bottom:1px;
 	}
-	
+
 	.shapeProperties.box div.box,
 	.shapeProperties.sphere div.sphere,
 	.shapeProperties.cylinder div.cylinder,
@@ -420,9 +420,6 @@ body {
 /* LOG */
 #log {
 	background:#111;
-	display:flex;
-	flex-direction:column;
-	justify-content: flex-end;
 	height:60px;
 	font-family:monospace;
 	font-size:.9em;
@@ -437,6 +434,10 @@ body {
 	color: #dd0;
 }
 
+#log .success {
+	color: #2d2;
+}
+
 /* WORLD */
 #world {
 	padding-top:170px; /* For the inspector */
@@ -446,13 +447,13 @@ body {
 		background:#111;
 		border:3px solid #262626;
 		padding:2px;
-		
+
 	}
-	
+
 	#worldPrefabTemplate {
 		display:none;
 	}
-	
+
 	.worldPrefab {
 		cursor:pointer;
 		margin:2px 0px;
@@ -460,15 +461,15 @@ body {
 		display:flex;
 		align-items:center;
 	}
-	
+
 	.worldPrefab:hover {
 		background:#333333;
 	}
-	
+
 	.worldPrefab.selected {
 		background:#444;
 	}
-	
+
 	.worldPrefab .uuid {
 		font-family:monospace;
 		font-size:1.1em;
@@ -509,6 +510,26 @@ body {
 		font-family: 'BenchNine', sans-serif;
 		text-shadow:0px 1px 1px #111;
 	}
+
+/* PORTATION */
+#portation {
+	padding-top:16px;
+}
+
+	#portation > h2 {
+		text-align: center;
+		color:#999;
+	}
+
+	#portation > h2 + p {
+		text-align: center;
+		color:#777;
+	}
+
+	#portation table td {
+		text-align: center;
+	}
+
 
 /* Other things */
 

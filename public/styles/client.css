@@ -10,12 +10,12 @@ html {
 
 body {
 	font-family:"Do Hyeon",monospace;
-	background:#111;
+	background:var(--theme-color);
 	height:calc(100vh - 2px);
 	overflow:hidden;
 	display:flex;
 	/* padding:1px; */
-	border:1px solid var(--theme-color);
+	/* border:1px solid var(--theme-color); */
 }
 
 a {
@@ -28,9 +28,13 @@ a:hover {
 
 #viewport {
 	flex:1;
-	margin:1px;
+	margin:6px;
 	position:relative;
 }
+
+	#viewport canvas {
+		border-radius:15px;
+	}
 
 	#viewportOverlay {
 		position:absolute;
@@ -61,7 +65,9 @@ a:hover {
 	align-items:center;
 	background:#161616;
 	color:#eee;
-	border-left:1px solid var(--theme-color);
+	margin:6px;
+	border-radius:15px;
+	/* border-left:1px solid var(--theme-color); */
 }
 
 	#sidebar > *:not(a) {

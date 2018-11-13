@@ -16,41 +16,41 @@ editor.inspector = {
 		let prefabUuid = this.dataset.prefabUuid;
 		let type = this.dataset.type;
 		insp.selected = this;
-		
+
 		let transformElements = editor.inspector.elements.transform;
-		
+
 		let entity = editor.prefabs[prefabUuid][type][uuid];
 		let sceneObject = entity.sceneObject;
-			
+
 		transformElements.input.translate.x.value = sceneObject.position.x;
 		transformElements.input.translate.y.value = sceneObject.position.y;
 		transformElements.input.translate.z.value = sceneObject.position.z;
-		
+
 		transformElements.input.scale.x.value = sceneObject.scale.x;
 		transformElements.input.scale.y.value = sceneObject.scale.y;
 		transformElements.input.scale.z.value = sceneObject.scale.z;
-		
+
 		transformElements.input.rotate.x.value = (sceneObject.rotation.x * (180 / Math.PI)).toFixed(1);
 		transformElements.input.rotate.y.value = (sceneObject.rotation.y * (180 / Math.PI)).toFixed(1);
 		transformElements.input.rotate.z.value = (sceneObject.rotation.z * (180 / Math.PI)).toFixed(1);
-		
+
 		// Reset any disabled inputs. Will be disabled again when necessary.
 		editor.inspector.disabled.all(false);
-		
+
 		if (entity.model) document.getElementById("inspectorModel").value = entity.model;
-		
+
 		// If a collider shape is selected, fill the inputs with the appropriate values
 		if (entity.shape){
 			editor.inspector.elements.shape.value = entity.shape;
-			editor.inspector.element.getElementsByClassName("shapeProperties")[0].className = 
+			editor.inspector.element.getElementsByClassName("shapeProperties")[0].className =
 				"shapeProperties colliderProperty "+entity.shape;
-				
+
 			editor.inspector.elements.shapeProperties.input.radius.value = sceneObject.userData.radius;
 			editor.inspector.elements.shapeProperties.input.width.value  = sceneObject.userData.width;
 			editor.inspector.elements.shapeProperties.input.height.value = sceneObject.userData.height;
-			editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;	
+			editor.inspector.elements.shapeProperties.input.depth.value  = sceneObject.userData.depth;
 		}
-		
+
 		// Set functionality if the object has it.
 		if (sceneObject.userData.functionality){
 			document.getElementById("inspectorFunction").value = sceneObject.userData.functionality;
@@ -59,7 +59,7 @@ editor.inspector = {
 				editor.inspector.disabled.shape(true);
 			}
 		}
-		
+
 		// Check if the root prefab contains a starting area, and disable the rotation based on that.
 		if (type === "instances"){
 			let containsStart = Object.keys( editor.prefabs[prefabUuid].entities ).some(
@@ -68,9 +68,9 @@ editor.inspector = {
 					return (userData.functionality && userData.functionality === "startarea");
 				}
 			);
-			if (containsStart) editor.inspector.disabled.rotation();
+			if (containsStart) editor.inspector.disabled.rotation(true);
 		}
-		
+
 		this.className += " selected";
 	},
 	deselect: function(){
@@ -83,7 +83,7 @@ editor.inspector = {
 			if (el.tagName === "INPUT"){
 				el.value = el.defaultValue || "";
 			} else {
-				el.selectedIndex = "0"; 
+				el.selectedIndex = "0";
 			}
 		}
 	},
@@ -123,7 +123,7 @@ editor.initialize.inspector = function(){
 		...editor.inspector.element.getElementsByTagName("select")
 	];
 	editor.inspector.deselect();
-	
+
 	// Inspector elements
 	editor.inspector.elements = {
 		name: document.getElementById("inspectorName"),
@@ -156,7 +156,7 @@ editor.initialize.inspector = function(){
 			}
 		}
 	};
-	
+
 	// Transform input & label elements
 	for (key in editor.inspector.elements.transform.input){
 		let elements = document.getElementsByClassName(key)[0].getElementsByTagName("input");
@@ -170,22 +170,22 @@ editor.initialize.inspector = function(){
 		editor.inspector.elements.transform.label[key].y = elements[1];
 		editor.inspector.elements.transform.label[key].z = elements[2];
 	}
-	
+
 	// Physics shape label & elements
 	let physicsShapeElements, i;
-	
+
 	physicsShapeElements = document.getElementById("shapeProperties").getElementsByTagName("input");
 	i = 0;
 	for (key in editor.inspector.elements.shapeProperties.input){
 		editor.inspector.elements.shapeProperties.input[key] = physicsShapeElements[i++];
 	}
-	
+
 	physicsShapeElements = document.getElementById("shapeProperties").getElementsByTagName("span");
 	i = 0;
 	for (key in editor.inspector.elements.shapeProperties.label){
 		editor.inspector.elements.shapeProperties.label[key] = physicsShapeElements[i++];
 	}
-	
+
 	// Inspector event listeners & functions
 	// Change name
 	let inspectorChangeName = function(){
@@ -195,7 +195,7 @@ editor.initialize.inspector = function(){
 	}
 	editor.inspector.elements.name.addEventListener("change",inspectorChangeName,false);
 	editor.inspector.elements.name.addEventListener("input",inspectorChangeName,false);
-	
+
 	// Change object model
 	let inspectorChangeModel = function(){
 		if (editor.inspector.selected){
@@ -204,7 +204,7 @@ editor.initialize.inspector = function(){
 			let old = editor.prefabs[prefabUuid].entities[uuid].sceneObject;
 			// remove old model
 			editor.prefabs[prefabUuid].group.remove(old);
-			
+
 			// add new model
 			let clone = editor.models[this.value].scene.clone();
 			clone.visible = true;
@@ -218,39 +218,54 @@ editor.initialize.inspector = function(){
 		}
 	}
 	editor.inspector.elements.model.addEventListener("change",inspectorChangeModel,false);
-	
+
+	// Center object model's origin -- Useful for aligning terrain with its physics counterpart
+	let inspectorCenterModelOrigin = function(){
+		if (editor.inspector.selected){
+			let uuid = editor.inspector.selected.dataset.uuid;
+			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
+			let sceneObject = editor.prefabs[prefabUuid].entities[uuid].sceneObject;
+			console.log(sceneObject);
+
+			sceneObject.children[0].geometry.computeBoundingBox();
+			sceneObject.children[0].geometry.center();
+			editor.prefabs[prefabUuid].changed = true;
+		}
+	}
+	document.getElementById("inspectorCenterModelOrigin").addEventListener("click",inspectorCenterModelOrigin,false);
+
 	// Change functionality
 	let inspectorChangeFunction = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
 			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-			
+
 			let entity = editor.prefabs[prefabUuid].entities[uuid];
 			let functionality = entity.sceneObject.userData.functionality = this.value;
-			
+
 			let rotationInputs = editor.inspector.elements.transform.input.rotate;
-			
+
 			rotationInputs.x.disabled = false;
 			rotationInputs.y.disabled = false;
 			rotationInputs.z.disabled = false;
 			editor.inspector.elements.shape.disabled = false;
-					
+
 			switch(functionality){
 				case "startarea":
 					entity.sceneObject.material = editor.startMaterial;
-					
+
 					rotationInputs.x.value = entity.sceneObject.rotation.x = 0;
 					rotationInputs.y.value = entity.sceneObject.rotation.y = 0;
 					rotationInputs.z.value = entity.sceneObject.rotation.z = 0;
-					
+
 					rotationInputs.x.disabled = true;
 					rotationInputs.y.disabled = true;
 					rotationInputs.z.disabled = true;
-					
+
 					editor.inspector.elements.shape.value = "box";
 					editor.inspector.elements.shape.disabled = true;
 					inspectorChangeShape();
-					
+
 					break;
 				case "startgate":
 					entity.sceneObject.material = editor.gateMaterial;
@@ -263,28 +278,28 @@ editor.initialize.inspector = function(){
 					entity.sceneObject.material = editor.physicsMaterial;
 					break;
 			}
-			
+
 			editor.prefabs[prefabUuid].changed = true;
 		}
 	}
 	document.getElementById("inspectorFunction").addEventListener("change",inspectorChangeFunction,false);
-	
+
 	// Change collider shape (except terrain)
 	let inspectorChangeShape = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
 			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-			
+
 			let shape = editor.inspector.elements.shape.value;
 			let entity = editor.prefabs[prefabUuid].entities[uuid];
 			let userData = entity.sceneObject.userData;
 			let terrainGeometry = entity.terrainGeometry;
-				
+
 			let radius = userData.radius = parseFloat(editor.inspector.elements.shapeProperties.input.radius.value);
 			let width  = userData.width  = parseFloat(editor.inspector.elements.shapeProperties.input.width.value);
 			let height = userData.height = parseFloat(editor.inspector.elements.shapeProperties.input.height.value);
 			let depth  = userData.depth  = parseFloat(editor.inspector.elements.shapeProperties.input.depth.value);
-			
+
 			let newGeometry;
 			switch(shape){
 				case "sphere":
@@ -311,7 +326,7 @@ editor.initialize.inspector = function(){
 					newGeometry = new THREE.BoxBufferGeometry( width, height, depth );
 					break;
 			}
-			
+
 			editor.prefabs[prefabUuid].entities[uuid].shape = shape;
 			document.getElementById("shapeProperties").className = "shapeProperties colliderProperty "+shape;
 			editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry = newGeometry;
@@ -319,39 +334,39 @@ editor.initialize.inspector = function(){
 		}
 	}
 	editor.inspector.elements.shape.addEventListener("change",inspectorChangeShape,false);
-	
+
 	// Change collider shape to terrain
 	let inspectorShapeTerrain = function(){
 		if (editor.inspector.selected){
 			let uuid = editor.inspector.selected.dataset.uuid;
 			let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
-			
+
 			let file = this.files[0];
 			let reader = new FileReader();
 			let loader = new THREE.OBJLoader();
-			
+
 			reader.onload = function(e) {
 				let result = reader.result;
 				let object3d = loader.parse( result );
 				object3d.children[0].geometry.computeBoundingBox();
 				object3d.children[0].geometry.center();
-				
+
 				editor.prefabs[prefabUuid].entities[uuid].sceneObject.geometry =
-					editor.prefabs[prefabUuid].entities[uuid].terrainGeometry = 
+					editor.prefabs[prefabUuid].entities[uuid].terrainGeometry =
 					object3d.children[0].geometry;
 			}
-			
+
 			reader.readAsText(file, "utf-8");
 		}
 	}
 	document.getElementById('terPhysics').addEventListener("change",inspectorShapeTerrain,false);
-	
+
 	//
-	
+
 	// Change transform
 	let transformElements = editor.inspector.elements.transform;
 	let transformFunctions = {};
-	
+
 	// Translation
 	transformFunctions.translate = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
@@ -360,7 +375,7 @@ editor.initialize.inspector = function(){
 		editor.prefabs[prefabUuid][type][uuid].sceneObject.position[axis] = parseFloat(value);
 		editor.prefabs[prefabUuid].changed = true;
 	}
-	
+
 	// Scale
 	transformFunctions.scale = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
@@ -369,14 +384,14 @@ editor.initialize.inspector = function(){
 		editor.prefabs[prefabUuid][type][uuid].sceneObject.scale[axis] = parseFloat(value);
 		editor.prefabs[prefabUuid].changed = true;
 	}
-	
+
 	// Rotate
 	transformFunctions.rotate = function(axis,value){
 		let uuid = editor.inspector.selected.dataset.uuid;
 		let prefabUuid = editor.inspector.selected.dataset.prefabUuid;
 		let type = editor.inspector.selected.dataset.type;
 		editor.prefabs[prefabUuid][type][uuid].sceneObject.setRotationFromEuler(
-			new THREE.Euler( 
+			new THREE.Euler(
 				parseFloat(editor.inspector.elements.transform.input.rotate.x.value) * Math.PI / 180,
 				parseFloat(editor.inspector.elements.transform.input.rotate.y.value) * Math.PI / 180,
 				parseFloat(editor.inspector.elements.transform.input.rotate.z.value) * Math.PI / 180,
@@ -385,9 +400,9 @@ editor.initialize.inspector = function(){
 		);
 		editor.prefabs[prefabUuid].changed = true;
 	}
-	
+
 	// Attach event listeners to inputs and labels
-	
+
 	// Transform
 	// Input
 	for (transform in transformElements.input){
@@ -400,7 +415,7 @@ editor.initialize.inspector = function(){
 	}
 	// Label
 	for (transform in transformElements.label){
-		for (key in transformElements.label[transform]){ 
+		for (key in transformElements.label[transform]){
 			let el = transformElements.label[transform][key];
 			let func = transformFunctions[transform];
 			el.addEventListener("mousedown",function(e){
@@ -417,7 +432,7 @@ editor.initialize.inspector = function(){
 			}, false);
 		}
 	}
-	
+
 	// Shape properties
 	// Input
 	for (key in editor.inspector.elements.shapeProperties.input){
@@ -425,7 +440,7 @@ editor.initialize.inspector = function(){
 		el.addEventListener("change", inspectorChangeShape, false);
 		el.addEventListener("input", inspectorChangeShape, false);
 	}
-	
+
 	// Label
 	for (key in editor.inspector.elements.shapeProperties.label){
 		let el = editor.inspector.elements.shapeProperties.label[key];
@@ -442,9 +457,9 @@ editor.initialize.inspector = function(){
 			}
 		}, false);
 	}
-	
+
 	//
-	
+
 	// Inspector drag events
 	document.body.addEventListener('mousemove', function(event) {
 		let dragValue = editor.inspector.dragValue;
