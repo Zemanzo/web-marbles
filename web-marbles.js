@@ -342,6 +342,7 @@ botClient = new discord.Client();
 
 botClient.on("ready", function() {
 	console.log(currentHourString()+"DISCORD: "+"Discord bot is ready!".green);
+	botClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 });
 
 botClient.on("message", function(message) {
