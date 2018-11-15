@@ -7,6 +7,7 @@ let net = {
 	ticksToLerp: 2, // Cannot be 0
 
 	// Initialize, do not configure these values.
+	marbleData: undefined,
 	marblePositions: new Float32Array(0),
 	marbleRotations: new Float32Array(0),
 	lastUpdate: 0,
@@ -63,12 +64,8 @@ let game = {
 		console.log(ms - Math.floor(s)*1000);
 	}
 }
-let marbleData;
 
-whenDocReady.add(function(entries){
-	document.getElementById("entries").innerHTML = entries;
-},"initialMarbles");
-
+// Document state promise
 let domReady = new Promise((resolve, reject) => {
 	if (document.readyState === "interactive" || document.readyState === "complete"){
 		resolve(true);
@@ -77,15 +74,14 @@ let domReady = new Promise((resolve, reject) => {
 	}
 });
 
+// Socket data promise
 let netReady = new Promise((resolve, reject) => {
 	// Once connected, client receives initial data
 	socket.on("initial data", function(obj){
-
-		marbleData = obj;
-		whenDocReady.args("initialMarbles",marbleData.length);
+		net.marbleData = obj;
 
 		/* Socket RPCs */
-
+		
 		// New marble
 		socket.on("new marble", function(obj){
 			console.log(obj);
@@ -101,40 +97,34 @@ let netReady = new Promise((resolve, reject) => {
 		socket.on("clear", function(obj){
 			game.end();
 		});
-
-
-		/* Physics syncing */
-
-		// Once connection is acknowledged, start requesting physics updates
-		net.getServerDataInterval = setInterval(function(){
-			if (net.ready < net.tickrate){
-				net.ready++;
-				socket.emit("request physics", Date.now(), (data) => {
-					net.marblePositions = new Float32Array(data.pos);
-					net.marbleRotations = new Float64Array(data.rot);
-					/* console.log(data.startGate); */
-					net.lastUpdate = 0;
-					net.ready--;
-				});
-			} else {
-				net.requestsSkipped++;
-			}
-		}, 1000 / net.tickrate);
-
-		// Initial request to kick off rendering on the first physics update
-		net.ready++;
-		socket.emit("request physics", Date.now(), (data) => {
-			net.marblePositions = new Float32Array(data.pos);
-			net.marbleRotations = new Float64Array(data.rot);
-			net.lastUpdate = 0;
-			net.ready--;
-			resolve(true);
-		});
+		
+		resolve(true);
 	});
+}).then(()=>{
+	/* Physics syncing */
+
+	// Once connection is acknowledged, start requesting physics updates
+	net.getServerData = function(){
+		if (net.ready < net.tickrate){
+			net.ready++;
+			socket.emit("request physics", Date.now(), (data) => {
+				net.marblePositions = new Float32Array(data.pos);
+				net.marbleRotations = new Float64Array(data.rot);
+				net.lastUpdate = 0;
+				net.ready--;
+			});
+		} else {
+			net.requestsSkipped++;
+		}
+		setTimeout(net.getServerData,1000 / net.tickrate);
+	};
+	net.getServerData();
 });
 
+// If both promises fulfill, start rendering & fill entries field
 Promise.all([domReady, netReady]).then(function(){
 	renderInit();
+	document.getElementById("entries").innerHTML = net.marbleData.length;
 });
 
 whenDocReady.add(function(response,requestStart,requestComplete){
@@ -149,8 +139,8 @@ whenDocReady.add(function(response,requestStart,requestComplete){
 	} else {
 		// Remove document load time & request time
 		game.state.timeToEnter -=
-			(requestComplete - requestStart) +
-			(requestComplete - whenDocReady.timestamp.interactive);
+			((requestComplete - requestStart) +
+			(requestComplete - whenDocReady.timestamp.interactive));
 
 		// Start timer interval
 		game.startTimerInterval(game.state.timeToEnter);
@@ -161,9 +151,11 @@ whenDocReady.add(function(response,requestStart,requestComplete){
 },"getGamestate");
 
 let requestStart = (new Date()).getTime();
-getXMLDoc("/client?gamestate=true",(response)=>{
-	whenDocReady.args("getGamestate",response,requestStart,(new Date()).getTime());
-});
+let gameStateReady = fetch("/client?gamestate=true").then(
+	(response)=>{
+		whenDocReady.args("getGamestate",response,requestStart,(new Date()).getTime());
+	}
+);
 
 window.addEventListener("DOMContentLoaded", function(){
 
