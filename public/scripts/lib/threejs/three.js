@@ -3724,8 +3724,12 @@
 			function getDataURL( image ) {
 
 				var canvas;
-
-				if ( image instanceof HTMLCanvasElement ) {
+				
+				if ( image instanceof HTMLImageElement && image.src.startsWith('data:') ) {
+					
+					return image.src;
+					
+				} else if ( image instanceof HTMLCanvasElement ) {
 
 					canvas = image;
 

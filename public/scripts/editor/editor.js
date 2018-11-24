@@ -280,9 +280,14 @@ window.addEventListener("DOMContentLoaded", function(){
 	document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldPrefab, false);
 
 	let exportPublishBinary = function(){
+		let serializationStart = new Date();
+		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
+		let payload = editor.serialization.preparePayload();
+		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
 		editor.serialization.worker.postMessage({
 			type: 'exportPublishBinary',
-			payload: editor.serialization.preparePayload()
+			payload: payload,
+			serializationStart: serializationStart
 		});
 	}
 	document.getElementById("exportPublishBinary").addEventListener("click", exportPublishBinary, false);
@@ -291,60 +296,71 @@ window.addEventListener("DOMContentLoaded", function(){
 
 // Spawn serialization worker
 editor.serialization = {};
-editor.serialization.worker = new Worker('scripts/editor/serialize_worker.js');
-editor.serialization.asyncToJson = function(obj){
-	return new Promise(resolve => {
-		resolve(obj = obj.toJSON());
-	});
-}
+editor.serialization.worker = new Worker("scripts/editor/serialize_worker.js");
 editor.serialization.preparePayload = function(){
-	let promises = [];
+
+	// TODO: DEEP CLONE ;-;
+
 	let prefabs = {};
 	Object.keys(editor.prefabs).forEach(key => {
-		prefabs[key] = Object.assign({}, editor.prefabs[key]);
+		prefabs[key] = Object.create(editor.prefabs[key]);
 		delete prefabs[key].element;
 		delete prefabs[key].option;
-		prefabs[key].group = prefabs[key].group.toJSON();
+		delete prefabs[key].group; // Remove original reference, so it does not get modified
+		prefabs[key].group = editor.prefabs[key].group.toJSON();
+
 		Object.keys(prefabs[key].entities).forEach(entity => {
 			delete prefabs[key].entities[entity].element;
 			delete prefabs[key].entities[entity].terrainGeometry;
-			prefabs[key].entities[entity].sceneObject = prefabs[key].entities[entity].sceneObject.toJSON();
+			delete prefabs[key].entities[entity].sceneObject;  // Remove original reference, so it does not get modified
+			prefabs[key].entities[entity].sceneObject = editor.prefabs[key].entities[entity].sceneObject.toJSON();
+		});
+
+		Object.keys(prefabs[key].instances).forEach(instance => {
+			delete prefabs[key].instances[instance].element;
+			delete prefabs[key].instances[instance].sceneObject; // Remove original reference, so it does not get modified
+			prefabs[key].instances[instance].sceneObject = editor.prefabs[key].instances[instance].sceneObject.toJSON();
 		});
 	});
 
 	let models = {};
 	Object.keys(editor.models).forEach(key => {
-		models[key] = Object.assign({}, editor.models[key]);
+		models[key] = Object.create(editor.models[key]);
 		delete models[key].animations;
 		delete models[key].asset;
 		delete models[key].cameras;
 		delete models[key].parser;
 		delete models[key].scenes;
-		promises.push(editor.serialization.asyncToJson(models[key].scene));
+		delete models[key].scene; // Remove original reference, so it does not get modified
+		models[key].scene = editor.models[key].scene.toJSON();
 	});
 
-	console.log(promises);
-	Promise.all(promises).then(()=>{
-		let payload = {
-			params: {
-				title: document.getElementById("paramMapName").value,
-				author: document.getElementById("paramAuthorName").value,
-				enterPeriod: document.getElementById("paramEnterPeriod").value,
-				maxRoundLength: document.getElementById("paramMaxRoundLength").value,
-				waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
-			},
-			models: models,
-			prefabs: prefabs
-		};
-		console.log(payload);
+	console.log(editor.models, models);
 
-		return payload;
-	})
+	let payload = {
+		params: {
+			title: document.getElementById("paramMapName").value,
+			author: document.getElementById("paramAuthorName").value,
+			enterPeriod: document.getElementById("paramEnterPeriod").value,
+			maxRoundLength: document.getElementById("paramMaxRoundLength").value,
+			waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
+		},
+		models: models,
+		prefabs: prefabs
+	};
+
+	return payload;
 }
 editor.serialization.worker.onmessage = function(message){
 	switch(message.data.type){
-		case 'log':
+		case "log":
 			editorLog(message.data.payload.message, message.data.payload.type);
+			break;
+		case "publishSuccess":
+			let a = document.createElement('a');
+	        a.href = message.data.payload.url;
+	        a.download = message.data.payload.filename;
+	        a.click();
 			break;
 		default:
 			console.log('Unknown worker message', message);
@@ -368,7 +384,7 @@ function getXMLDoc(doc, callback){
 	xmlhttp.send();
 }
 
-function editorLog(message, type = 'info'){
+function editorLog(message, type = "info"){
 	let date = new Date();
 	let hrs = date.getHours();
 	let min = date.getMinutes();
@@ -386,6 +402,7 @@ function editorLog(message, type = 'info'){
 		"beforeend",
 		"<div class='"+type+"'>["+hrs+":"+min+":"+sec+"] "+message+"</div>"
 	);
+	editor.elements.log.scrollTop = editor.elements.log.scrollHeight;
 }
 
 let TUUIDs = [];
@@ -444,3 +461,33 @@ window.onbeforeunload = function(e) {
 	e.returnValue = dialogText;
 	return dialogText;
 };
+
+
+// =============== gross
+
+const isObject = val =>
+  typeof val === 'object' && !Array.isArray(val);
+
+const paths = (obj = {}) =>
+  Object.entries(obj)
+    .reduce(
+      (product, [key, value]) =>
+        isObject(value) ?
+        product.concat([
+          [typeof value, paths(value)] // adds [root, [children]] list
+        ]) :
+        product.concat([typeof value]), // adds [child] list
+      []
+    )
+
+const addDelimiter = (a, b) =>
+  a ? `${a}.${b}` : b;
+
+const pathToString = ([root, children]) =>
+  children.map(
+    child =>
+      Array.isArray(child) ?
+      addDelimiter(root, pathToString(child)) :
+      addDelimiter(root, child)
+  )
+  .join('\n');

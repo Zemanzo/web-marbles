@@ -417,25 +417,26 @@ body {
 	.shapeProperties.terrain div.terrain {
 		display:flex;
 	}
+
 /* LOG */
 #log {
 	background:#111;
-	height:60px;
+	height:90px;
 	font-family:monospace;
 	font-size:.9em;
 	overflow-y:auto; /* fuck u */
 }
 
 #log .error {
-	color: #d00;
+	color:#d00;
 }
 
 #log .warn {
-	color: #dd0;
+	color:#dd0;
 }
 
 #log .success {
-	color: #2d2;
+	color:#2d2;
 }
 
 /* WORLD */
