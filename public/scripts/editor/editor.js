@@ -292,6 +292,20 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 	document.getElementById("exportPublishBinary").addEventListener("click", exportPublishBinary, false);
 
+	let exportPublishPlain = function(){
+		let serializationStart = new Date();
+		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
+		let payload = editor.serialization.preparePayload();
+		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
+		editor.serialization.worker.postMessage({
+			type: 'exportPublishPlain',
+			payload: payload,
+			serializationStart: serializationStart
+		});
+	}
+	document.getElementById("exportPublishPlain").addEventListener("click", exportPublishPlain, false);
+
+
 }, false);
 
 // Spawn serialization worker
@@ -299,41 +313,42 @@ editor.serialization = {};
 editor.serialization.worker = new Worker("scripts/editor/serialize_worker.js");
 editor.serialization.preparePayload = function(){
 
-	// TODO: DEEP CLONE ;-;
-
+	//  Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
-	Object.keys(editor.prefabs).forEach(key => {
-		prefabs[key] = Object.create(editor.prefabs[key]);
-		delete prefabs[key].element;
-		delete prefabs[key].option;
-		delete prefabs[key].group; // Remove original reference, so it does not get modified
-		prefabs[key].group = editor.prefabs[key].group.toJSON();
+	for (key in editor.prefabs) {
+		prefabs[key] = {
+			group: editor.prefabs[key].group.toJSON(),
+			uuid: key,
+			entities: {}
+		};
 
-		Object.keys(prefabs[key].entities).forEach(entity => {
-			delete prefabs[key].entities[entity].element;
-			delete prefabs[key].entities[entity].terrainGeometry;
-			delete prefabs[key].entities[entity].sceneObject;  // Remove original reference, so it does not get modified
-			prefabs[key].entities[entity].sceneObject = editor.prefabs[key].entities[entity].sceneObject.toJSON();
-		});
+		for (entity in editor.prefabs[key].entities) {
+			prefabs[key].entities[entity] = {
+				sceneObject: editor.prefabs[key].entities[entity].sceneObject.toJSON(),
+				model: editor.prefabs[key].entities[entity].model,
+				shape: editor.prefabs[key].entities[entity].shape
+			};
+		};
 
-		Object.keys(prefabs[key].instances).forEach(instance => {
-			delete prefabs[key].instances[instance].element;
-			delete prefabs[key].instances[instance].sceneObject; // Remove original reference, so it does not get modified
-			prefabs[key].instances[instance].sceneObject = editor.prefabs[key].instances[instance].sceneObject.toJSON();
-		});
-	});
+		for (instance in prefabs[key].instances) {
+			prefabs[key].instances[instance] = {
+				sceneObject: editor.prefabs[key].instances[instance].sceneObject.toJSON(),
+				uuid: instance
+			}
+		};
+	};
 
 	let models = {};
-	Object.keys(editor.models).forEach(key => {
-		models[key] = Object.create(editor.models[key]);
-		delete models[key].animations;
-		delete models[key].asset;
-		delete models[key].cameras;
-		delete models[key].parser;
-		delete models[key].scenes;
-		delete models[key].scene; // Remove original reference, so it does not get modified
-		models[key].scene = editor.models[key].scene.toJSON();
-	});
+	for (model in editor.models) {
+		models[model] = {
+			scene: editor.models[model].scene.toJSON(),
+			userData: {}
+		};
+
+		for (key in editor.models[model].userData) {
+			models[model].userData[key] = editor.models[model].userData[key];
+		};
+	};
 
 	console.log(editor.models, models);
 
@@ -358,9 +373,9 @@ editor.serialization.worker.onmessage = function(message){
 			break;
 		case "publishSuccess":
 			let a = document.createElement('a');
-	        a.href = message.data.payload.url;
-	        a.download = message.data.payload.filename;
-	        a.click();
+			a.href = message.data.payload.url;
+			a.download = message.data.payload.filename;
+			a.click();
 			break;
 		default:
 			console.log('Unknown worker message', message);
@@ -376,7 +391,7 @@ function getXMLDoc(doc, callback){
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
 			console.log("rip", xmlhttp.response);
-  		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200){
+		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200){
 			callback(xmlhttp.response);
 		}
 	}
