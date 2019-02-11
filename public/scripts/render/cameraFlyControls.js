@@ -1,7 +1,7 @@
 /**
-	This script adds a constructor function to the THREE object that generates a camera with WASD / 
-	arrow keys fly controls. 
-	
+	This script adds a constructor function to the THREE object that generates a camera with WASD /
+	arrow keys fly controls.
+
 	The constructor takes the following arguments:
 	- scene		THREE scene object to add the camera to
 	- renderer	THREE renderer the camera should use
@@ -12,7 +12,7 @@
 								default.
 		- speed					Fly control speed. Can be changed afterwards. 150 by default.
 		- disableOnBlur			Boolean. Whether to disable camera on tabbing out. true by default.
-		
+
 	Methods:
 	enable()		Enables the controls.
 	disable()		Disables the controls.
@@ -25,10 +25,10 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 	let addRegisteredEventListener = function(scope, event, func, capture){
 		scope.addEventListener(event, func, capture);
 		return () => {
-			scope.removeEventListener(event, func, capture);    
+			scope.removeEventListener(event, func, capture);
 		};
 	}
-		
+
 	THREE.webMarbles.cameraFlyControls = function(
 		scene,
 		renderer,
@@ -36,27 +36,27 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 	){
 		if (!options)
 			var options = {};
-		
+
 		if (!options.pointerLockElement)
 			options.pointerLockElement = renderer.domElement;
-		
+
 		if (!options.camera)
-			options.camera = new THREE.PerspectiveCamera( 
-				75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000 
+			options.camera = new THREE.PerspectiveCamera(
+				75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000
 			);
-			
+
 		if (!options.speed)
 			options.speed = 150;
-		
+
 		if (!options.disableOnBlur)
 			options.disableOnBlur = true;
-		
+
 		console.log(scene,renderer,options.pointerLockElement,options.camera);
-		
+
 		this.pointerLockElement = options.pointerLockElement;
 		this.camera = options.camera;
 		this.speed = options.speed;
-		
+
 		this.moveForward = false;
 		this.moveBackward = false;
 		this.moveLeft = false;
@@ -65,13 +65,13 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 		this.prevTime = performance.now();
 		this.velocity = new THREE.Vector3();
 		this.direction = new THREE.Vector3();
-		
+
 		let listeners = [];
 		this.enable = function(){
 			this.enabled = true;
 			let func;
-			
-			// Hook pointer lock state change events		
+
+			// Hook pointer lock state change events
 			func = function(event){
 				// document.pointerLockElement is null if pointerlock is inactive
 				if (document.pointerLockElement === options.pointerLockElement) {
@@ -136,26 +136,26 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 
 			listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
 			listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
-		
-			this.update = function(){ 
+
+			this.update = function(){
 				update.bind(this)();
 			}
 		}
-		
+
 		this.disable = function(){
 			this.enabled = false;
-			
+
 			stop();
-			
+
 			// remove listeners
 			listeners.forEach((el)=>{
 				el();
 			});
-			
+
 			// null update function
 			this.update = () => void 0;
 		}
-			
+
 		if (options.disableOnBlur === true){
 			document.addEventListener("visibilitychange",(function(){
 				if (document.hidden)
@@ -164,12 +164,12 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 					this.enable();
 			}).bind(this),false);
 		}
-		
+
 		let stop = (function(){
 			this.velocity.x = 0;
 			this.velocity.y = 0;
 			this.velocity.z = 0;
-			
+
 			this.moveForward = false;
 			this.moveBackward = false;
 			this.moveLeft = false;
@@ -187,7 +187,7 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 		options.camera.parent.rotation.x = -.3;
 
 		scene.add(controls.getObject());
-		
+
 		// Call this function in the update loop to update the controls.
 		let time, delta;
 		let update = function(){
@@ -206,11 +206,11 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 			if ( this.controls.enabled === true ) {
 				if ( this.moveForward || this.moveBackward )
 					this.velocity.z -= this.direction.z * this.speed * delta;
-				
+
 				if ( this.moveForward || this.moveBackward )
 					this.velocity.y -= this.direction.y * this.speed * delta *
 						(-this.camera.parent.rotation.x * Math.PI*.5);
-				
+
 				if ( this.moveLeft || this.moveRight )
 					this.velocity.x -= this.direction.x * this.speed* delta;
 			}
@@ -220,7 +220,7 @@ if (!THREE.webMarbles) THREE.webMarbles = {};
 
 			this.prevTime = time;
 		}
-		
+
 		this.enable();
 	}
 })();

@@ -19,11 +19,14 @@
     "express": "^4.16.3",
     "mustache-express": "^1.2.5",
     "obj-file-parser": "^0.5.0",
-    "request": "^2.85.0",
+    "request": "^2.88.0",
     "socket.io": "^2.1.0"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/Zemanzo/web-marbles.git"
+  },
+  "devDependencies": {
+    "eslint": "^5.13.0"
   }
 }

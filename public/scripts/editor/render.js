@@ -175,7 +175,7 @@ editor.startMaterial = new THREE.MeshPhongMaterial( {
 	emissive: 0x00cc00,
 	shininess: 10,
 	opacity: 0.5,
-	transparent: true 
+	transparent: true
 } );
 
 // End area material
@@ -185,7 +185,7 @@ editor.endMaterial = new THREE.MeshPhongMaterial( {
 	emissive: 0xcc0000,
 	shininess: 10,
 	opacity: 0.5,
-	transparent: true 
+	transparent: true
 } );
 
 //
@@ -197,33 +197,33 @@ editor.gateMaterial = new THREE.MeshPhongMaterial( {
 	emissive: 0xcc7700,
 	shininess: 10,
 	opacity: 0.5,
-	transparent: true 
+	transparent: true
 } );
 
 //
 
 function animate() {
 	requestAnimationFrame( animate );
-	
+
 	// Update controls
 	flyCam.update();
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
-	
+
 	// Update stats in top left corner
 	stats.update();
 
 	var delta = clock.getDelta();
 
 	uniforms.time.value += delta * 5;
-	
+
 	// Render the darn thing
 	renderer.render( scene, flyCam.camera );
 }
 
 // Stuff that can only be rendered after network data has been received
-function renderInit(){ 
+function renderInit(){
 	editorLog("Renderer loaded");
 	animate();
 }

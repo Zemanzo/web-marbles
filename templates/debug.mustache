@@ -6,7 +6,7 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		<title>Local debugger with server data</title>
 		<link href="favicon.ico?" rel="shortcut icon" type="image/x-icon">
-		
+
 		<!-- Stylesheets -->
 		<link href="fontello/css/fontello.css" rel="stylesheet">
 		<style>
@@ -59,9 +59,9 @@
 					index.vertices[2].vertexIndex
 				);
 			}
-			
+
 			indices.reverse();
-			
+
             var triShape = new CANNON.Trimesh(vertices,indices);
             var triBody = new CANNON.Body({ mass: 0 });
             triBody.addShape(triShape);
@@ -71,7 +71,7 @@
 
             var sizeX = 15,
                 sizeY = 15;
-				
+
             // Add spheres
             var mass = 1;
             for(var i=0; i<sizeX - 1; i++){
@@ -87,7 +87,7 @@
                     demo.addVisual(sphereBody);
                 }
             }
-			
+
 			var boxShape = new CANNON.Box(new CANNON.Vec3(20,.2,.2));
             var boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
@@ -95,7 +95,7 @@
 			boxBody.position.vadd(triBody.position, boxBody.position);
             world.addBody(boxBody);
             demo.addVisual(boxBody);
-			
+
 			boxShape = new CANNON.Box(new CANNON.Vec3(.2,20,.2));
             boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
@@ -103,7 +103,7 @@
 			boxBody.position.vadd(triBody.position, boxBody.position);
             world.addBody(boxBody);
             demo.addVisual(boxBody);
-			
+
 			boxShape = new CANNON.Box(new CANNON.Vec3(.2,.2,20));
             boxBody = new CANNON.Body({ mass: 0 });
             boxBody.addShape(boxShape);
@@ -116,11 +116,11 @@
       demo.start();
 
 		function vertexObjectArrayToFloat32Array(array){ // Also converts z up to y up
-			
+
 			// indexing expects vertices starting at 1, so we add a 0,0,0 vertex at the start to solve this
 			let f32array = new Float32Array(array.length*3 + 3);
 			let i = 1;
-			
+
 			for (let vertex of array){
 				f32array[i*3+0] = vertex.x;
 				f32array[i*3+1] = vertex.z;

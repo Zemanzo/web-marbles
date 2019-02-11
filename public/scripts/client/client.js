@@ -81,7 +81,7 @@ let netReady = new Promise((resolve, reject) => {
 		net.marbleData = obj;
 
 		/* Socket RPCs */
-		
+
 		// New marble
 		socket.on("new marble", function(obj){
 			console.log(obj);
@@ -97,7 +97,7 @@ let netReady = new Promise((resolve, reject) => {
 		socket.on("clear", function(obj){
 			game.end();
 		});
-		
+
 		resolve(true);
 	});
 }).then(()=>{

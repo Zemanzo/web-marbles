@@ -1,21 +1,21 @@
 body {
-	--theme-color:#BA0069;
-	--theme-color-dark:#4B002A;
-	--twitch-purple:#6441A4;
-	--twitch-purple-hover:rgb(125, 91, 190);
+	--theme-color: #BA0069;
+	--theme-color-dark: #4B002A;
+	--twitch-purple: #6441A4;
+	--twitch-purple-hover: rgb(125, 91, 190);
 }
 
 button {
-	color:var(--theme-color);
-	background:#111;
-	border:none;
-	cursor:pointer;
-	padding:4px;
-	font-weight:600;
+	color: var(--theme-color);
+	background: #111;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	font-weight: 600;
 }
 
 button:hover {
-	text-decoration:underline;
+	text-decoration: underline;
 }
 
 input[type=color] {

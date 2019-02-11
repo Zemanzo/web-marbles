@@ -1,15 +1,28 @@
 let config = require("./config");
-let colors = require("colors");
+require("colors");
 
-console.log(" Webbased Marble Racing".cyan);
+console.log(" Web marbles".cyan);
 console.log("   by "+"Z".green+"emanz"+"o".green);
-console.log(" "+(new Date()).toLocaleString('nl').cyan);
+console.log(" "+(new Date()).toLocaleString("nl").cyan);
 
 /* Database */
-let sqlite3 = require('better-sqlite3');
+let sqlite3 = require("better-sqlite3");
 let db = new sqlite3(config.database.path);
 
-db.prepare("CREATE TABLE IF NOT EXISTS users ( id INTEGER UNIQUE, username TEXT, discriminator TEXT, avatar TEXT, access_token TEXT, refresh_token TEXT, refresh_last INTEGER, refresh_expire INTEGER, scope TEXT, stat_rounds_entered INTEGER, stat_marbles_entered INTEGER, PRIMARY KEY('id'))").run();
+db.prepare(`CREATE TABLE IF NOT EXISTS users (
+	id INTEGER UNIQUE,
+	username TEXT,
+	discriminator TEXT,
+	avatar TEXT,
+	access_token TEXT,
+	refresh_token TEXT,
+	refresh_last INTEGER,
+	refresh_expire INTEGER,
+	scope TEXT,
+	stat_rounds_entered INTEGER,
+	stat_marbles_entered INTEGER,
+	PRIMARY KEY('id')
+	)`).run();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
 let timeoutMap = {};
@@ -19,7 +32,7 @@ function setTrackableTimeout(callback, delay) { // Modify setTimeout
 	timeoutMap[id] = [Date.now(), delay]; // Store the start date and delay
 
 	return id; // Return the id
-};
+}
 
 function getTimeout(id) { // The actual getTimeLeft function
 	let m = timeoutMap[id]; // Find the timeout in map
@@ -29,17 +42,16 @@ function getTimeout(id) { // The actual getTimeLeft function
 }
 
 /* Set up physics world */
-let Ammo = require('ammo-node');
+let Ammo = require("ammo-node");
 
 // Physics letiables
 let collisionConfiguration,
 	dispatcher,
 	broadphase,
 	solver,
-	physicsWorld,
-	terrainBody;
+	physicsWorld;
 let transformAux1 = new Ammo.btTransform();
-let transformAux2 = new Ammo.btTransform();
+//let transformAux2 = new Ammo.btTransform();
 
 // Physics configuration
 collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
@@ -63,7 +75,7 @@ function createTerrainShape() {
 	let flipQuadEdges = false;
 
 	// Creates height data buffer in Ammo heap
-    let ammoHeightData = null;
+	let ammoHeightData = null;
 	ammoHeightData = Ammo._malloc( 4 * mapObj.width * mapObj.depth );
 
 	// Copy the javascript height data array to the Ammo one.
@@ -115,13 +127,12 @@ mapObj.centerOrigin("xyz");
 
 
 // Collision flags
-  // BODYFLAG_STATIC_OBJECT: 1,
-  // BODYFLAG_KINEMATIC_OBJECT: 2,
-  // BODYFLAG_NORESPONSE_OBJECT: 4,
-
+// BODYFLAG_STATIC_OBJECT: 1,
+// BODYFLAG_KINEMATIC_OBJECT: 2,
+// BODYFLAG_NORESPONSE_OBJECT: 4,
 
 /* Create the terrain body */
-groundShape = createTerrainShape( mapObj );
+let groundShape = createTerrainShape( mapObj );
 let groundTransform = new Ammo.btTransform();
 groundTransform.setIdentity();
 // Shifts the terrain, since bullet re-centers it on its bounding box.
@@ -173,7 +184,7 @@ game.addMarble = function(id,name,color){
 			spawnMarble(name,color);
 		}
 	}
-}
+};
 
 game.end = function(){
 	if (game.logic.state === "started"){
@@ -188,7 +199,7 @@ game.end = function(){
 		gateBody.activate();
 		
 		// Remove marble physics bodies
-		for (i = marbles.length - 1; i >= 0; --i){
+		for (let i = marbles.length - 1; i >= 0; --i){
 			physicsWorld.removeRigidBody(marbles[i].ammoBody);
 		}
 		
@@ -218,7 +229,7 @@ game.end = function(){
 	} else {
 		return false;
 	}
-}
+};
 
 game.start = function(){
 	if (game.logic.state === "enter"){
@@ -246,25 +257,25 @@ game.start = function(){
 	} else {
 		return false;
 	}
-}
+};
 
 /* Express connections */
-let express = require('express');
-let mustacheExpress = require('mustache-express');
-let compression = require('compression');
+let express = require("express");
+let mustacheExpress = require("mustache-express");
+let compression = require("compression");
 let app = express();
-let http = require('http').Server(app);
-let io = require('socket.io')(http);
+let http = require("http").Server(app);
+let io = require("socket.io")(http);
 app.use(compression({
-  filter: function () { return true; }
+	filter: function () { return true; }
 }));
-app.use(express.static(__dirname + '/public'));
-app.engine('mustache', mustacheExpress());
-app.set('view engine', 'mustache');
-if (!config.express.cache) app.disable('view cache');
-app.set('views', __dirname + '/templates');
+app.use(express.static(__dirname + "/public"));
+app.engine("mustache", mustacheExpress());
+app.set("view engine", "mustache");
+if (!config.express.cache) app.disable("view cache");
+app.set("views", __dirname + "/templates");
 
-let bodyParser = require('body-parser');
+let bodyParser = require("body-parser");
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
@@ -338,14 +349,14 @@ app.get("/client", function (req, res) {
 
 let discord, discordClient;
 discord = require("discord.js");
-botClient = new discord.Client();
+discordClient = new discord.Client();
 
-botClient.on("ready", function() {
+discordClient.on("ready", function() {
 	console.log(currentHourString()+"DISCORD: "+"Discord bot is ready!".green);
-	botClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
+	discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 });
 
-botClient.on("message", function(message) {
+discordClient.on("message", function(message) {
 	if (message.channel.id == config.discord.gameplayChannelId){
 		if (message.author.id != config.discord.webhookId){ // Make sure we're not listening to our own blabber
 		
@@ -364,7 +375,7 @@ botClient.on("message", function(message) {
 	}
 });
 
-botClient.login(config.discord.botToken);
+discordClient.login(config.discord.botToken);
 
 //
 
@@ -372,7 +383,7 @@ let chat = {};
 chat.testMessage = function(messageContent,id,username){
 	if (messageContent.startsWith("!marble")) {
 				
-		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g
+		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
 		let match = messageContent.match(colorRegEx);
 		
 		let color = (match === null ? undefined : match[0]);
@@ -383,7 +394,7 @@ chat.testMessage = function(messageContent,id,username){
 			color
 		);
 	}
-}
+};
 
 //
 
@@ -391,7 +402,7 @@ function spawnMarble(name,color){
 	
 	// Create physics body
 	let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
-	let sphereShape =  new Ammo.btSphereShape(size);
+	let sphereShape = new Ammo.btSphereShape(size);
 	sphereShape.setMargin( 0.05 );
 	let mass = (size || 0.5) * 5;
 	let localInertia = new Ammo.btVector3( 0, 0, 0 );
@@ -407,7 +418,7 @@ function spawnMarble(name,color){
 	let body = {
 		ammoBody: ammoBody,
 		tags: {}
-	}
+	};
 	body.tags.color = color || randomHexColor();
 	body.tags.size = size;
 	body.tags.useFancy = (Math.random() > .99);
@@ -423,7 +434,7 @@ function spawnMarble(name,color){
 
 //
 
-let request = require('request');
+let request = require("request");
 app.get("/chat", function (req, res) {
 	
 	if (req.query){
@@ -625,8 +636,8 @@ app.get("/debug", function (req, res) {
 
 /* Express listener */
 let server = http.listen(config.express.port, function () {
-  let port = server.address().port;
-  console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
+	let port = server.address().port;
+	console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
 });
 
 /* Sockets */
@@ -646,7 +657,7 @@ io.on("connection", function(socket){
 			if ( dbAuthenticated(user_data.id, user_data.access_token) ){
 				name = (" ("+dbUsernameById(user_data.id)+")").yellow;
 			} else {
-				name = " Hacker?!?".red
+				name = " Hacker?!?".red;
 			}
 		}
 	}
@@ -654,7 +665,7 @@ io.on("connection", function(socket){
 	console.log(currentHourString() + "A user connected!".green + name);
 	
 	let initialMarbleData = [];
-	for (i = 0; i < marbles.length; i++){
+	for (let i = 0; i < marbles.length; i++){
 		initialMarbleData.push({
 			pos: marbles[i].position,
 			id: marbles[i].id,
@@ -669,7 +680,7 @@ io.on("connection", function(socket){
 		if (marbles.length !== 0){
 			pos = new Float32Array(marbles.length*3);
 			rot = new Float64Array(marbles.length*4);
-			for (i = 0; i < marbles.length; i++){
+			for (let i = 0; i < marbles.length; i++){
 				let ms = marbles[i].ammoBody.getMotionState();
 				if (ms){
 					ms.getWorldTransform( transformAux1 );
@@ -698,7 +709,7 @@ io.on("connection", function(socket){
 	});
 	
 	// Discord chat
-	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken)
+	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken);
 	socket.on("chat incoming", (obj) => {
 		
 		let row = db.prepare("SELECT access_token, username, avatar, discriminator FROM users WHERE id = ?").get(obj.id);
@@ -723,17 +734,17 @@ io.on("connection", function(socket){
 	});
 });
 
-io.on("disconnected", function(socket){
+io.on("disconnected", function(){
 	console.log("A user disconnected...".red);
 });
 
 let lastPhysicsUpdate = Date.now();
 /* Physics interval */
-physStepInterval = setInterval(function(){
-    let now = Date.now();
-    let deltaTime = (now - lastPhysicsUpdate)/1000;
-    lastPhysicsUpdate = now;
-	updatePhysics(deltaTime)
+let physStepInterval = setInterval(function(){
+	let now = Date.now();
+	let deltaTime = (now - lastPhysicsUpdate)/1000;
+	lastPhysicsUpdate = now;
+	updatePhysics(deltaTime);
 },1000/config.physics.steps);
 
 function updatePhysics( deltaTime ) {
@@ -744,17 +755,17 @@ function updatePhysics( deltaTime ) {
 
 /* Other */
 function pad(num,size) {
-    let s = "000000000" + num;
-    return s.substr(s.length-size);
+	let s = "000000000" + num;
+	return s.substr(s.length-size);
 }
 
 function currentHourString() {
 	let date = new Date();
-	return "["+pad(date.getHours(),2)+":"+pad(date.getMinutes(),2)+"] ";
+	return `[${pad(date.getHours(),2)}:${pad(date.getMinutes(),2)}] `;
 }
 
 function randomHexColor(){
-	return '#'+(Math.random()*0xffffff|0).toString(16);
+	return `#${(Math.random()*0xffffff|0).toString(16)}`;
 }
 
 function now(){

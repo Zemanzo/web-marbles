@@ -1,7 +1,7 @@
 /**
 	This function is created to make firing a function easy, when both the document and your
 	asynchronous function are ready.
-	
+
 	Use it as following:
 	1.  add(<FUNCTION>,<ID>,<OPTIONS>) your function. <OPTIONS> is an object that allows for three
 		variables:
@@ -15,7 +15,7 @@
 		-- returnOnFire		// (only used for type 1)
 			false			- Call function immediately when fired (default)
 			true			- Do not fire function but return it instead
-			
+
 	2a. add args(<ID>,<ARGS>) when your asynchronous function is ready. this will attempt to fire
 		your function automatically.
 	OR
@@ -25,11 +25,11 @@
 */
 
 var whenDocReady = {
-	
+
 	timestamp: {},
-	
+
 	lookup: {},
-	
+
 	add: function(callback,id,options){
 		if (!options)
 			options = {};
@@ -46,12 +46,12 @@ var whenDocReady = {
 			args: null
 		}
 	},
-	
+
 	args: function(id,...args){
 		this.lookup[id].args = args;
 		this.fire(id,true);
 	},
-	
+
 	fire: function(id,withArguments){
 		if (
 			this.lookup[id] &&	// This id exists AND
@@ -70,7 +70,7 @@ var whenDocReady = {
 				if (this.lookup[id].returnOnFire){
 					return this.lookup[id].callback;
 				} else {
-					return this.lookup[id].callback();	
+					return this.lookup[id].callback();
 				}
 			}
 		} else {
@@ -79,7 +79,7 @@ var whenDocReady = {
 			return (withArguments ? null : ()=>{return null});
 		}
 	},
-	
+
 	fireAll: function(readyState){
 		for (let id in this.lookup){
 			if (
@@ -92,15 +92,15 @@ var whenDocReady = {
 			}
 		}
 	},
-	
+
 	docReady: function(){
 		return (document.readyState === "interactive" || document.readyState === "complete");
 	},
-	
+
 	docDone: function(){
 		return document.readyState === "complete";
 	}
-	
+
 }
 
 window.addEventListener("DOMContentLoaded", function(){

@@ -3,23 +3,23 @@ let serialize = {};
 onmessage = function(message) {
 	serialize.start = message.data.serializationStart || new Date();
 	switch(message.data.type){
-		case "exportPublishBinary":
-			sendLog(`- Data received by worker (${(new Date()) - serialize.start}ms)`);
-			exportPublish(message.data.payload, true);
-			break;
-		case "exportPublishPlain":
-			sendLog(`- Data received by worker (${(new Date()) - serialize.start}ms)`);
-			exportPublish(message.data.payload, false);
-			break;
-		default:
-			postMessage({
-				type: "log",
-				payload: {
-					message: `No such serialization type is available (${message.data.type})`,
-					type: "error"
-				}
-			});
-			break;
+	case "exportPublishBinary":
+		sendLog(`- Data received by worker (${(new Date()) - serialize.start}ms)`);
+		exportPublish(message.data.payload, true);
+		break;
+	case "exportPublishPlain":
+		sendLog(`- Data received by worker (${(new Date()) - serialize.start}ms)`);
+		exportPublish(message.data.payload, false);
+		break;
+	default:
+		postMessage({
+			type: "log",
+			payload: {
+				message: `No such serialization type is available (${message.data.type})`,
+				type: "error"
+			}
+		});
+		break;
 	}
 }
 
@@ -32,14 +32,14 @@ let exportPublish = function(data, compress){
 		if (compress){
 			importScripts("/scripts/lib/lz-string.min.js");
 			let startLength = data.length;
-			sendLog(`- Start compression (this might take a while...)`);
+			sendLog("- Start compression (this might take a while...)");
 			data = LZString.compress(data);
 			let compressionRatio = Math.round((data.length / startLength) * 10000) * .01;
 			sendLog(`- Compressed (${compressionRatio}% of original) (${(new Date()) - serialize.start}ms)`);
 		}
 
 		data = new Blob([data], {
-		    type: "text/plain"
+			type: "text/plain"
 		});
 		let extension = compress ? ".mmb" : ".mmp";
 		let filetype = compress ? "application/octet-stream" : "application/json";
@@ -47,7 +47,7 @@ let exportPublish = function(data, compress){
 		let file = new File([data], filename, {type: filetype});
 		let objectUrl = URL.createObjectURL(file);
 
-		sendLog(`Serialization succesful! (${(new Date()) - serialize.start}ms)`, 'success');
+		sendLog(`Serialization succesful! (${(new Date()) - serialize.start}ms)`, "success");
 		postMessage({
 			type: "publishSuccess",
 			payload: {

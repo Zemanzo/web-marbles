@@ -4,409 +4,409 @@ body {
 }
 
 #viewportOverlay > button {
-	margin:4px;
+	margin: 4px;
 }
 
 #mode {
-	text-align:center;
-	font-size:2em;
-	color:var(--theme-color-dark);
+	text-align: center;
+	font-size: 2em;
+	color: var(--theme-color-dark);
 }
 
 #sidebar {
-	padding:9px;
+	padding: 9px;
 }
 
 #properties {
-	display:flex;
-	overflow:hidden;
-	flex:1;
+	display: flex;
+	overflow: hidden;
+	flex: 1;
 }
 
 	#properties > div {
-		font-family:sans-serif;
-		font-size:.8em;
-		min-width:100%;
-		transition:margin-left .4s;
+		font-family: sans-serif;
+		font-size: .8em;
+		min-width: 100%;
+		transition: margin-left .4s;
 	}
 
 	#properties > div h3 {
-		font-family:"Do Hyeon",monospace;
-		font-size:1.3em;
-		text-transform:uppercase;
-		margin:.7em 0 0 0;
+		font-family: "Do Hyeon",monospace;
+		font-size: 1.3em;
+		text-transform: uppercase;
+		margin: .7em 0 0 0;
 	}
 
 	#properties > div h3:first-child {
-		margin:.3em 0 0 0;
+		margin: .3em 0 0 0;
 	}
 
 #editorMode {
-	display:flex;
-	flex-wrap:wrap;
-	justify-content:space-around;
-	text-align:center;
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-around;
+	text-align: center;
 }
 
 	#editorMode > * {
-		min-width:10ch;
-		flex:1;
-		cursor:pointer;
-		background:#666;
+		min-width: 10ch;
+		flex: 1;
+		cursor: pointer;
+		background: #666;
 	}
 	#editorMode > *:hover {
-		background:var(--theme-color-dark);
+		background: var(--theme-color-dark);
 	}
 
 	#editorMode > *.selected {
-		background:var(--theme-color);
-		color:#111;
+		background: var(--theme-color);
+		color: #111;
 	}
 
 .add {
-	font-size:2.3em;
-	display:flex;
-	justify-content:space-around;
-	align-items:center;
-	text-align:center;
-	color:var(--theme-color-dark);
-	margin:12px;
-	text-transform:uppercase;
-	cursor:pointer;
+	font-size: 2.3em;
+	display: flex;
+	justify-content: space-around;
+	align-items: center;
+	text-align: center;
+	color: var(--theme-color-dark);
+	margin: 12px;
+	text-transform: uppercase;
+	cursor: pointer;
 }
 	.add i {
-		font-size:1.3em;
+		font-size: 1.3em;
 	}
 	.add:hover {
-		color:var(--theme-color);
+		color: var(--theme-color);
 	}
 	.add:hover span {
-		text-decoration:underline;
+		text-decoration: underline;
 	}
 
 #addModel {
 	-webkit-appearance: none;
-	-moz-appearance:    none;
-	appearance:         none;
+	-moz-appearance: none;
+	appearance: none;
 }
 
 	#addModelFile {
-		display:none;
+		display: none;
 	}
 
 	#models {
-		font-size:1.3em;
-		font-family:monospace;
+		font-size: 1.3em;
+		font-family: monospace;
 	}
 
 	#modelTemplate {
-		display:none;
+		display: none;
 	}
 
 	.model {
-		cursor:pointer;
-		margin:2px 0px;
-		padding-left:2px;
-		background:#262626;
-		display:flex;
+		cursor: pointer;
+		margin: 2px 0px;
+		padding-left: 2px;
+		background: #262626;
+		display: flex;
 	}
 
 	.model:hover {
-		background:#333333;
+		background: #333333;
 	}
 
 	.model.selected {
-		background:#444;
+		background: #444;
 	}
 
 	.model .name {
-		flex:1;
-		display:flex;
-		align-items:center;
+		flex: 1;
+		display: flex;
+		align-items: center;
 	}
 
 #prefabs {
-	display:flex;
-	flex-direction:column;
-	overflow-y:auto;
+	display: flex;
+	flex-direction: column;
+	overflow-y: auto;
 }
 
 	#prefabTemplate {
-		display:none;
+		display: none;
 	}
 
 	#prefabsList {
-		overflow:auto;
+		overflow: auto;
 	}
 
 .prefab {
-	/* border:1px solid var(--theme-color-dark); */
-	background:#262626;
-	min-height:160px;
-	max-height:300px;
-	transition:min-height .3s, max-height .3s;
-	display:flex;
-	flex-direction:column;
-	overflow:hidden;
+	/* border: 1px solid var(--theme-color-dark); */
+	background: #262626;
+	min-height: 160px;
+	max-height: 300px;
+	transition: min-height .3s, max-height .3s;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
 }
 .prefab:not(:nth-child(2)){ /* First child is hidden template */
-	margin-top:12px;
+	margin-top: 12px;
 }
 
 .prefab.collapsed {
-	min-height:calc(1.4em + 12px);
-	max-height:calc(1.4em + 12px);
+	min-height: calc(1.4em + 12px);
+	max-height: calc(1.4em + 12px);
 }
 	.prefabHeader {
-		display:flex;
-		min-height:calc(1.4em + 12px);
+		display: flex;
+		min-height: calc(1.4em + 12px);
 	}
 		.prefabHeader i {
-			display:inline-block;
-			transition:transform .3s;
+			display: inline-block;
+			transition: transform .3s;
 		}
 		.prefabHeader i.rotated {
-			transform:rotate(90deg);
+			transform: rotate(90deg);
 		}
 		.prefabHeader > button {
-			font-size:1.4em;
-			background:transparent;
-			color:#eee;
-			padding:4px 10px;
+			font-size: 1.4em;
+			background: transparent;
+			color: #eee;
+			padding: 4px 10px;
 		}
 		.prefabHeader > button:hover {
-			text-decoration:none;
-			background:#eee;
-			color:#111;
+			text-decoration: none;
+			background: #eee;
+			color: #111;
 		}
 
 		.prefab .prefabName {
-			margin:4px;
-			padding-left:2px;
-			flex:1;
-			background:#111;
-			color:#eee;
-			border:none;
-			font-size:1.1em;
-			font-weight:600;
-			min-width:100px;
+			margin: 4px;
+			padding-left: 2px;
+			flex: 1;
+			background: #111;
+			color: #eee;
+			border: none;
+			font-size: 1.1em;
+			font-weight: 600;
+			min-width: 100px;
 		}
 
 	.prefabDetails {
-		display:flex;
-		justify-content:space-around;
-		color:#999;
-		text-align:center;
-		padding:2px;
-		position:relative;
+		display: flex;
+		justify-content: space-around;
+		color: #999;
+		text-align: center;
+		padding: 2px;
+		position: relative;
 	}
 
 		.prefabDetails > * {
-			flex:1;
-			font-size:.8em;
+			flex: 1;
+			font-size: .8em;
 		}
 
 		.detailsID {
-			font-family:monospace;
-			font-size:1.1em;
-			color:#666;
+			font-family: monospace;
+			font-size: 1.1em;
+			color: #666;
 		}
 
 		.prefabColor {
-			border:none;
-			padding:0px;
-			margin:0px;
-			height:14px;
-			width:64px;
-			position:absolute;
-			top:0px;
-			overflow:hidden;
-			clip:rect(1px,63px,13px,1px);
+			border: none;
+			padding: 0px;
+			margin: 0px;
+			height: 14px;
+			width: 64px;
+			position: absolute;
+			top: 0px;
+			overflow: hidden;
+			clip: rect(1px,63px,13px,1px);
 		}
 
 	.prefab .showPrefab .icofont-eye-blocked {
-		color:#666;
+		color: #666;
 	}
 
 	.prefab .delete,
 	.delete {
-		background:transparent;
-		color:#f00;
-		border:none;
+		background: transparent;
+		color: #f00;
+		border: none;
 	}
 	.prefab .delete:hover,
 	.delete:hover {
-		background:#f00;
-		color:#fff;
-		text-decoration:none;
+		background: #f00;
+		color: #fff;
+		text-decoration: none;
 	}
 
 	.prefab .objectList {
-		background:#111;
-		min-height:6em;
-		overflow-y:auto;
-		margin:0px 4px;
-		padding:2px;
-		font-size:1.1em;
-		display:flex;
-		flex-direction:column;
+		background: #111;
+		min-height: 6em;
+		overflow-y: auto;
+		margin: 0px 4px;
+		padding: 2px;
+		font-size: 1.1em;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.prefab .objectList > div {
-		cursor:pointer;
-		display:flex;
-		align-items:center;
+		cursor: pointer;
+		display: flex;
+		align-items: center;
 	}
 	.prefab .objectList > div:hover {
-		background:#222;
+		background: #222;
 	}
 
 		.prefab .objectList > div.selected {
-			background:#333;
+			background: #333;
 		}
 		.prefab .objectList > div .name {
-			flex:1;
-			padding-left:3px;
+			flex: 1;
+			padding-left: 3px;
 		}
 		.prefab .objectList > div .uuid {
-			font-family:monospace;
-			padding-right:3px;
-			color:#666;
+			font-family: monospace;
+			padding-right: 3px;
+			color: #666;
 		}
 		/* wow so optimized omg no layout recalculation */
 		.prefab .objectList > div .delete {
-			visibility:hidden;
+			visibility: hidden;
 		}
 		.prefab .objectList > div:hover .delete {
-			visibility:visible;
+			visibility: visible;
 		}
 
 		#prefabObjectTemplate,
 		#prefabColliderTemplate {
-			display:none;
+			display: none;
 		}
 
 	.prefabActions {
-		display:flex;
-		justify-content:space-around;
-		padding-top:2px;
+		display: flex;
+		justify-content: space-around;
+		padding-top: 2px;
 	}
 	.prefabActions > button {
-		border:none;
-		color:var(--theme-color);
-		background:transparent;
+		border: none;
+		color: var(--theme-color);
+		background: transparent;
 	}
 	.prefabActions > button:hover {
-		text-decoration:underline;
+		text-decoration: underline;
 	}
 	.prefabActions > * {
-		flex:1;
-		margin:0px 4px;
+		flex: 1;
+		margin: 0px 4px;
 	}
 
 /* WORLD */
 
 #worldAddPrefab {
-	display:flex;
-	justify-content:space-around;
+	display: flex;
+	justify-content: space-around;
 }
 
 	#worldPrefab {
-		width:190px;
+		width: 190px;
 	}
 
 	#worldAddPrefabButton {
-		flex:1;
-		font-size:1.3em;
-		margin:0px;
+		flex: 1;
+		font-size: 1.3em;
+		margin: 0px;
 	}
 
 	#worldPrefab:disabled ~ #worldAddPrefabButton {
-		color:#666;
-		cursor:not-allowed;
+		color: #666;
+		cursor: not-allowed;
 	}
 
 	#worldPrefab:disabled ~ #worldAddPrefabButton:hover span {
-		text-decoration:none;
+		text-decoration: none;
 	}
 
 /* INSPECTOR */
 #inspector {
-	height:192px;
-	overflow-y:auto;
-	transition:transform .4s;
+	height: 192px;
+	overflow-y: auto;
+	transition: transform .4s;
 }
 
 #inspector.noSelection {
-	opacity:.5;
-	filter:grayscale(100%);
+	opacity: .5;
+	filter: grayscale(100%);
 }
 
 	#inspector input:disabled {
-		cursor:not-allowed;
+		cursor: not-allowed;
 	}
 
 	#inspector .objectProperty,
 	#inspector .colliderProperty {
-		display:none;
+		display: none;
 	}
 	#inspector.objectSelection .objectProperty,
 	#inspector.colliderSelection .colliderProperty {
-		display:table-row;
+		display: table-row;
 	}
 	#inspector h3:after {
-		content:"";
+		content: "";
 		text-transform: uppercase;
-		color:#999;
+		color: #999;
 	}
 	#inspector.objectSelection h3:after { content:" - Object" }
 	#inspector.colliderSelection h3:after { content:" - Collider" }
 
 	#inspector table {
-		border-collapse:collapse;
+		border-collapse: collapse;
 	}
 
 	#inspector table tr:hover {
-		background:#363636;
+		background: #363636;
 	}
 
 /* transform */
 
 	.transform > tr > td:first-child {
-		flex:3;
-		min-width:75px;
-		vertical-align:top;
+		flex: 3;
+		min-width: 75px;
+		vertical-align: top;
 	}
 
 	.transform > tr > td:not(:first-child) {
-		margin-right:2px;
+		margin-right: 2px;
 	}
 
 	.transform > tr > td > div {
-		display:inline-flex;
-		flex-direction:row-reverse; /* sort-of hack to use the '~' selector for preceding elements */
+		display: inline-flex;
+		flex-direction: row-reverse; /* sort-of hack to use the '~' selector for preceding elements */
 	}
 
 	.transform span {
-		min-width:12px;
-		font-weight:600;
-		padding:2px;
-		text-align:center;
-		display:block;
-		color:#eee;
-		font-family:"Courier New";
+		min-width: 12px;
+		font-weight: 600;
+		padding: 2px;
+		text-align: center;
+		display: block;
+		color: #eee;
+		font-family: "Courier New";
 	}
 
 	.rotation input[type=number]::after {
-		content:"&deg;";
+		content: "&deg;";
 	}
 
 /* shapeProperties */
 
 	.transform > tr.shapeProperties > td > div {
-		display:none;
-		justify-content:flex-start;
-		margin-bottom:1px;
+		display: none;
+		justify-content: flex-start;
+		margin-bottom: 1px;
 	}
 
 	.shapeProperties.box div.box,
@@ -415,116 +415,116 @@ body {
 	.shapeProperties.cone div.cone,
 	.shapeProperties.capsule div.capsule,
 	.shapeProperties.terrain div.terrain {
-		display:flex;
+		display: flex;
 	}
 
 /* LOG */
 #log {
-	background:#111;
-	height:90px;
-	font-family:monospace;
-	font-size:.9em;
-	overflow-y:auto; /* fuck u */
+	background: #111;
+	height: 90px;
+	font-family: monospace;
+	font-size: .9em;
+	overflow-y: auto; /* fuck u */
 }
 
 #log .error {
-	color:#d00;
+	color: #d00;
 }
 
 #log .warn {
-	color:#dd0;
+	color: #dd0;
 }
 
 #log .success {
-	color:#2d2;
+	color: #2d2;
 }
 
 /* WORLD */
 #world {
-	padding-top:170px; /* For the inspector */
+	padding-top: 170px; /* For the inspector */
 }
 
 	#worldHierarchy {
-		background:#111;
-		border:3px solid #262626;
-		padding:2px;
+		background: #111;
+		border: 3px solid #262626;
+		padding: 2px;
 
 	}
 
 	#worldPrefabTemplate {
-		display:none;
+		display: none;
 	}
 
 	.worldPrefab {
-		cursor:pointer;
-		margin:2px 0px;
-		padding-left:2px;
-		display:flex;
-		align-items:center;
+		cursor: pointer;
+		margin: 2px 0px;
+		padding-left: 2px;
+		display: flex;
+		align-items: center;
 	}
 
 	.worldPrefab:hover {
-		background:#333333;
+		background: #333333;
 	}
 
 	.worldPrefab.selected {
-		background:#444;
+		background: #444;
 	}
 
 	.worldPrefab .uuid {
-		font-family:monospace;
-		font-size:1.1em;
-		padding-right:3px;
-		color:#666;
+		font-family: monospace;
+		font-size: 1.1em;
+		padding-right: 3px;
+		color: #666;
 	}
 
 	.worldPrefab .delete {
-		padding:0px;
-		visibility:hidden;
+		padding: 0px;
+		visibility: hidden;
 	}
 
 	.worldPrefab:hover .delete {
-		visibility:visible;
+		visibility: visible;
 	}
 	.worldPrefab:hover .delete:hover i {
-		color:#eee;
+		color: #eee;
 	}
 
 	.worldPrefab .name {
-		flex:1;
-		display:flex;
-		align-items:center;
+		flex: 1;
+		display: flex;
+		align-items: center;
 	}
 
 	.worldPrefab .prefabName {
-		margin:1px 4px 1px 2px;
-		padding:0px 2px;
-		background:#000;
-		color:#ccc;
-		border:none;
-		overflow:hidden;
-		white-space:nowrap;
-		min-width:12px;
-		min-height:12px;
-		max-width:65px;
-		border-radius:2px;
+		margin: 1px 4px 1px 2px;
+		padding: 0px 2px;
+		background: #000;
+		color: #ccc;
+		border: none;
+		overflow: hidden;
+		white-space: nowrap;
+		min-width: 12px;
+		min-height: 12px;
+		max-width: 65px;
+		border-radius: 2px;
 		font-family: 'BenchNine', sans-serif;
-		text-shadow:0px 1px 1px #111;
+		text-shadow: 0px 1px 1px #111;
 	}
 
 /* PORTATION */
 #portation {
-	padding-top:16px;
+	padding-top: 16px;
 }
 
 	#portation > h2 {
 		text-align: center;
-		color:#999;
+		color: #999;
 	}
 
 	#portation > h2 + p {
 		text-align: center;
-		color:#777;
+		color: #777;
 	}
 
 	#portation table td {
@@ -535,65 +535,65 @@ body {
 /* Other things */
 
 input[type=number] {
-	max-width:50px;
-	min-width:30px;
+	max-width: 50px;
+	min-width: 30px;
 	width: 100%;
-	max-height:19px;
-	padding:1px 2px 1px 3px;
+	max-height: 19px;
+	padding: 1px 2px 1px 3px;
 	-webkit-appearance: textfield;
-	-moz-appearance:    textfield;
-	appearance:         textfield;
-	box-sizing:border-box;
+	-moz-appearance: textfield;
+	appearance: textfield;
+	box-sizing: border-box;
 }
 
 input[type=number]:disabled,
 select:disabled {
-	opacity:.5;
+	opacity: .5;
 }
 
 input[type=number],
 input[type=text],
 select {
-	background:#060606;
-	color:#eee;
-	border:none;
+	background: #060606;
+	color: #eee;
+	border: none;
 }
 
 input:read-only {
-	color:#999;
-	font-style:italic;
+	color: #999;
+	font-style: italic;
 }
 input:-moz-read-only { /* little disappointed here */
-	color:#999;
-	font-style:italic;
+	color: #999;
+	font-style: italic;
 }
 input[type=number]:focus,
 span.x:active ~ input[type=number],
 span.y:active ~ input[type=number],
 span.z:active ~ input[type=number],
 span.q:active ~ input[type=number] {
-	background:#262626;
+	background: #262626;
 }
 input[type=number]:hover:not(:disabled) {
 	-webkit-appearance: initial;
-	-moz-appearance:    initial;
-	appearance:         initial;
+	-moz-appearance: initial;
+	appearance: initial;
 }
 
 table {
-	min-width:100%;
+	min-width: 100%;
 }
 
 td:last-child {
-	text-align:right;
+	text-align: right;
 }
 
 span.x, span.y, span.z, span.q {
-	cursor:e-resize;
-	-webkit-user-select:none;
-	-moz-user-select:none;
-	-ms-user-select:none;
-	user-select:none;
+	cursor: e-resize;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
 	text-shadow: 1px 1px 1px #333;
 }
 
@@ -610,10 +610,10 @@ span.x:active,
 span.y:active,
 span.z:active,
 span.q:active {
-	opacity:.6;
+	opacity: .6;
 }
 
-span.x {background:#c00;}
-span.y {background:#2a2;}
-span.z {background:#33f;}
-span.q {background:#666;}
+span.x {background: #c00;}
+span.y {background: #2a2;}
+span.z {background: #33f;}
+span.q {background: #666;}

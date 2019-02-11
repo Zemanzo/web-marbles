@@ -248,14 +248,14 @@ var marbleMeshes = [];
 
 function animate() {
 	requestAnimationFrame( animate );
-	
+
 	// Update marble positions
 	for (i = 0; i < marbleMeshes.length; i++){
 		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3+0], net.lastUpdate);
 		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
 		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
-		
-		
+
+
 		marbleMeshes[i].quaternion.set(
 			net.marbleRotations[i*4+0],
 			net.marbleRotations[i*4+1],
@@ -264,11 +264,11 @@ function animate() {
 		);
 		/* marbleMeshes[i].quaternion.normalize(); */
 	}
-	
+
 	if (net.lastUpdate < 1.5){
 		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
 	}
-	
+
 	// Update controls
 	if ( controlsEnabled === true ) {
 		var time = performance.now();
@@ -293,18 +293,18 @@ function animate() {
 		controls.getObject().translateZ( velocity.z * delta );
 
 		prevTime = time;
-	}	
+	}
 
 	// Update water material
 	water.material.uniforms.time.value += 1.0 / 60.0;
-	
+
 	// Update stats in top left corner
 	stats.update();
 
 	var delta = clock.getDelta();
 
 	uniforms.time.value += delta * 5;
-	
+
 	// Render the darn thing
 	renderer.render( scene, camera );
 }
@@ -312,31 +312,31 @@ function animate() {
 var mapMesh;
 
 // Stuff that can only be rendered after network data has been received
-function renderInit(){ 
+function renderInit(){
 	for (i = 0; i < net.marblePositions.length/3; i++){
 		spawnMarble(marbleData[i].tags);
 	}
-	
+
 	getXMLDoc("/client?dlmap=map2",(response)=>{
-		
+
 		var mapName = response.substr(0,response.lastIndexOf("."));
-		
+
 		console.log(mapName);
 		var manager = new THREE.LoadingManager();
 		manager.onProgress = function ( item, loaded, total ) {
 			console.log( item, loaded, total );
 		};
-		
+
 		var loader = new THREE.OBJLoader( manager );
 		loader.load( "/resources/"+mapName+"_optimized.obj", function ( object ) {
 			object.traverse( function ( child ) {
 				if ( child.name.indexOf("Terrain") !== -1) {
 					mapMesh = child;
-					
+
 					scene.add( mapMesh );
-					
+
 					mapMesh.setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
-					
+
 					mapMesh.geometry.computeBoundingBox();
 					mapMesh.geometry.center();
 					mapMesh.material = createMapMaterial();
@@ -345,7 +345,7 @@ function renderInit(){
 			} );
 		}, ()=>{}, ()=>{} );
 	});
-	
+
 	animate();
 }
 
@@ -362,35 +362,35 @@ function spawnMarble(tags){
 		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
 
 	} );
-	
+
 	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
 	let sphereMesh = new THREE.Mesh(sphereGeometry, (useFancy ? fancyMaterial : sphereMaterial));
-	
+
 	// Shadows
 	sphereMesh.castShadow = settings.graphics.castShadow.marbles;
 	sphereMesh.receiveShadow = settings.graphics.receiveShadow.marbles;
-	
+
 	// Add name sprite
 	let nameSprite = makeTextSprite(name);
-	
+
 	// Add to collection
 	marbleMeshes.push(sphereMesh);
-	
+
 	// Add objects to the scene
 	scene.add(marbleMeshes[marbleMeshes.length-1]);
 	scene.add(nameSprite);
 	marbleMeshes[marbleMeshes.length-1].add(nameSprite);
-		
+
 	// Add UI stuff
 	var listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
 	listEntry.removeAttribute("id");
 	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
 	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
 	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length;
-	
+
 	document.getElementById("marbleList").appendChild(listEntry);
 	document.getElementById("entries").innerHTML = marbleMeshes.length;
 }
@@ -414,17 +414,17 @@ function getTexture( name ) {
 
 function createMapMaterial(){
 	var mtl;
-	
+
 	// MATERIAL
 	mtl = new THREE.StandardNodeMaterial();
 	mtl.roughness = new THREE.FloatNode( .9 );
 	mtl.metalness = new THREE.FloatNode( 0 );
-	
+
 	function createUv(scale,offset){
-		
+
 		var uvOffset = new THREE.FloatNode( offset || 0 );
 		var uvScale = new THREE.FloatNode( scale || 1 );
-		
+
 		var uvNode = new THREE.UVNode();
 		var offsetNode = new THREE.OperatorNode(
 			uvOffset,
@@ -436,10 +436,10 @@ function createMapMaterial(){
 			uvScale,
 			THREE.OperatorNode.MUL
 		);
-		
+
 		return scaleNode;
 	}
-	
+
 	var grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
 	var dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
 	var mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
@@ -459,12 +459,12 @@ function createMapMaterial(){
 		normalScale,
 		THREE.OperatorNode.MUL
 	);
-	
+
 	mtl.normalScale = normalMask;
-	
+
 	// build shader
 	mtl.build();
-	
+
 	// set material
 	return mtl;
 }
@@ -474,31 +474,31 @@ function createMapMaterial(){
 function makeTextSprite( message )
 {
 	var parameters = {};
-	
+
 	var fontface = "Courier New";
 	var fontsize = 24;
-		
+
 	var canvas = document.createElement('canvas');
 	var width = canvas.width = 256;
 	var height = canvas.height = 64;
 	var context = canvas.getContext('2d');
 	context.font = "Bold " + fontsize + "px " + fontface;
-	context.textAlign = "center"; 
-    
+	context.textAlign = "center";
+
 	// get size data (height depends only on font size)
 	var metrics = context.measureText( message );
 	var textWidth = metrics.width;
-	
+
 	// text color
 	context.fillStyle = "#ffffff";
 
 	context.fillText(message, 128, fontsize);
-	
+
 	// canvas contents will be used for a texture
-	var texture = new THREE.Texture(canvas) 
+	var texture = new THREE.Texture(canvas)
 	texture.needsUpdate = true;
 	var spriteMaterial = new THREE.SpriteMaterial({map: texture});
 	var sprite = new THREE.Sprite( spriteMaterial );
 	sprite.scale.set(4,1,1.0);
-	return sprite;	
+	return sprite;
 }
