@@ -6,23 +6,11 @@ console.log("   by "+"Z".green+"emanz"+"o".green);
 console.log(" "+(new Date()).toLocaleString("nl").cyan);
 
 /* Database */
-let sqlite3 = require("better-sqlite3");
-let db = new sqlite3(config.database.path);
-
-db.prepare(`CREATE TABLE IF NOT EXISTS users (
-	id INTEGER UNIQUE,
-	username TEXT,
-	discriminator TEXT,
-	avatar TEXT,
-	access_token TEXT,
-	refresh_token TEXT,
-	refresh_last INTEGER,
-	refresh_expire INTEGER,
-	scope TEXT,
-	stat_rounds_entered INTEGER,
-	stat_marbles_entered INTEGER,
-	PRIMARY KEY('id')
-	)`).run();
+let db = require("./src/database/manager");
+db.setCurrentDatabase(
+	require("better-sqlite3")(config.database.path)
+);
+db.initialize();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
 let timeoutMap = {};
@@ -87,7 +75,7 @@ function createTerrainShape() {
 			// write 32-bit float data to memory
 			Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[ p ];
 			p++;
-			
+
 			// 4 bytes/float
 			p2 += 4;
 		}
@@ -174,85 +162,85 @@ let game = {
 	entered: []
 };
 
-game.addMarble = function(id,name,color){
+game.addMarble = function(id,name,color) {
 	// Only allow marbles during entering phase
-	if (game.logic.state === "enter"){
-		
+	if (game.logic.state === "enter") {
+
 		// Make sure this person hasn't entered in this round yet
-		if (!game.entered.includes(id)){
+		if (!game.entered.includes(id)) {
 			game.entered.push(id);
 			spawnMarble(name,color);
 		}
 	}
 };
 
-game.end = function(){
-	if (game.logic.state === "started"){
+game.end = function() {
+	if (game.logic.state === "started") {
 		game.logic.state = "enter";
 		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
-	
+
 		// Set starting gate to original position
 		let origin = gateBody.getWorldTransform().getOrigin();
 		/* console.log(origin.z()); */
 		origin.setZ(config.marbles.mapRotation[0].startGate.position.y);
 		/* console.log(origin.z()); */
 		gateBody.activate();
-		
+
 		// Remove marble physics bodies
-		for (let i = marbles.length - 1; i >= 0; --i){
+		for (let i = marbles.length - 1; i >= 0; --i) {
 			physicsWorld.removeRigidBody(marbles[i].ammoBody);
 		}
-		
+
 		// Clear the array of people that entered
 		game.entered = [];
-		
+
 		// Clear the marble array
 		marbles = [];
-		
+
 		// Send clients game restart so they can clean up on their side
 		io.sockets.emit("clear", true);
-		
+
 		// Start the game after the entering period is over
 		clearTimeout(game.enterTimeout);
 		game.enterTimeout = setTrackableTimeout(
 			game.start,
 			config.marbles.rules.enterPeriod * 1000
 		);
-		
+
 		/* setInterval(
 			function(){
 				console.log(getTimeout(game.enterTimeout));
 			},1000
 		); */
-		
+
 		return true;
 	} else {
 		return false;
 	}
 };
 
-game.start = function(){
-	if (game.logic.state === "enter"){
+game.start = function() {
+	if (game.logic.state === "enter") {
 		game.logic.state = "started";
 		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
 		io.sockets.emit("start", true);
-		
-		setTimeout(function(){
+
+		setTimeout(function() {
 			// Lower starting gate
 			let origin = gateBody.getWorldTransform().getOrigin();
 			origin.setZ(0);
 			gateBody.activate();
-			
+
 			// Add bot marble to ensure physics not freezing
 			spawnMarble("Nightbot","#000000");
 		},game.startDelay);
-		
+
 		clearTimeout(game.gameplayTimeout);
 		game.gameplayTimeout = setTrackableTimeout(
 			game.end,
 			config.marbles.rules.maxRoundLength * 1000
 		);
-		
+
 		return true;
 	} else {
 		return false;
@@ -279,45 +267,45 @@ let bodyParser = require("body-parser");
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
-})); 
+}));
 
 app.get("/", function (req, res) {
 	res.render("index");
 });
 
 app.get("/client", function (req, res) {
-	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object){
-		
+	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
+
 		// Add bot marble
-		if ( 
-			req.query.bot &&
-			game.logic.state === "enter"
-		){
+		if (
+			req.query.bot
+			&& game.logic.state === "enter"
+		) {
 			spawnMarble("nightbot","#000000");
 			res.send("ok");
 		}
-		
+
 		// Clear all marbles
-		else if (req.query.clear){ 
-			
+		else if (req.query.clear) {
+
 			res.send(
 				game.end() ? "ok" : "already waiting for start"
 			);
-			
+
 		}
-		
+
 		// Start the game, move the startGate out of the way
-		else if (req.query.start){ 
-			
+		else if (req.query.start) {
+
 			res.send(
 				game.start() ? "ok" : "already started"
 			);
-			
+
 		}
-		
+
 		// Send over the gamestate when a new connection is made
-		else if (req.query.gamestate){ 
-			
+		else if (req.query.gamestate) {
+
 			res.send(
 				{
 					gameState: game.logic.state,
@@ -327,15 +315,15 @@ app.get("/client", function (req, res) {
 					mapId: config.marbles.mapRotation[0].name
 				}
 			);
-			
+
 		}
-		
+
 		// Send map id -- DEPRECATED
-		else if (req.query.dlmap){
+		else if (req.query.dlmap) {
 			res.send(config.marbles.mapRotation[0].name);
-			
+
 		}
-		
+
 		// Got nothing for ya.
 		else {
 			res.send("You probably can't do that. Nice try tho gg.");
@@ -357,17 +345,17 @@ discordClient.on("ready", function() {
 });
 
 discordClient.on("message", function(message) {
-	if (message.channel.id == config.discord.gameplayChannelId){
-		if (message.author.id != config.discord.webhookId){ // Make sure we're not listening to our own blabber
-		
+	if (message.channel.id == config.discord.gameplayChannelId) {
+		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
+
 			io.sockets.emit("chat message", {
 				username: message.author.username,
 				discriminator: message.author.discriminator,
 				content: message.content
 			});
-			
+
 			chat.testMessage(message.content, message.author.id, message.author.username);
-		
+
 			if (message.content === "!doot") {
 				message.reply("🎺");
 			}
@@ -380,14 +368,14 @@ discordClient.login(config.discord.botToken);
 //
 
 let chat = {};
-chat.testMessage = function(messageContent,id,username){
+chat.testMessage = function(messageContent,id,username) {
 	if (messageContent.startsWith("!marble")) {
-				
+
 		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
 		let match = messageContent.match(colorRegEx);
-		
+
 		let color = (match === null ? undefined : match[0]);
-		
+
 		game.addMarble(
 			id,
 			username,
@@ -398,8 +386,8 @@ chat.testMessage = function(messageContent,id,username){
 
 //
 
-function spawnMarble(name,color){
-	
+function spawnMarble(name,color) {
+
 	// Create physics body
 	let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
 	let sphereShape = new Ammo.btSphereShape(size);
@@ -413,7 +401,7 @@ function spawnMarble(name,color){
 	let motionState = new Ammo.btDefaultMotionState( transform );
 	let bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 	let ammoBody = new Ammo.btRigidBody( bodyInfo );
-	
+
 	// Add metadata
 	let body = {
 		ammoBody: ammoBody,
@@ -423,11 +411,11 @@ function spawnMarble(name,color){
 	body.tags.size = size;
 	body.tags.useFancy = (Math.random() > .99);
 	body.tags.name = name || "Nightbot";
-	
+
 	// Add to physics world
 	marbles.push(body);
 	physicsWorld.addRigidBody( body.ammoBody );
-	
+
 	// Send client info on new marble
 	io.sockets.emit("new marble", body.tags);
 }
@@ -436,10 +424,10 @@ function spawnMarble(name,color){
 
 let request = require("request");
 app.get("/chat", function (req, res) {
-	
-	if (req.query){
-		
-		if (req.query.code){
+
+	if (req.query) {
+
+		if (req.query.code) {
 			let options = {
 				url: "https://discordapp.com/api/oauth2/token",
 				form: {
@@ -451,26 +439,26 @@ app.get("/chat", function (req, res) {
 					scope: config.discord.scope
 				}
 			};
-			
+
 			let callback = function (error, response, token_body) {
 				if (!error && response.statusCode === 200) {
-					
+
 					token_body = JSON.parse(token_body);
-					
+
 					request.get({
 						url: "https://discordapp.com/api/users/@me",
 						headers: {
 							"Authorization": "Bearer "+token_body.access_token
 						}
-					},function (error, response, user_body){
+					},function (error, response, user_body) {
 						if (!error && response.statusCode === 200) {
-							
+
 							user_body = JSON.parse(user_body);
-							
-							let exists = db.prepare("SELECT id FROM users WHERE id = ?").get(user_body.id);
+
+							let exists = db.currentDatabase.prepare("SELECT id FROM users WHERE id = ?").get(user_body.id);
 							let nowTimestamp = now();
-							if (exists){
-								db.prepare(
+							if (exists) {
+								db.currentDatabase.prepare(
 									"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
 								).run([
 									token_body.access_token,
@@ -481,7 +469,7 @@ app.get("/chat", function (req, res) {
 									user_body.id
 								]);
 							} else {
-								db.prepare(
+								db.currentDatabase.prepare(
 									"INSERT OR ABORT INTO users (id, username, discriminator, avatar, access_token, refresh_token, refresh_last, refresh_expire, scope) VALUES (?,?,?,?,?,?,?,?,?)"
 								).run([
 									user_body.id,
@@ -495,7 +483,7 @@ app.get("/chat", function (req, res) {
 									config.discord.scope
 								]);
 							}
-							
+
 							res.render("chat",{
 								invitelink: config.discord.inviteLink,
 								user_data: JSON.stringify({
@@ -505,30 +493,30 @@ app.get("/chat", function (req, res) {
 									access_granted: nowTimestamp,
 									expires_in: token_body.expires_in,
 									discriminator: user_body.discriminator,
-									avatar: user_body.avatar,
+									avatar: user_body.avatar
 								}),
 								success: true
 							});
-							
+
 						} else {
 							console.log(error,response.statusCode);
 						}
 					});
-					
+
 				} else {
-					
+
 					res.render("chat",{
 						invitelink: config.discord.inviteLink,
 						success: false
 					});
-					
+
 				}
 			};
-			
+
 			request.post(options,callback);
 			return;
 		}
-		
+
 	}
 	res.render("chat",{
 		invitelink: config.discord.inviteLink,
@@ -536,22 +524,22 @@ app.get("/chat", function (req, res) {
 		redirect_uri: encodeURIComponent(config.discord.redirectUriRoot+"chat"),
 		scope: encodeURIComponent(config.discord.scope) // separated with spaces
 	});
-	
+
 });
 
-app.post("/chat", function (req, res){
-	
-	if (req.body){
-		
+app.post("/chat", function (req, res) {
+
+	if (req.body) {
+
 		// Request new access_token
 		if (
-			req.body.type == "refresh_token" &&
-			req.body.id &&
-			req.body.access_token &&
-			dbAuthenticated(req.body.id, req.body.access_token)
-		){
-			let row = db.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?").get(req.body.id);
-			
+			req.body.type == "refresh_token"
+			&& req.body.id
+			&& req.body.access_token
+			&& db.user.isAuthenticated(req.body.id, req.body.access_token)
+		) {
+			let row = db.currentDatabase.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?").get(req.body.id);
+
 			let options = {
 				url: "https://discordapp.com/api/oauth2/token",
 				form: {
@@ -563,14 +551,14 @@ app.post("/chat", function (req, res){
 					scope: row.scope
 				}
 			};
-			
+
 			let callback = function (error, response, token_body) {
 				if (!error && response.statusCode === 200) {
-					
+
 					token_body = JSON.parse(token_body);
 					token_body.access_granted = now();
-					
-					db.prepare(
+
+					db.currentDatabase.prepare(
 						"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
 					).run([
 						token_body.access_token,
@@ -580,49 +568,22 @@ app.post("/chat", function (req, res){
 						token_body.scope,
 						req.body.id
 					]);
-					
+
 					res.send(token_body);
 				}
 			};
-			
+
 			request.post(options,callback);
-			
+
 		}
-		
+
 	}
 });
-
-function dbIdExists(id){
-	if (
-		db.prepare("SELECT EXISTS(SELECT 1 FROM users WHERE id = ?)").get(id)
-	)
-		return true;
-	else
-		return false;
-}
-
-function dbAuthenticated(id,access_token){
-	if (dbIdExists(id)){
-		let row = db.prepare("SELECT access_token FROM users WHERE id = ?").get(id);
-		if (row && row.access_token == access_token){
-			return true;
-		}
-	}
-	return false;
-}
-
-function dbUsernameById(id){
-	if (dbIdExists(id)){
-		let row = db.prepare("SELECT username FROM users WHERE id = ?").get(id);
-		if (row) return row.username;
-	}
-	return false;
-}
 
 app.get("/editor", function (req, res) {
 	if (config.editor.enabled)
 		res.render("editor",{});
-	else 
+	else
 		res.render("editorDisabled",{});
 });
 
@@ -642,30 +603,30 @@ let server = http.listen(config.express.port, function () {
 
 /* Sockets */
 let pos, rot;
-io.on("connection", function(socket){
-	
+io.on("connection", function(socket) {
+
 	// Get user if there is one
 	// Note: this is pretty unsafe code. Remove or improve.
 	let name = " [Guest]";
-	if (socket.handshake.headers && socket.handshake.headers.cookie){
+	if (socket.handshake.headers && socket.handshake.headers.cookie) {
 		let cookies = socket.handshake.headers.cookie.split("; ");
 		let user_data = cookies.find( element => { return element.startsWith("user_data"); } );
-		if (user_data){
+		if (user_data) {
 			user_data = decodeURIComponent(user_data);
 			user_data = user_data.substr(10);
 			user_data = JSON.parse(user_data);
-			if ( dbAuthenticated(user_data.id, user_data.access_token) ){
-				name = (" ("+dbUsernameById(user_data.id)+")").yellow;
+			if ( db.user.isAuthenticated(user_data.id, user_data.access_token) ) {
+				name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
 			} else {
 				name = " Hacker?!?".red;
 			}
 		}
 	}
-	
+
 	console.log(currentHourString() + "A user connected!".green + name);
-	
+
 	let initialMarbleData = [];
-	for (let i = 0; i < marbles.length; i++){
+	for (let i = 0; i < marbles.length; i++) {
 		initialMarbleData.push({
 			pos: marbles[i].position,
 			id: marbles[i].id,
@@ -674,55 +635,55 @@ io.on("connection", function(socket){
 	}
 	/* console.log(initialMarbleData); */
 	socket.emit("initial data", initialMarbleData);
-	
+
 	// Request physics
 	socket.on("request physics", (timestamp, callback) => {
-		if (marbles.length !== 0){
+		if (marbles.length !== 0) {
 			pos = new Float32Array(marbles.length*3);
 			rot = new Float64Array(marbles.length*4);
-			for (let i = 0; i < marbles.length; i++){
+			for (let i = 0; i < marbles.length; i++) {
 				let ms = marbles[i].ammoBody.getMotionState();
-				if (ms){
+				if (ms) {
 					ms.getWorldTransform( transformAux1 );
 					let p = transformAux1.getOrigin();
 					let q = transformAux1.getRotation();
-					
+
 					pos[i*3+0] = p.x();
 					pos[i*3+1] = p.z();
 					pos[i*3+2] = p.y();
-					
+
 					rot[i*4+0] = q.x();
 					rot[i*4+1] = q.z();
 					rot[i*4+2] = q.y();
 					rot[i*4+3] = q.w();
 				}
 			}
-				
+
 			let gorig = gateBody.getWorldTransform().getOrigin();
 			let swPos = [gorig.x(),gorig.y(),gorig.z()];
 			/* console.log(swPos); */
-			
+
 			callback({pos:pos.buffer,rot:rot.buffer,startGate:swPos});
 		} else {
 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
 		}
 	});
-	
+
 	// Discord chat
 	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken);
 	socket.on("chat incoming", (obj) => {
-		
-		let row = db.prepare("SELECT access_token, username, avatar, discriminator FROM users WHERE id = ?").get(obj.id);
-		if (row && row.access_token == obj.access_token){
-			
+
+		let row = db.currentDatabase.prepare("SELECT access_token, username, avatar, discriminator FROM users WHERE id = ?").get(obj.id);
+		if (row && row.access_token == obj.access_token) {
+
 			chat.testMessage(obj.message, obj.id, row.username);
-			
+
 			chatWebhook.send(obj.message,{
 				username: row.username,
 				avatarURL: "https://cdn.discordapp.com/avatars/"+obj.id+"/"+row.avatar+".png",
-				disableEveryone: true,
+				disableEveryone: true
 			});
-			
+
 			io.sockets.emit("chat message", {
 				username: row.username,
 				discriminator: row.discriminator,
@@ -734,13 +695,13 @@ io.on("connection", function(socket){
 	});
 });
 
-io.on("disconnected", function(){
+io.on("disconnected", function() {
 	console.log("A user disconnected...".red);
 });
 
 let lastPhysicsUpdate = Date.now();
 /* Physics interval */
-let physStepInterval = setInterval(function(){
+let physStepInterval = setInterval(function() {
 	let now = Date.now();
 	let deltaTime = (now - lastPhysicsUpdate)/1000;
 	lastPhysicsUpdate = now;
@@ -764,11 +725,11 @@ function currentHourString() {
 	return `[${pad(date.getHours(),2)}:${pad(date.getMinutes(),2)}] `;
 }
 
-function randomHexColor(){
+function randomHexColor() {
 	return `#${(Math.random()*0xffffff|0).toString(16)}`;
 }
 
-function now(){
+function now() {
 	return (new Date()).getTime();
 }
 
