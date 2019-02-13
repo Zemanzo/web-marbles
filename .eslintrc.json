@@ -28,7 +28,7 @@
         "no-new-object":
             "error",
         "operator-linebreak":
-            ["error", "before"],
+            ["error", "before", { "overrides": { "=": "ignore" } }],
         "space-before-blocks":
             ["error", "always"]
     }

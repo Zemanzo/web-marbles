@@ -23,15 +23,15 @@ let game = {
 	state: {
 		timeToEnter: null
 	},
-	start: function(){
+	start: function() {
 		game.audio.start.play();
 		document.getElementById("state").innerHTML = "Race started!";
 		document.getElementById("timer").style.display = "none";
 	},
-	end: function(){
+	end: function() {
 		game.audio.end.play();
-		for (let mesh of marbleMeshes){
-			for (i = mesh.children.length; i >= 0; i--) {
+		for (let mesh of marbleMeshes) {
+			for (let i = mesh.children.length; i >= 0; i--) {
 				scene.remove(mesh.children[i]);
 			}
 			scene.remove(mesh);
@@ -43,15 +43,15 @@ let game = {
 		document.getElementById("timer").style.display = "block";
 		game.startTimerInterval(this.state.enterPeriod * 1000);
 	},
-	startTimerInterval: function(ms){
+	startTimerInterval: function(ms) {
 		let s = ms/1000;
 		let timerElement = document.getElementById("timer");
 		timerElement.innerHTML = Math.ceil(s);
-		setTimeout(function(){
+		setTimeout(function() {
 			let timeLeft = Math.floor(s);
 			console.log(s,timeLeft);
-			let timerInterval = setInterval(function(){
-				if (timeLeft < 0){
+			let timerInterval = setInterval(function() {
+				if (timeLeft < 0) {
 					clearInterval(timerInterval);
 				} else {
 					timerElement.innerHTML = timeLeft;
@@ -67,7 +67,7 @@ let game = {
 
 // Document state promise
 let domReady = new Promise((resolve, reject) => {
-	if (document.readyState === "interactive" || document.readyState === "complete"){
+	if (document.readyState === "interactive" || document.readyState === "complete") {
 		resolve(true);
 	} else {
 		window.addEventListener("DOMContentLoaded", () => resolve(true), false);
@@ -77,24 +77,24 @@ let domReady = new Promise((resolve, reject) => {
 // Socket data promise
 let netReady = new Promise((resolve, reject) => {
 	// Once connected, client receives initial data
-	socket.on("initial data", function(obj){
+	socket.on("initial data", function(obj) {
 		net.marbleData = obj;
 
 		/* Socket RPCs */
 
 		// New marble
-		socket.on("new marble", function(obj){
+		socket.on("new marble", function(obj) {
 			console.log(obj);
 			spawnMarble(obj);
 		});
 
 		// Start game
-		socket.on("start", function(obj){
+		socket.on("start", function(obj) {
 			game.start();
 		});
 
 		// End game, and start next round
-		socket.on("clear", function(obj){
+		socket.on("clear", function(obj) {
 			game.end();
 		});
 
@@ -104,8 +104,8 @@ let netReady = new Promise((resolve, reject) => {
 	/* Physics syncing */
 
 	// Once connection is acknowledged, start requesting physics updates
-	net.getServerData = function(){
-		if (net.ready < net.tickrate){
+	net.getServerData = function() {
+		if (net.ready < net.tickrate) {
 			net.ready++;
 			socket.emit("request physics", Date.now(), (data) => {
 				net.marblePositions = new Float32Array(data.pos);
@@ -122,25 +122,25 @@ let netReady = new Promise((resolve, reject) => {
 });
 
 // If both promises fulfill, start rendering & fill entries field
-Promise.all([domReady, netReady]).then(function(){
+Promise.all([domReady, netReady]).then(function() {
 	renderInit();
 	document.getElementById("entries").innerHTML = net.marbleData.length;
 });
 
-whenDocReady.add(function(response,requestStart,requestComplete){
+whenDocReady.add(function(response,requestStart,requestComplete) {
 	game.state = JSON.parse(response);
 	console.log(
 		game.state,
 		(requestComplete - requestStart) + (requestComplete - whenDocReady.timestamp.interactive)
 	);
-	if (game.state.gameState === "started"){
+	if (game.state.gameState === "started") {
 		document.getElementById("timer").style.display = "none";
 		document.getElementById("state").innerHTML = "Race started!";
 	} else {
 		// Remove document load time & request time
-		game.state.timeToEnter -=
-			((requestComplete - requestStart) +
-			(requestComplete - whenDocReady.timestamp.interactive));
+		game.state.timeToEnter
+			-= ((requestComplete - requestStart)
+			+ (requestComplete - whenDocReady.timestamp.interactive));
 
 		// Start timer interval
 		game.startTimerInterval(game.state.timeToEnter);
@@ -157,7 +157,7 @@ let gameStateReady = fetch("/client?gamestate=true").then(
 	}
 );
 
-window.addEventListener("DOMContentLoaded", function(){
+window.addEventListener("DOMContentLoaded", function() {
 
 	// Fix camera
 	/* document.getElementById("fixCam").addEventListener("click", function(){
@@ -168,16 +168,16 @@ window.addEventListener("DOMContentLoaded", function(){
 
 },false);
 
-function getXMLDoc(doc,callback){
+function getXMLDoc(doc,callback) {
 	let xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
 			console.log("rip", xmlhttp.response);
-  		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200){
+		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
 			callback(xmlhttp.response);
 		}
-	}
+	};
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
 }

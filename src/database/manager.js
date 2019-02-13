@@ -3,7 +3,7 @@ module.exports = {
 		this.currentDatabase = this._db = db;
 
 		this._initializer = require("./initializer")(db);
-		this.user = require("./user")(db);
+		this.user = require("./users")(db);
 	},
 
 	initialize: function() {

@@ -6,7 +6,7 @@ console.log("   by "+"Z".green+"emanz"+"o".green);
 console.log(" "+(new Date()).toLocaleString("nl").cyan);
 
 /* Database */
-let db = require("./src/database/manager");
+const db = require("./src/database/manager");
 db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
@@ -30,128 +30,7 @@ function getTimeout(id) { // The actual getTimeLeft function
 }
 
 /* Set up physics world */
-let Ammo = require("ammo-node");
-
-// Physics letiables
-let collisionConfiguration,
-	dispatcher,
-	broadphase,
-	solver,
-	physicsWorld;
-let transformAux1 = new Ammo.btTransform();
-//let transformAux2 = new Ammo.btTransform();
-
-// Physics configuration
-collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-dispatcher = new Ammo.btCollisionDispatcher( collisionConfiguration );
-broadphase = new Ammo.btDbvtBroadphase();
-solver = new Ammo.btSequentialImpulseConstraintSolver();
-physicsWorld = new Ammo.btDiscreteDynamicsWorld( dispatcher, broadphase, solver, collisionConfiguration );
-physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
-
-// List of marble physics bodies
-let marbles = [];
-
-function createTerrainShape() {
-	// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-	let upAxis = 1;
-
-	// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-	let hdt = "PHY_FLOAT";
-
-	// Set this to your needs (inverts the triangles)
-	let flipQuadEdges = false;
-
-	// Creates height data buffer in Ammo heap
-	let ammoHeightData = null;
-	ammoHeightData = Ammo._malloc( 4 * mapObj.width * mapObj.depth );
-
-	// Copy the javascript height data array to the Ammo one.
-	let p = 0;
-	let p2 = 0;
-	for ( let j = 0; j < mapObj.depth; j ++ ) {
-		for ( let i = 0; i < mapObj.width; i ++ ) {
-
-			// write 32-bit float data to memory
-			Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[ p ];
-			p++;
-
-			// 4 bytes/float
-			p2 += 4;
-		}
-	}
-
-	// Creates the heightfield physics shape
-	let heightFieldShape = new Ammo.btHeightfieldTerrainShape(
-		mapObj.width,
-		mapObj.depth,
-		ammoHeightData,
-		1,
-		mapObj.minZ,
-		mapObj.maxZ,
-		upAxis,
-		hdt,
-		flipQuadEdges
-	);
-
-	// Set horizontal scale
-	let scaleX = mapObj.gridDistance;
-	let scaleZ = mapObj.gridDistance;
-	heightFieldShape.setLocalScaling( new Ammo.btVector3( scaleX, 1, scaleZ ) );
-
-	heightFieldShape.setMargin( 0.05 );
-
-	return heightFieldShape;
-
-}
-
-/* Load obj as heightfield */
-let OBJHeightfield = require("./src/model-import/obj-heightfield");
-let fs = require("fs");
-let file = fs.readFileSync( config.marbles.resources+config.marbles.mapRotation[0].name, "utf-8" );
-let mapObj = new OBJHeightfield(file); // X forward, Z up. Write normals & Objects as OBJ Objects.
-mapObj.centerOrigin("xyz");
-
-
-
-// Collision flags
-// BODYFLAG_STATIC_OBJECT: 1,
-// BODYFLAG_KINEMATIC_OBJECT: 2,
-// BODYFLAG_NORESPONSE_OBJECT: 4,
-
-/* Create the terrain body */
-let groundShape = createTerrainShape( mapObj );
-let groundTransform = new Ammo.btTransform();
-groundTransform.setIdentity();
-// Shifts the terrain, since bullet re-centers it on its bounding box.
-//groundTransform.setOrigin( new Ammo.btVector3( 0, ( mapObj.maxHeight + mapObj.minHeight ) / 2, 0 ) );
-let groundMass = 0;
-let groundLocalInertia = new Ammo.btVector3( 0, 0, 0 );
-let groundMotionState = new Ammo.btDefaultMotionState( groundTransform );
-let groundBody = new Ammo.btRigidBody( new Ammo.btRigidBodyConstructionInfo( groundMass, groundMotionState, groundShape, groundLocalInertia ) );
-groundBody.setCollisionFlags(1); // Set static
-physicsWorld.addRigidBody( groundBody );
-
-/* Add start gate */
-let gateSize = config.marbles.mapRotation[0].startGate.size;
-let gateShape = new Ammo.btBoxShape(new Ammo.btVector3( gateSize[0], gateSize[1], gateSize[2] ));
-
-let gateTransform = new Ammo.btTransform();
-gateTransform.setIdentity();
-let gatePosition = config.marbles.mapRotation[0].startGate.position;
-gateTransform.setOrigin( new Ammo.btVector3( gatePosition.x,gatePosition.z,gatePosition.y ) );
-
-let gateMass = 0;
-let gatelocalInertia = new Ammo.btVector3(0, 0, 0);
-gateShape.calculateLocalInertia(gateMass, gatelocalInertia);
-
-let gateMotionState = new Ammo.btDefaultMotionState(gateTransform);
-let gateRbInfo = new Ammo.btRigidBodyConstructionInfo(gateMass, gateMotionState, gateShape, gatelocalInertia);
-let gateBody = new Ammo.btRigidBody(gateRbInfo);
-gateBody.setCollisionFlags(2); // Set kinematic
-/* console.log(gateBody.getCollisionFlags()); */
-
-physicsWorld.addRigidBody(gateBody);
+const physics = require("./src/physics/manager")(config);
 
 /* Game logic */
 let game = {
@@ -179,23 +58,11 @@ game.end = function() {
 		game.logic.state = "enter";
 		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
 
-		// Set starting gate to original position
-		let origin = gateBody.getWorldTransform().getOrigin();
-		/* console.log(origin.z()); */
-		origin.setZ(config.marbles.mapRotation[0].startGate.position.y);
-		/* console.log(origin.z()); */
-		gateBody.activate();
-
-		// Remove marble physics bodies
-		for (let i = marbles.length - 1; i >= 0; --i) {
-			physicsWorld.removeRigidBody(marbles[i].ammoBody);
-		}
+		// Close the gate
+		physics.closeGate();
 
 		// Clear the array of people that entered
 		game.entered = [];
-
-		// Clear the marble array
-		marbles = [];
 
 		// Send clients game restart so they can clean up on their side
 		io.sockets.emit("clear", true);
@@ -226,10 +93,7 @@ game.start = function() {
 		io.sockets.emit("start", true);
 
 		setTimeout(function() {
-			// Lower starting gate
-			let origin = gateBody.getWorldTransform().getOrigin();
-			origin.setZ(0);
-			gateBody.activate();
+			physics.openGate();
 
 			// Add bot marble to ensure physics not freezing
 			spawnMarble("Nightbot","#000000");
@@ -387,34 +251,7 @@ chat.testMessage = function(messageContent,id,username) {
 //
 
 function spawnMarble(name,color) {
-
-	// Create physics body
-	let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
-	let sphereShape = new Ammo.btSphereShape(size);
-	sphereShape.setMargin( 0.05 );
-	let mass = (size || 0.5) * 5;
-	let localInertia = new Ammo.btVector3( 0, 0, 0 );
-	sphereShape.calculateLocalInertia( mass, localInertia );
-	let transform = new Ammo.btTransform();
-	transform.setIdentity();
-	transform.setOrigin( new Ammo.btVector3( Math.random()*3-20, mapObj.maxZ + 1, Math.random()*3+1 ) );
-	let motionState = new Ammo.btDefaultMotionState( transform );
-	let bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-	let ammoBody = new Ammo.btRigidBody( bodyInfo );
-
-	// Add metadata
-	let body = {
-		ammoBody: ammoBody,
-		tags: {}
-	};
-	body.tags.color = color || randomHexColor();
-	body.tags.size = size;
-	body.tags.useFancy = (Math.random() > .99);
-	body.tags.name = name || "Nightbot";
-
-	// Add to physics world
-	marbles.push(body);
-	physicsWorld.addRigidBody( body.ammoBody );
+	let body = physics.marbles.createMarble(name,color);
 
 	// Send client info on new marble
 	io.sockets.emit("new marble", body.tags);
@@ -536,7 +373,7 @@ app.post("/chat", function (req, res) {
 			req.body.type == "refresh_token"
 			&& req.body.id
 			&& req.body.access_token
-			&& db.user.isAuthenticated(req.body.id, req.body.access_token)
+			&& db.user.idIsAuthenticated(req.body.id, req.body.access_token)
 		) {
 			let row = db.currentDatabase.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?").get(req.body.id);
 
@@ -591,7 +428,7 @@ app.get("/editor", function (req, res) {
 
 app.get("/debug", function (req, res) {
 	res.render("ammo",{
-		map: JSON.stringify(mapObj.parsed)
+		map: JSON.stringify(physics.world.map.parsed)
 	});
 });
 
@@ -615,7 +452,7 @@ io.on("connection", function(socket) {
 			user_data = decodeURIComponent(user_data);
 			user_data = user_data.substr(10);
 			user_data = JSON.parse(user_data);
-			if ( db.user.isAuthenticated(user_data.id, user_data.access_token) ) {
+			if ( db.user.idIsAuthenticated(user_data.id, user_data.access_token) ) {
 				name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
 			} else {
 				name = " Hacker?!?".red;
@@ -626,11 +463,11 @@ io.on("connection", function(socket) {
 	console.log(currentHourString() + "A user connected!".green + name);
 
 	let initialMarbleData = [];
-	for (let i = 0; i < marbles.length; i++) {
+	for (let i = 0; i < physics.marbles.list.length; i++) {
 		initialMarbleData.push({
-			pos: marbles[i].position,
-			id: marbles[i].id,
-			tags: marbles[i].tags
+			pos: physics.marbles.list[i].position,
+			id: physics.marbles.list[i].id,
+			tags: physics.marbles.list[i].tags
 		});
 	}
 	/* console.log(initialMarbleData); */
@@ -638,32 +475,18 @@ io.on("connection", function(socket) {
 
 	// Request physics
 	socket.on("request physics", (timestamp, callback) => {
-		if (marbles.length !== 0) {
-			pos = new Float32Array(marbles.length*3);
-			rot = new Float64Array(marbles.length*4);
-			for (let i = 0; i < marbles.length; i++) {
-				let ms = marbles[i].ammoBody.getMotionState();
-				if (ms) {
-					ms.getWorldTransform( transformAux1 );
-					let p = transformAux1.getOrigin();
-					let q = transformAux1.getRotation();
+		if (physics.marbles.list.length !== 0) {
 
-					pos[i*3+0] = p.x();
-					pos[i*3+1] = p.z();
-					pos[i*3+2] = p.y();
+			let marbleTransformations = physics.marbles.getMarbleTransformations();
 
-					rot[i*4+0] = q.x();
-					rot[i*4+1] = q.z();
-					rot[i*4+2] = q.y();
-					rot[i*4+3] = q.w();
-				}
-			}
+			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
+			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
 
-			let gorig = gateBody.getWorldTransform().getOrigin();
-			let swPos = [gorig.x(),gorig.y(),gorig.z()];
-			/* console.log(swPos); */
-
-			callback({pos:pos.buffer,rot:rot.buffer,startGate:swPos});
+			callback({
+				pos: marbleTransformations.position.buffer,
+				rot: marbleTransformations.rotation.buffer,
+				startGate: startGatePosition
+			});
 		} else {
 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
 		}
@@ -699,21 +522,6 @@ io.on("disconnected", function() {
 	console.log("A user disconnected...".red);
 });
 
-let lastPhysicsUpdate = Date.now();
-/* Physics interval */
-let physStepInterval = setInterval(function() {
-	let now = Date.now();
-	let deltaTime = (now - lastPhysicsUpdate)/1000;
-	lastPhysicsUpdate = now;
-	updatePhysics(deltaTime);
-},1000/config.physics.steps);
-
-function updatePhysics( deltaTime ) {
-
-	physicsWorld.stepSimulation( deltaTime, 10 );
-
-}
-
 /* Other */
 function pad(num,size) {
 	let s = "000000000" + num;
@@ -723,10 +531,6 @@ function pad(num,size) {
 function currentHourString() {
 	let date = new Date();
 	return `[${pad(date.getHours(),2)}:${pad(date.getMinutes(),2)}] `;
-}
-
-function randomHexColor() {
-	return `#${(Math.random()*0xffffff|0).toString(16)}`;
 }
 
 function now() {
