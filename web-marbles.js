@@ -2,8 +2,8 @@ let config = require("./config");
 require("colors");
 
 console.log(" Web marbles".cyan);
-console.log("   by "+"Z".green+"emanz"+"o".green);
-console.log(" "+(new Date()).toLocaleString("nl").cyan);
+console.log(`   by ${"Z".green}emanz${"o".green}`);
+console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 
 /* Database */
 const db = require("./src/database/manager");
@@ -121,11 +121,11 @@ let io = require("socket.io")(http);
 app.use(compression({
 	filter: function () { return true; }
 }));
-app.use(express.static(__dirname + "/public"));
+app.use(express.static(`${__dirname}/public`));
 app.engine("mustache", mustacheExpress());
 app.set("view engine", "mustache");
 if (!config.express.cache) app.disable("view cache");
-app.set("views", __dirname + "/templates");
+app.set("views", `${__dirname}/templates`);
 
 let bodyParser = require("body-parser");
 app.use(bodyParser.json()); // to support JSON-encoded bodies
@@ -204,7 +204,7 @@ discord = require("discord.js");
 discordClient = new discord.Client();
 
 discordClient.on("ready", function() {
-	console.log(currentHourString()+"DISCORD: "+"Discord bot is ready!".green);
+	console.log(`${currentHourString()}DISCORD: ${"Discord bot is ready!".green}`);
 	discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 });
 
@@ -234,10 +234,8 @@ discordClient.login(config.discord.botToken);
 let chat = {};
 chat.testMessage = function(messageContent,id,username) {
 	if (messageContent.startsWith("!marble")) {
-
 		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
 		let match = messageContent.match(colorRegEx);
-
 		let color = (match === null ? undefined : match[0]);
 
 		game.addMarble(
@@ -261,9 +259,7 @@ function spawnMarble(name,color) {
 
 let request = require("request");
 app.get("/chat", function (req, res) {
-
 	if (req.query) {
-
 		if (req.query.code) {
 			let options = {
 				url: "https://discordapp.com/api/oauth2/token",
@@ -272,54 +268,33 @@ app.get("/chat", function (req, res) {
 					client_secret: config.discord.clientSecret,
 					grant_type: "authorization_code",
 					code: req.query.code,
-					redirect_uri: config.discord.redirectUriRoot+"chat",
+					redirect_uri: `${config.discord.redirectUriRoot}chat`,
 					scope: config.discord.scope
 				}
 			};
 
 			let callback = function (error, response, token_body) {
 				if (!error && response.statusCode === 200) {
-
 					token_body = JSON.parse(token_body);
 
 					request.get({
 						url: "https://discordapp.com/api/users/@me",
 						headers: {
-							"Authorization": "Bearer "+token_body.access_token
+							"Authorization": `Bearer ${token_body.access_token}`
 						}
 					},function (error, response, user_body) {
 						if (!error && response.statusCode === 200) {
 
 							user_body = JSON.parse(user_body);
 
-							let exists = db.currentDatabase.prepare("SELECT id FROM users WHERE id = ?").get(user_body.id);
-							let nowTimestamp = now();
-							if (exists) {
-								db.currentDatabase.prepare(
-									"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
-								).run([
-									token_body.access_token,
-									token_body.refresh_token,
-									nowTimestamp,
-									token_body.expires_in,
-									config.discord.scope,
-									user_body.id
-								]);
-							} else {
-								db.currentDatabase.prepare(
-									"INSERT OR ABORT INTO users (id, username, discriminator, avatar, access_token, refresh_token, refresh_last, refresh_expire, scope) VALUES (?,?,?,?,?,?,?,?,?)"
-								).run([
-									user_body.id,
-									user_body.username,
-									user_body.discriminator,
-									user_body.avatar,
-									token_body.access_token,
-									token_body.refresh_token,
-									nowTimestamp,
-									token_body.expires_in,
-									config.discord.scope
-								]);
-							}
+							let exists = db.users.idExists(user_body.id);
+
+							token_body.access_granted = now();
+
+							if (exists)
+								db.user.updateTokenById(token_body, user_body.id);
+							else
+								db.user.insertNewUser(token_body, user_body, config.discord.scope);
 
 							res.render("chat",{
 								invitelink: config.discord.inviteLink,
@@ -327,7 +302,7 @@ app.get("/chat", function (req, res) {
 									id: user_body.id,
 									username: user_body.username,
 									access_token: token_body.access_token,
-									access_granted: nowTimestamp,
+									access_granted: token_body.access_granted,
 									expires_in: token_body.expires_in,
 									discriminator: user_body.discriminator,
 									avatar: user_body.avatar
@@ -339,35 +314,30 @@ app.get("/chat", function (req, res) {
 							console.log(error,response.statusCode);
 						}
 					});
-
 				} else {
-
 					res.render("chat",{
 						invitelink: config.discord.inviteLink,
 						success: false
 					});
-
 				}
 			};
 
 			request.post(options,callback);
 			return;
 		}
-
 	}
+
 	res.render("chat",{
 		invitelink: config.discord.inviteLink,
 		client_id: config.discord.clientId,
-		redirect_uri: encodeURIComponent(config.discord.redirectUriRoot+"chat"),
+		redirect_uri: encodeURIComponent(`config.discord.redirectUriRoot${chat}`),
 		scope: encodeURIComponent(config.discord.scope) // separated with spaces
 	});
 
 });
 
 app.post("/chat", function (req, res) {
-
 	if (req.body) {
-
 		// Request new access_token
 		if (
 			req.body.type == "refresh_token"
@@ -375,8 +345,7 @@ app.post("/chat", function (req, res) {
 			&& req.body.access_token
 			&& db.user.idIsAuthenticated(req.body.id, req.body.access_token)
 		) {
-			let row = db.currentDatabase.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?").get(req.body.id);
-
+			let row = db.user.getTokenById(req.body.id);
 			let options = {
 				url: "https://discordapp.com/api/oauth2/token",
 				form: {
@@ -384,36 +353,23 @@ app.post("/chat", function (req, res) {
 					client_secret: config.discord.clientSecret,
 					grant_type: "refresh_token",
 					refresh_token: row.refresh_token,
-					redirect_uri: config.discord.redirectUriRoot+"chat",
+					redirect_uri: `${config.discord.redirectUriRoot}chat`,
 					scope: row.scope
 				}
 			};
-
 			let callback = function (error, response, token_body) {
 				if (!error && response.statusCode === 200) {
-
 					token_body = JSON.parse(token_body);
 					token_body.access_granted = now();
 
-					db.currentDatabase.prepare(
-						"UPDATE OR REPLACE users SET access_token = ?, refresh_token = ?, refresh_last = ?, refresh_expire = ?, scope = ? WHERE id = ?"
-					).run([
-						token_body.access_token,
-						token_body.refresh_token,
-						token_body.access_granted,
-						token_body.expires_in,
-						token_body.scope,
-						req.body.id
-					]);
+					db.user.updateTokenById(token_body, req.body.id);
 
 					res.send(token_body);
 				}
 			};
 
 			request.post(options,callback);
-
 		}
-
 	}
 });
 
@@ -439,7 +395,6 @@ let server = http.listen(config.express.port, function () {
 });
 
 /* Sockets */
-let pos, rot;
 io.on("connection", function(socket) {
 
 	// Get user if there is one
@@ -492,18 +447,18 @@ io.on("connection", function(socket) {
 		}
 	});
 
-	// Discord chat
+	// Discord chat embed
 	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken);
 	socket.on("chat incoming", (obj) => {
+		let row = db.user.getUserDetailsById(obj.id);
+		console.log(row);
 
-		let row = db.currentDatabase.prepare("SELECT access_token, username, avatar, discriminator FROM users WHERE id = ?").get(obj.id);
 		if (row && row.access_token == obj.access_token) {
-
 			chat.testMessage(obj.message, obj.id, row.username);
 
 			chatWebhook.send(obj.message,{
 				username: row.username,
-				avatarURL: "https://cdn.discordapp.com/avatars/"+obj.id+"/"+row.avatar+".png",
+				avatarURL: `https://cdn.discordapp.com/avatars/${obj.id}/${row.avatar}.png`,
 				disableEveryone: true
 			});
 
@@ -524,7 +479,7 @@ io.on("disconnected", function() {
 
 /* Other */
 function pad(num,size) {
-	let s = "000000000" + num;
+	let s = `000000000${num}`;
 	return s.substr(s.length-size);
 }
 

@@ -30,6 +30,8 @@
         "operator-linebreak":
             ["error", "before", { "overrides": { "=": "ignore" } }],
         "space-before-blocks":
-            ["error", "always"]
+            ["error", "always"],
+        "prefer-template":
+            "error"
     }
 }

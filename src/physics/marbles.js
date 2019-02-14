@@ -1,4 +1,4 @@
-module.exports = function(Ammo, world, config) {
+module.exports = function(Ammo, world) {
 	return {
 		list: [],
 		_marblesTransformAux: new Ammo.btTransform(),
