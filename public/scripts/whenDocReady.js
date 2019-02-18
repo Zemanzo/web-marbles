@@ -30,7 +30,7 @@ var whenDocReady = {
 
 	lookup: {},
 
-	add: function(callback,id,options){
+	add: function(callback,id,options) {
 		if (!options)
 			options = {};
 		options.type = options.type || 0;
@@ -44,30 +44,30 @@ var whenDocReady = {
 			returnOnFire: options.returnOnFire,
 			fired: false,
 			args: null
-		}
+		};
 	},
 
-	args: function(id,...args){
+	args: function(id,...args) {
 		this.lookup[id].args = args;
 		this.fire(id,true);
 	},
 
-	fire: function(id,withArguments){
+	fire: function(id,withArguments) {
 		if (
-			this.lookup[id] &&	// This id exists AND
-			!this.lookup[id].fired && ( // It hasn't been fired yet AND
-				( this.lookup[id].readyState === "interactive" && this.docReady() ) ||
-				( this.lookup[id].readyState === "complete" && this.docDone() )
+			this.lookup[id] // This id exists AND
+			&& !this.lookup[id].fired && ( // It hasn't been fired yet AND
+				( this.lookup[id].readyState === "interactive" && this.docReady() )
+				|| ( this.lookup[id].readyState === "complete" && this.docDone() )
 			) && ( // The document is ready AND
-				!withArguments ||
-				( this.lookup[id].args && this.lookup[id].args.length > 0 )
+				!withArguments
+				|| ( this.lookup[id].args && this.lookup[id].args.length > 0 )
 			) // In case it's being called with arguments, there are arguments
-		){
+		) {
 			this.lookup[id].fired = true;
-			if (withArguments){
+			if (withArguments) {
 				return this.lookup[id].callback(...this.lookup[id].args);
 			} else {
-				if (this.lookup[id].returnOnFire){
+				if (this.lookup[id].returnOnFire) {
 					return this.lookup[id].callback;
 				} else {
 					return this.lookup[id].callback();
@@ -76,39 +76,39 @@ var whenDocReady = {
 		} else {
 			if (!this.lookup[id])
 				console.warn("No such ID:",id);
-			return (withArguments ? null : ()=>{return null});
+			return (withArguments ? null : ()=>{return null;});
 		}
 	},
 
-	fireAll: function(readyState){
-		for (let id in this.lookup){
+	fireAll: function(readyState) {
+		for (let id in this.lookup) {
 			if (
-				!this.lookup[id].fired &&
-				this.lookup[id].type !== 2 &&
-				this.lookup[id].readyState === readyState
-			){
+				!this.lookup[id].fired
+				&& this.lookup[id].type !== 2
+				&& this.lookup[id].readyState === readyState
+			) {
 				/* console.log(id); */
 				this.fire(id,(this.lookup[id].type === 0));
 			}
 		}
 	},
 
-	docReady: function(){
+	docReady: function() {
 		return (document.readyState === "interactive" || document.readyState === "complete");
 	},
 
-	docDone: function(){
+	docDone: function() {
 		return document.readyState === "complete";
 	}
 
-}
+};
 
-window.addEventListener("DOMContentLoaded", function(){
+window.addEventListener("DOMContentLoaded", function() {
 	whenDocReady.timestamp.interactive = (new Date()).getTime();
 	whenDocReady.fireAll("interactive");
 },false);
 
-window.addEventListener("load", function(){
+window.addEventListener("load", function() {
 	whenDocReady.timestamp.complete = (new Date()).getTime();
 	whenDocReady.fireAll("complete");
 },false);

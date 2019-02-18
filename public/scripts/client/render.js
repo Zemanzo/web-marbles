@@ -1,117 +1,115 @@
-var settings = {
-	graphics: {
-		castShadow: {
-			marbles: true
-		},
-		receiveShadow: {
-			marbles: false
-		}
-	}
-}
+import * as THREE from "three";
+import { PointerLockControls } from "three/examples/js/controls/PointerLockControls";
+import { Water } from "three/examples/js/objects/Water";
+import { Sky } from "three/examples/js/objects/Sky";
+import { LoadingManager } from "three/examples/js/loaders/LoaderSupport";
+import { OBJLoader } from "three/examples/js/loaders/OBJLoader";
+import * as config from "../../config";
+import * as Stats from "stats-js";
 
-var map;
-var viewport = document.getElementById("viewport");
+console.log("RENDERRERERERRRR");
 
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
+let net;
+let viewport = document.getElementById("viewport");
+let scene = new THREE.Scene();
+let camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
 
-var renderer = new THREE.WebGLRenderer();
+let renderer = new THREE.WebGLRenderer();
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 renderer.setSize( viewport.clientWidth, viewport.clientHeight );
 viewport.appendChild( renderer.domElement );
 
-var stats = new Stats();
+let stats = new Stats();
 stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
 document.body.appendChild( stats.dom );
 
 /* CONTROLS */
+let controlsEnabled = true;
+let moveForward = false;
+let moveBackward = false;
+let moveLeft = false;
+let moveRight = false;
 
-var element = viewport;
-var controlsEnabled = false;
-var moveForward = false;
-var moveBackward = false;
-var moveLeft = false;
-var moveRight = false;
-
-var prevTime = performance.now();
-var velocity = new THREE.Vector3();
-var direction = new THREE.Vector3();
-var vertex = new THREE.Vector3();
-var color = new THREE.Color();
+let prevTime = performance.now();
+let velocity = new THREE.Vector3();
+let direction = new THREE.Vector3();
+let vertex = new THREE.Vector3();
+let color = new THREE.Color();
 
 // Hook pointer lock state change events
-document.addEventListener('pointerlockchange', function(event){
-	if (document.pointerLockElement === element) {
-		controlsEnabled = true;
-		controls.enabled = true;
-	} else {
-		controls.enabled = false;
-	}
-}, false );
+// document.addEventListener("pointerlockchange", function() {
+// 	if (document.pointerLockElement === element) {
+// 		controlsEnabled = true;
+// 		controls.enabled = true;
+// 	} else {
+// 		controls.enabled = false;
+// 	}
+// }, false );
 
-document.addEventListener('pointerlockerror', function(event){}, false);
+// document.addEventListener("pointerlockerror", function() { }, false);
 
-renderer.domElement.addEventListener('mousedown', function (event) {
-	element.requestPointerLock();
-}, false );
+let onKeyDown = function(event) {
+	switch (event.keyCode) {
+	case 38: // up
+	case 87: // w
+		moveForward = true;
+		break;
 
-document.body.addEventListener('mouseup', function (event) {
-	document.exitPointerLock();
-}, false );
+	case 37: // left
+	case 65: // a
+		moveLeft = true;
+		break;
 
-var onKeyDown = function(event){
-	switch(event.keyCode){
-		case 38: // up
-		case 87: // w
-			moveForward = true;
-			break;
+	case 40: // down
+	case 83: // s
+		moveBackward = true;
+		break;
 
-		case 37: // left
-		case 65: // a
-			moveLeft = true;
-			break;
-
-		case 40: // down
-		case 83: // s
-			moveBackward = true;
-			break;
-
-		case 39: // right
-		case 68: // d
-			moveRight = true;
-			break;
+	case 39: // right
+	case 68: // d
+		moveRight = true;
+		break;
 	}
 };
 
-var onKeyUp = function(event){
-	switch(event.keyCode){
-		case 38: // up
-		case 87: // w
-			moveForward = false;
-			break;
+let onKeyUp = function(event) {
+	switch (event.keyCode) {
+	case 38: // up
+	case 87: // w
+		moveForward = false;
+		break;
 
-		case 37: // left
-		case 65: // a
-			moveLeft = false;
-			break;
+	case 37: // left
+	case 65: // a
+		moveLeft = false;
+		break;
 
-		case 40: // down
-		case 83: // s
-			moveBackward = false;
-			break;
+	case 40: // down
+	case 83: // s
+		moveBackward = false;
+		break;
 
-		case 39: // right
-		case 68: // d
-			moveRight = false;
-			break;
+	case 39: // right
+	case 68: // d
+		moveRight = false;
+		break;
 	}
 };
 
-document.addEventListener('keydown',onKeyDown,false);
-document.addEventListener('keyup',onKeyUp,false);
+document.addEventListener("keydown",onKeyDown,false);
+document.addEventListener("keyup",onKeyUp,false);
 
-var controls = new THREE.PointerLockControls(camera);
+let controls = new PointerLockControls(camera, renderer.domElement);
+
+renderer.domElement.addEventListener("mousedown", function () {
+	controls.lock();
+}, false);
+
+document.body.addEventListener("mouseup", function () {
+	controls.unlock();
+}, false);
+
 controls.getObject().position.x = -25.3;
 controls.getObject().position.y = 55;
 controls.getObject().position.z = 19.7;
@@ -120,29 +118,28 @@ camera.parent.rotation.x = -.3;
 controls.getObject().rotation.z = 0;
 scene.add(controls.getObject());
 
-/* var controls = new THREE.OrbitControls( camera, renderer.domElement );
+/* let controls = new THREE.OrbitControls( camera, renderer.domElement );
 controls.enableDamping = true;
 controls.dampingFactor = 0.25;
 controls.enableZoom = true; */
 
 /* CONTROLS END */
 
-var ambientLight = new THREE.AmbientLight( 0x746070 );
+let ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
 
-var axesHelper = new THREE.AxesHelper( 3 );
+let axesHelper = new THREE.AxesHelper( 3 );
 scene.add( axesHelper );
 
 // Sun
-
-light = new THREE.DirectionalLight( 0xf5d0d0, 1.5 );
+let light = new THREE.DirectionalLight( 0xf5d0d0, 1.5 );
 light.castShadow = true;
 scene.add( light );
 
 // Water
-var waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
+let waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
 
-water = new THREE.Water(
+let water = new Water(
 	waterGeometry,
 	{
 		textureWidth: 512,
@@ -160,18 +157,18 @@ water = new THREE.Water(
 );
 
 water.rotation.x = - Math.PI / 2;
-water.position.y = -9
+water.position.y = -9;
 water.material.uniforms.size.value = 8;
 
 scene.add( water );
 
 // Skybox
 
-var sky = new THREE.Sky();
+let sky = new Sky();
 sky.scale.setScalar( 10000 );
 scene.add( sky );
 
-var uniforms = sky.material.uniforms;
+let uniforms = sky.material.uniforms;
 
 uniforms.turbidity.value = 10;
 uniforms.rayleigh.value = 2;
@@ -179,26 +176,26 @@ uniforms.luminance.value = 1;
 uniforms.mieCoefficient.value = 0.005;
 uniforms.mieDirectionalG.value = 0.8;
 
-var parameters = {
+let parameters = {
 	distance: 4000,
 	inclination: 0.25,
 	azimuth: 0.205
 };
 
-var cubeCamera = new THREE.CubeCamera( 1, 20000, 256 );
+let cubeCamera = new THREE.CubeCamera( 1, 20000, 256 );
 cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
 
 function updateSun() {
 
-	var theta = Math.PI * ( parameters.inclination - 0.5 );
-	var phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
+	let theta = Math.PI * ( parameters.inclination - 0.5 );
+	let phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
 
 	light.position.x = parameters.distance * Math.cos( phi );
 	light.position.y = parameters.distance * Math.sin( phi ) * Math.sin( theta );
 	light.position.z = parameters.distance * Math.sin( phi ) * Math.cos( theta );
 
 	sky.material.uniforms.sunPosition.value = light.position.copy( light.position );
-/* 	light.shadow.camera.position.copy(light.position);
+	/* light.shadow.camera.position.copy(light.position);
 	light.shadow.camera.rotation.copy(light.rotation); */
 	light.shadow.mapSize.width = 2048;  // default
 	light.shadow.mapSize.height = 2048; // default
@@ -218,25 +215,25 @@ updateSun();
 
 //
 
-/* var shadowHelper = new THREE.CameraHelper( light.shadow.camera );
+/* let shadowHelper = new THREE.CameraHelper( light.shadow.camera );
 scene.add( shadowHelper ); */
 
 //
 
-var uniforms = {
+uniforms = {
 	time: { value: 1.0 }
 };
-var clock = new THREE.Clock();
+let clock = new THREE.Clock();
 
 //
 
-/* var blueLight = new THREE.PointLight(0x0099ff);
+/* let blueLight = new THREE.PointLight(0x0099ff);
 scene.add( blueLight );
 blueLight.position.x = 5;
 blueLight.position.y = 70;
 blueLight.position.z = 500;
 
-var orangeLight = new THREE.PointLight(0xff9900);
+let orangeLight = new THREE.PointLight(0xff9900);
 scene.add( orangeLight );
 orangeLight.position.x = 5;
 orangeLight.position.y = 70;
@@ -244,13 +241,13 @@ orangeLight.position.z = -500; */
 
 /* controls.update(); */
 
-var marbleMeshes = [];
+let marbleMeshes = [];
 
 function animate() {
 	requestAnimationFrame( animate );
 
 	// Update marble positions
-	for (i = 0; i < marbleMeshes.length; i++){
+	for (let i = 0; i < marbleMeshes.length; i++) {
 		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3+0], net.lastUpdate);
 		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
 		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
@@ -265,14 +262,14 @@ function animate() {
 		/* marbleMeshes[i].quaternion.normalize(); */
 	}
 
-	if (net.lastUpdate < 1.5){
-		net.lastUpdate += net.tickrate/60/net.ticksToLerp; //FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
+	if (net.lastUpdate < 1.5) {
+		net.lastUpdate += net.tickrate / 60 / net.ticksToLerp; // FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
 	}
 
 	// Update controls
 	if ( controlsEnabled === true ) {
-		var time = performance.now();
-		var delta = ( time - prevTime ) / 1000;
+		let time = performance.now();
+		let delta = ( time - prevTime ) / 1000;
 
 		velocity.x -= velocity.x * 10.0 * delta;
 		velocity.y -= velocity.y * 10.0 * delta;
@@ -301,7 +298,7 @@ function animate() {
 	// Update stats in top left corner
 	stats.update();
 
-	var delta = clock.getDelta();
+	let delta = clock.getDelta();
 
 	uniforms.time.value += delta * 5;
 
@@ -309,47 +306,49 @@ function animate() {
 	renderer.render( scene, camera );
 }
 
-var mapMesh;
+let mapMesh;
 
 // Stuff that can only be rendered after network data has been received
-function renderInit(){
-	for (i = 0; i < net.marblePositions.length/3; i++){
-		spawnMarble(marbleData[i].tags);
+function renderInit() {
+	for (let i = 0; i < net.marblePositions.length / 3; i++) {
+		spawnMarble(net.marbleData[i].tags);
 	}
 
-	getXMLDoc("/client?dlmap=map2",(response)=>{
+	// getXMLDoc("/client?dlmap=map2", (response) => {
 
-		var mapName = response.substr(0,response.lastIndexOf("."));
+	// 	let mapName = response.substr(0, response.lastIndexOf("."));
 
-		console.log(mapName);
-		var manager = new THREE.LoadingManager();
-		manager.onProgress = function ( item, loaded, total ) {
-			console.log( item, loaded, total );
-		};
+	// 	console.log(mapName);
+	// 	let manager = new LoadingManager();
+	// 	manager.onProgress = function ( item, loaded, total ) {
+	// 		console.log( item, loaded, total );
+	// 	};
 
-		var loader = new THREE.OBJLoader( manager );
-		loader.load( "/resources/"+mapName+"_optimized.obj", function ( object ) {
-			object.traverse( function ( child ) {
-				if ( child.name.indexOf("Terrain") !== -1) {
-					mapMesh = child;
+	// 	let loader = new OBJLoader( manager );
+	// 	loader.load( `/resources/${mapName}_optimized.obj`, function ( object ) {
+	// 		object.traverse( function ( child ) {
+	// 			if ( child.name.indexOf("Terrain") !== -1) {
+	// 				mapMesh = child;
 
-					scene.add( mapMesh );
+	// 				scene.add( mapMesh );
 
-					mapMesh.setRotationFromEuler( new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, 'XYZ' ) );
+	// 				mapMesh.setRotationFromEuler(
+	// 					new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, "XYZ" )
+	// 				);
 
-					mapMesh.geometry.computeBoundingBox();
-					mapMesh.geometry.center();
-					mapMesh.material = createMapMaterial();
-					mapMesh.receiveShadow = true;
-				}
-			} );
-		}, ()=>{}, ()=>{} );
-	});
+	// 				mapMesh.geometry.computeBoundingBox();
+	// 				mapMesh.geometry.center();
+	// 				mapMesh.material = createMapMaterial();
+	// 				mapMesh.receiveShadow = true;
+	// 			}
+	// 		} );
+	// 	}, ()=>{}, ()=>{} );
+	// });
 
 	animate();
 }
 
-function spawnMarble(tags){
+function spawnMarble(tags) {
 	let size = tags.size;
 	let color = tags.color;
 	let name = tags.name;
@@ -358,8 +357,8 @@ function spawnMarble(tags){
 	let fancyMaterial = new THREE.ShaderMaterial( {
 
 		uniforms: uniforms,
-		vertexShader: document.getElementById( 'vertexShader' ).textContent,
-		fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+		vertexShader: document.getElementById("vertexShader").textContent,
+		fragmentShader: document.getElementById("fragmentShader").textContent
 
 	} );
 
@@ -370,8 +369,8 @@ function spawnMarble(tags){
 	let sphereMesh = new THREE.Mesh(sphereGeometry, (useFancy ? fancyMaterial : sphereMaterial));
 
 	// Shadows
-	sphereMesh.castShadow = settings.graphics.castShadow.marbles;
-	sphereMesh.receiveShadow = settings.graphics.receiveShadow.marbles;
+	sphereMesh.castShadow = config.graphics.castShadow.marbles;
+	sphereMesh.receiveShadow = config.graphics.receiveShadow.marbles;
 
 	// Add name sprite
 	let nameSprite = makeTextSprite(name);
@@ -385,7 +384,7 @@ function spawnMarble(tags){
 	marbleMeshes[marbleMeshes.length-1].add(nameSprite);
 
 	// Add UI stuff
-	var listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
+	let listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
 	listEntry.removeAttribute("id");
 	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
 	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
@@ -395,16 +394,16 @@ function spawnMarble(tags){
 	document.getElementById("entries").innerHTML = marbleMeshes.length;
 }
 
-var textures = {
-	dirt: { url: 'scripts/lib/threejs/textures/dirt.jpg' },
-	dirtNormal: { url: 'scripts/lib/threejs/textures/dirt_n.jpg' },
-	grass: { url: 'scripts/lib/threejs/textures/grasslight-big.jpg' },
-	grassNormal: { url: 'scripts/lib/threejs/textures/grasslight-big-nm.jpg' },
-	mask: { url: 'scripts/lib/threejs/textures/mask_alpha.png' }
+let textures = {
+	dirt: { url: "scripts/lib/threejs/textures/dirt.jpg" },
+	dirtNormal: { url: "scripts/lib/threejs/textures/dirt_n.jpg" },
+	grass: { url: "scripts/lib/threejs/textures/grasslight-big.jpg" },
+	grassNormal: { url: "scripts/lib/threejs/textures/grasslight-big-nm.jpg" },
+	mask: { url: "scripts/lib/threejs/textures/mask_alpha.png" }
 };
 
 function getTexture( name ) {
-	var texture = textures[ name ].texture;
+	let texture = textures[ name ].texture;
 	if ( ! texture ) {
 		texture = textures[ name ].texture = new THREE.TextureLoader().load( textures[ name ].url );
 		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
@@ -412,26 +411,26 @@ function getTexture( name ) {
 	return texture;
 }
 
-function createMapMaterial(){
-	var mtl;
+function createMapMaterial() {
+	let mtl;
 
 	// MATERIAL
 	mtl = new THREE.StandardNodeMaterial();
 	mtl.roughness = new THREE.FloatNode( .9 );
 	mtl.metalness = new THREE.FloatNode( 0 );
 
-	function createUv(scale,offset){
+	function createUv(scale,offset) {
 
-		var uvOffset = new THREE.FloatNode( offset || 0 );
-		var uvScale = new THREE.FloatNode( scale || 1 );
+		let uvOffset = new THREE.FloatNode( offset || 0 );
+		let uvScale = new THREE.FloatNode( scale || 1 );
 
-		var uvNode = new THREE.UVNode();
-		var offsetNode = new THREE.OperatorNode(
+		let uvNode = new THREE.UVNode();
+		let offsetNode = new THREE.OperatorNode(
 			uvOffset,
 			uvNode,
 			THREE.OperatorNode.ADD
 		);
-		var scaleNode = new THREE.OperatorNode(
+		let scaleNode = new THREE.OperatorNode(
 			offsetNode,
 			uvScale,
 			THREE.OperatorNode.MUL
@@ -440,11 +439,11 @@ function createMapMaterial(){
 		return scaleNode;
 	}
 
-	var grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
-	var dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
-	var mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
-	var maskAlphaChannel = new THREE.SwitchNode( mask, 'w' );
-	var blend = new THREE.Math3Node(
+	let grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
+	let dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
+	let mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
+	let maskAlphaChannel = new THREE.SwitchNode( mask, "w" );
+	let blend = new THREE.Math3Node(
 		grass,
 		dirt,
 		maskAlphaChannel,
@@ -453,8 +452,8 @@ function createMapMaterial(){
 	mtl.color = blend;
 	mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
 
-	var normalScale = new THREE.FloatNode( 1 );
-	var normalMask = new THREE.OperatorNode(
+	let normalScale = new THREE.FloatNode( 1 );
+	let normalMask = new THREE.OperatorNode(
 		new THREE.TextureNode( getTexture( "mask" ), createUv() ),
 		normalScale,
 		THREE.OperatorNode.MUL
@@ -473,21 +472,21 @@ function createMapMaterial(){
 
 function makeTextSprite( message )
 {
-	var parameters = {};
+	let parameters = {};
 
-	var fontface = "Courier New";
-	var fontsize = 24;
+	let fontface = "Courier New";
+	let fontsize = 24;
 
-	var canvas = document.createElement('canvas');
-	var width = canvas.width = 256;
-	var height = canvas.height = 64;
-	var context = canvas.getContext('2d');
-	context.font = "Bold " + fontsize + "px " + fontface;
+	let canvas = document.createElement("canvas");
+	let width = canvas.width = 256;
+	let height = canvas.height = 64;
+	let context = canvas.getContext("2d");
+	context.font = `Bold ${fontsize}px ${fontface}`;
 	context.textAlign = "center";
 
 	// get size data (height depends only on font size)
-	var metrics = context.measureText( message );
-	var textWidth = metrics.width;
+	let metrics = context.measureText( message );
+	let textWidth = metrics.width;
 
 	// text color
 	context.fillStyle = "#ffffff";
@@ -495,10 +494,40 @@ function makeTextSprite( message )
 	context.fillText(message, 128, fontsize);
 
 	// canvas contents will be used for a texture
-	var texture = new THREE.Texture(canvas)
+	let texture = new THREE.Texture(canvas);
 	texture.needsUpdate = true;
-	var spriteMaterial = new THREE.SpriteMaterial({map: texture});
-	var sprite = new THREE.Sprite( spriteMaterial );
+	let spriteMaterial = new THREE.SpriteMaterial({map: texture});
+	let sprite = new THREE.Sprite( spriteMaterial );
 	sprite.scale.set(4,1,1.0);
 	return sprite;
 }
+
+function getXMLDoc(doc, callback) {
+	let xmlhttp;
+	xmlhttp = new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function () {
+		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
+			console.log("rip", xmlhttp.response);
+		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
+			callback(xmlhttp.response);
+		}
+	};
+	xmlhttp.open("GET", doc, true);
+	xmlhttp.send();
+}
+
+let clearMarbleMeshes = function () {
+	marbleMeshes = [];
+};
+
+let updateNet = function (newNet) {
+	net = newNet;
+};
+
+export {
+	spawnMarble,
+	scene,
+	clearMarbleMeshes,
+	updateNet,
+	renderInit
+};

@@ -17,20 +17,11 @@
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
-		{{>partials/scripts/global}}
-		<script src="config.js"></script>
-		<script src="scripts/lib/socket.io.js"></script>
 		<script src="scripts/lib/OBJFile.js"></script>
 		<script src="scripts/whenDocReady.js"></script>
-		<script src="scripts/client/client.js"></script>
+		<script src="scripts/dist/client.js"></script>
 	</head>
 	<body>
-		<!-- THREEJS -->
-		{{>partials/scripts/ThreeJS}}
-
-		<!-- NODE MATERIALS -->
-		{{>partials/scripts/NodeMaterials}}
-
 		<!-- FANCY SHADERS -->
 		<script id="vertexShader" type="x-shader/x-vertex">
 
@@ -138,7 +129,5 @@
 
 			</div>
 		</section>
-
-		<script src="scripts/client/render.js"></script>
 	</body>
 </html>

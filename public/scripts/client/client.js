@@ -1,10 +1,15 @@
+import io from "socket.io-client";
+import * as config from "../../config";
+
 let socket = io({
 	transports: ["websocket"]
 });
 
+let renderer;
+
 let net = {
-	tickrate: 10, // Cannot be 0
-	ticksToLerp: 2, // Cannot be 0
+	tickrate: config.network.tickrate, // Cannot be 0
+	ticksToLerp: config.network.ticksToLerp, // Cannot be 0
 
 	// Initialize, do not configure these values.
 	marbleData: undefined,
@@ -30,15 +35,15 @@ let game = {
 	},
 	end: function() {
 		game.audio.end.play();
-		for (let mesh of marbleMeshes) {
+		for (let mesh of renderer.marbleMeshes) {
 			for (let i = mesh.children.length; i >= 0; i--) {
-				scene.remove(mesh.children[i]);
+				renderer.scene.remove(mesh.children[i]);
 			}
-			scene.remove(mesh);
+			renderer.scene.remove(mesh);
 			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
 		}
 		document.getElementById("entries").innerHTML = "0";
-		marbleMeshes = [];
+		renderer.clearMarbleMeshes();
 		document.getElementById("state").innerHTML = "Enter marbles now!";
 		document.getElementById("timer").style.display = "block";
 		game.startTimerInterval(this.state.enterPeriod * 1000);
@@ -63,38 +68,40 @@ let game = {
 		}, ms - Math.floor(s)*1000); // milliseconds only, i.e. 23941 becomes 941
 		console.log(ms - Math.floor(s)*1000);
 	}
-}
+};
 
 // Document state promise
-let domReady = new Promise((resolve, reject) => {
-	if (document.readyState === "interactive" || document.readyState === "complete") {
-		resolve(true);
-	} else {
-		window.addEventListener("DOMContentLoaded", () => resolve(true), false);
-	}
-});
+let domReadyTimestamp;
+let domReady =
+	new Promise((resolve) => {
+		if (document.readyState === "interactive" || document.readyState === "complete") {
+			resolve(true);
+		} else {
+			window.addEventListener("DOMContentLoaded", () => resolve(true), false);
+		}
+	}).then(() => {
+		domReadyTimestamp = (new Date()).getTime();
+	});
 
 // Socket data promise
-let netReady = new Promise((resolve, reject) => {
+let netReady = new Promise((resolve) => {
 	// Once connected, client receives initial data
 	socket.on("initial data", function(obj) {
 		net.marbleData = obj;
 
 		/* Socket RPCs */
-
 		// New marble
 		socket.on("new marble", function(obj) {
-			console.log(obj);
-			spawnMarble(obj);
+			renderer.spawnMarble(obj);
 		});
 
 		// Start game
-		socket.on("start", function(obj) {
+		socket.on("start", function() {
 			game.start();
 		});
 
 		// End game, and start next round
-		socket.on("clear", function(obj) {
+		socket.on("clear", function() {
 			game.end();
 		});
 
@@ -102,7 +109,6 @@ let netReady = new Promise((resolve, reject) => {
 	});
 }).then(()=>{
 	/* Physics syncing */
-
 	// Once connection is acknowledged, start requesting physics updates
 	net.getServerData = function() {
 		if (net.ready < net.tickrate) {
@@ -116,46 +122,63 @@ let netReady = new Promise((resolve, reject) => {
 		} else {
 			net.requestsSkipped++;
 		}
+		if (renderer) {
+			renderer.updateNet(net);
+		}
 		setTimeout(net.getServerData,1000 / net.tickrate);
 	};
 	net.getServerData();
 });
 
+let requestComplete;
+let requestStart = (new Date()).getTime();
+let gameStateReady = fetch("/client?gamestate=true")
+	.then((response) => {
+		requestComplete = (new Date()).getTime();
+		return response.json();
+	});
+
 // If both promises fulfill, start rendering & fill entries field
-Promise.all([domReady, netReady]).then(function() {
-	renderInit();
+Promise.all([netReady, domReady]).then(function () {
+	import(
+		/* webpackPrefetch: true */
+		/* webpackChunkName: "renderer" */
+		"./render"
+	).then((dImport)=>{
+		renderer = dImport;
+		renderer.updateNet(net);
+		renderer.renderInit();
+	});
 	document.getElementById("entries").innerHTML = net.marbleData.length;
 });
 
-whenDocReady.add(function(response,requestStart,requestComplete) {
-	game.state = JSON.parse(response);
+
+Promise.all([gameStateReady, domReady]).then((values) => {
+	game.state = values[0];
 	console.log(
+		values,
 		game.state,
-		(requestComplete - requestStart) + (requestComplete - whenDocReady.timestamp.interactive)
+		requestComplete,
+		requestStart,
+		domReadyTimestamp,
+		(requestComplete - requestStart) + (requestComplete - domReadyTimestamp)
 	);
 	if (game.state.gameState === "started") {
 		document.getElementById("timer").style.display = "none";
 		document.getElementById("state").innerHTML = "Race started!";
 	} else {
 		// Remove document load time & request time
-		game.state.timeToEnter
-			-= ((requestComplete - requestStart)
-			+ (requestComplete - whenDocReady.timestamp.interactive));
+		game.state.timeToEnter -= (
+			(requestComplete - requestStart) + (requestComplete - domReadyTimestamp)
+		);
 
 		// Start timer interval
 		game.startTimerInterval(game.state.timeToEnter);
 
 		// Show the timer
-		document.getElementById("timer").innerHTML = game.state.timeToEnter.toString().substr(0,2);
+		document.getElementById("timer").innerHTML = game.state.timeToEnter.toString().substr(0, 2);
 	}
-},"getGamestate");
-
-let requestStart = (new Date()).getTime();
-let gameStateReady = fetch("/client?gamestate=true").then(
-	(response)=>{
-		whenDocReady.args("getGamestate",response,requestStart,(new Date()).getTime());
-	}
-);
+});
 
 window.addEventListener("DOMContentLoaded", function() {
 
@@ -167,17 +190,3 @@ window.addEventListener("DOMContentLoaded", function() {
 	},false); */
 
 },false);
-
-function getXMLDoc(doc,callback) {
-	let xmlhttp;
-	xmlhttp = new XMLHttpRequest();
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
-			console.log("rip", xmlhttp.response);
-		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-			callback(xmlhttp.response);
-		}
-	};
-	xmlhttp.open("GET", doc, true);
-	xmlhttp.send();
-}

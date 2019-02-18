@@ -1,4 +1,4 @@
-let config = require("./config");
+const config = require("./config");
 require("colors");
 
 console.log(" Web marbles".cyan);
@@ -112,12 +112,12 @@ game.start = function() {
 };
 
 /* Express connections */
-let express = require("express");
-let mustacheExpress = require("mustache-express");
-let compression = require("compression");
-let app = express();
-let http = require("http").Server(app);
-let io = require("socket.io")(http);
+const express = require("express");
+const mustacheExpress = require("mustache-express");
+const compression = require("compression");
+const app = express();
+const http = require("http").Server(app);
+const io = require("socket.io")(http);
 app.use(compression({
 	filter: function () { return true; }
 }));
@@ -127,7 +127,7 @@ app.set("view engine", "mustache");
 if (!config.express.cache) app.disable("view cache");
 app.set("views", `${__dirname}/templates`);
 
-let bodyParser = require("body-parser");
+const bodyParser = require("body-parser");
 app.use(bodyParser.json()); // to support JSON-encoded bodies
 app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true

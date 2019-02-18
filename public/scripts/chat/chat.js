@@ -1,3 +1,6 @@
+import io from "socket.io-client";
+import * as Cookies from "js-cookie";
+
 /* Origin window variant */
 let socket, cookieData;
 
@@ -47,7 +50,7 @@ function init() {
 					let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,"").toLowerCase();
 					clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
 					clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
-					clone.getElementsByClassName("content")[0].innerText = "Logged in as "+cookieData.username;
+					clone.getElementsByClassName("content")[0].innerText = `Logged in as ${cookieData.username}`;
 					clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
 					clone.getElementsByClassName("content")[0].style.color = "#999";
 					clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
@@ -93,7 +96,7 @@ function init() {
 		let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,"").toLowerCase();
 		clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
 		clone.getElementsByClassName("name")[0].innerText = obj.username;
-		clone.getElementsByClassName("name")[0].title = obj.username+"#"+obj.discriminator;
+		clone.getElementsByClassName("name")[0].title = `${obj.username}#${obj.discriminator}`;
 		clone.getElementsByClassName("text")[0].innerText = obj.content;
 
 		chatMessages.insertAdjacentElement("beforeend",clone);
@@ -153,12 +156,13 @@ function init() {
 let authWindow;
 function authenticationWindow() {
 	let authorizationUrl = "https://discordapp.com/api/oauth2/authorize?response_type=code";
-	authorizationUrl += "&client_id="+this.dataset.client_id;
-	authorizationUrl += "&scope="+this.dataset.scope;
-	authorizationUrl += "&redirect_uri="+this.dataset.redirect_uri;
+	authorizationUrl += `&client_id=${this.dataset.client_id}`;
+	authorizationUrl += `&scope=${this.dataset.scope}`;
+	authorizationUrl += `&redirect_uri=${this.dataset.redirect_uri}`;
 	if (this.dataset.state)
-		authorizationUrl += "&state="+this.dataset.state;
+		authorizationUrl += `&state=${this.dataset.state}`;
 
+	console.log(authorizationUrl);
 	authWindow = window.open(authorizationUrl, "_blank", "location=yes,height=800,width=720,scrollbars=yes,status=yes");
 }
 
