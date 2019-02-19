@@ -31,7 +31,6 @@
     "url": "https://github.com/Zemanzo/web-marbles.git"
   },
   "devDependencies": {
-    "@wildpeaks/three-webpack-plugin": "^2.0.0",
     "babel-eslint": "10",
     "eslint": "5.x",
     "webpack": "^4.29.3",

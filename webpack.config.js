@@ -1,5 +1,5 @@
 const path = require("path");
-const ThreeWebpackPlugin = require("@wildpeaks/three-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
 	mode: "development",
@@ -16,6 +16,8 @@ module.exports = {
 	},
 	devtool: "source-map",
 	plugins: [
-		new ThreeWebpackPlugin()
+		new webpack.ProvidePlugin({
+			THREE: "three"
+		})
 	]
 };

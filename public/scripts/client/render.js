@@ -1,13 +1,12 @@
 import * as THREE from "three";
-import { PointerLockControls } from "three/examples/js/controls/PointerLockControls";
-import { Water } from "three/examples/js/objects/Water";
-import { Sky } from "three/examples/js/objects/Sky";
-import { LoadingManager } from "three/examples/js/loaders/LoaderSupport";
-import { OBJLoader } from "three/examples/js/loaders/OBJLoader";
+import "three/examples/js/controls/PointerLockControls";
+import "three/examples/js/objects/Water";
+import "three/examples/js/objects/Sky";
+import "three/examples/js/loaders/LoaderSupport";
+import "three/examples/js/loaders/OBJLoader";
+import "three/examples/js/nodes/THREE.Nodes";
 import * as config from "../../config";
 import * as Stats from "stats-js";
-
-console.log("RENDERRERERERRRR");
 
 let net;
 let viewport = document.getElementById("viewport");
@@ -100,7 +99,7 @@ let onKeyUp = function(event) {
 document.addEventListener("keydown",onKeyDown,false);
 document.addEventListener("keyup",onKeyUp,false);
 
-let controls = new PointerLockControls(camera, renderer.domElement);
+let controls = new THREE.PointerLockControls(camera, renderer.domElement);
 
 renderer.domElement.addEventListener("mousedown", function () {
 	controls.lock();
@@ -139,7 +138,7 @@ scene.add( light );
 // Water
 let waterGeometry = new THREE.PlaneBufferGeometry( 10000, 10000 );
 
-let water = new Water(
+let water = new THREE.Water(
 	waterGeometry,
 	{
 		textureWidth: 512,
@@ -164,7 +163,7 @@ scene.add( water );
 
 // Skybox
 
-let sky = new Sky();
+let sky = new THREE.Sky();
 sky.scale.setScalar( 10000 );
 scene.add( sky );
 
@@ -314,36 +313,36 @@ function renderInit() {
 		spawnMarble(net.marbleData[i].tags);
 	}
 
-	// getXMLDoc("/client?dlmap=map2", (response) => {
+	getXMLDoc("/client?dlmap=map2", (response) => {
 
-	// 	let mapName = response.substr(0, response.lastIndexOf("."));
+		let mapName = response.substr(0, response.lastIndexOf("."));
 
-	// 	console.log(mapName);
-	// 	let manager = new LoadingManager();
-	// 	manager.onProgress = function ( item, loaded, total ) {
-	// 		console.log( item, loaded, total );
-	// 	};
+		console.log(mapName);
+		let manager = new THREE.LoadingManager();
+		manager.onProgress = function ( item, loaded, total ) {
+			console.log( item, loaded, total );
+		};
 
-	// 	let loader = new OBJLoader( manager );
-	// 	loader.load( `/resources/${mapName}_optimized.obj`, function ( object ) {
-	// 		object.traverse( function ( child ) {
-	// 			if ( child.name.indexOf("Terrain") !== -1) {
-	// 				mapMesh = child;
+		let loader = new THREE.OBJLoader( manager );
+		loader.load( `/resources/${mapName}_optimized.obj`, function ( object ) {
+			object.traverse( function ( child ) {
+				if ( child.name.indexOf("Terrain") !== -1) {
+					mapMesh = child;
 
-	// 				scene.add( mapMesh );
+					scene.add( mapMesh );
 
-	// 				mapMesh.setRotationFromEuler(
-	// 					new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, "XYZ" )
-	// 				);
+					mapMesh.setRotationFromEuler(
+						new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, "XYZ" )
+					);
 
-	// 				mapMesh.geometry.computeBoundingBox();
-	// 				mapMesh.geometry.center();
-	// 				mapMesh.material = createMapMaterial();
-	// 				mapMesh.receiveShadow = true;
-	// 			}
-	// 		} );
-	// 	}, ()=>{}, ()=>{} );
-	// });
+					mapMesh.geometry.computeBoundingBox();
+					mapMesh.geometry.center();
+					mapMesh.material = createMapMaterial();
+					mapMesh.receiveShadow = true;
+				}
+			} );
+		}, ()=>{}, ()=>{} );
+	});
 
 	animate();
 }
@@ -450,7 +449,7 @@ function createMapMaterial() {
 		THREE.Math3Node.MIX
 	);
 	mtl.color = blend;
-	mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
+	//mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
 
 	let normalScale = new THREE.FloatNode( 1 );
 	let normalMask = new THREE.OperatorNode(
@@ -459,7 +458,7 @@ function createMapMaterial() {
 		THREE.OperatorNode.MUL
 	);
 
-	mtl.normalScale = normalMask;
+	//mtl.normalScale = normalMask;
 
 	// build shader
 	mtl.build();
