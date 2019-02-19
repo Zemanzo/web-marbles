@@ -7,122 +7,146 @@ import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/nodes/THREE.Nodes";
 import * as config from "../../config";
 import * as Stats from "stats-js";
+import { net as networking } from "./networking";
 
-let net;
-let viewport = document.getElementById("viewport");
-let scene = new THREE.Scene();
-let camera = new THREE.PerspectiveCamera( 75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000 );
+let viewport, camera, renderer, stats,
+	scene = new THREE.Scene();
 
-let renderer = new THREE.WebGLRenderer();
-renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-renderer.setSize( viewport.clientWidth, viewport.clientHeight );
-viewport.appendChild( renderer.domElement );
+function init() {
+	viewport = document.getElementById("viewport");
+	camera = new THREE.PerspectiveCamera(75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000);
 
-let stats = new Stats();
-stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
-document.body.appendChild( stats.dom );
+	renderer = new THREE.WebGLRenderer();
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+	renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+	viewport.appendChild(renderer.domElement);
+
+	stats = new Stats();
+	stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+	document.body.appendChild(stats.dom);
+
+	updateSun();
+
+	addMap();
+
+	controls.init();
+
+	animate();
+}
 
 /* CONTROLS */
-let controlsEnabled = true;
-let moveForward = false;
-let moveBackward = false;
-let moveLeft = false;
-let moveRight = false;
+let controls = {
+	enabled: true,
 
-let prevTime = performance.now();
-let velocity = new THREE.Vector3();
-let direction = new THREE.Vector3();
-let vertex = new THREE.Vector3();
-let color = new THREE.Color();
+	moveForward: false,
+	moveBackward: false,
+	moveLeft: false,
+	moveRight: false,
 
-// Hook pointer lock state change events
-// document.addEventListener("pointerlockchange", function() {
-// 	if (document.pointerLockElement === element) {
-// 		controlsEnabled = true;
-// 		controls.enabled = true;
-// 	} else {
-// 		controls.enabled = false;
-// 	}
-// }, false );
+	prevTime: performance.now(),
+	velocity: new THREE.Vector3(),
+	direction: new THREE.Vector3(),
 
-// document.addEventListener("pointerlockerror", function() { }, false);
+	onKeyDown: function(event) {
+		switch (event.keyCode) {
+		case 38: // up
+		case 87: // w
+			controls.moveForward = true;
+			break;
 
-let onKeyDown = function(event) {
-	switch (event.keyCode) {
-	case 38: // up
-	case 87: // w
-		moveForward = true;
-		break;
+		case 37: // left
+		case 65: // a
+			controls.moveLeft = true;
+			break;
 
-	case 37: // left
-	case 65: // a
-		moveLeft = true;
-		break;
+		case 40: // down
+		case 83: // s
+			controls.moveBackward = true;
+			break;
 
-	case 40: // down
-	case 83: // s
-		moveBackward = true;
-		break;
+		case 39: // right
+		case 68: // d
+			controls.moveRight = true;
+			break;
+		}
+	},
 
-	case 39: // right
-	case 68: // d
-		moveRight = true;
-		break;
+	onKeyUp: function(event) {
+		switch (event.keyCode) {
+		case 38: // up
+		case 87: // w
+			controls.moveForward = false;
+			break;
+
+		case 37: // left
+		case 65: // a
+			controls.moveLeft = false;
+			break;
+
+		case 40: // down
+		case 83: // s
+			controls.moveBackward = false;
+			break;
+
+		case 39: // right
+		case 68: // d
+			controls.moveRight = false;
+			break;
+		}
+	},
+
+	init: function() {
+		document.addEventListener("keydown", this.onKeyDown, false);
+		document.addEventListener("keyup", this.onKeyUp, false);
+
+		let pointerLockControls
+			= this.pointerLockControls
+			= new THREE.PointerLockControls(camera, renderer.domElement);
+
+		renderer.domElement.addEventListener("mousedown", function () {
+			pointerLockControls.lock();
+		}, false);
+
+		document.body.addEventListener("mouseup", function () {
+			pointerLockControls.unlock();
+		}, false);
+
+		pointerLockControls.getObject().position.x = -25.3;
+		pointerLockControls.getObject().position.y = 55;
+		pointerLockControls.getObject().position.z = 19.7;
+
+		camera.parent.rotation.x = -.3;
+		pointerLockControls.getObject().rotation.z = 0;
+		scene.add(pointerLockControls.getObject());
+	},
+
+	update: function() {
+
+		let time = performance.now();
+		let delta = (time - this.prevTime) / 1000;
+
+		this.velocity.x -= this.velocity.x * 10.0 * delta;
+		this.velocity.y -= this.velocity.y * 10.0 * delta;
+		this.velocity.z -= this.velocity.z * 10.0 * delta;
+
+		this.direction.z = Number(this.moveForward) - Number(this.moveBackward);
+		this.direction.y = Number(this.moveForward) - Number(this.moveBackward);
+		this.direction.x = Number(this.moveLeft) - Number(this.moveRight);
+		this.direction.normalize(); // this ensures consistent movements in all directions
+
+		if(this.moveForward || this.moveBackward ) this.velocity.z -= this.direction.z * config.controls.camera.speed * delta;
+		if(this.moveForward || this.moveBackward ) this.velocity.y -= this.direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI * .5);
+		if (this.moveLeft || this.moveRight) this.velocity.x -= this.direction.x * config.controls.camera.speed * delta;
+
+		/* console.log(velocity.x * delta, controlsEnabled); */
+		this.pointerLockControls.getObject().translateX(this.velocity.x * delta);
+		this.pointerLockControls.getObject().translateY(this.velocity.y * delta);
+		this.pointerLockControls.getObject().translateZ(this.velocity.z * delta);
+
+		this.prevTime = time;
 	}
 };
-
-let onKeyUp = function(event) {
-	switch (event.keyCode) {
-	case 38: // up
-	case 87: // w
-		moveForward = false;
-		break;
-
-	case 37: // left
-	case 65: // a
-		moveLeft = false;
-		break;
-
-	case 40: // down
-	case 83: // s
-		moveBackward = false;
-		break;
-
-	case 39: // right
-	case 68: // d
-		moveRight = false;
-		break;
-	}
-};
-
-document.addEventListener("keydown",onKeyDown,false);
-document.addEventListener("keyup",onKeyUp,false);
-
-let controls = new THREE.PointerLockControls(camera, renderer.domElement);
-
-renderer.domElement.addEventListener("mousedown", function () {
-	controls.lock();
-}, false);
-
-document.body.addEventListener("mouseup", function () {
-	controls.unlock();
-}, false);
-
-controls.getObject().position.x = -25.3;
-controls.getObject().position.y = 55;
-controls.getObject().position.z = 19.7;
-
-camera.parent.rotation.x = -.3;
-controls.getObject().rotation.z = 0;
-scene.add(controls.getObject());
-
-/* let controls = new THREE.OrbitControls( camera, renderer.domElement );
-controls.enableDamping = true;
-controls.dampingFactor = 0.25;
-controls.enableZoom = true; */
-
-/* CONTROLS END */
 
 let ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );
@@ -194,9 +218,9 @@ function updateSun() {
 	light.position.z = parameters.distance * Math.sin( phi ) * Math.cos( theta );
 
 	sky.material.uniforms.sunPosition.value = light.position.copy( light.position );
-	/* light.shadow.camera.position.copy(light.position);
-	light.shadow.camera.rotation.copy(light.rotation); */
-	light.shadow.mapSize.width = 2048;  // default
+	// light.shadow.camera.position.copy(light.position);
+	// light.shadow.camera.rotation.copy(light.rotation);
+	light.shadow.mapSize.width = 2048; // default
 	light.shadow.mapSize.height = 2048; // default
 	light.shadow.camera.near = 3500;
 	light.shadow.camera.far = 4200;
@@ -209,8 +233,6 @@ function updateSun() {
 	cubeCamera.update( renderer, scene );
 
 }
-
-updateSun();
 
 //
 
@@ -247,48 +269,28 @@ function animate() {
 
 	// Update marble positions
 	for (let i = 0; i < marbleMeshes.length; i++) {
-		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, net.marblePositions[i*3+0], net.lastUpdate);
-		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, net.marblePositions[i*3+2], net.lastUpdate);
-		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, net.marblePositions[i*3+1], net.lastUpdate);
+		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, networking.marblePositions[i * 3 + 0], networking.lastUpdate);
+		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, networking.marblePositions[i * 3 + 2], networking.lastUpdate);
+		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, networking.marblePositions[i * 3 + 1], networking.lastUpdate);
 
 
 		marbleMeshes[i].quaternion.set(
-			net.marbleRotations[i*4+0],
-			net.marbleRotations[i*4+1],
-			net.marbleRotations[i*4+2],
-			net.marbleRotations[i*4+3]
+			networking.marbleRotations[i * 4 + 0],
+			networking.marbleRotations[i * 4 + 1],
+			networking.marbleRotations[i * 4 + 2],
+			networking.marbleRotations[i * 4 + 3]
 		);
 		/* marbleMeshes[i].quaternion.normalize(); */
 	}
 
-	if (net.lastUpdate < 1.5) {
-		net.lastUpdate += net.tickrate / 60 / net.ticksToLerp; // FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
+	if (networking.lastUpdate < 1.5) {
+		// FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
+		networking.lastUpdate += (config.network.tickrate / 60 / config.network.ticksToLerp);
 	}
 
 	// Update controls
-	if ( controlsEnabled === true ) {
-		let time = performance.now();
-		let delta = ( time - prevTime ) / 1000;
-
-		velocity.x -= velocity.x * 10.0 * delta;
-		velocity.y -= velocity.y * 10.0 * delta;
-		velocity.z -= velocity.z * 10.0 * delta;
-
-		direction.z = Number( moveForward ) - Number( moveBackward );
-		direction.y = Number( moveForward ) - Number( moveBackward );
-		direction.x = Number( moveLeft ) - Number( moveRight );
-		direction.normalize(); // this ensures consistent movements in all directions
-
-		if ( moveForward || moveBackward ) velocity.z -= direction.z * config.controls.camera.speed * delta;
-		if ( moveForward || moveBackward ) velocity.y -= direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI*.5);
-		if ( moveLeft || moveRight ) velocity.x -= direction.x * config.controls.camera.speed* delta;
-
-		/* console.log(velocity.x * delta, controlsEnabled); */
-		controls.getObject().translateX( velocity.x * delta );
-		controls.getObject().translateY( velocity.y * delta );
-		controls.getObject().translateZ( velocity.z * delta );
-
-		prevTime = time;
+	if ( controls.enabled === true ) {
+		controls.update();
 	}
 
 	// Update water material
@@ -306,48 +308,44 @@ function animate() {
 }
 
 let mapMesh;
+function addMap() {
+	fetch("/client?dlmap=map2")
+		.then((response) => {
+			return response.text();
+		})
+		.then((response) => {
+			let mapName = response.substr(0, response.lastIndexOf("."));
 
-// Stuff that can only be rendered after network data has been received
-function renderInit() {
-	for (let i = 0; i < net.marblePositions.length / 3; i++) {
-		spawnMarble(net.marbleData[i].tags);
-	}
+			console.log(mapName);
+			let manager = new THREE.LoadingManager();
+			manager.onProgress = function (item, loaded, total) {
+				console.log(item, loaded, total);
+			};
 
-	getXMLDoc("/client?dlmap=map2", (response) => {
+			let loader = new THREE.OBJLoader(manager);
+			loader.load(`/resources/${mapName}_optimized.obj`, function (object) {
+				object.traverse(function (child) {
+					if (child.name.indexOf("Terrain") !== -1) {
+						mapMesh = child;
 
-		let mapName = response.substr(0, response.lastIndexOf("."));
+						scene.add(mapMesh);
 
-		console.log(mapName);
-		let manager = new THREE.LoadingManager();
-		manager.onProgress = function ( item, loaded, total ) {
-			console.log( item, loaded, total );
-		};
+						mapMesh.setRotationFromEuler(
+							new THREE.Euler(-Math.PI * .5, 0, Math.PI * .5, "XYZ")
+						);
 
-		let loader = new THREE.OBJLoader( manager );
-		loader.load( `/resources/${mapName}_optimized.obj`, function ( object ) {
-			object.traverse( function ( child ) {
-				if ( child.name.indexOf("Terrain") !== -1) {
-					mapMesh = child;
-
-					scene.add( mapMesh );
-
-					mapMesh.setRotationFromEuler(
-						new THREE.Euler( -Math.PI*.5, 0, Math.PI*.5, "XYZ" )
-					);
-
-					mapMesh.geometry.computeBoundingBox();
-					mapMesh.geometry.center();
-					mapMesh.material = createMapMaterial();
-					mapMesh.receiveShadow = true;
-				}
-			} );
-		}, ()=>{}, ()=>{} );
-	});
-
-	animate();
+						mapMesh.geometry.computeBoundingBox();
+						mapMesh.geometry.center();
+						mapMesh.material = createMapMaterial();
+						mapMesh.receiveShadow = true;
+					}
+				});
+			}, () => { }, () => { });
+		});
 }
 
-function spawnMarble(tags) {
+function spawnMarbleMesh(tags) {
+	console.log(tags);
 	let size = tags.size;
 	let color = tags.color;
 	let name = tags.name;
@@ -361,7 +359,7 @@ function spawnMarble(tags) {
 
 	} );
 
-	let sphereGeometry = new THREE.SphereBufferGeometry(size,9,9);
+	let sphereGeometry = new THREE.SphereBufferGeometry(size, 9, 9);
 	/* let sphereGeometry = new THREE.BoxGeometry(.2,.2,.2); */
 	let materialColor = new THREE.Color(color);
 	let sphereMaterial = new THREE.MeshStandardMaterial({ color: materialColor });
@@ -378,19 +376,9 @@ function spawnMarble(tags) {
 	marbleMeshes.push(sphereMesh);
 
 	// Add objects to the scene
-	scene.add(marbleMeshes[marbleMeshes.length-1]);
+	scene.add(marbleMeshes[marbleMeshes.length - 1]);
 	scene.add(nameSprite);
-	marbleMeshes[marbleMeshes.length-1].add(nameSprite);
-
-	// Add UI stuff
-	let listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
-	listEntry.removeAttribute("id");
-	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
-	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
-	listEntry.getElementsByClassName("id")[0].innerText = marbleMeshes.length;
-
-	document.getElementById("marbleList").appendChild(listEntry);
-	document.getElementById("entries").innerHTML = marbleMeshes.length;
+	marbleMeshes[marbleMeshes.length - 1].add(nameSprite);
 }
 
 let textures = {
@@ -418,7 +406,7 @@ function createMapMaterial() {
 	mtl.roughness = new THREE.FloatNode( .9 );
 	mtl.metalness = new THREE.FloatNode( 0 );
 
-	function createUv(scale,offset) {
+	function createUv(scale, offset) {
 
 		let uvOffset = new THREE.FloatNode( offset || 0 );
 		let uvScale = new THREE.FloatNode( scale || 1 );
@@ -438,10 +426,10 @@ function createMapMaterial() {
 		return scaleNode;
 	}
 
-	let grass = new THREE.TextureNode( getTexture( "grass" ), createUv(35) );
-	let dirt = new THREE.TextureNode( getTexture( "dirt" ), createUv(35) );
-	let mask = new THREE.TextureNode( getTexture( "mask" ), createUv() );
-	let maskAlphaChannel = new THREE.SwitchNode( mask, "w" );
+	let grass = new THREE.TextureNode( getTexture("grass"), createUv(35) );
+	let dirt = new THREE.TextureNode( getTexture("dirt"), createUv(35) );
+	let mask = new THREE.TextureNode( getTexture("mask"), createUv() );
+	let maskAlphaChannel = new THREE.SwitchNode(mask, "w");
 	let blend = new THREE.Math3Node(
 		grass,
 		dirt,
@@ -449,16 +437,17 @@ function createMapMaterial() {
 		THREE.Math3Node.MIX
 	);
 	mtl.color = blend;
-	//mtl.normal = new THREE.TextureNode( getTexture( "dirtNormal" ), createUv(35) );
+	mtl.normal = new THREE.NormalMapNode(
+		new THREE.TextureNode( getTexture("dirtNormal"), createUv(35) )
+	);
 
-	let normalScale = new THREE.FloatNode( 1 );
 	let normalMask = new THREE.OperatorNode(
-		new THREE.TextureNode( getTexture( "mask" ), createUv() ),
-		normalScale,
+		new THREE.TextureNode( getTexture("mask"), createUv() ),
+		new THREE.FloatNode(1),
 		THREE.OperatorNode.MUL
 	);
 
-	//mtl.normalScale = normalMask;
+	mtl.normalScale = normalMask;
 
 	// build shader
 	mtl.build();
@@ -471,21 +460,20 @@ function createMapMaterial() {
 
 function makeTextSprite( message )
 {
-	let parameters = {};
 
 	let fontface = "Courier New";
 	let fontsize = 24;
 
 	let canvas = document.createElement("canvas");
-	let width = canvas.width = 256;
-	let height = canvas.height = 64;
+	canvas.width = 256;
+	canvas.height = 64;
 	let context = canvas.getContext("2d");
 	context.font = `Bold ${fontsize}px ${fontface}`;
 	context.textAlign = "center";
 
 	// get size data (height depends only on font size)
-	let metrics = context.measureText( message );
-	let textWidth = metrics.width;
+	// let metrics = context.measureText( message );
+	// let textWidth = metrics.width;
 
 	// text color
 	context.fillStyle = "#ffffff";
@@ -497,22 +485,8 @@ function makeTextSprite( message )
 	texture.needsUpdate = true;
 	let spriteMaterial = new THREE.SpriteMaterial({map: texture});
 	let sprite = new THREE.Sprite( spriteMaterial );
-	sprite.scale.set(4,1,1.0);
+	sprite.scale.set(4, 1, 1.0);
 	return sprite;
-}
-
-function getXMLDoc(doc, callback) {
-	let xmlhttp;
-	xmlhttp = new XMLHttpRequest();
-	xmlhttp.onreadystatechange = function () {
-		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
-			console.log("rip", xmlhttp.response);
-		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-			callback(xmlhttp.response);
-		}
-	};
-	xmlhttp.open("GET", doc, true);
-	xmlhttp.send();
 }
 
 let clearMarbleMeshes = function () {
@@ -526,14 +500,10 @@ let clearMarbleMeshes = function () {
 	marbleMeshes = [];
 };
 
-let updateNet = function (newNet) {
-	net = newNet;
-};
-
 export {
-	spawnMarble,
 	scene,
+	marbleMeshes,
+	spawnMarbleMesh,
 	clearMarbleMeshes,
-	updateNet,
-	renderInit
+	init
 };

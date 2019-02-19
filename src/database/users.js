@@ -42,13 +42,15 @@ module.exports = function(db) {
 			return false;
 		},
 
-		_getUserDetailsById: db.prepare(`SELECT
+		_getUserDetailsById: db.prepare(
+			`SELECT
 			access_token,
 			username,
 			avatar,
 			discriminator
 			FROM users
-			WHERE id = ?`),
+			WHERE id = ?`
+		),
 
 		getUserDetailsById(id) {
 			if (this.idExists(id)) {

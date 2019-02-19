@@ -41,14 +41,14 @@ let game = {
 	entered: []
 };
 
-game.addMarble = function(id,name,color) {
+game.addMarble = function(id, name, color) {
 	// Only allow marbles during entering phase
 	if (game.logic.state === "enter") {
 
 		// Make sure this person hasn't entered in this round yet
 		if (!game.entered.includes(id)) {
 			game.entered.push(id);
-			spawnMarble(name,color);
+			spawnMarble(name, color);
 		}
 	}
 };
@@ -56,7 +56,7 @@ game.addMarble = function(id,name,color) {
 game.end = function() {
 	if (game.logic.state === "started") {
 		game.logic.state = "enter";
-		console.log(currentHourString()+"Current state: ".magenta, game.logic.state);
+		console.log(currentHourString() + "Current state: ".magenta, game.logic.state);
 
 		// Close the gate
 		physics.closeGate();
@@ -92,15 +92,15 @@ game.end = function() {
 game.start = function() {
 	if (game.logic.state === "enter") {
 		game.logic.state = "started";
-		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
+		console.log(currentHourString() + "Current state: ".magenta, game.logic.state);
 		io.sockets.emit("start", true);
 
 		setTimeout(function() {
 			physics.openGate();
 
 			// Add bot marble to ensure physics not freezing
-			spawnMarble("Nightbot","#000000");
-		},game.startDelay);
+			spawnMarble("Nightbot", "#000000");
+		}, game.startDelay);
 
 		clearTimeout(game.gameplayTimeout);
 		game.gameplayTimeout = setTrackableTimeout(
@@ -148,7 +148,7 @@ app.get("/client", function (req, res) {
 			req.query.bot
 			&& game.logic.state === "enter"
 		) {
-			spawnMarble("nightbot","#000000");
+			spawnMarble("nightbot", "#000000");
 			res.send("ok");
 		}
 
@@ -235,7 +235,7 @@ discordClient.login(config.discord.botToken);
 //
 
 let chat = {};
-chat.testMessage = function(messageContent,id,username) {
+chat.testMessage = function(messageContent, id, username) {
 	if (messageContent.startsWith("!marble")) {
 		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
 		let match = messageContent.match(colorRegEx);
@@ -247,12 +247,16 @@ chat.testMessage = function(messageContent,id,username) {
 			color
 		);
 	}
+
+	if (messageContent.startsWith("!end") && id == "112621040487702528") {
+		game.end();
+	}
 };
 
 //
 
-function spawnMarble(name,color) {
-	let body = physics.marbles.createMarble(name,color);
+function spawnMarble(name, color) {
+	let body = physics.marbles.createMarble(name, color);
 
 	// Send client info on new marble
 	io.sockets.emit("new marble", body.tags);
@@ -285,12 +289,12 @@ app.get("/chat", function (req, res) {
 						headers: {
 							"Authorization": `Bearer ${token_body.access_token}`
 						}
-					},function (error, response, user_body) {
+					}, function (error, response, user_body) {
 						if (!error && response.statusCode === 200) {
 
 							user_body = JSON.parse(user_body);
 
-							let exists = db.users.idExists(user_body.id);
+							let exists = db.user.idExists(user_body.id);
 
 							token_body.access_granted = now();
 
@@ -299,7 +303,7 @@ app.get("/chat", function (req, res) {
 							else
 								db.user.insertNewUser(token_body, user_body, config.discord.scope);
 
-							res.render("chat",{
+							res.render("chat", {
 								invitelink: config.discord.inviteLink,
 								user_data: JSON.stringify({
 									id: user_body.id,
@@ -314,26 +318,26 @@ app.get("/chat", function (req, res) {
 							});
 
 						} else {
-							console.log(error,response.statusCode);
+							console.log(error, response.statusCode);
 						}
 					});
 				} else {
-					res.render("chat",{
+					res.render("chat", {
 						invitelink: config.discord.inviteLink,
 						success: false
 					});
 				}
 			};
 
-			request.post(options,callback);
+			request.post(options, callback);
 			return;
 		}
 	}
 
-	res.render("chat",{
+	res.render("chat", {
 		invitelink: config.discord.inviteLink,
 		client_id: config.discord.clientId,
-		redirect_uri: encodeURIComponent(`config.discord.redirectUriRoot${chat}`),
+		redirect_uri: encodeURIComponent(`${config.discord.redirectUriRoot}chat`),
 		scope: encodeURIComponent(config.discord.scope) // separated with spaces
 	});
 
@@ -371,22 +375,22 @@ app.post("/chat", function (req, res) {
 				}
 			};
 
-			request.post(options,callback);
+			request.post(options, callback);
 		}
 	}
 });
 
 app.get("/editor", function (req, res) {
 	if (config.editor.enabled)
-		res.render("editor",{});
+		res.render("editor", {});
 	else
-		res.render("editorDisabled",{});
+		res.render("editorDisabled", {});
 });
 
 //
 
 app.get("/debug", function (req, res) {
-	res.render("ammo",{
+	res.render("ammo", {
 		map: JSON.stringify(physics.world.map.parsed)
 	});
 });
@@ -394,7 +398,7 @@ app.get("/debug", function (req, res) {
 /* Express listener */
 let server = http.listen(config.express.port, function () {
 	let port = server.address().port;
-	console.log(currentHourString()+"EXPRESS: Listening at port %s".cyan, port);
+	console.log(currentHourString() + "EXPRESS: Listening at port %s".cyan, port);
 });
 
 /* Sockets */
@@ -451,7 +455,7 @@ io.on("connection", function(socket) {
 	});
 
 	// Discord chat embed
-	const chatWebhook = new discord.WebhookClient(config.discord.webhookId,config.discord.webhookToken);
+	const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 	socket.on("chat incoming", (obj) => {
 		let row = db.user.getUserDetailsById(obj.id);
 		console.log(row);
@@ -459,7 +463,7 @@ io.on("connection", function(socket) {
 		if (row && row.access_token == obj.access_token) {
 			chat.testMessage(obj.message, obj.id, row.username);
 
-			chatWebhook.send(obj.message,{
+			chatWebhook.send(obj.message, {
 				username: row.username,
 				avatarURL: `https://cdn.discordapp.com/avatars/${obj.id}/${row.avatar}.png`,
 				disableEveryone: true
@@ -471,7 +475,7 @@ io.on("connection", function(socket) {
 				content: obj.message
 			});
 		} else {
-			console.log("User ID and access token mismatch!",row);
+			console.log("User ID and access token mismatch!", row);
 		}
 	});
 });
@@ -481,14 +485,14 @@ io.on("disconnected", function() {
 });
 
 /* Other */
-function pad(num,size) {
+function pad(num, size) {
 	let s = `000000000${num}`;
-	return s.substr(s.length-size);
+	return s.substr(s.length - size);
 }
 
 function currentHourString() {
 	let date = new Date();
-	return `[${pad(date.getHours(),2)}:${pad(date.getMinutes(),2)}] `;
+	return `[${pad(date.getHours(), 2)}:${pad(date.getMinutes(), 2)}] `;
 }
 
 function now() {

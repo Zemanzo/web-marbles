@@ -1,24 +1,7 @@
-import io from "socket.io-client";
 import * as config from "../../config";
-
-let socket = io({
-	transports: ["websocket"]
-});
-
-let renderer;
-
-let net = {
-	tickrate: config.network.tickrate, // Cannot be 0
-	ticksToLerp: config.network.ticksToLerp, // Cannot be 0
-
-	// Initialize, do not configure these values.
-	marbleData: undefined,
-	marblePositions: new Float32Array(0),
-	marbleRotations: new Float32Array(0),
-	lastUpdate: 0,
-	ready: 0,
-	requestsSkipped: 0 // Helps detect network issues
-};
+import * as renderer from "./render";
+import domReady from "../domReady";
+import { net as networking, socket } from "./networking";
 
 let game = {
 	audio: {
@@ -43,12 +26,12 @@ let game = {
 		game.startTimerInterval(this.state.enterPeriod * 1000);
 	},
 	startTimerInterval: function(ms) {
-		let s = ms/1000;
+		let s = ms / 1000;
 		let timerElement = document.getElementById("timer");
 		timerElement.innerHTML = Math.ceil(s);
 		setTimeout(function() {
 			let timeLeft = Math.floor(s);
-			console.log(s,timeLeft);
+			console.log(s, timeLeft);
 			let timerInterval = setInterval(function() {
 				if (timeLeft < 0) {
 					clearInterval(timerInterval);
@@ -56,74 +39,58 @@ let game = {
 					timerElement.innerHTML = timeLeft;
 				}
 				timeLeft--;
-			},1000);
+			}, 1000);
+
 			timerElement.innerHTML = timeLeft;
 			timeLeft--;
-		}, ms - Math.floor(s)*1000); // milliseconds only, i.e. 23941 becomes 941
-		console.log(ms - Math.floor(s)*1000);
+		}, ms - Math.floor(s) * 1000); // milliseconds only, i.e. 23941 becomes 941
+		console.log(ms - Math.floor(s) * 1000);
+	},
+	spawnMarble: function(tags) {
+		// Add mesh
+		renderer.spawnMarbleMesh(tags);
+
+		// Add UI stuff
+		let listEntry = document.getElementById("marbleListTemplate").cloneNode(true);
+		listEntry.removeAttribute("id");
+		listEntry.getElementsByClassName("name")[0].innerText = tags.name;
+		listEntry.getElementsByClassName("color")[0].style.background = tags.color;
+		listEntry.getElementsByClassName("id")[0].innerText = renderer.marbleMeshes.length;
+
+		document.getElementById("marbleList").appendChild(listEntry);
+		document.getElementById("entries").innerHTML = renderer.marbleMeshes.length;
 	}
 };
 
-// Document state promise
-let domReadyTimestamp;
-let domReady =
-	new Promise((resolve) => {
-		if (document.readyState === "interactive" || document.readyState === "complete") {
-			resolve(true);
-		} else {
-			window.addEventListener("DOMContentLoaded", () => resolve(true), false);
-		}
-	}).then(() => {
-		domReadyTimestamp = (new Date()).getTime();
+// Add socket RPCs
+networking.socketReady.then(() => {
+	// New marble
+	socket.on("new marble", function(tags) {
+		game.spawnMarble(tags);
 	});
 
-// Socket data promise
-let netReady = new Promise((resolve) => {
-	// Once connected, client receives initial data
-	socket.on("initial data", function(obj) {
-		net.marbleData = obj;
-
-		/* Socket RPCs */
-		// New marble
-		socket.on("new marble", function(obj) {
-			renderer.spawnMarble(obj);
-		});
-
-		// Start game
-		socket.on("start", function() {
-			game.start();
-		});
-
-		// End game, and start next round
-		socket.on("clear", function() {
-			game.end();
-		});
-
-		resolve(true);
+	// Start game
+	socket.on("start", function() {
+		game.start();
 	});
-}).then(()=>{
-	/* Physics syncing */
-	// Once connection is acknowledged, start requesting physics updates
-	net.getServerData = function() {
-		if (net.ready < net.tickrate) {
-			net.ready++;
-			socket.emit("request physics", Date.now(), (data) => {
-				net.marblePositions = new Float32Array(data.pos);
-				net.marbleRotations = new Float64Array(data.rot);
-				net.lastUpdate = 0;
-				net.ready--;
-			});
-		} else {
-			net.requestsSkipped++;
-		}
-		if (renderer) {
-			renderer.updateNet(net);
-		}
-		setTimeout(net.getServerData,1000 / net.tickrate);
-	};
-	net.getServerData();
+
+	// End game, and start next round
+	socket.on("clear", function() {
+		game.end();
+	});
 });
 
+// If both promises fulfill, start rendering & fill entries field
+Promise.all([networking.socketReady, domReady]).then(() => {
+	for (let i = 0; i < networking.marblePositions.length / 3; i++) {
+		game.spawnMarble(networking.marbleData[i].tags);
+	}
+
+	renderer.init();
+	document.getElementById("entries").innerHTML = networking.marbleData.length;
+});
+
+// Fetch gamestate
 let requestComplete;
 let requestStart = (new Date()).getTime();
 let gameStateReady = fetch("/client?gamestate=true")
@@ -132,31 +99,14 @@ let gameStateReady = fetch("/client?gamestate=true")
 		return response.json();
 	});
 
-// If both promises fulfill, start rendering & fill entries field
-Promise.all([netReady, domReady]).then(function () {
-	import(
-		/* webpackPrefetch: true */
-		/* webpackChunkName: "renderer" */
-		"./render"
-	).then((dImport)=>{
-		renderer = dImport;
-		renderer.updateNet(net);
-		renderer.renderInit();
-	});
-	document.getElementById("entries").innerHTML = net.marbleData.length;
+// Fill gamestate properties in UI
+let domReadyTimestamp;
+domReady.then(() => {
+	domReadyTimestamp = (new Date()).getTime();
 });
-
 
 Promise.all([gameStateReady, domReady]).then((values) => {
 	game.state = values[0];
-	console.log(
-		values,
-		game.state,
-		requestComplete,
-		requestStart,
-		domReadyTimestamp,
-		(requestComplete - requestStart) + (requestComplete - domReadyTimestamp)
-	);
 	if (game.state.gameState === "started") {
 		document.getElementById("timer").style.display = "none";
 		document.getElementById("state").innerHTML = "Race started!";
@@ -183,4 +133,4 @@ window.addEventListener("DOMContentLoaded", function() {
 		controls.getObject().position.z = 0;
 	},false); */
 
-},false);
+}, false);
