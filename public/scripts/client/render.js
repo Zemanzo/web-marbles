@@ -517,6 +517,13 @@ function getXMLDoc(doc, callback) {
 }
 
 let clearMarbleMeshes = function () {
+	for (let mesh of marbleMeshes) {
+		for (let i = mesh.children.length; i >= 0; i--) {
+			scene.remove(mesh.children[i]);
+		}
+		scene.remove(mesh);
+	}
+
 	marbleMeshes = [];
 };
 

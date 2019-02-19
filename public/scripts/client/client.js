@@ -35,15 +35,9 @@ let game = {
 	},
 	end: function() {
 		game.audio.end.play();
-		for (let mesh of renderer.marbleMeshes) {
-			for (let i = mesh.children.length; i >= 0; i--) {
-				renderer.scene.remove(mesh.children[i]);
-			}
-			renderer.scene.remove(mesh);
-			document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
-		}
-		document.getElementById("entries").innerHTML = "0";
 		renderer.clearMarbleMeshes();
+		document.getElementById("marbleList").innerHTML = document.getElementById("marbleListTemplate").outerHTML;
+		document.getElementById("entries").innerHTML = "0";
 		document.getElementById("state").innerHTML = "Enter marbles now!";
 		document.getElementById("timer").style.display = "block";
 		game.startTimerInterval(this.state.enterPeriod * 1000);

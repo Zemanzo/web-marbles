@@ -56,10 +56,13 @@ game.addMarble = function(id,name,color) {
 game.end = function() {
 	if (game.logic.state === "started") {
 		game.logic.state = "enter";
-		console.log(currentHourString()+"Current state: ".magenta,game.logic.state);
+		console.log(currentHourString()+"Current state: ".magenta, game.logic.state);
 
 		// Close the gate
 		physics.closeGate();
+
+		// Remove all marbles
+		physics.marbles.destroyAllMarbles();
 
 		// Clear the array of people that entered
 		game.entered = [];
