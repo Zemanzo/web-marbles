@@ -5,11 +5,12 @@ import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/nodes/THREE.Nodes";
-import * as config from "../../config";
 import * as Stats from "stats-js";
+import * as config from "../../config";
 import { net as networking } from "./networking";
+import { CameraFlyControls } from "../render/cameraFlyControls";
 
-let viewport, camera, renderer, stats,
+let viewport, camera, renderer, stats, controls,
 	scene = new THREE.Scene();
 
 function init() {
@@ -30,123 +31,23 @@ function init() {
 
 	addMap();
 
-	controls.init();
+	controls = new CameraFlyControls(scene, renderer, {
+		pointerLockElement: viewport,
+		camera,
+		defaultPosition: {
+			x: -25.3,
+			y: 55,
+			z: 19.7
+		},
+		defaultRotation: {
+			x: -.3,
+			y: 0,
+			z: 0
+		}
+	});
 
 	animate();
 }
-
-/* CONTROLS */
-let controls = {
-	enabled: true,
-
-	moveForward: false,
-	moveBackward: false,
-	moveLeft: false,
-	moveRight: false,
-
-	prevTime: performance.now(),
-	velocity: new THREE.Vector3(),
-	direction: new THREE.Vector3(),
-
-	onKeyDown: function(event) {
-		switch (event.keyCode) {
-		case 38: // up
-		case 87: // w
-			controls.moveForward = true;
-			break;
-
-		case 37: // left
-		case 65: // a
-			controls.moveLeft = true;
-			break;
-
-		case 40: // down
-		case 83: // s
-			controls.moveBackward = true;
-			break;
-
-		case 39: // right
-		case 68: // d
-			controls.moveRight = true;
-			break;
-		}
-	},
-
-	onKeyUp: function(event) {
-		switch (event.keyCode) {
-		case 38: // up
-		case 87: // w
-			controls.moveForward = false;
-			break;
-
-		case 37: // left
-		case 65: // a
-			controls.moveLeft = false;
-			break;
-
-		case 40: // down
-		case 83: // s
-			controls.moveBackward = false;
-			break;
-
-		case 39: // right
-		case 68: // d
-			controls.moveRight = false;
-			break;
-		}
-	},
-
-	init: function() {
-		document.addEventListener("keydown", this.onKeyDown, false);
-		document.addEventListener("keyup", this.onKeyUp, false);
-
-		let pointerLockControls
-			= this.pointerLockControls
-			= new THREE.PointerLockControls(camera, renderer.domElement);
-
-		renderer.domElement.addEventListener("mousedown", function () {
-			pointerLockControls.lock();
-		}, false);
-
-		document.body.addEventListener("mouseup", function () {
-			pointerLockControls.unlock();
-		}, false);
-
-		pointerLockControls.getObject().position.x = -25.3;
-		pointerLockControls.getObject().position.y = 55;
-		pointerLockControls.getObject().position.z = 19.7;
-
-		camera.parent.rotation.x = -.3;
-		pointerLockControls.getObject().rotation.z = 0;
-		scene.add(pointerLockControls.getObject());
-	},
-
-	update: function() {
-
-		let time = performance.now();
-		let delta = (time - this.prevTime) / 1000;
-
-		this.velocity.x -= this.velocity.x * 10.0 * delta;
-		this.velocity.y -= this.velocity.y * 10.0 * delta;
-		this.velocity.z -= this.velocity.z * 10.0 * delta;
-
-		this.direction.z = Number(this.moveForward) - Number(this.moveBackward);
-		this.direction.y = Number(this.moveForward) - Number(this.moveBackward);
-		this.direction.x = Number(this.moveLeft) - Number(this.moveRight);
-		this.direction.normalize(); // this ensures consistent movements in all directions
-
-		if(this.moveForward || this.moveBackward ) this.velocity.z -= this.direction.z * config.controls.camera.speed * delta;
-		if(this.moveForward || this.moveBackward ) this.velocity.y -= this.direction.y * config.controls.camera.speed * delta * (-camera.parent.rotation.x * Math.PI * .5);
-		if (this.moveLeft || this.moveRight) this.velocity.x -= this.direction.x * config.controls.camera.speed * delta;
-
-		/* console.log(velocity.x * delta, controlsEnabled); */
-		this.pointerLockControls.getObject().translateX(this.velocity.x * delta);
-		this.pointerLockControls.getObject().translateY(this.velocity.y * delta);
-		this.pointerLockControls.getObject().translateZ(this.velocity.z * delta);
-
-		this.prevTime = time;
-	}
-};
 
 let ambientLight = new THREE.AmbientLight( 0x746070 );
 scene.add( ambientLight );

@@ -1,11 +1,10 @@
-whenDocReady.add(
-	function(){renderInit()},
-	"renderInit",
-	{
-		type:1,
-		readyState:"complete"
-	}
-);
+import * as THREE from "three";
+import "three/examples/js/loaders/GLTFLoader";
+import { config } from "../../config";
+import * as inspector from "./inspector";
+import * as prefabs from "./prefabs";
+import "./render";
+import { generateTinyUUID } from "../generateTinyUUID";
 
 let editor = {
 	log: undefined,
@@ -23,7 +22,7 @@ let editor = {
 	entityCount: 0
 };
 
-window.addEventListener("DOMContentLoaded", function(){
+window.addEventListener("DOMContentLoaded", function() {
 	editor.elements = {
 		log: document.getElementById("log"),
 		worldPrefab: document.getElementById("worldPrefab")
@@ -31,46 +30,46 @@ window.addEventListener("DOMContentLoaded", function(){
 
 	//
 
-	editor.initialize.inspector();
+	inspector.initialize(editor);
 
 	//
 
-	editor.initialize.prefabs();
+	prefabs.initialize(editor);
 
 	//
 
 	// Menu
 	let childValue = 0;
-	for (let child of document.getElementById("editorMode").children){
+	for (let child of document.getElementById("editorMode").children) {
 		child.dataset.nthChild = childValue++;
-		child.addEventListener("click", function(){
+		child.addEventListener("click", function() {
 			let firstElement = document.getElementById("properties").firstElementChild;
-			firstElement.style.marginLeft = "-"+parseInt(this.dataset.nthChild) * 100 +"%";
+			firstElement.style.marginLeft = `-${parseInt(this.dataset.nthChild) * 100 }%`;
 
-			for (let c of this.parentNode.children){
+			for (let c of this.parentNode.children) {
 				c.className = "";
 			}
 
-			for (let key in editor.groups){
+			for (let key in editor.groups) {
 				editor.groups[key].visible = false;
 			}
 
 			editor.inspector.deselect();
 
-			if (parseInt(this.dataset.nthChild) >= 2){
+			if (parseInt(this.dataset.nthChild) >= 2) {
 				editor.inspector.element.style.transform = "translateX(100%)";
 				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
 				document.getElementById("prefabs").style.overflow = "visible";
 			} else {
 				editor.inspector.element.style.transform = "translateX(0%)";
-				editor.menu.overflowTimeout = setTimeout(function(){
+				editor.menu.overflowTimeout = setTimeout(function() {
 					document.getElementById("prefabs").style.overflow = "auto";
-				},400);
+				}, 400);
 			}
 
-			if (parseInt(this.dataset.nthChild) === 2){ // World
-				for (uuid in editor.prefabs){
-					if (editor.prefabs[uuid].changed){
+			if (parseInt(this.dataset.nthChild) === 2) { // World
+				for (let uuid in editor.prefabs) {
+					if (editor.prefabs[uuid].changed) {
 						// update prefab
 
 						let containsStart = Object.keys( editor.prefabs[uuid].entities ).some(
@@ -80,7 +79,7 @@ window.addEventListener("DOMContentLoaded", function(){
 							}
 						);
 
-						for (key in editor.prefabs[uuid].instances){
+						for (let key in editor.prefabs[uuid].instances) {
 							let instance = editor.prefabs[uuid].instances[key];
 							let old = instance.sceneObject;
 
@@ -89,7 +88,7 @@ window.addEventListener("DOMContentLoaded", function(){
 							clone.position.copy(old.position);
 
 							if (containsStart) {
-								clone.rotation.setFromVector3( new THREE.Vector3(0,0,0) );
+								clone.rotation.setFromVector3( new THREE.Vector3(0, 0, 0) );
 							} else {
 								clone.rotation.copy(old.rotation);
 							}
@@ -116,7 +115,7 @@ window.addEventListener("DOMContentLoaded", function(){
 	}
 
 	// Fix camera
-	document.getElementById("fixCam").addEventListener("click", function(event){
+	document.getElementById("fixCam").addEventListener("click", function() {
 		flyCam.controls.getObject().position.x = -2.3;
 		flyCam.controls.getObject().position.y = 12;
 		flyCam.controls.getObject().position.z = 19.7;
@@ -137,25 +136,25 @@ window.addEventListener("DOMContentLoaded", function(){
 
 	// Add models
 	let GLTFLoader = new THREE.GLTFLoader();
-    document.getElementById("addModelFile").addEventListener("change", function(e) {
-		Array.from(this.files).forEach(function(file){
+	document.getElementById("addModelFile").addEventListener("change", function() {
+		Array.from(this.files).forEach(function(file) {
 			file.reader = new FileReader();
-			file.reader.onload = function(e) {
+			file.reader.onload = function() {
 				let result = file.reader.result;
 				// parse using your corresponding loader
 				GLTFLoader.parse(
 					result,	null,
-					function(model){
+					function(model) {
 						model.userData.name = file.name;
 						if (!Object.keys(editor.models).some((key)=>{ // Check if model is already loaded
 							return key === file.name;
-						})){
+						})) {
 							// Add to model list
 							let clone = document.getElementById("modelTemplate").cloneNode(true); // deep clone
 							clone.id = file.name;
 							clone.getElementsByClassName("name")[0].innerHTML = file.name;
-							clone.getElementsByClassName("name")[0].addEventListener("mousedown",function(){
-								if (editor.selectedModel){
+							clone.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
+								if (editor.selectedModel) {
 									editor.models[editor.selectedModel].scene.visible = false;
 									document.getElementById(editor.selectedModel).className = "model";
 								}
@@ -165,10 +164,10 @@ window.addEventListener("DOMContentLoaded", function(){
 							}, false);
 
 							// Delete model
-							clone.getElementsByClassName("delete")[0].addEventListener("click",function(){
+							clone.getElementsByClassName("delete")[0].addEventListener("click", function() {
 								let parent = this.parentNode;
 								let id = parent.id;
-								if ( confirm("Are you sure you want to delete this model? ("+id+")") ) {
+								if ( confirm(`Are you sure you want to delete this model? (${id})`) ) {
 									if (editor.selectedModel === id) editor.selectedModel = null;
 									editor.groups.models.remove(editor.models[id].scene);
 									delete editor.models[id];
@@ -178,7 +177,7 @@ window.addEventListener("DOMContentLoaded", function(){
 									}, false);
 									select.remove(index);
 									parent.parentNode.removeChild(parent); // oofies
-									editorLog("Removed model ("+id+")","warn");
+									editorLog(`Removed model (${id})`, "warn");
 								}
 							}, false);
 
@@ -198,42 +197,42 @@ window.addEventListener("DOMContentLoaded", function(){
 							model.scene.visible = false;
 
 							editor.models[file.name] = model;
-							editorLog("Loaded model: "+file.name,"info");
+							editorLog(`Loaded model: ${file.name}`, "info");
 						} else {
-							editorLog("Model already loaded. ("+file.name+")","error");
+							editorLog(`Model already loaded. (${file.name})`, "error");
 						}
-					}, function(error){
+					}, function(error) {
 						console.log(error);
 					}
 				);
-			}
+			};
 			file.reader.readAsText(file, "utf-8");
 		});
-    }, false);
+	}, false);
 
 	// World
 
 	// Change water level
-	let changeWaterLevel = function(e){
+	let changeWaterLevel = function() {
 		water.position.y = this.value;
-	}
-	document.getElementById("envWaterHeight").addEventListener("change",changeWaterLevel,false);
-	document.getElementById("envWaterHeight").addEventListener("input",changeWaterLevel,false);
+	};
+	document.getElementById("envWaterHeight").addEventListener("change", changeWaterLevel, false);
+	document.getElementById("envWaterHeight").addEventListener("input", changeWaterLevel, false);
 
 	// Change sun inclination
-	let changeSunInclination = function(e){
+	let changeSunInclination = function() {
 		parameters.inclination = this.value;
 		updateSun();
-	}
-	document.getElementById("envSunInclination").addEventListener("change",changeSunInclination,false);
-	document.getElementById("envSunInclination").addEventListener("input",changeSunInclination,false);
+	};
+	document.getElementById("envSunInclination").addEventListener("change", changeSunInclination, false);
+	document.getElementById("envSunInclination").addEventListener("input", changeSunInclination, false);
 
 	// Add world prefab
-	let addWorldPrefab = function(){
+	let addWorldPrefab = function() {
 		let prefabUuid = editor.elements.worldPrefab.value;
 		if (
-			!editor.elements.worldPrefab.disabled &&
-			prefabUuid !== "null"
+			!editor.elements.worldPrefab.disabled
+			&& prefabUuid !== "null"
 		) {
 			let clone = document.getElementById("worldPrefabTemplate").cloneNode(true); // deep clone
 			let uuid = generateTinyUUID();
@@ -243,7 +242,7 @@ window.addEventListener("DOMContentLoaded", function(){
 			clone.dataset.type = "instances";
 
 			// Add select event
-			clone.addEventListener("click",editor.inspector.select,false);
+			clone.addEventListener("click", editor.inspector.select, false);
 
 			// Add name & prefab name
 			clone.getElementsByClassName("name")[0].innerText =
@@ -266,7 +265,7 @@ window.addEventListener("DOMContentLoaded", function(){
 
 			// Add to DOM
 			let hierarchy = document.getElementById("worldHierarchy");
-			let element = hierarchy.insertBefore(clone,document.getElementById("worldPrefabTemplate"));
+			let element = hierarchy.insertBefore(clone, document.getElementById("worldPrefabTemplate"));
 
 			// Add instance reference to parent prefab
 			editor.prefabs[prefabUuid].instances[uuid] = {
@@ -276,79 +275,80 @@ window.addEventListener("DOMContentLoaded", function(){
 			};
 
 		}
-	}
+	};
+
 	document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldPrefab, false);
 
-	let exportPublishBinary = function(){
+	let exportPublishBinary = function() {
 		let serializationStart = new Date();
 		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
 		let payload = editor.serialization.preparePayload();
 		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
 		editor.serialization.worker.postMessage({
-			type: 'exportPublishBinary',
+			type: "exportPublishBinary",
 			payload: payload,
 			serializationStart: serializationStart
 		});
-	}
+	};
+
 	document.getElementById("exportPublishBinary").addEventListener("click", exportPublishBinary, false);
 
-	let exportPublishPlain = function(){
+	let exportPublishPlain = function() {
 		let serializationStart = new Date();
 		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
 		let payload = editor.serialization.preparePayload();
 		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
 		editor.serialization.worker.postMessage({
-			type: 'exportPublishPlain',
+			type: "exportPublishPlain",
 			payload: payload,
 			serializationStart: serializationStart
 		});
-	}
+	};
+
 	document.getElementById("exportPublishPlain").addEventListener("click", exportPublishPlain, false);
-
-
 }, false);
 
 // Spawn serialization worker
 editor.serialization = {};
 editor.serialization.worker = new Worker("scripts/editor/serialize_worker.js");
-editor.serialization.preparePayload = function(){
+editor.serialization.preparePayload = function() {
 
 	//  Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
-	for (key in editor.prefabs) {
+	for (let key in editor.prefabs) {
 		prefabs[key] = {
 			group: editor.prefabs[key].group.toJSON(),
 			uuid: key,
 			entities: {}
 		};
 
-		for (entity in editor.prefabs[key].entities) {
+		for (let entity in editor.prefabs[key].entities) {
 			prefabs[key].entities[entity] = {
 				sceneObject: editor.prefabs[key].entities[entity].sceneObject.toJSON(),
 				model: editor.prefabs[key].entities[entity].model,
 				shape: editor.prefabs[key].entities[entity].shape
 			};
-		};
+		}
 
-		for (instance in prefabs[key].instances) {
+		for (let instance in prefabs[key].instances) {
 			prefabs[key].instances[instance] = {
 				sceneObject: editor.prefabs[key].instances[instance].sceneObject.toJSON(),
 				uuid: instance
-			}
-		};
-	};
+			};
+		}
+	}
 
 	let models = {};
-	for (model in editor.models) {
+	for (let model in editor.models) {
 		models[model] = {
 			scene: editor.models[model].scene.toJSON(),
 			userData: {}
 		};
 
-		for (key in editor.models[model].userData) {
+		for (let key in editor.models[model].userData) {
 			models[model].userData[key] = editor.models[model].userData[key];
-		};
-	};
+		}
+	}
 
 	console.log(editor.models, models);
 
@@ -358,117 +358,68 @@ editor.serialization.preparePayload = function(){
 			author: document.getElementById("paramAuthorName").value,
 			enterPeriod: document.getElementById("paramEnterPeriod").value,
 			maxRoundLength: document.getElementById("paramMaxRoundLength").value,
-			waitAfterFinish: document.getElementById("paramWaitAfterFinish").value,
+			waitAfterFinish: document.getElementById("paramWaitAfterFinish").value
 		},
 		models: models,
 		prefabs: prefabs
 	};
 
 	return payload;
-}
-editor.serialization.worker.onmessage = function(message){
-	switch(message.data.type){
-		case "log":
-			editorLog(message.data.payload.message, message.data.payload.type);
-			break;
-		case "publishSuccess":
-			let a = document.createElement('a');
-			a.href = message.data.payload.url;
-			a.download = message.data.payload.filename;
-			a.click();
-			break;
-		default:
-			console.log('Unknown worker message', message);
-			break;
+};
+
+editor.serialization.worker.onmessage = function(message) {
+	let a;
+	switch(message.data.type) {
+	case "log":
+		editorLog(message.data.payload.message, message.data.payload.type);
+		break;
+	case "publishSuccess":
+		a = document.createElement("a");
+		a.href = message.data.payload.url;
+		a.download = message.data.payload.filename;
+		a.click();
+		break;
+	default:
+		console.log("Unknown worker message", message);
+		break;
 	}
-}
+};
 
 
 // Classic XHR snippet
-function getXMLDoc(doc, callback){
+function getXMLDoc(doc, callback) {
 	let xmlhttp;
 	xmlhttp = new XMLHttpRequest();
 	xmlhttp.onreadystatechange = function() {
 		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
 			console.log("rip", xmlhttp.response);
-		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200){
+		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
 			callback(xmlhttp.response);
 		}
-	}
+	};
 	xmlhttp.open("GET", doc, true);
 	xmlhttp.send();
 }
 
-function editorLog(message, type = "info"){
+function editorLog(message, type = "info") {
 	let date = new Date();
 	let hrs = date.getHours();
 	let min = date.getMinutes();
 	let sec = date.getSeconds();
-	if (hrs < 10){
-		hrs = "0"+hrs;
+	if (hrs < 10) {
+		hrs = `0${hrs}`;
 	}
-	if (min < 10){
-		min = "0"+min;
+	if (min < 10) {
+		min = `0${min}`;
 	}
-	if (sec < 10){
-		sec = "0"+sec;
+	if (sec < 10) {
+		sec = `0${sec}`;
 	}
 	editor.elements.log.insertAdjacentHTML(
 		"beforeend",
-		"<div class='"+type+"'>["+hrs+":"+min+":"+sec+"] "+message+"</div>"
+		`<div class='${type}'>[${hrs}:${min}:${sec}] ${message}</div>`
 	);
 	editor.elements.log.scrollTop = editor.elements.log.scrollHeight;
-}
-
-let TUUIDs = [];
-let charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-function generateTinyUUID(){
-	let l = 4;
-	let possibilities = Math.pow(charset.length,l);
-	let timeString = (new Date()).getTime().toString();
-	let decimal = parseInt(timeString.substr(timeString.length - possibilities.toString().length)) % possibilities;
-	while(TUUIDs.indexOf(decimal) !== -1){
-		decimal++;
-	}
-	TUUIDs.push(decimal);
-	let tUUID = "";
-	for (let i = 0; i < l; i++){
-		let remain = decimal % charset.length;
-		decimal = (decimal - remain) / charset.length;
-		tUUID += charset.substr(remain,1);
-	}
-	return tUUID.split("").reverse().join("");
-}
-
-// hslToHex courtesy of icl7126 and Abel Rodríguez at
-// https://stackoverflow.com/questions/36721830/convert-hsl-to-rgb-and-hex
-function hslToHex(h, s, l) {
-  h /= 360;
-  s /= 100;
-  l /= 100;
-  let r, g, b;
-  if (s === 0) {
-    r = g = b = l; // achromatic
-  } else {
-    const hue2rgb = (p, q, t) => {
-      if (t < 0) t += 1;
-      if (t > 1) t -= 1;
-      if (t < 1 / 6) return p + (q - p) * 6 * t;
-      if (t < 1 / 2) return q;
-      if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-      return p;
-    };
-    const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-    const p = 2 * l - q;
-    r = hue2rgb(p, q, h + 1 / 3);
-    g = hue2rgb(p, q, h);
-    b = hue2rgb(p, q, h - 1 / 3);
-  }
-  const toHex = x => {
-    const hex = Math.round(x * 255).toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  };
-  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
 window.onbeforeunload = function(e) {
@@ -476,33 +427,3 @@ window.onbeforeunload = function(e) {
 	e.returnValue = dialogText;
 	return dialogText;
 };
-
-
-// =============== gross
-
-const isObject = val =>
-  typeof val === 'object' && !Array.isArray(val);
-
-const paths = (obj = {}) =>
-  Object.entries(obj)
-    .reduce(
-      (product, [key, value]) =>
-        isObject(value) ?
-        product.concat([
-          [typeof value, paths(value)] // adds [root, [children]] list
-        ]) :
-        product.concat([typeof value]), // adds [child] list
-      []
-    )
-
-const addDelimiter = (a, b) =>
-  a ? `${a}.${b}` : b;
-
-const pathToString = ([root, children]) =>
-  children.map(
-    child =>
-      Array.isArray(child) ?
-      addDelimiter(root, pathToString(child)) :
-      addDelimiter(root, child)
-  )
-  .join('\n');

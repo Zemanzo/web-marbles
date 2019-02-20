@@ -18,21 +18,10 @@
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
-		{{>partials/scripts/global}}
-		<script src="config.js"></script>
 		<script src="scripts/lib/OBJFile.js"></script>
-		<script src="scripts/whenDocReady.js"></script>
-		<script src="scripts/editor/editor.js"></script>
-		<script src="scripts/editor/inspector.js"></script>
-		<script src="scripts/editor/prefabs.js"></script>
+		<script src="scripts/dist/editor.js"></script>
 	</head>
 	<body>
-		<!-- THREEJS -->
-		{{>partials/scripts/ThreeJS}}
-
-		<!-- NODE MATERIALS -->
-		{{>partials/scripts/NodeMaterials}}
-
 		<!-- Actual document stuff -->
 		<section id="viewport">
 			<!-- Things are rendered here -->
@@ -431,7 +420,5 @@
 			</div>
 
 		</section>
-		<script src="scripts/render/cameraFlyControls.js"></script>
-		<script src="scripts/editor/render.js"></script>
 	</body>
 </html>

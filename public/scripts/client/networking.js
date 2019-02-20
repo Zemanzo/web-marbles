@@ -15,7 +15,6 @@ let net = { // Initialize, do not configure these values.
 	requestsSkipped: 0 // Helps detect network issues
 };
 
-
 // Socket data promise
 net.socketReady = new Promise((resolve) => {
 	// Once connected, client receives initial data
