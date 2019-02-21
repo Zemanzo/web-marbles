@@ -54,8 +54,6 @@ export function CameraFlyControls(
 	if (!options.defaultRotation)
 		options.defaultRotation = { x: 0, y: 0, z: 0 };
 
-	console.log(options);
-
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
 	this.speed = options.speed;
@@ -81,7 +79,7 @@ export function CameraFlyControls(
 		// Hook pointer lock state change events
 		func = function() {
 			// document.pointerLockElement is null if pointerlock is inactive
-			if (document.pointerLockElement !== options.pointerLockElement) this.stop();
+			if (document.pointerLockElement !== options.pointerLockElement) stop();
 		};
 		listeners.push( addRegisteredEventListener(document, "pointerlockchange", func, false) );
 
@@ -144,7 +142,7 @@ export function CameraFlyControls(
 	this.disable = function() {
 		this.enabled = false;
 
-		this.stop();
+		stop();
 
 		// remove listeners
 		listeners.forEach((el)=>{
@@ -164,7 +162,7 @@ export function CameraFlyControls(
 		}).bind(this), false);
 	}
 
-	this.stop = (function() {
+	let stop = this.stop = (function() {
 		this.velocity.x = 0;
 		this.velocity.y = 0;
 		this.velocity.z = 0;
