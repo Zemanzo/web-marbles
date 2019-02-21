@@ -2,8 +2,7 @@ import * as THREE from "three";
 import * as materials from "./materials";
 
 let editor;
-
-export let inspector = {
+let inspector = {
 	selected: null,
 	selectedEntity: null,
 	select: function() {
@@ -487,3 +486,9 @@ export let inspector = {
 		}, false);
 	}
 };
+
+export let initialize = inspector.initialize,
+	select = inspector.select,
+	deselect = inspector.deselect,
+	selected = inspector.selected,
+	selectedEntity = inspector.selectedEntity;

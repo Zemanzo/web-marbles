@@ -81,7 +81,7 @@ export function CameraFlyControls(
 		// Hook pointer lock state change events
 		func = function() {
 			// document.pointerLockElement is null if pointerlock is inactive
-			if (document.pointerLockElement !== options.pointerLockElement) stop();
+			if (document.pointerLockElement !== options.pointerLockElement) this.stop();
 		};
 		listeners.push( addRegisteredEventListener(document, "pointerlockchange", func, false) );
 
@@ -144,7 +144,7 @@ export function CameraFlyControls(
 	this.disable = function() {
 		this.enabled = false;
 
-		stop();
+		this.stop();
 
 		// remove listeners
 		listeners.forEach((el)=>{
@@ -164,7 +164,7 @@ export function CameraFlyControls(
 		}).bind(this), false);
 	}
 
-	let stop = (function() {
+	this.stop = (function() {
 		this.velocity.x = 0;
 		this.velocity.y = 0;
 		this.velocity.z = 0;
@@ -177,13 +177,16 @@ export function CameraFlyControls(
 
 	let controls = this.controls = new PointerLockControls(options.camera, renderer.domElement);
 
-	controls.getObject().position.x = options.defaultPosition.x;
-	controls.getObject().position.y = options.defaultPosition.y;
-	controls.getObject().position.z = options.defaultPosition.z;
+	this.toDefaults = function() {
+		controls.getObject().position.x = options.defaultPosition.x;
+		controls.getObject().position.y = options.defaultPosition.y;
+		controls.getObject().position.z = options.defaultPosition.z;
 
-	options.camera.parent.rotation.x = options.defaultRotation.x;
-	options.camera.parent.rotation.y = options.defaultRotation.y;
-	controls.getObject().rotation.z  = options.defaultRotation.z;
+		options.camera.parent.rotation.x = options.defaultRotation.x;
+		options.camera.parent.rotation.y = options.defaultRotation.y;
+		controls.getObject().rotation.z  = options.defaultRotation.z;
+	};
+	this.toDefaults();
 
 	scene.add(controls.getObject());
 

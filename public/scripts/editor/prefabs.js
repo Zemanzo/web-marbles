@@ -1,11 +1,13 @@
 import { BoxBufferGeometry, Mesh, Group } from "three";
 import { generateTinyUUID } from "../generateTinyUUID";
 import { hslToHex } from "../hslToHex";
-import * as inspector from "./inspector";
+import { selected, select, deselect } from "./inspector";
 import { physicsMaterial } from "./materials";
+import { defaultModel } from "./render";
 
 let prefabs = {},
 	editor;
+
 prefabs.initialize = function(global) {
 	editor = global;
 
@@ -31,8 +33,8 @@ prefabs.initialize = function(global) {
 		let name = parent.getElementsByClassName("name")[0].innerHTML;
 		if ( !event || confirm(`Are you sure you want to delete this entity? (${name}) (${uuid})`) ) {
 			// Deselect inspector if it shows currently selected object
-			if (inspector.selected === parent)
-				inspector.deselect();
+			if (selected === parent)
+				deselect();
 
 			// Remove element
 			parent.parentNode.removeChild(parent);
@@ -56,7 +58,7 @@ prefabs.initialize = function(global) {
 		if ( confirm(`Are you sure you want to delete this prefab? (${name}) (${parent.dataset.uuid})`) ) {
 			// Deselect inspector
 			// TODO: add deselect condition (only need to deselect when selected object is in prefab)
-			editor.inspector.deselect();
+			deselect();
 
 			let children = parent.getElementsByClassName("objectList")[0].children;
 			for (let i = children.length; i > 0; i--) {
@@ -97,7 +99,7 @@ prefabs.initialize = function(global) {
 		clone.getElementsByClassName("name")[0].innerHTML = type + editor.entityCount++;
 		clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
 		clone.getElementsByClassName("delete")[0].addEventListener("click", deleteEntity, false);
-		clone.addEventListener("click", editor.inspector.select, false);
+		clone.addEventListener("click", select, false);
 		clone = parent.getElementsByClassName("objectList")[0].appendChild(clone);
 		editor.prefabs[parent.dataset.uuid].entities[uuid] = {
 			element: clone
@@ -111,7 +113,7 @@ prefabs.initialize = function(global) {
 		let parent = this.closest(".prefab");
 		let uuid = addTemplateElement.call(this, "Object", parent);
 
-		let clone = editor.defaultModel.clone();
+		let clone = defaultModel.clone();
 		editor.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
 		editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject.userData.functionality = "static";
@@ -230,3 +232,5 @@ prefabs.initialize = function(global) {
 		clone.getElementsByClassName("prefabName")[0].focus();
 	}, false);
 };
+
+export { prefabs };

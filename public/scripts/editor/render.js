@@ -6,8 +6,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/loaders/GLTFLoader";
 import * as Stats from "stats-js";
-import * as config from "../../config";
-import { cameraFlyControls } from "../render/cameraFlyControls";
+import { CameraFlyControls } from "../render/cameraFlyControls";
 
 let viewport, camera, renderer, stats, controls,
 	scene = new THREE.Scene();
@@ -28,24 +27,28 @@ function init() {
 
 	updateSun();
 
-	controls = new cameraFlyControls(
-		scene, renderer, {
-			pointerLockElement: viewport,
-			camera,
-			defaultPosition: {
-				x: -2.3,
-				y: 12,
-				z: 19.7
-			},
-			defaultRotation: {
-				x: -.3,
-				y: 0,
-				z: 0
-			}
+	controls = new CameraFlyControls(scene, renderer, {
+		pointerLockElement: viewport,
+		camera,
+		defaultPosition: {
+			x: -2.3,
+			y: 12,
+			z: 19.7
+		},
+		defaultRotation: {
+			x: -.3,
+			y: 0,
+			z: 0
 		}
-	);
+	});
 
-	editorLog("Renderer loaded");
+	// Fix camera
+	document.getElementById("fixCam").addEventListener("click", function () {
+		controls.stop();
+		controls.toDefaults();
+	}, false);
+
+	//editorLog("Renderer loaded");
 
 	animate();
 }
@@ -108,7 +111,7 @@ uniforms.luminance.value = 1;
 uniforms.mieCoefficient.value = 0.005;
 uniforms.mieDirectionalG.value = 0.8;
 
-let parameters = {
+let sunParameters = {
 	distance: 4000,
 	inclination: 0.49,
 	azimuth: 0.205
@@ -119,16 +122,16 @@ cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
 
 function updateSun() {
 
-	let theta = Math.PI * ( parameters.inclination - 0.5 );
-	let phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
+	let theta = Math.PI * ( sunParameters.inclination - 0.5 );
+	let phi = 2 * Math.PI * ( sunParameters.azimuth - 0.5 );
 
-	light.position.x = parameters.distance * Math.cos( phi );
-	light.position.y = parameters.distance * Math.sin( phi ) * Math.sin( theta );
-	light.position.z = parameters.distance * Math.sin( phi ) * Math.cos( theta );
+	light.position.x = sunParameters.distance * Math.cos( phi );
+	light.position.y = sunParameters.distance * Math.sin( phi ) * Math.sin( theta );
+	light.position.z = sunParameters.distance * Math.sin( phi ) * Math.cos( theta );
 
 	sky.material.uniforms.sunPosition.value = light.position.copy( light.position );
-/* 	light.shadow.camera.position.copy(light.position);
-	light.shadow.camera.rotation.copy(light.rotation); */
+	// light.shadow.camera.position.copy(light.position);
+	// light.shadow.camera.rotation.copy(light.rotation);
 	light.shadow.mapSize.width = 2048;  // default
 	light.shadow.mapSize.height = 2048; // default
 	light.shadow.camera.near = 3500;
@@ -143,23 +146,15 @@ function updateSun() {
 
 }
 
-updateSun();
-
 //
 
-let uniforms = {
+uniforms = {
 	time: { value: 1.0 }
 };
 let clock = new THREE.Clock();
 
-// Editor groups
-for (let key in editor.groups) {
-	editor.groups[key] = new THREE.Group();
-	scene.add(editor.groups[key]);
-	if (key !== "models") editor.groups[key].visible = false;
-}
-
 // Default model
+let defaultModel;
 let GLTFLoader = new THREE.GLTFLoader();
 GLTFLoader.load(
 	// resource URL
@@ -167,7 +162,7 @@ GLTFLoader.load(
 
 	// called when the resource is loaded
 	function (gltf) {
-		editor.defaultModel = gltf.scene;
+		defaultModel = gltf.scene;
 	},
 
 	null,
@@ -196,10 +191,14 @@ function animate() {
 	uniforms.time.value += delta * 5;
 
 	// Render the darn thing
-	renderer.render(scene, camera );
+	renderer.render(scene, camera);
 }
 
 export {
 	scene,
-	init
+	init,
+	defaultModel,
+	updateSun,
+	sunParameters,
+	water
 };

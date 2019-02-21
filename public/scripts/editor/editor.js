@@ -1,9 +1,8 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
-import { config } from "../../config";
 import * as inspector from "./inspector";
-import * as prefabs from "./prefabs";
-import "./render";
+import { prefabs } from "./prefabs";
+import { scene, init as renderInit, updateSun, water, sunParameters } from "./render";
 import { generateTinyUUID } from "../generateTinyUUID";
 
 let editor = {
@@ -25,18 +24,22 @@ let editor = {
 window.addEventListener("DOMContentLoaded", function() {
 	editor.elements = {
 		log: document.getElementById("log"),
-		worldPrefab: document.getElementById("worldPrefab")
+		worldPrefab: document.getElementById("worldPrefab"),
+		inspector: document.getElementById("inspector")
 	};
-
-	//
 
 	inspector.initialize(editor);
 
-	//
-
 	prefabs.initialize(editor);
 
-	//
+	renderInit();
+
+	// Editor groups
+	for (let key in editor.groups) {
+		editor.groups[key] = new THREE.Group();
+		scene.add(editor.groups[key]);
+		if (key !== "models") editor.groups[key].visible = false;
+	}
 
 	// Menu
 	let childValue = 0;
@@ -54,14 +57,14 @@ window.addEventListener("DOMContentLoaded", function() {
 				editor.groups[key].visible = false;
 			}
 
-			editor.inspector.deselect();
+			inspector.deselect();
 
 			if (parseInt(this.dataset.nthChild) >= 2) {
-				editor.inspector.element.style.transform = "translateX(100%)";
+				editor.elements.inspector.style.transform = "translateX(100%)";
 				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
 				document.getElementById("prefabs").style.overflow = "visible";
 			} else {
-				editor.inspector.element.style.transform = "translateX(0%)";
+				editor.elements.inspector.style.transform = "translateX(0%)";
 				editor.menu.overflowTimeout = setTimeout(function() {
 					document.getElementById("prefabs").style.overflow = "auto";
 				}, 400);
@@ -113,26 +116,6 @@ window.addEventListener("DOMContentLoaded", function() {
 
 		}, false);
 	}
-
-	// Fix camera
-	document.getElementById("fixCam").addEventListener("click", function() {
-		flyCam.controls.getObject().position.x = -2.3;
-		flyCam.controls.getObject().position.y = 12;
-		flyCam.controls.getObject().position.z = 19.7;
-		flyCam.controls.getObject().rotation.z = 0;
-		flyCam.controls.getObject().rotation.x = 0;
-		flyCam.controls.getObject().rotation.y = 0;
-		camera.parent.rotation.x = -.3;
-		velocity.z = 0;
-		velocity.x = 0;
-		velocity.y = 0;
-		moveForward = false;
-		moveBackward = false;
-		moveLeft = false;
-		moveRight = false;
-	}, false);
-
-	//
 
 	// Add models
 	let GLTFLoader = new THREE.GLTFLoader();
@@ -221,7 +204,7 @@ window.addEventListener("DOMContentLoaded", function() {
 
 	// Change sun inclination
 	let changeSunInclination = function() {
-		parameters.inclination = this.value;
+		sunParameters.inclination = this.value;
 		updateSun();
 	};
 	document.getElementById("envSunInclination").addEventListener("change", changeSunInclination, false);
@@ -242,7 +225,7 @@ window.addEventListener("DOMContentLoaded", function() {
 			clone.dataset.type = "instances";
 
 			// Add select event
-			clone.addEventListener("click", editor.inspector.select, false);
+			clone.addEventListener("click", inspector.select, false);
 
 			// Add name & prefab name
 			clone.getElementsByClassName("name")[0].innerText =
@@ -384,22 +367,6 @@ editor.serialization.worker.onmessage = function(message) {
 		break;
 	}
 };
-
-
-// Classic XHR snippet
-function getXMLDoc(doc, callback) {
-	let xmlhttp;
-	xmlhttp = new XMLHttpRequest();
-	xmlhttp.onreadystatechange = function() {
-		if (xmlhttp.readyState === 4 && xmlhttp.status !== 200) {
-			console.log("rip", xmlhttp.response);
-		} else if (callback && xmlhttp.readyState === 4 && xmlhttp.status === 200) {
-			callback(xmlhttp.response);
-		}
-	};
-	xmlhttp.open("GET", doc, true);
-	xmlhttp.send();
-}
 
 function editorLog(message, type = "info") {
 	let date = new Date();
