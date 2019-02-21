@@ -1,10 +1,6 @@
 module.exports = function(db) {
 	return {
-		_idExists: db.prepare(
-			`SELECT EXISTS (
-				SELECT 1 FROM users WHERE id = ?
-			)`
-		),
+		_idExists: db.prepare("SELECT id FROM users WHERE id = ?"),
 
 		idExists(id) {
 			return !!this._idExists.get(id);
@@ -95,7 +91,7 @@ module.exports = function(db) {
 			) VALUES (?,?,?,?,?,?,?,?,?)`
 		),
 
-		insertNewUser(user_body, token_body, scope) {
+		insertNewUser(token_body, user_body, scope) {
 			this._insertNewUser.run([
 				user_body.id,
 				user_body.username,

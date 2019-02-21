@@ -1,6 +1,5 @@
 import io from "socket.io-client";
 import { network as config } from "../../config";
-import { renderer } from "./render";
 
 let socket = io({
 	transports: ["websocket"]
@@ -36,9 +35,6 @@ net.socketReady = new Promise((resolve) => {
 			});
 		} else {
 			net.requestsSkipped++;
-		}
-		if (renderer) {
-			renderer.updateNet(net);
 		}
 		setTimeout(net.getServerData, 1000 / config.tickrate);
 	};
