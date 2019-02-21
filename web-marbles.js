@@ -10,7 +10,6 @@ const db = require("./src/database/manager");
 db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
-db.initialize();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
 let timeoutMap = {};
@@ -248,8 +247,15 @@ chat.testMessage = function(messageContent, id, username) {
 		);
 	}
 
-	if (messageContent.startsWith("!end") && id == "112621040487702528") {
+	else if (messageContent.startsWith("!end") && (id == "112621040487702528" || id == "133988602530103298")) {
 		game.end();
+	}
+
+	else if (messageContent.startsWith("!lotsofbots") && (id == "112621040487702528" || id == "133988602530103298")) {
+		let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
+		for (let i = 0; i < amount; i++) {
+			spawnMarble();
+		}
 	}
 };
 

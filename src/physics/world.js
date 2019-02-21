@@ -98,7 +98,7 @@ module.exports = function(Ammo, config) {
 	let gateTransform = new Ammo.btTransform();
 	gateTransform.setIdentity();
 	let gatePosition = config.marbles.mapRotation[0].startGate.position;
-	gateTransform.setOrigin( new Ammo.btVector3( gatePosition.x,gatePosition.z,gatePosition.y ) );
+	gateTransform.setOrigin( new Ammo.btVector3( gatePosition.x, gatePosition.z, gatePosition.y ) );
 
 	let gateMass = 0;
 	let gatelocalInertia = new Ammo.btVector3(0, 0, 0);
@@ -116,10 +116,10 @@ module.exports = function(Ammo, config) {
 	/* Physics interval */
 	let physStepInterval = setInterval(function() {
 		let now = Date.now();
-		let deltaTime = (now - lastPhysicsUpdate)/1000;
+		let deltaTime = (now - lastPhysicsUpdate) / 1000;
 		lastPhysicsUpdate = now;
 		updatePhysics(deltaTime);
-	},1000/config.physics.steps);
+	}, 1000 / config.physics.steps);
 
 	function updatePhysics( deltaTime ) {
 

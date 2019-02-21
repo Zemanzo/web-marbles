@@ -5,7 +5,7 @@ module.exports = function(Ammo, world) {
 		_pos: undefined,
 		_rot: undefined,
 
-		createMarble(name,color) {
+		createMarble(name, color) {
 			// Create physics body
 			let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
 			let sphereShape = new Ammo.btSphereShape(size);
@@ -38,8 +38,8 @@ module.exports = function(Ammo, world) {
 		},
 
 		getMarbleTransformations() {
-			this._pos = new Float32Array(this.list.length*3);
-			this._rot = new Float64Array(this.list.length*4);
+			this._pos = new Float32Array(this.list.length * 3);
+			this._rot = new Float64Array(this.list.length * 4);
 
 			for (let i = 0; i < this.list.length; i++) {
 				let ms = this.list[i].ammoBody.getMotionState();
@@ -48,14 +48,14 @@ module.exports = function(Ammo, world) {
 					let p = this._marblesTransformAux.getOrigin();
 					let q = this._marblesTransformAux.getRotation();
 
-					this._pos[i*3+0] = p.x();
-					this._pos[i*3+1] = p.z();
-					this._pos[i*3+2] = p.y();
+					this._pos[i * 3 + 0] = p.x();
+					this._pos[i * 3 + 1] = p.z();
+					this._pos[i * 3 + 2] = p.y();
 
-					this._rot[i*4+0] = q.x();
-					this._rot[i*4+1] = q.z();
-					this._rot[i*4+2] = q.y();
-					this._rot[i*4+3] = q.w();
+					this._rot[i * 4 + 0] = q.x();
+					this._rot[i * 4 + 1] = q.z();
+					this._rot[i * 4 + 2] = q.y();
+					this._rot[i * 4 + 3] = q.w();
 				}
 			}
 
@@ -76,5 +76,5 @@ module.exports = function(Ammo, world) {
 };
 
 function randomHexColor() {
-	return `#${(Math.random()*0xffffff|0).toString(16)}`;
+	return `#${(Math.random() * 0xffffff | 0).toString(16)}`;
 }
