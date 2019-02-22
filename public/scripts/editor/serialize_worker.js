@@ -2,7 +2,7 @@ let serialize = {};
 
 onmessage = function(message) {
 	serialize.start = message.data.serializationStart || new Date();
-	switch(message.data.type){
+	switch(message.data.type) {
 	case "exportPublishBinary":
 		sendLog(`- Data received by worker (${(new Date()) - serialize.start}ms)`);
 		exportPublish(message.data.payload, true);
@@ -21,15 +21,15 @@ onmessage = function(message) {
 		});
 		break;
 	}
-}
+};
 
-let exportPublish = function(data, compress){
+let exportPublish = function(data, compress) {
 	try {
 		// Object to string
 		data = JSON.stringify(data);
 		sendLog(`- Stringified (${(new Date()) - serialize.start}ms)`);
 
-		if (compress){
+		if (compress) {
 			importScripts("/scripts/lib/lz-string.min.js");
 			let startLength = data.length;
 			sendLog("- Start compression (this might take a while...)");
@@ -65,9 +65,9 @@ let exportPublish = function(data, compress){
 			}
 		});
 	}
-}
+};
 
-function sendLog(message,type){
+function sendLog(message, type) {
 	postMessage({
 		type: "log",
 		payload: {

@@ -7,6 +7,7 @@ import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/loaders/GLTFLoader";
 import * as Stats from "stats-js";
 import { CameraFlyControls } from "../render/cameraFlyControls";
+import { editorLog } from "./log";
 
 let viewport, camera, renderer, stats, controls,
 	scene = new THREE.Scene();
@@ -48,7 +49,7 @@ function init() {
 		controls.toDefaults();
 	}, false);
 
-	//editorLog("Renderer loaded");
+	editorLog("Renderer loaded");
 
 	animate();
 }

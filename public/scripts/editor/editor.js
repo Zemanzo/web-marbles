@@ -1,9 +1,10 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
+import { generateTinyUUID } from "../generateTinyUUID";
 import * as inspector from "./inspector";
 import { prefabs } from "./prefabs";
+import { setEditorLogElement, editorLog } from "./log";
 import { scene, init as renderInit, updateSun, water, sunParameters } from "./render";
-import { generateTinyUUID } from "../generateTinyUUID";
 
 let editor = {
 	log: undefined,
@@ -23,10 +24,11 @@ let editor = {
 
 window.addEventListener("DOMContentLoaded", function() {
 	editor.elements = {
-		log: document.getElementById("log"),
 		worldPrefab: document.getElementById("worldPrefab"),
 		inspector: document.getElementById("inspector")
 	};
+
+	setEditorLogElement( document.getElementById("log") );
 
 	inspector.initialize(editor);
 
@@ -124,14 +126,19 @@ window.addEventListener("DOMContentLoaded", function() {
 			file.reader = new FileReader();
 			file.reader.onload = function() {
 				let result = file.reader.result;
+
 				// parse using your corresponding loader
 				GLTFLoader.parse(
 					result,	null,
 					function(model) {
 						model.userData.name = file.name;
-						if (!Object.keys(editor.models).some((key)=>{ // Check if model is already loaded
+						// Check if model is already loaded
+						if (!Object
+							.keys(editor.models)
+							.some( (key) => {
 							return key === file.name;
-						})) {
+							} )
+						) {
 							// Add to model list
 							let clone = document.getElementById("modelTemplate").cloneNode(true); // deep clone
 							clone.id = file.name;
@@ -296,7 +303,7 @@ editor.serialization = {};
 editor.serialization.worker = new Worker("scripts/editor/serialize_worker.js");
 editor.serialization.preparePayload = function() {
 
-	//  Recreate necessary object structure so it can be "deep cloned"
+	// Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
 	for (let key in editor.prefabs) {
 		prefabs[key] = {
@@ -368,29 +375,8 @@ editor.serialization.worker.onmessage = function(message) {
 	}
 };
 
-function editorLog(message, type = "info") {
-	let date = new Date();
-	let hrs = date.getHours();
-	let min = date.getMinutes();
-	let sec = date.getSeconds();
-	if (hrs < 10) {
-		hrs = `0${hrs}`;
-	}
-	if (min < 10) {
-		min = `0${min}`;
-	}
-	if (sec < 10) {
-		sec = `0${sec}`;
-	}
-	editor.elements.log.insertAdjacentHTML(
-		"beforeend",
-		`<div class='${type}'>[${hrs}:${min}:${sec}] ${message}</div>`
-	);
-	editor.elements.log.scrollTop = editor.elements.log.scrollHeight;
-}
-
 window.onbeforeunload = function(e) {
-	var dialogText = "Leave? You might lose unsaved changes!";
+	let dialogText = "Leave? You might lose unsaved changes!";
 	e.returnValue = dialogText;
 	return dialogText;
 };

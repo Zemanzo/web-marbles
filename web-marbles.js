@@ -142,35 +142,8 @@ app.get("/", function (req, res) {
 app.get("/client", function (req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
 
-		// Add bot marble
-		if (
-			req.query.bot
-			&& game.logic.state === "enter"
-		) {
-			spawnMarble("nightbot", "#000000");
-			res.send("ok");
-		}
-
-		// Clear all marbles
-		else if (req.query.clear) {
-
-			res.send(
-				game.end() ? "ok" : "already waiting for start"
-			);
-
-		}
-
-		// Start the game, move the startGate out of the way
-		else if (req.query.start) {
-
-			res.send(
-				game.start() ? "ok" : "already started"
-			);
-
-		}
-
 		// Send over the gamestate when a new connection is made
-		else if (req.query.gamestate) {
+		if (req.query.gamestate) {
 
 			res.send(
 				{
