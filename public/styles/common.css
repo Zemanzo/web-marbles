@@ -1,46 +1,23 @@
 body {
-	--theme-color:#BA0069;
-	--theme-color-dark:#4B002A;
-	--twitch-purple:#6441A4;
-	--twitch-purple-hover:rgb(125, 91, 190);
+	--theme-color: #BA0069;
+	--theme-color-dark: #4B002A;
+	--twitch-purple: #6441A4;
+	--twitch-purple-hover: rgb(125, 91, 190);
 }
-
-#twitchLink {
-	text-decoration:none;
-	display:flex;
-	justify-content:center;
-}
-	
-#twitchConnect {
-	font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
-	background-color:var(--twitch-purple);
-	padding:8px;
-	justify-content:center;
-	align-items:center;
-	color:#fff;
-	font-size:.8em;
-	font-weight:600;
-	width:25ch;
-	cursor:pointer;
-}
-	#twitchConnect:hover {
-		background-color:var(--twitch-purple-hover);
-	}
-
-	#twitchConnect img {
-		max-height:1.8em;
-		margin-right:12px;
-	}
 
 button {
-	color:var(--theme-color);
-	background:#111;
-	border:none;
-	cursor:pointer;
-	padding:4px;
-	font-weight:600;
+	color: var(--theme-color);
+	background: #111;
+	border: none;
+	cursor: pointer;
+	padding: 4px;
+	font-weight: 600;
 }
 
 button:hover {
-	text-decoration:underline;
+	text-decoration: underline;
+}
+
+input[type=color] {
+	padding: 0px;
 }

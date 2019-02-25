@@ -1,204 +1,210 @@
 * {
-	margin:0;
-	box-sizing:border-box;
+	margin: 0;
+	box-sizing: border-box;
 }
 
 html {
-	background:#111;
-	padding:1px;
+	background: #111;
+	padding: 1px;
 }
 
 body {
-	font-family:"Do Hyeon",monospace;
-	background:#111;
-	height:calc(100vh - 2px);
-	overflow:hidden;
-	display:flex;
-	/* padding:1px; */
-	border:1px solid var(--theme-color);
+	font-family: "Do Hyeon",monospace;
+	background: var(--theme-color);
+	height: calc(100vh - 2px);
+	overflow: hidden;
+	display: flex;
+	/* padding: 1px; */
+	/* border: 1px solid var(--theme-color); */
 }
 
 a {
-	color:#09f;
+	color: #09f;
 }
 
 a:hover {
-	color:#3df;
+	color: #3df;
 }
 
 #viewport {
-	flex:1;
-	margin:1px;
-	position:relative;
+	flex: 1;
+	margin: 6px;
+	position: relative;
 }
 
+	#viewport canvas {
+		border-radius: 15px;
+	}
+
 	#viewportOverlay {
-		position:absolute;
-		left:0px;
-		top:0px;
-		height:100%;
-		width:100%;
-		display:flex;
-		flex-direction:row-reverse;
-		pointer-events: none;
+		position: absolute;
+		left: 0px;
+		top: 0px;
+		height: 100%;
+		width: 100%;
+		display: flex;
+		flex-direction: row-reverse;
+		pointer-events:  none;
 	}
-	
+
 	#viewportOverlay > * {
-		pointer-events: all;
+		pointer-events:  all;
 	}
-	
+
 	#viewportOverlay button {
-		height: 2em;
+		height:  2em;
 	}
 
 #sidebar {
-	right:0px;
-	width:360px;
-	box-sizing:border-box;
-	display:flex;
-	flex-direction:column;
-	justify-content:flex-start;
-	align-items:center;
-	background:#161616;
-	color:#eee;
-	border-left:1px solid var(--theme-color);
+	right: 0px;
+	width: 360px;
+	box-sizing: border-box;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	background: #161616;
+	color: #eee;
+	margin: 6px;
+	border-radius: 15px;
+	/* border-left: 1px solid var(--theme-color); */
 }
 
 	#sidebar > *:not(a) {
-		width:100%;
-		box-sizing:border-box;
+		width: 100%;
+		box-sizing: border-box;
 	}
 
 	#sidebar > h4 {
-		text-align:center;
-		color:#444;
-		margin-bottom:1em;
+		text-align: center;
+		color: #444;
+		margin-bottom: 1em;
 	}
 
 	hr {
-		border-top:none;
-		border-left:none;
-		border-right:none;
-		border-bottom:2px dashed var(--theme-color-dark);
-		margin-bottom:12px;
+		border-top: none;
+		border-left: none;
+		border-right: none;
+		border-bottom: 2px dashed var(--theme-color-dark);
+		margin-bottom: 12px;
 	}
 
 	#title {
-		width:100%;
-		color:#aaa;
-		text-align:center;
-		font-size:1.3em;
-		text-decoration:none;
+		width: 100%;
+		color: #aaa;
+		text-align: center;
+		font-size: 1.3em;
+		text-decoration: none;
 	}
 	#gameInfo {
-		min-height:350px;
-		padding:9px;
+		min-height: 350px;
+		padding: 9px;
 	}
-	
+
 		#gameState {
-			display:flex;
-			justify-content:space-around;
-			align-items:center;
-			margin-bottom:12px;
-			height:2em;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+			margin-bottom: 12px;
+			height: 2em;
 		}
 			#state {
-				margin:0px 8px;
-				font-size:1.7em;
-				text-align: center;
-				width:260px;
+				margin: 0px 8px;
+				font-size: 1.7em;
+				text-align:  center;
+				width: 260px;
 			}
-		
+
 			#timer {
-				flex:1;
-				text-align:center;
-				font-size:2em;
+				flex: 1;
+				text-align: center;
+				font-size: 2em;
 			}
 
 	#title:hover {
-		color:#eee;
+		color: #eee;
 	}
-		
+
 	#twitchConnect,
 	#welcomeMessage {
-		display:none;
+		display: none;
 	}
-	
+
 	#twitchConnect ~ hr,
 	#welcomeMessage ~ hr {
-		margin-top:12px;
+		margin-top: 12px;
 	}
-	
+
 	#welcomeMessage {
-		text-align:center;
+		text-align: center;
 	}
-	
+
 .themeNumber {
-	color:var(--theme-color);
-	text-shadow:2px 2px var(--theme-color-dark);
+	color: var(--theme-color);
+	text-shadow: 2px 2px var(--theme-color-dark);
 }
 
 #chat {
-	flex:1;
-	display:flex;
-	flex-direction:column;
-	padding:9px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	padding: 9px;
 }
 
 	#chat > iframe {
-		flex:1;
+		flex: 1;
 	}
-	
+
 .separator {
-	display:flex;
-	align-items:center;
-	margin-top:12px;
+	display: flex;
+	align-items: center;
+	margin-top: 12px;
 }
 
 .separator hr {
-	border:none;
-	border-top:2px solid #000;
-	margin:0px 8px;
-	flex:1;
+	border: none;
+	border-top: 2px solid #000;
+	margin: 0px 8px;
+	flex: 1;
 }
 
 p {
-	margin:0px 8px 4px 8px;
+	margin: 0px 8px 4px 8px;
 }
 
 #marbleList {
-	min-height:240px;
-	max-height:240px;
-	overflow:auto;
+	min-height: 240px;
+	max-height: 240px;
+	overflow: auto;
 }
 
 #marbleListTemplate {
-	display:none;
+	display: none;
 }
 
 .marbleListEntry {
-	margin:0px 8px;
-	display:flex;
+	margin: 0px 8px;
+	display: flex;
 }
 
 	.marbleListEntry .rank {
-		min-width:2.5em;
-		margin-right:8px;
-		text-align:right;
+		min-width: 2.5em;
+		margin-right: 8px;
+		text-align: right;
 	}
 
 	.marbleListEntry .color {
-		min-width:1em;
-		display:inline-block;
-		margin-right:4px;
+		min-width: 1em;
+		display: inline-block;
+		margin-right: 4px;
 	}
-	
+
 	.marbleListEntry .id {
-		min-width:2.5em;
-		margin-left:8px;
-		text-align:right;
+		min-width: 2.5em;
+		margin-left: 8px;
+		text-align: right;
 	}
-	
+
 	.marbleListEntry .name {
-		flex:1;
+		flex: 1;
 	}

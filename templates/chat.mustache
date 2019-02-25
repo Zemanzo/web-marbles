@@ -6,23 +6,21 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		<title>Chat - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
-		
+
 		<!-- Stylesheets -->
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
-		
+
 		<!-- Scripts -->
-		{{>partials/scripts/global}}
-		<script src="scripts/lib/socket.io.js"></script>
 		<script>
 			let user_data;
 			{{#user_data}}
 			user_data = JSON.parse('{{{user_data}}}');
 			{{/user_data}}
 		</script>
-		
-		<script src="scripts/chat/chat.js"></script>
-		
+
+		<script src="scripts/dist/chat.js"></script>
+
 	</head>
 	<body>
 		{{#success}}

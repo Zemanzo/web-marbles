@@ -1,0 +1,38 @@
+{
+    "env": {
+        "node": true,
+        "es6": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 2018
+    },
+    "rules": {
+        "indent":
+            ["error", "tab"],
+        "quotes":
+            ["error", "double"],
+        "semi":
+            ["error", "always"],
+        "no-console":
+            "off",
+        "no-nested-ternary":
+            "error",
+        "comma-dangle":
+            ["error", "never"],
+        "comma-spacing":
+            "error",
+        "eol-last":
+            ["error", "always"],
+        "no-new-object":
+            "error",
+        "operator-linebreak":
+            ["error", "before", { "overrides": { "=": "ignore" } }],
+        "space-before-blocks":
+            ["error", "always"],
+        "prefer-template":
+            "error",
+        "space-infix-ops":
+            "error"
+    }
+}

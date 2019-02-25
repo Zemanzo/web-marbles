@@ -10,9 +10,7 @@ Stackoverflow
 
 //
 
-Specifically, I would like to thank these people:
-
-The open source community, for allowing me to use all these tools at no additional cost.
+A sincere thanks to the open source community, for allowing me to use all these tools at no additional cost.
 
 //
 
@@ -24,12 +22,7 @@ Siem "siem3141"
 Matias "Sanguinary"
 Mitchell "Sodaman"
 Tristan "Venlious"
-My family
-
-//
-
-Music:
-Epic Mountain - All Kurzgesagt arrangements
+My family and friends
 
 //
 

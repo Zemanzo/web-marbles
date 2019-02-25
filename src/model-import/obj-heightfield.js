@@ -1,10 +1,8 @@
-const config = require('../../config');
-const fs = require('fs');
 const OBJFile = require('obj-file-parser');
 
 class OBJHeightfield {
 	constructor(file) {
-		this.obj = new OBJFile( fs.readFileSync( config.marbles.resources+file, "utf-8" ) );
+		this.obj = new OBJFile( file );
 		this.parsed = this.obj.parse();
 		
 		// Clone & sort vertices

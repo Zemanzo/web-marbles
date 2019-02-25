@@ -6,31 +6,20 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		<title>Client - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
-		
+
 		<!-- Stylesheets -->
 			<!-- Webfont -->
 			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon" rel="stylesheet">
-			
+
 			<!-- Own styles -->
 			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
-		
+
 		<!-- Scripts -->
-		{{>partials/scripts/global}}
-		<script src="config.js"></script>
-		<script src="scripts/lib/socket.io.js"></script>
-		<script src="scripts/lib/OBJFile.js"></script>
-		<script src="scripts/whenDocReady.js"></script>
-		<script src="scripts/client/client.js"></script>
+		<script src="scripts/dist/client.js"></script>
 	</head>
 	<body>
-		<!-- THREEJS -->
-		{{>partials/scripts/ThreeJS}}
-		
-		<!-- NODE MATERIALS -->
-		{{>partials/scripts/NodeMaterials}}
-			
 		<!-- FANCY SHADERS -->
 		<script id="vertexShader" type="x-shader/x-vertex">
 
@@ -82,28 +71,28 @@
 			}
 
 		</script>
-			
+
 		<!-- Actual document stuff -->
 		<section id="viewport">
-		
+
 		</section>
 		<section id="sidebar">
-		
+
 			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
 			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
-			
-			<hr/> 
-			
+
+			<hr/>
+
 			<!-- <a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
 				<div id="twitchConnect">
 					<img src="images/Glitch_White_RGB.svg" alt="Glitch Logo"> Login with Twitch!
 				</div>
 			</a>
-			
+
 			<h3 id="welcomeMessage">Welcome back, fellow marble friend!</h3>
-			
+
 			<hr/> -->
-			
+
 			<div id="gameInfo">
 				<div id="gameState">
 					<h2 id="state">Enter marbles now!</h2>
@@ -111,9 +100,9 @@
 						...
 					</div>
 				</div>
-				
+
 				<hr/>
-				
+
 				<div>
 					<div class="separator">
 						<h2>
@@ -128,16 +117,15 @@
 							<span class="id">...</span>
 						</div>
 					</div>
-					
+
 				</div>
 			</div>
-			
+
 			<div id="chat">
-				
+
 				<iframe src="/chat" frameborder="0"></iframe>
-				
+
 			</div>
 		</section>
-		<script src="scripts/client/render.js"></script>
 	</body>
 </html>
