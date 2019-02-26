@@ -68,7 +68,7 @@ let water = new THREE.Water(
 	{
 		textureWidth: 512,
 		textureHeight: 512,
-		waterNormals: new THREE.TextureLoader().load( "scripts/lib/threejs/textures/waternormals.jpg", function ( texture ) {
+		waterNormals: new THREE.TextureLoader().load( "scripts/lib/threejs/textures/waternormals.jpg", function( texture ) {
 			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		}),
 		alpha: 1.0,
@@ -219,13 +219,13 @@ function addMap() {
 
 			console.log(mapName);
 			let manager = new THREE.LoadingManager();
-			manager.onProgress = function (item, loaded, total) {
+			manager.onProgress = function(item, loaded, total) {
 				console.log(item, loaded, total);
 			};
 
 			let loader = new THREE.OBJLoader(manager);
-			loader.load(`/resources/${mapName}_optimized.obj`, function (object) {
-				object.traverse(function (child) {
+			loader.load(`/resources/${mapName}_optimized.obj`, function(object) {
+				object.traverse(function(child) {
 					if (child.name.indexOf("Terrain") !== -1) {
 						mapMesh = child;
 
@@ -390,7 +390,7 @@ function makeTextSprite( message )
 	return sprite;
 }
 
-let clearMarbleMeshes = function () {
+let clearMarbleMeshes = function() {
 	for (let mesh of marbleMeshes) {
 		for (let i = mesh.children.length; i >= 0; i--) {
 			scene.remove(mesh.children[i]);
