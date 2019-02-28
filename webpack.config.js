@@ -1,5 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
+const IgnoreNotFoundExportPlugin = require("./ignorenotfoundexportplugin.js");
 
 module.exports = {
 	mode: "development",
@@ -18,6 +19,7 @@ module.exports = {
 	plugins: [
 		new webpack.ProvidePlugin({
 			THREE: "three"
-		})
+		}),
+		new IgnoreNotFoundExportPlugin()
 	]
 };
