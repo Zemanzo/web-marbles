@@ -18,17 +18,17 @@ config.marbles.bots = {};
 config.marbles.bots.names = [
 	{
 		name: "LAIKA bot"
-	},{
+	}, {
 		name: "Hirona bot"
-	},{
+	}, {
 		name: "Racherona bot"
-	},{
+	}, {
 		name: "A Generic Gamer bot"
-	},{
+	}, {
 		name: "Kcaz95 bot"
-	},{
+	}, {
 		name: "Rhyjohnson bot"
-	},{
+	}, {
 		name: "Nightbot",
 		color: "#000000"
 	}
@@ -75,6 +75,10 @@ config.physics.steps = 120; // Amount of physics steps to calculate per second.
 config.express = {};
 config.express.port = 3004;
 config.express.cache = false;
+
+/* µWebSockets */
+config.uwebsockets = {};
+config.uwebsockets.port = 3014;
 
 /* Network */
 config.network = {};

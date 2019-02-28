@@ -1,12 +1,12 @@
 This project couldn't have existed without these amazing tools by amazing people:
 
 Node.js
-Three.js
-Ammo.js (with Bullet in extension)
-Sockets.io
 Git
 GitHub
 Stackoverflow
+VSCode
+Microsoft Windows
+Linux
 
 //
 

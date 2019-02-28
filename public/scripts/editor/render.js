@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import "three/examples/js/controls/PointerLockControls";
 import "three/examples/js/objects/Water";
 import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";

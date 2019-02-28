@@ -67,7 +67,7 @@ game.end = function() {
 		game.entered = [];
 
 		// Send clients game restart so they can clean up on their side
-		io.sockets.emit("clear", true);
+		gameplaySocketManager.emit("true", "clear");
 
 		// Start the game after the entering period is over
 		clearTimeout(game.enterTimeout);
@@ -92,7 +92,7 @@ game.start = function() {
 	if (game.logic.state === "enter") {
 		game.logic.state = "started";
 		console.log(currentHourString() + "Current state: ".magenta, game.logic.state);
-		io.sockets.emit("start", true);
+		gameplaySocketManager.emit("true", "start");
 
 		setTimeout(function() {
 			physics.openGate();
@@ -119,9 +119,8 @@ const mustacheExpress = require("mustache-express");
 const compression = require("compression");
 const app = express();
 const http = require("http").Server(app);
-const io = require("socket.io")(http);
 app.use(compression({
-	filter: function () { return true; }
+	filter: function() { return true; }
 }));
 app.use(express.static(`${__dirname}/public`));
 app.engine("mustache", mustacheExpress());
@@ -135,11 +134,11 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 	extended: true
 }));
 
-app.get("/", function (req, res) {
+app.get("/", function(req, res) {
 	res.render("index");
 });
 
-app.get("/client", function (req, res) {
+app.get("/client", function(req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
 
 		// Send over the gamestate when a new connection is made
@@ -186,12 +185,14 @@ discordClient.on("ready", function() {
 discordClient.on("message", function(message) {
 	if (message.channel.id == config.discord.gameplayChannelId) {
 		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
-
-			io.sockets.emit("chat message", {
-				username: message.author.username,
-				discriminator: message.author.discriminator,
-				content: message.content
-			});
+			// Send it to the client chat
+			chatSocketManager.emit(
+				JSON.stringify({
+					username: message.author.username,
+					discriminator: message.author.discriminator,
+					content: message.content
+				})
+			);
 
 			chat.testMessage(message.content, message.author.id, message.author.username);
 
@@ -238,13 +239,13 @@ function spawnMarble(name, color) {
 	let body = physics.marbles.createMarble(name, color);
 
 	// Send client info on new marble
-	io.sockets.emit("new marble", body.tags);
+	gameplaySocketManager.emit(JSON.stringify(body.tags), "new_marble");
 }
 
 //
 
 let request = require("request");
-app.get("/chat", function (req, res) {
+app.get("/chat", function(req, res) {
 	if (req.query) {
 		if (req.query.code) {
 			let options = {
@@ -259,7 +260,7 @@ app.get("/chat", function (req, res) {
 				}
 			};
 
-			let callback = function (error, response, token_body) {
+			let callback = function(error, response, token_body) {
 				if (!error && response.statusCode === 200) {
 					token_body = JSON.parse(token_body);
 
@@ -268,7 +269,7 @@ app.get("/chat", function (req, res) {
 						headers: {
 							"Authorization": `Bearer ${token_body.access_token}`
 						}
-					}, function (error, response, user_body) {
+					}, function(error, response, user_body) {
 						if (!error && response.statusCode === 200) {
 
 							user_body = JSON.parse(user_body);
@@ -322,7 +323,7 @@ app.get("/chat", function (req, res) {
 
 });
 
-app.post("/chat", function (req, res) {
+app.post("/chat", function(req, res) {
 	if (req.body) {
 		// Request new access_token
 		if (
@@ -343,7 +344,7 @@ app.post("/chat", function (req, res) {
 					scope: row.scope
 				}
 			};
-			let callback = function (error, response, token_body) {
+			let callback = function(error, response, token_body) {
 				if (!error && response.statusCode === 200) {
 					token_body = JSON.parse(token_body);
 					token_body.access_granted = now();
@@ -359,108 +360,148 @@ app.post("/chat", function (req, res) {
 	}
 });
 
-app.get("/editor", function (req, res) {
+app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
 		res.render("editor", {});
 	else
 		res.render("editorDisabled", {});
 });
 
-//
-
-app.get("/debug", function (req, res) {
-	res.render("ammo", {
-		map: JSON.stringify(physics.world.map.parsed)
-	});
-});
-
 /* Express listener */
-let server = http.listen(config.express.port, function () {
+let server = http.listen(config.express.port, function() {
 	let port = server.address().port;
 	console.log(currentHourString() + "EXPRESS: Listening at port %s".cyan, port);
 });
 
 /* Sockets */
-io.on("connection", function(socket) {
-
-	// Get user if there is one
-	// Note: this is pretty unsafe code. Remove or improve.
-	let name = " [Guest]";
-	if (socket.handshake.headers && socket.handshake.headers.cookie) {
-		let cookies = socket.handshake.headers.cookie.split("; ");
-		let user_data = cookies.find( element => { return element.startsWith("user_data"); } );
-		if (user_data) {
-			user_data = decodeURIComponent(user_data);
-			user_data = user_data.substr(10);
-			user_data = JSON.parse(user_data);
-			if ( db.user.idIsAuthenticated(user_data.id, user_data.access_token) ) {
-				name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
-			} else {
-				name = " Hacker?!?".red;
+let SocketManager = require("./src/network/sockets");
+let gameplaySocketManager = new SocketManager(
+	"/gameplay",
+	{
+		compression: 0,
+		maxPayloadLength: 1024 ** 2,
+		idleTimeout: 3600,
+		open: function(ws, req) {
+			// Get user if there is one
+			// Note: this might be pretty unsafe code. Remove or improve.
+			let name = " [Guest]";
+			let cookie = req.getHeader("cookie");
+			if (cookie) {
+				let cookies = cookie.split("; ");
+				let user_data = cookies.find(element => { return element.startsWith("user_data"); });
+				if (user_data) {
+					user_data = decodeURIComponent(user_data);
+					user_data = user_data.substr(10);
+					user_data = JSON.parse(user_data);
+					if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+						name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
+					} else {
+						name = " Hacker?!?".red;
+					}
+				}
 			}
+
+			console.log(currentHourString() + "A user connected!".green + name);
+			ws.meta = { name };
+
+			let initialMarbleData = [];
+			for (let i = 0; i < physics.marbles.list.length; i++) {
+				initialMarbleData.push({
+					pos: physics.marbles.list[i].position,
+					id: physics.marbles.list[i].id,
+					tags: physics.marbles.list[i].tags
+				});
+			}
+
+			ws.sendTyped(JSON.stringify(initialMarbleData), "initial_data");
+		},
+		close: function(ws) {
+			console.log(currentHourString() + "A user disconnected...".red + ws.meta.name);
 		}
 	}
+);
 
-	console.log(currentHourString() + "A user connected!".green + name);
-
-	let initialMarbleData = [];
-	for (let i = 0; i < physics.marbles.list.length; i++) {
-		initialMarbleData.push({
-			pos: physics.marbles.list[i].position,
-			id: physics.marbles.list[i].id,
-			tags: physics.marbles.list[i].tags
-		});
-	}
-	/* console.log(initialMarbleData); */
-	socket.emit("initial data", initialMarbleData);
-
-	// Request physics
-	socket.on("request physics", (timestamp, callback) => {
+gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type) {
+	if (type === "request_physics") {
 		if (physics.marbles.list.length !== 0) {
 
 			let marbleTransformations = physics.marbles.getMarbleTransformations();
-
 			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
 			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
 
-			callback({
-				pos: marbleTransformations.position.buffer,
-				rot: marbleTransformations.rotation.buffer,
-				startGate: startGatePosition
-			});
+			ws.sendTyped(
+				JSON.stringify({
+					pos: marbleTransformations.position,
+					rot: marbleTransformations.rotation
+				}),
+				type
+			);
 		} else {
-			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
+			ws.sendTyped("false", type);
 		}
-	});
-
-	// Discord chat embed
-	const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
-	socket.on("chat incoming", (obj) => {
-		let row = db.user.getUserDetailsById(obj.id);
-		console.log(row);
-
-		if (row && row.access_token == obj.access_token) {
-			chat.testMessage(obj.message, obj.id, row.username);
-
-			chatWebhook.send(obj.message, {
-				username: row.username,
-				avatarURL: `https://cdn.discordapp.com/avatars/${obj.id}/${row.avatar}.png`,
-				disableEveryone: true
-			});
-
-			io.sockets.emit("chat message", {
-				username: row.username,
-				discriminator: row.discriminator,
-				content: obj.message
-			});
-		} else {
-			console.log("User ID and access token mismatch!", row);
-		}
-	});
+	}
 });
 
-io.on("disconnected", function() {
-	console.log("A user disconnected...".red);
+// io.on("connection", function(socket) {
+
+// 	// Request physics
+// 	socket.on("request physics", (timestamp, callback) => {
+// 		if (physics.marbles.list.length !== 0) {
+
+// 			let marbleTransformations = physics.marbles.getMarbleTransformations();
+
+// 			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
+// 			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
+
+// 			callback({
+// 				pos: marbleTransformations.position.buffer,
+// 				rot: marbleTransformations.rotation.buffer,
+// 				startGate: startGatePosition
+// 			});
+// 		} else {
+// 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
+// 		}
+// 	});
+// });
+
+// Discord chat embed
+const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
+let chatSocketManager = new SocketManager(
+	"/chat",
+	{
+		compression: 1,
+		maxPayloadLength: 128 * 1024,
+		idleTimeout: 3600
+	}
+);
+
+chatSocketManager.messageFunctions.push(function(ws, message) {
+	try {
+		message = JSON.parse(message);
+	}
+	catch(e) {
+		ws.send("Invalid JSON");
+		return;
+	}
+
+	let row = db.user.getUserDetailsById(message.id);
+	if (row && row.access_token == message.access_token) {
+		chat.testMessage(message.content, message.id, row.username);
+
+		chatWebhook.send(message.content, {
+			username: row.username,
+			avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
+			disableEveryone: true
+		});
+
+		ws.send(JSON.stringify({
+			username: row.username,
+			discriminator: row.discriminator,
+			content: message.content
+		}));
+	} else {
+		console.log("User ID and access token mismatch!", row);
+	}
 });
 
 /* Other */
@@ -477,7 +518,6 @@ function currentHourString() {
 function now() {
 	return (new Date()).getTime();
 }
-
 
 // Start the game loop
 game.end();
