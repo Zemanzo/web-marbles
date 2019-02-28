@@ -43,7 +43,7 @@ function WebSocketManager(
 	// Create list that contains all open socket connections
 	this._list = [];
 
-	this.typeMessage = function(message, type) {
+	let _typeMessage = this._typeMessage = function(message, type) {
 		type = socketMessageTypes.routes[route][type];
 
 		// Modify message based on type
@@ -61,6 +61,10 @@ function WebSocketManager(
 	};
 
 	this._add = function(ws) {
+		ws.sendTyped = function(message, type) {
+			ws.send( _typeMessage(message, type) );
+		};
+
 		this._list.push(ws);
 	};
 
@@ -69,12 +73,9 @@ function WebSocketManager(
 	};
 
 	this.emit = function(message, type) {
-
 		for (let i = 0; i < this._list.length; i++) {
 			if (this._list[i].getBufferedAmount() < _maxBackpressure) {
-				this._list[i].send(
-					this.typeMessage(message, type)
-				);
+				this._list[i].sendTyped(message, type);
 			} else {
 				return false;
 			}

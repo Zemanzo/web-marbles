@@ -413,9 +413,7 @@ let gameplaySocketManager = new SocketManager(
 				});
 			}
 
-			ws.send(
-				gameplaySocketManager.typeMessage(JSON.stringify(initialMarbleData), "initial_data")
-			);
+			ws.sendTyped(JSON.stringify(initialMarbleData), "initial_data");
 		},
 		close: function(ws) {
 			console.log(currentHourString() + "A user disconnected...".red + ws.meta.name);
@@ -431,19 +429,15 @@ gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type
 			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
 			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
 
-			ws.send(
-				gameplaySocketManager.typeMessage(
-					JSON.stringify({
-						pos: marbleTransformations.position,
-						rot: marbleTransformations.rotation
-					}),
-					type
-				)
+			ws.sendTyped(
+				JSON.stringify({
+					pos: marbleTransformations.position,
+					rot: marbleTransformations.rotation
+				}),
+				type
 			);
 		} else {
-			ws.send(
-				gameplaySocketManager.typeMessage("false", type)
-			);
+			ws.sendTyped("false", type);
 		}
 	}
 });
