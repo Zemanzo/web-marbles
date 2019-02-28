@@ -10,7 +10,7 @@ function TypedSocketHelper(route) {
 				key => socketMessageTypes.routes[route][key] === parseInt(message.substr(0, 1))
 			);
 			message = message.substr(1);
-		} else if (message instanceof ArrayBuffer) {
+		} else if (message instanceof ArrayBuffer || message instanceof Blob) {
 			type = socketMessageTypes.routes[route][Uint8Array.from(message)[0]];
 			message = message.slice(1);
 		}

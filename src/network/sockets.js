@@ -33,18 +33,12 @@ function WebSocketManager(
 		options.idleTimeout = 600;
 
 	// Additional functionality when connection to socket is made (open)
-	let _open;
-	if (!options.open) {
-		_open = options._open = options.open;
-		delete options.open; // avoid conflict with Object.assign;
-	}
+	let _open = options._open = options.open;
+	delete options.open; // avoid conflict with Object.assign;
 
 	// Additional functionality when connection to socket is lost (close, disconnect)
-	let _close;
-	if (!options.close) {
-		_close = options._close = options.close;
-		delete options.close; // avoid conflict with Object.assign;
-	}
+	let _close = options._close = options.close;
+	delete options.close; // avoid conflict with Object.assign;
 
 	// Create list that contains all open socket connections
 	this._list = [];
@@ -75,6 +69,7 @@ function WebSocketManager(
 	};
 
 	this.emit = function(message, type) {
+
 		for (let i = 0; i < this._list.length; i++) {
 			if (this._list[i].getBufferedAmount() < _maxBackpressure) {
 				this._list[i].send(
@@ -95,9 +90,9 @@ function WebSocketManager(
 		Object.assign(
 			{
 				// Handlers
-				open: (ws) => {
+				open: (ws, req) => {
 					this._add(ws);
-					if (_open) _open(ws);
+					if (_open) _open(ws, req);
 				},
 				message: (ws, message, isBinary) => {
 					// Strip message type if neccesary
@@ -126,9 +121,9 @@ function WebSocketManager(
 						}
 					}
 				},
-				close: (ws) => {
+				close: (ws, req) => {
 					this._remove(ws);
-					if (_close) _close(ws);
+					if (_close) _close(ws, req);
 				}
 			},
 			options

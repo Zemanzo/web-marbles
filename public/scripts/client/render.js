@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import "three/examples/js/controls/PointerLockControls";
 import "three/examples/js/objects/Water";
 import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";
@@ -75,7 +74,7 @@ let water = new THREE.Water(
 		sunDirection: light.position.clone().normalize(),
 		sunColor: 0xffffff,
 		waterColor: 0x001e0f,
-		distortionScale:  3.7,
+		distortionScale: 3.7,
 		fog: scene.fog !== undefined
 	}
 );
@@ -167,13 +166,11 @@ let marbleMeshes = [];
 
 function animate() {
 	requestAnimationFrame( animate );
-
 	// Update marble positions
 	for (let i = 0; i < marbleMeshes.length; i++) {
 		marbleMeshes[i].position.x = THREE.Math.lerp(marbleMeshes[i].position.x || 0, networking.marblePositions[i * 3 + 0], networking.lastUpdate);
 		marbleMeshes[i].position.y = THREE.Math.lerp(marbleMeshes[i].position.y || 0, networking.marblePositions[i * 3 + 2], networking.lastUpdate);
 		marbleMeshes[i].position.z = THREE.Math.lerp(marbleMeshes[i].position.z || 0, networking.marblePositions[i * 3 + 1], networking.lastUpdate);
-
 
 		marbleMeshes[i].quaternion.set(
 			networking.marbleRotations[i * 4 + 0],

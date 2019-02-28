@@ -197,7 +197,6 @@ function authenticationWindow() {
 	if (this.dataset.state)
 		authorizationUrl += `&state=${this.dataset.state}`;
 
-	console.log(authorizationUrl);
 	authWindow = window.open(authorizationUrl, "_blank", "location=yes,height=800,width=720,scrollbars=yes,status=yes");
 }
 

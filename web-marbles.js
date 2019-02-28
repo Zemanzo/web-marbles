@@ -424,7 +424,6 @@ let gameplaySocketManager = new SocketManager(
 );
 
 gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type) {
-	console.log(type, message);
 	if (type === "request_physics") {
 		if (physics.marbles.list.length !== 0) {
 
@@ -434,12 +433,10 @@ gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type
 
 			ws.send(
 				gameplaySocketManager.typeMessage(
-					Buffer.concat(
-						[
-							Buffer.from(marbleTransformations.position),
-							Buffer.from(marbleTransformations.rotation)
-						] /*, physics.marbles.list.length * 7 */ // Add buffer length here for optimization
-					),
+					JSON.stringify({
+						pos: marbleTransformations.position,
+						rot: marbleTransformations.rotation
+					}),
 					type
 				)
 			);

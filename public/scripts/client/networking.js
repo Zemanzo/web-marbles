@@ -9,11 +9,12 @@ let ws = new ReconnectingWebSocket("ws://localhost:3014/gameplay", [], {
 	reconnectionDelayGrowFactor: 2
 });
 
-ws.addEventListener("open", function(event) {
+ws.addEventListener("open", function() {
 	net.websocketOpen = true;
+	net.ready = 0;
 });
 
-ws.addEventListener("close", function(event) {
+ws.addEventListener("close", function() {
 	net.websocketOpen = false;
 });
 
@@ -32,19 +33,20 @@ let net = { // Initialize, do not configure these values.
 // Socket data promise
 net.socketReady = new Promise((resolve) => {
 	// Once connected, client receives initial data
-
 	ws.addEventListener("message", function(event) {
 		let { type, message } = helper.extractSocketMessageType(event.data);
-		console.log(type, message);
 
 		switch(type) {
 		case "initial_data":
-			net.marbleData = message;
+			net.marbleData = JSON.parse(message);
 			resolve(true);
 			break;
 		case "request_physics":
-			net.marblePositions = new Float32Array(message.pos);
-			net.marbleRotations = new Float32Array(message.rot);
+			message = JSON.parse(message);
+			if (message) {
+				net.marblePositions = new Float32Array(Object.values(message.pos));
+				net.marbleRotations = new Float32Array(Object.values(message.rot));
+			}
 			net.lastUpdate = 0;
 			net.ready--;
 			break;
@@ -65,13 +67,11 @@ net.socketReady = new Promise((resolve) => {
 	let getServerData = function() {
 		if (net.ready < config.tickrate && net.websocketOpen) {
 			net.ready++;
-			console.log(net.ready);
 			ws.send(
 				helper.addMessageType(Date.now().toString(), "request_physics")
 			);
 		} else if (net.websocketOpen) {
 			net.requestsSkipped++;
-			console.log(net.requestsSkipped);
 		}
 		setTimeout(getServerData, 1000 / config.tickrate);
 	};

@@ -23,7 +23,7 @@ export function end() {
 	document.getElementById("entries").innerHTML = "0";
 	document.getElementById("state").innerHTML = "Enter marbles now!";
 	document.getElementById("timer").style.display = "block";
-	startTimerInterval(this.state.enterPeriod * 1000);
+	startTimerInterval(state.enterPeriod * 1000);
 }
 
 function startTimerInterval(ms) {
