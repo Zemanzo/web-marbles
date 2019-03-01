@@ -1,3 +1,4 @@
+import "three/examples/js/controls/PointerLockControls";
 import { PerspectiveCamera, Vector3, PointerLockControls } from "three";
 
 let addRegisteredEventListener = function(scope, event, func, capture) {

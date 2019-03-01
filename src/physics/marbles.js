@@ -39,7 +39,7 @@ module.exports = function(Ammo, world) {
 
 		getMarbleTransformations() {
 			this._pos = new Float32Array(this.list.length * 3);
-			this._rot = new Float64Array(this.list.length * 4);
+			this._rot = new Float32Array(this.list.length * 4);
 
 			for (let i = 0; i < this.list.length; i++) {
 				let ms = this.list[i].ammoBody.getMotionState();

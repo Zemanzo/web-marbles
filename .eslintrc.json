@@ -33,6 +33,8 @@
         "prefer-template":
             "error",
         "space-infix-ops":
-            "error"
+            "error",
+        "space-before-function-paren":
+            ["error", "never"]
     }
 }

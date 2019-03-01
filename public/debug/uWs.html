@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<script>
+			let ws = new WebSocket("ws://localhost:3014/chat");
+
+			ws.onopen = function (event) {
+				console.log("WebSocket is open now.", event);
+			};
+
+			ws.onmessage = function (event) {
+				console.log("WebSocket message received:", event);
+			};
+
+			ws.onclose = function (event) {
+				console.log("WebSocket is closed now.");
+			};
+		</script>
+	</head>
+	<body>
+		<input type="text" id="chat"><button onclick='ws.send(document.getElementById("chat").value);'>Send</button>
+	</body>
+</html>
+
+

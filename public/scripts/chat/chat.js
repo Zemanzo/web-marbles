@@ -1,11 +1,17 @@
-import io from "socket.io-client";
 import * as Cookies from "js-cookie";
+import ReconnectingWebSocket from "reconnecting-websocket";
 
-/* Origin window variant */
-let socket, cookieData;
+let ws = new ReconnectingWebSocket("ws://localhost:3014/chat", [], {
+	minReconnectionDelay: 1000,
+	maxReconnectionDelay: 30000,
+	reconnectionDelayGrowFactor: 2
+});
+
+// Origin window variant
+let cookieData;
 
 function init() {
-	/* Simple function that returns current date as Date object or integer (ms since epoch) */
+	// Simple function that returns current date as Date object or integer (ms since epoch)
 	let now = function(ms) {
 		let date = new Date();
 		if (ms)
@@ -14,14 +20,25 @@ function init() {
 			return date;
 	};
 
-	/* Add discord link open as new window */
-	document.getElementById("discordLink").addEventListener("click",authenticationWindow,false);
+	// String formatted timestamp
+	let timestamp = function() {
+		return now()
+			.toLocaleTimeString([], {
+				hour: "2-digit",
+				minute: "2-digit"
+			})
+			.replace(/ /g, "")
+			.toLowerCase();
+	};
 
-	/* Get some references to DOM */
+	// Add discord link open as new window
+	document.getElementById("discordLink").addEventListener("click", authenticationWindow, false);
+
+	// Get some references to DOM
 	let chatMessages = document.getElementById("chatMessages");
 	let chatMessageTemplate = document.getElementById("messageTemplate");
 
-	/* Check for former authentication */
+	// Check for former authentication
 	cookieData = Cookies.getJSON("user_data");
 
 	// If there is former data, check if it is not outdated.
@@ -43,19 +60,18 @@ function init() {
 					Cookies.set("user_data", response, { expires: days });
 					cookieData = response;
 
-					/* Add login message */
+					// Add login message
 					let clone = chatMessageTemplate.cloneNode(true);
 					clone.removeAttribute("id");
 
-					let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,"").toLowerCase();
-					clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
+					clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
 					clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
 					clone.getElementsByClassName("content")[0].innerText = `Logged in as ${cookieData.username}`;
 					clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
 					clone.getElementsByClassName("content")[0].style.color = "#999";
 					clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
 
-					chatMessages.insertAdjacentElement("beforeend",clone);
+					chatMessages.insertAdjacentElement("beforeend", clone);
 
 				}
 			};
@@ -73,47 +89,17 @@ function init() {
 		}
 	}
 
-
-	/* Add welcome message */
-	let clone = chatMessageTemplate.cloneNode(true);
-	clone.removeAttribute("id");
-
-	let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,"").toLowerCase();
-	clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
-	clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
-	clone.getElementsByClassName("content")[0].innerText = "Successfully connected to chat. Say !marble to join the race!";
-	clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
-	clone.getElementsByClassName("content")[0].style.color = "#999";
-	clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
-
-	chatMessages.insertAdjacentElement("beforeend",clone);
-
-	/* Listen for chat messages */
-	socket.on("chat message", function(obj) {
-		let clone = chatMessageTemplate.cloneNode(true);
-		clone.removeAttribute("id");
-
-		let timestamp = now().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"}).replace(/ /g,"").toLowerCase();
-		clone.getElementsByClassName("timestamp")[0].innerText = timestamp;
-		clone.getElementsByClassName("name")[0].innerText = obj.username;
-		clone.getElementsByClassName("name")[0].title = `${obj.username}#${obj.discriminator}`;
-		clone.getElementsByClassName("text")[0].innerText = obj.content;
-
-		chatMessages.insertAdjacentElement("beforeend",clone);
-		chatMessages.scrollTop = chatMessages.scrollHeight;
-	});
-
 	let lastMessageSent = now(true);
 	let sendMessage = function(message) {
 		// Check whether messages are not being spammed.
 		let messageTimestamp = now(true);
 		if (messageTimestamp > lastMessageSent + 500) {
-			socket.emit("chat incoming", {
+			ws.send(JSON.stringify({
 				access_token: cookieData.access_token,
 				id: cookieData.id,
 				avatar: cookieData.avatar,
-				message: message
-			});
+				content: message
+			}));
 			lastMessageSent = messageTimestamp;
 			return true;
 		} else {
@@ -121,9 +107,58 @@ function init() {
 		}
 	};
 
+	// On websocket open (connection), add welcome message
+	ws.addEventListener("open", function() {
+		let clone = chatMessageTemplate.cloneNode(true);
+		clone.removeAttribute("id");
+		clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
+		clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
+		clone.getElementsByClassName("content")[0].innerText = "Successfully connected to chat. Say !marble to join the race!";
+		clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
+		clone.getElementsByClassName("content")[0].style.color = "#090";
+		clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
+		chatMessages.insertAdjacentElement("beforeend", clone);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
+	});
+
+	// On message, add message to DOM
+	ws.addEventListener("message", function(event) {
+		let data = JSON.parse(event.data);
+		let clone = chatMessageTemplate.cloneNode(true);
+		clone.removeAttribute("id");
+		clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
+		clone.getElementsByClassName("name")[0].innerText = data.username;
+		clone.getElementsByClassName("name")[0].title = `${data.username}#${data.discriminator}`;
+		clone.getElementsByClassName("text")[0].innerText = data.content;
+		chatMessages.insertAdjacentElement("beforeend", clone);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
+	});
+
+	// On websocket close (disconnect), add warning message. Reconnecting happens automagically.
+	ws.addEventListener("close", function(event) {
+		let clone = chatMessageTemplate.cloneNode(true);
+		clone.removeAttribute("id");
+		clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
+		clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
+		clone.getElementsByClassName("content")[0].innerText =
+			`Lost connection... Attempt #${event.target._retryCount} to reconnect in ${
+				Math.min(Math.ceil(
+					event.target._options.minReconnectionDelay
+					* event.target._options.reconnectionDelayGrowFactor
+					** (event.target._retryCount - 1)
+					/ 1000
+				), 30)
+			} seconds`;
+		clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
+		clone.getElementsByClassName("content")[0].style.color = "#900";
+		clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
+		chatMessages.insertAdjacentElement("beforeend", clone);
+		chatMessages.scrollTop = chatMessages.scrollHeight;
+	});
+
 	// Be able to send chat messages back
 	let chatInput = document.getElementById("chatInput");
-	chatInput.addEventListener("keypress",function(event) {
+	chatInput.addEventListener("keypress", function(event) {
 		let message = this.value;
 		if (event.keyCode === 13 && this.checkValidity() && message != "") {
 			sendMessage(message);
@@ -132,24 +167,24 @@ function init() {
 			this.value = "";
 		}
 
-	},false);
+	}, false);
 
 	// Make SEND button functional
 	let chatButtonSend = document.getElementById("buttonSend");
-	chatButtonSend.addEventListener("click",function() {
+	chatButtonSend.addEventListener("click", function() {
 		if (chatInput.checkValidity() && chatInput.value != "") {
 			sendMessage(chatInput.value);
 
 			// Clean input
 			chatInput.value = "";
 		}
-	},false);
+	}, false);
 
 	// Make !MARBLE button functional
 	let chatButtonMarble = document.getElementById("buttonMarble");
-	chatButtonMarble.addEventListener("click",function() {
+	chatButtonMarble.addEventListener("click", function() {
 		sendMessage("!marble");
-	},false);
+	}, false);
 
 }
 
@@ -162,7 +197,6 @@ function authenticationWindow() {
 	if (this.dataset.state)
 		authorizationUrl += `&state=${this.dataset.state}`;
 
-	console.log(authorizationUrl);
 	authWindow = window.open(authorizationUrl, "_blank", "location=yes,height=800,width=720,scrollbars=yes,status=yes");
 }
 
@@ -190,11 +224,8 @@ if (user_data) {
 	window.opener.postMessage({
 		success: true,
 		response: user_data
-	},window.location.origin);
+	}, window.location.origin);
 
 } else {
-	socket = io({
-		transports: ["websocket"]
-	});
-	window.addEventListener("DOMContentLoaded",init,false);
+	window.addEventListener("DOMContentLoaded", init, false);
 }
