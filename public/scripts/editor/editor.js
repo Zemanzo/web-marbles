@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
-import { generateTinyUUID } from "../generateTinyUUID";
 import * as inspector from "./inspector";
+import { models } from "./models";
 import { prefabs } from "./prefabs";
+import { world } from "./world";
 import { setEditorLogElement, editorLog } from "./log";
-import { scene, init as renderInit, updateSun, water, sunParameters } from "./render";
+import { scene, init as renderInit } from "./render";
 
 let editor = {
 	log: undefined,
@@ -14,10 +15,10 @@ let editor = {
 		prefabs: undefined,
 		world: undefined
 	},
-	models: {},
+	models: undefined,
 	prefabs: {},
-	world: {},
-	initialize: {},
+	world: undefined,
+	inspector: undefined,
 	selectedModel: null,
 	entityCount: 0
 };
@@ -32,9 +33,13 @@ window.addEventListener("DOMContentLoaded", function() {
 
 	inspector.initialize(editor);
 
+	renderInit();
+	
+	models.initialize(editor);
+
 	prefabs.initialize(editor);
 
-	renderInit();
+	world.initialize(editor);
 
 	// Editor groups
 	for (let key in editor.groups) {
@@ -119,164 +124,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		}, false);
 	}
 
-	// Add models
-	let GLTFLoader = new THREE.GLTFLoader();
-	document.getElementById("addModelFile").addEventListener("change", function() {
-		Array.from(this.files).forEach(function(file) {
-			file.reader = new FileReader();
-			file.reader.onload = function() {
-				let result = file.reader.result;
-
-				// parse using your corresponding loader
-				try {
-					GLTFLoader.parse(
-						result,	null,
-						function(model) {
-							model.userData.name = file.name;
-							// Check if model is already loaded
-							if (!Object
-								.keys(editor.models)
-								.some( (key) => {
-								return key === file.name;
-								} )
-							) {
-								// Add to model list
-								let clone = document.getElementById("modelTemplate").cloneNode(true); // deep clone
-								clone.id = file.name;
-								clone.getElementsByClassName("name")[0].innerHTML = file.name;
-								clone.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
-									if (editor.selectedModel) {
-										editor.models[editor.selectedModel].scene.visible = false;
-										document.getElementById(editor.selectedModel).className = "model";
-									}
-									editor.selectedModel = this.parentNode.id;
-									editor.models[editor.selectedModel].scene.visible = true;
-									document.getElementById(editor.selectedModel).className = "model selected";
-								}, false);
-
-								// Delete model
-								clone.getElementsByClassName("delete")[0].addEventListener("click", function() {
-									let parent = this.parentNode;
-									let id = parent.id;
-									if ( confirm(`Are you sure you want to delete this model? (${id})`) ) {
-										if (editor.selectedModel === id) editor.selectedModel = null;
-										editor.groups.models.remove(editor.models[id].scene);
-										delete editor.models[id];
-										let select = document.getElementById("inspectorModel");
-										let index = Array.from(select.children).findIndex((el)=>{
-											return el.value === id;
-										}, false);
-										select.remove(index);
-										parent.parentNode.removeChild(parent); // oofies
-										editorLog(`Removed model (${id})`, "warn");
-									}
-								}, false);
-
-								// Add to select drop-down
-								let select = document.getElementById("inspectorModel");
-								let option = document.createElement("option");
-								option.text = file.name;
-								option.value = file.name;
-								select.add(option);
-
-								// Add to DOM
-								let modelList = document.getElementById("models");
-								clone = modelList.appendChild(clone);
-
-								// Add to scene
-								editor.groups.models.add(model.scene);
-								model.scene.visible = false;
-
-								editor.models[file.name] = model;
-								editorLog(`Loaded model: ${file.name}`, "info");
-							} else {
-								editorLog(`Model already loaded. (${file.name})`, "error");
-							}
-						}, function(error) {
-							editorLog(`Unable to load model (${file.name}): ${error}`, "error");
-							console.log(error);
-						}
-					);
-				}
-				catch(error) {
-					// Invalid JSON/GLTF files may end up here
-					editorLog(`Unable to load model (${file.name}): ${error}`, "error");
-					console.log(error);
-				}
-			};
-			file.reader.readAsText(file, "utf-8");
-		});
-	}, false);
-
-	// World
-
-	// Change water level
-	let changeWaterLevel = function() {
-		water.position.y = this.value;
-	};
-	document.getElementById("envWaterHeight").addEventListener("change", changeWaterLevel, false);
-	document.getElementById("envWaterHeight").addEventListener("input", changeWaterLevel, false);
-
-	// Change sun inclination
-	let changeSunInclination = function() {
-		sunParameters.inclination = this.value;
-		updateSun();
-	};
-	document.getElementById("envSunInclination").addEventListener("change", changeSunInclination, false);
-	document.getElementById("envSunInclination").addEventListener("input", changeSunInclination, false);
-
-	// Add world prefab
-	let addWorldPrefab = function() {
-		let prefabUuid = editor.elements.worldPrefab.value;
-		if (
-			!editor.elements.worldPrefab.disabled
-			&& prefabUuid !== "null"
-		) {
-			let clone = document.getElementById("worldPrefabTemplate").cloneNode(true); // deep clone
-			let uuid = generateTinyUUID();
-			clone.removeAttribute("id");
-			clone.dataset.uuid = uuid;
-			clone.dataset.prefabUuid = prefabUuid;
-			clone.dataset.type = "instances";
-
-			// Add select event
-			clone.addEventListener("click", inspector.select, false);
-
-			// Add name & prefab name
-			clone.getElementsByClassName("name")[0].innerText =
-			clone.getElementsByClassName("prefabName")[0].innerText =
-				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabName")[0].value;
-
-			clone.getElementsByClassName("prefabName")[0].style.background =
-				editor.prefabs[prefabUuid].element.getElementsByClassName("prefabColor")[0].value;
-
-			// Add uuid
-			clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
-
-			// Add prefab uuid
-			clone.getElementsByClassName("prefabName")[0].title = prefabUuid;
-
-			// Add threejs group to scene
-			let groupClone = editor.prefabs[prefabUuid].group.clone();
-			editor.groups.world.add( groupClone );
-			groupClone.visible = true;
-
-			// Add to DOM
-			let hierarchy = document.getElementById("worldHierarchy");
-			let element = hierarchy.insertBefore(clone, document.getElementById("worldPrefabTemplate"));
-
-			// Add instance reference to parent prefab
-			editor.prefabs[prefabUuid].instances[uuid] = {
-				uuid: uuid,
-				sceneObject: groupClone,
-				element: element
-			};
-
-		}
-	};
-
-	document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldPrefab, false);
-
+	// Serialisation
 	let exportPublishBinary = function() {
 		let serializationStart = new Date();
 		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
@@ -338,6 +186,7 @@ editor.serialization.preparePayload = function() {
 
 	let models = {};
 	for (let model in editor.models) {
+		if(model === "initialize") continue; // HOTFIX
 		models[model] = {
 			scene: editor.models[model].scene.toJSON(),
 			userData: {}
@@ -347,8 +196,6 @@ editor.serialization.preparePayload = function() {
 			models[model].userData[key] = editor.models[model].userData[key];
 		}
 	}
-
-	console.log(editor.models, models);
 
 	let payload = {
 		params: {
