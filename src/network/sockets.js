@@ -75,7 +75,11 @@ function WebSocketManager(
 	this.emit = function(message, type) {
 		for (let i = 0; i < this._list.length; i++) {
 			if (this._list[i].getBufferedAmount() < _maxBackpressure) {
-				this._list[i].sendTyped(message, type);
+				if (type) {
+					this._list[i].sendTyped(message, type);
+				} else {
+					this._list[i].send(message);
+				}
 			} else {
 				return false;
 			}
