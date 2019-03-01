@@ -121,6 +121,7 @@ let inspector = {
 	},
 	initialize: function(global) {
 		editor = global;
+		editor.inspector = this;
 
 		// Inspector
 		inspector.element = document.getElementById("inspector");
