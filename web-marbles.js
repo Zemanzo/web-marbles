@@ -1,119 +1,70 @@
 const config = require("./config");
-require("colors");
+const log = require("./src/log");
 
-console.log(" Web marbles".cyan);
+// Splash screen
+require("colors");
+console.log(" web-marbles".cyan);
 console.log(`   by ${"Z".green}emanz${"o".green}`);
 console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 
-/* Database */
+// Database
 const db = require("./src/database/manager");
 db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
 
-// Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
-let timeoutMap = {};
-function setTrackableTimeout(callback, delay) { // Modify setTimeout
-	let id = setTimeout(callback, delay); // Run the original, and store the id
-
-	timeoutMap[id] = [Date.now(), delay]; // Store the start date and delay
-
-	return id; // Return the id
-}
-
-function getTimeout(id) { // The actual getTimeLeft function
-	let m = timeoutMap[id]; // Find the timeout in map
-
-	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
-	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
-}
-
-/* Set up physics world */
+// Set up physics world
 const physics = require("./src/physics/manager")(config);
 
-/* Game logic */
-let game = {
-	logic: {
-		state: "started" // "enter", "started"
-	},
-	startDelay: 2825, // length in ms of audio
-	entered: []
-};
+// Set up gameplay socket
+const sockets = require("./src/network/sockets");
+const socketGameplay = sockets.setupGameplay(db, physics);
 
-game.addMarble = function(id, name, color) {
-	// Only allow marbles during entering phase
-	if (game.logic.state === "enter") {
+// Set up game logic
+const game = require("./src/game")(config, physics, socketGameplay);
 
-		// Make sure this person hasn't entered in this round yet
-		if (!game.entered.includes(id)) {
-			game.entered.push(id);
-			spawnMarble(name, color);
+// Chat testing
+const chat = require("./src/chat")(game);
+
+// Need discord.js for WebHookClient and for regular client
+const discord = require("discord.js");
+
+// Set up chat socket
+const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
+const socketChat = sockets.setupChat(db, chat, chatWebhook);
+
+// Set up discord client
+const discordClient = new discord.Client();
+
+discordClient.on("ready", function() {
+	log.info(`DISCORD: ${"Discord bot is ready!".green}`);
+	discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
+});
+
+discordClient.on("message", function(message) {
+	if (message.channel.id == config.discord.gameplayChannelId) {
+		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
+			// Send it to the client chat
+			socketChat.emit(
+				JSON.stringify({
+					username: message.author.username,
+					discriminator: message.author.discriminator,
+					content: message.content
+				})
+			);
+
+			chat.testMessage(message.content, message.author.id, message.author.username);
+
+			if (message.content === "!doot") {
+				message.reply("🎺");
+			}
 		}
 	}
-};
+});
 
-game.end = function() {
-	if (game.logic.state === "started") {
-		game.logic.state = "enter";
-		console.log(currentHourString() + "Current state: ".magenta, game.logic.state);
+discordClient.login(config.discord.botToken);
 
-		// Close the gate
-		physics.closeGate();
-
-		// Remove all marbles
-		physics.marbles.destroyAllMarbles();
-
-		// Clear the array of people that entered
-		game.entered = [];
-
-		// Send clients game restart so they can clean up on their side
-		gameplaySocketManager.emit("true", "clear");
-
-		// Start the game after the entering period is over
-		clearTimeout(game.enterTimeout);
-		game.enterTimeout = setTrackableTimeout(
-			game.start,
-			config.marbles.rules.enterPeriod * 1000
-		);
-
-		/* setInterval(
-			function(){
-				console.log(getTimeout(game.enterTimeout));
-			},1000
-		); */
-
-		return true;
-	} else {
-		return false;
-	}
-};
-
-game.start = function() {
-	if (game.logic.state === "enter") {
-		game.logic.state = "started";
-		console.log(currentHourString() + "Current state: ".magenta, game.logic.state);
-		gameplaySocketManager.emit("true", "start");
-
-		setTimeout(function() {
-			physics.openGate();
-
-			// Add bot marble to ensure physics not freezing
-			spawnMarble("Nightbot", "#000000");
-		}, game.startDelay);
-
-		clearTimeout(game.gameplayTimeout);
-		game.gameplayTimeout = setTrackableTimeout(
-			game.end,
-			config.marbles.rules.maxRoundLength * 1000
-		);
-
-		return true;
-	} else {
-		return false;
-	}
-};
-
-/* Express connections */
+// Express connections
 const express = require("express");
 const mustacheExpress = require("mustache-express");
 const compression = require("compression");
@@ -149,7 +100,7 @@ app.get("/client", function(req, res) {
 					gameState: game.logic.state,
 					enterPeriod: config.marbles.rules.enterPeriod,
 					maxRoundLength: config.marbles.rules.maxRoundLength,
-					timeToEnter: getTimeout(game.enterTimeout),
+					timeToEnter: game.getTimeRemaining(),
 					mapId: config.marbles.mapRotation[0].name
 				}
 			);
@@ -170,79 +121,6 @@ app.get("/client", function(req, res) {
 		res.render("client");
 	}
 });
-
-// Discord integration
-
-let discord, discordClient;
-discord = require("discord.js");
-discordClient = new discord.Client();
-
-discordClient.on("ready", function() {
-	console.log(`${currentHourString()}DISCORD: ${"Discord bot is ready!".green}`);
-	discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
-});
-
-discordClient.on("message", function(message) {
-	if (message.channel.id == config.discord.gameplayChannelId) {
-		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
-			// Send it to the client chat
-			chatSocketManager.emit(
-				JSON.stringify({
-					username: message.author.username,
-					discriminator: message.author.discriminator,
-					content: message.content
-				})
-			);
-
-			chat.testMessage(message.content, message.author.id, message.author.username);
-
-			if (message.content === "!doot") {
-				message.reply("🎺");
-			}
-		}
-	}
-});
-
-discordClient.login(config.discord.botToken);
-
-//
-
-let chat = {};
-chat.testMessage = function(messageContent, id, username) {
-	if (messageContent.startsWith("!marble")) {
-		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
-		let match = messageContent.match(colorRegEx);
-		let color = (match === null ? undefined : match[0]);
-
-		game.addMarble(
-			id,
-			username,
-			color
-		);
-	}
-
-	else if (messageContent.startsWith("!end") && (id == "112621040487702528" || id == "133988602530103298")) {
-		game.end();
-	}
-
-	else if (messageContent.startsWith("!lotsofbots") && (id == "112621040487702528" || id == "133988602530103298")) {
-		let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
-		for (let i = 0; i < amount; i++) {
-			spawnMarble();
-		}
-	}
-};
-
-//
-
-function spawnMarble(name, color) {
-	let body = physics.marbles.createMarble(name, color);
-
-	// Send client info on new marble
-	gameplaySocketManager.emit(JSON.stringify(body.tags), "new_marble");
-}
-
-//
 
 let request = require("request");
 app.get("/chat", function(req, res) {
@@ -276,7 +154,7 @@ app.get("/chat", function(req, res) {
 
 							let exists = db.user.idExists(user_body.id);
 
-							token_body.access_granted = now();
+							token_body.access_granted = Date.now();
 
 							if (exists)
 								db.user.updateTokenById(token_body, user_body.id);
@@ -298,7 +176,7 @@ app.get("/chat", function(req, res) {
 							});
 
 						} else {
-							console.log(error, response.statusCode);
+							log.error(error, response.statusCode);
 						}
 					});
 				} else {
@@ -347,7 +225,7 @@ app.post("/chat", function(req, res) {
 			let callback = function(error, response, token_body) {
 				if (!error && response.statusCode === 200) {
 					token_body = JSON.parse(token_body);
-					token_body.access_granted = now();
+					token_body.access_granted = Date.now();
 
 					db.user.updateTokenById(token_body, req.body.id);
 
@@ -367,157 +245,11 @@ app.get("/editor", function(req, res) {
 		res.render("editorDisabled", {});
 });
 
-/* Express listener */
+// Express listener
 let server = http.listen(config.express.port, function() {
 	let port = server.address().port;
-	console.log(currentHourString() + "EXPRESS: Listening at port %s".cyan, port);
+	log.info("EXPRESS: Listening at port %s".cyan, port);
 });
-
-/* Sockets */
-let SocketManager = require("./src/network/sockets");
-let gameplaySocketManager = new SocketManager(
-	"/gameplay",
-	{
-		compression: 0,
-		maxPayloadLength: 1024 ** 2,
-		idleTimeout: 3600,
-		open: function(ws, req) {
-			// Get user if there is one
-			// Note: this might be pretty unsafe code. Remove or improve.
-			let name = " [Guest]";
-			let cookie = req.getHeader("cookie");
-			if (cookie) {
-				let cookies = cookie.split("; ");
-				let user_data = cookies.find(element => { return element.startsWith("user_data"); });
-				if (user_data) {
-					user_data = decodeURIComponent(user_data);
-					user_data = user_data.substr(10);
-					user_data = JSON.parse(user_data);
-					if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
-						name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
-					} else {
-						name = " Hacker?!?".red;
-					}
-				}
-			}
-
-			console.log(currentHourString() + "A user connected!".green + name);
-			ws.meta = { name };
-
-			let initialMarbleData = [];
-			for (let i = 0; i < physics.marbles.list.length; i++) {
-				initialMarbleData.push({
-					pos: physics.marbles.list[i].position,
-					id: physics.marbles.list[i].id,
-					tags: physics.marbles.list[i].tags
-				});
-			}
-
-			ws.sendTyped(JSON.stringify(initialMarbleData), "initial_data");
-		},
-		close: function(ws) {
-			console.log(currentHourString() + "A user disconnected...".red + ws.meta.name);
-		}
-	}
-);
-
-gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type) {
-	if (type === "request_physics") {
-		if (physics.marbles.list.length !== 0) {
-
-			let marbleTransformations = physics.marbles.getMarbleTransformations();
-			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
-			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
-
-			ws.sendTyped(
-				JSON.stringify({
-					pos: marbleTransformations.position,
-					rot: marbleTransformations.rotation
-				}),
-				type
-			);
-		} else {
-			ws.sendTyped("false", type);
-		}
-	}
-});
-
-// io.on("connection", function(socket) {
-
-// 	// Request physics
-// 	socket.on("request physics", (timestamp, callback) => {
-// 		if (physics.marbles.list.length !== 0) {
-
-// 			let marbleTransformations = physics.marbles.getMarbleTransformations();
-
-// 			let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
-// 			let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
-
-// 			callback({
-// 				pos: marbleTransformations.position.buffer,
-// 				rot: marbleTransformations.rotation.buffer,
-// 				startGate: startGatePosition
-// 			});
-// 		} else {
-// 			callback(0); // Still need to send the callback so the client doesn't lock up waiting for packets.
-// 		}
-// 	});
-// });
-
-// Discord chat embed
-const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
-let chatSocketManager = new SocketManager(
-	"/chat",
-	{
-		compression: 1,
-		maxPayloadLength: 128 * 1024,
-		idleTimeout: 3600
-	}
-);
-
-chatSocketManager.messageFunctions.push(function(ws, message) {
-	try {
-		message = JSON.parse(message);
-	}
-	catch(e) {
-		ws.send("Invalid JSON");
-		return;
-	}
-
-	let row = db.user.getUserDetailsById(message.id);
-	if (row && row.access_token == message.access_token) {
-		chat.testMessage(message.content, message.id, row.username);
-
-		chatWebhook.send(message.content, {
-			username: row.username,
-			avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
-			disableEveryone: true
-		});
-
-		ws.send(JSON.stringify({
-			username: row.username,
-			discriminator: row.discriminator,
-			content: message.content
-		}));
-	} else {
-		console.log("User ID and access token mismatch!", row);
-	}
-});
-
-/* Other */
-function pad(num, size) {
-	let s = `000000000${num}`;
-	return s.substr(s.length - size);
-}
-
-function currentHourString() {
-	let date = new Date();
-	return `[${pad(date.getHours(), 2)}:${pad(date.getMinutes(), 2)}] `;
-}
-
-function now() {
-	return (new Date()).getTime();
-}
 
 // Start the game loop
 game.end();

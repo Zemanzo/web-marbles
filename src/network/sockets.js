@@ -1,152 +1,122 @@
-const uWS = require("../../node_modules/uWebSockets.js/uws");
-const config = require("../../config");
-const socketMessageTypes = require("./socketMessageTypes");
+const SocketManager = require("./websocket-manager");
+const log = require("../log");
 
-const app = uWS.App({
-	key_file_name: "misc/key.pem",
-	cert_file_name: "misc/cert.pem",
-	passphrase: "1234"
-});
-
-function WebSocketManager(
-	route,
-	options
-) {
-	if (!options)
-		options = {};
-
-	// No compression by default
-	if (!options.compression || options.compression === 0)
-		options.compression = 0;
-
-	// Max 1 MB payload by default
-	if (!options.maxPayloadLength || options.maxPayloadLength === 0)
-		options.maxPayloadLength = 1 * 1024 * 1024;
-
-	// Max 16 * max payload by default
-	let _maxBackpressure;
-	if (!options.maxBackpressure || options.maxBackpressure === 0)
-		_maxBackpressure = options.maxBackpressure = options.maxPayloadLength * 16;
-
-	// Default timeout after 10 minutes
-	if (!options.idleTimeout || options.idleTimeout === 0)
-		options.idleTimeout = 600;
-
-	// Additional functionality when connection to socket is made (open)
-	let _open = options._open = options.open;
-	delete options.open; // avoid conflict with Object.assign;
-
-	// Additional functionality when connection to socket is lost (close, disconnect)
-	let _close = options._close = options.close;
-	delete options.close; // avoid conflict with Object.assign;
-
-	// Create list that contains all open socket connections
-	this._list = [];
-
-	let _typeMessage = this._typeMessage = function(message, type) {
-		type = socketMessageTypes.routes[route][type];
-
-		// Modify message based on type
-		if (typeof message === "string" && typeof type !== "undefined") {
-			type = (new Buffer.from([type])).readUInt8(0);
-			message = type + message;
-		} else if (typeof type !== "undefined") {
-			message = Buffer.concat([
-				(new Buffer.from([type])),
-				message
-			], message.length + 1);
-		}
-
-		return message;
-	};
-
-	this._add = function(ws) {
-		ws.sendTyped = function(message, type) {
-			ws.send( _typeMessage(message, type) );
-		};
-
-		this._list.push(ws);
-	};
-
-	this._remove = function(ws) {
-		this._list.splice(this._list.indexOf(ws), 1);
-	};
-
-	this.emit = function(message, type) {
-		for (let i = 0; i < this._list.length; i++) {
-			if (this._list[i].getBufferedAmount() < _maxBackpressure) {
-				if (type) {
-					this._list[i].sendTyped(message, type);
-				} else {
-					this._list[i].send(message);
-				}
-			} else {
-				return false;
-			}
-		}
-		return true;
-	};
-
-	this.messageFunctions = [];
-
-	// Create the socket endpoint
-	this._socket = app.ws(
-		route,
-		Object.assign(
-			{
-				// Handlers
-				open: (ws, req) => {
-					this._add(ws);
-					if (_open) _open(ws, req);
-				},
-				message: (ws, message, isBinary) => {
-					// Strip message type if neccesary
-					let type = socketMessageTypes.routes[route] ? Buffer.from(message).readUInt8(0) : false;
-
-					if (type) {
-						// Remove type byte
-						message = message.slice(1);
-
-						// Determine type
-						type = Object.keys(socketMessageTypes.routes[route]).find(
-							key => socketMessageTypes.routes[route][key] === parseInt(String.fromCharCode(type))
-						);
-					}
-
-					// Convert non-binary messages back to a string
-					if (!isBinary) {
-						message = Buffer.from(message).toString("utf-8");
-					}
-
-					// Only execute functions if there is no backpressure built up.
-					if (ws.getBufferedAmount() < _maxBackpressure) {
-						// Execute functions
-						for (let i = 0; i < this.messageFunctions.length; i++) {
-							this.messageFunctions[i](ws, message, isBinary, type);
+const setupGameplay = function(db, physics) {
+	// Gameplay socket
+	let gameplaySocketManager = new SocketManager(
+		"/gameplay",
+		{
+			compression: 0,
+			maxPayloadLength: 1024 ** 2,
+			idleTimeout: 3600,
+			open: function(ws, req) {
+				// Get user if there is one
+				// Note: this might be pretty unsafe code. Remove or improve.
+				let name = " [Guest]";
+				let cookie = req.getHeader("cookie");
+				if (cookie) {
+					let cookies = cookie.split("; ");
+					let user_data = cookies.find(element => { return element.startsWith("user_data"); });
+					if (user_data) {
+						user_data = decodeURIComponent(user_data);
+						user_data = user_data.substr(10);
+						user_data = JSON.parse(user_data);
+						if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+							name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
+						} else {
+							name = " Hacker?!?".red;
 						}
 					}
-				},
-				close: (ws, req) => {
-					this._remove(ws);
-					if (_close) _close(ws, req);
 				}
+
+				log.info("A user connected!".green + name);
+				ws.meta = { name };
+
+				let initialMarbleData = [];
+				for (let i = 0; i < physics.marbles.list.length; i++) {
+					initialMarbleData.push({
+						pos: physics.marbles.list[i].position,
+						id: physics.marbles.list[i].id,
+						tags: physics.marbles.list[i].tags
+					});
+				}
+
+				ws.sendTyped(JSON.stringify(initialMarbleData), "initial_data");
 			},
-			options
-		)
+			close: function(ws) {
+				log.info("A user disconnected...".red + ws.meta.name);
+			}
+		}
 	);
-}
 
-app.any("/*", (res) => {
-	res.end("Websockets are ready.");
-});
+	gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type) {
+		if (type === "request_physics") {
+			if (physics.marbles.list.length !== 0) {
 
+				let marbleTransformations = physics.marbles.getMarbleTransformations();
+				let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
+				let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
 
-app.listen(config.uwebsockets.port, (token) => {
-	if (token) {
-		console.log(`Listening to port ${config.uwebsockets.port}`);
-	} else {
-		console.log(`Failed to listen to port ${config.uwebsockets.port}`);
-	}
-});
+				ws.sendTyped(
+					JSON.stringify({
+						pos: marbleTransformations.position,
+						rot: marbleTransformations.rotation
+					}),
+					type
+				);
+			} else {
+				ws.sendTyped("false", type);
+			}
+		}
+	});
 
-module.exports = WebSocketManager;
+	return gameplaySocketManager;
+};
+
+const setupChat = function(db, chat, chatWebhook) {
+	// Chat socket (Discord chat embed)
+	let chatSocketManager = new SocketManager(
+		"/chat",
+		{
+			compression: 1,
+			maxPayloadLength: 128 * 1024,
+			idleTimeout: 3600
+		}
+	);
+
+	chatSocketManager.messageFunctions.push(function(ws, message) {
+		try {
+			message = JSON.parse(message);
+		}
+		catch (e) {
+			ws.send("Invalid JSON");
+			return;
+		}
+
+		let row = db.user.getUserDetailsById(message.id);
+		if (row && row.access_token == message.access_token) {
+			chat.testMessage(message.content, message.id, row.username);
+
+			chatWebhook.send(message.content, {
+				username: row.username,
+				avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
+				disableEveryone: true
+			});
+
+			ws.send(JSON.stringify({
+				username: row.username,
+				discriminator: row.discriminator,
+				content: message.content
+			}));
+		} else {
+			log.warn("User ID and access token mismatch!", row);
+		}
+	});
+
+	return chatSocketManager;
+};
+
+module.exports = {
+	setupChat,
+	setupGameplay
+};

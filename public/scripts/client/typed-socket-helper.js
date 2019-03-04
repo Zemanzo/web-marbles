@@ -1,4 +1,4 @@
-import * as socketMessageTypes from "../../../src/network/socketMessageTypes.json";
+import * as socketMessageTypes from "../../../src/network/socket-message-types.json";
 
 function TypedSocketHelper(route) {
 	this.route = route;
