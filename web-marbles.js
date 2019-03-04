@@ -242,7 +242,7 @@ app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
 		res.render("editor", {});
 	else
-		res.render("editorDisabled", {});
+		res.render("editor-disabled", {});
 });
 
 // Express listener
