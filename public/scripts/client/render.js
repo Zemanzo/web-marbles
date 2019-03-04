@@ -8,8 +8,9 @@ import * as Stats from "stats-js";
 import * as config from "../../config";
 import { net as networking } from "./networking";
 import { CameraFlyControls } from "../render/cameraFlyControls";
+import { BadTvEffect } from "./post-processing-vfx";
 
-let viewport, camera, renderer, stats, controls,
+let viewport, camera, renderer, postProcess, stats, controls,
 	scene = new THREE.Scene();
 
 function init() {
@@ -44,6 +45,11 @@ function init() {
 			z: 0
 		}
 	});
+
+	// Add post processing
+	postProcess = new BadTvEffect(renderer, scene, camera);
+	console.log(postProcess);
+	postProcess.composer.setSize(viewport.clientWidth, viewport.clientHeight);
 
 	animate();
 }
@@ -202,7 +208,7 @@ function animate() {
 	uniforms.time.value += delta * 5;
 
 	// Render the darn thing
-	renderer.render( scene, camera );
+	postProcess.composer.render();
 }
 
 let mapMesh;
