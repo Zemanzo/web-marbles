@@ -1,4 +1,5 @@
-var config = {};
+const clientConfig = require("./public/config");
+const config = {};
 
 /* Marbles */
 config.marbles = {};
@@ -78,7 +79,11 @@ config.express.cache = false;
 
 /* µWebSockets */
 config.uwebsockets = {};
-config.uwebsockets.port = 3014;
+config.uwebsockets.port = clientConfig.network.websockets.port;
+config.uwebsockets.ssl = clientConfig.network.websockets.ssl;
+config.uwebsockets.keyFileName = "misc/key.pem";
+config.uwebsockets.certFileName = "misc/cert.pem";
+config.uwebsockets.passphrase = "1234";
 
 /* Network */
 config.network = {};

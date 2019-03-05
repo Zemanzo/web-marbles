@@ -1,7 +1,9 @@
+import { network as config } from "../../config";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
-let ws = new ReconnectingWebSocket("ws://localhost:3014/chat", [], {
+let wsUri = `ws${config.websockets.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/chat`;
+let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,
 	reconnectionDelayGrowFactor: 2
@@ -216,14 +218,14 @@ function isAuthorized(data) {
 }
 
 /* Popout variant */
-if (user_data) {
+if (window.user_data) {
 
-	let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
-	Cookies.set("user_data", user_data, { expires: days });
+	let days = (window.user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
+	Cookies.set("user_data", window.user_data, { expires: days });
 
 	window.opener.postMessage({
 		success: true,
-		response: user_data
+		response: window.user_data
 	}, window.location.origin);
 
 } else {

@@ -3,7 +3,8 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import * as game from "./game";
 
-let ws = new ReconnectingWebSocket("ws://localhost:3014/gameplay", [], {
+let wsUri = `ws${config.websockets.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/gameplay`;
+let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,
 	reconnectionDelayGrowFactor: 2
