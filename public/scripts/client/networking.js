@@ -54,6 +54,9 @@ net.socketReady = new Promise((resolve) => {
 		case "new_marble":
 			game.spawnMarble(JSON.parse(message));
 			break;
+		case "finished_marble":
+			game.finishMarble(JSON.parse(message));
+			break;
 		case "start":
 			game.start();
 			break;

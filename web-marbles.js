@@ -97,7 +97,8 @@ app.get("/client", function(req, res) {
 
 			res.send(
 				{
-					gameState: game.logic.state,
+					gameState: game.state,
+					roundTimerStart: game.startTime,
 					enterPeriod: config.marbles.rules.enterPeriod,
 					maxRoundLength: config.marbles.rules.maxRoundLength,
 					timeToEnter: game.getTimeRemaining(),

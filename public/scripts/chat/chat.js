@@ -218,14 +218,14 @@ function isAuthorized(data) {
 }
 
 /* Popout variant */
-if (window.user_data) {
+if (user_data) {
 
-	let days = (window.user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
-	Cookies.set("user_data", window.user_data, { expires: days });
+	let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
+	Cookies.set("user_data", user_data, { expires: days });
 
 	window.opener.postMessage({
 		success: true,
-		response: window.user_data
+		response: user_data
 	}, window.location.origin);
 
 } else {

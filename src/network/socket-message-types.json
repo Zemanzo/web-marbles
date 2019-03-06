@@ -5,7 +5,8 @@
 			"request_physics": 1,
 			"new_marble": 2,
 			"start": 3,
-			"clear": 4
+			"clear": 4,
+			"finished_marble": 5
 		}
 	}
 }
