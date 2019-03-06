@@ -1,3 +1,13 @@
+/* do-hyeon-regular - latin */
+@font-face {
+	font-family: "Do Hyeon";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Do Hyeon Regular"),
+		local("DoHyeon-Regular"),
+		url("../fonts/do-hyeon-v8/do-hyeon-v8-latin-regular.woff2") format("woff2");
+}
+
 * {
 	margin: 0;
 	box-sizing: border-box;
@@ -9,13 +19,11 @@ html {
 }
 
 body {
-	font-family: "Do Hyeon",monospace;
+	font-family: "Do Hyeon", monospace;
 	background: var(--theme-color);
 	height: calc(100vh - 2px);
 	overflow: hidden;
 	display: flex;
-	/* padding: 1px; */
-	/* border: 1px solid var(--theme-color); */
 }
 
 a {
@@ -44,15 +52,15 @@ a:hover {
 		width: 100%;
 		display: flex;
 		flex-direction: row-reverse;
-		pointer-events:  none;
+		pointer-events: none;
 	}
 
 	#viewportOverlay > * {
-		pointer-events:  all;
+		pointer-events: all;
 	}
 
 	#viewportOverlay button {
-		height:  2em;
+		height: 2em;
 	}
 
 #sidebar {
