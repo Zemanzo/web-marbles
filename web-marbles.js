@@ -16,12 +16,15 @@ db.setCurrentDatabase(
 // Set up physics world
 const physics = require("./src/physics/manager")(config);
 
+// Set up game logic
+const game = require("./src/game")(config, physics);
+
 // Set up gameplay socket
 const sockets = require("./src/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, physics);
+const socketGameplay = sockets.setupGameplay(db, physics, config, game);
 
-// Set up game logic
-const game = require("./src/game")(config, physics, socketGameplay);
+// Set game socketManager
+game.setSocketManager(socketGameplay);
 
 // Chat testing
 const chat = require("./src/chat")(game);

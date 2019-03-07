@@ -76,7 +76,7 @@ module.exports = function(Ammo, world) {
 					ms.getWorldTransform(this._marblesTransformAux);
 					let p = this._marblesTransformAux.getOrigin();
 
-					if ( p.y() < 35 && this._finishedMarbles[i] !== true ) {
+					if ( p.y() < 5 && this._finishedMarbles[i] !== true ) {
 						this._finishedMarbles[i] = true;
 						finished.push(i);
 					}

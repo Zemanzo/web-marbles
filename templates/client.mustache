@@ -75,21 +75,12 @@
 		<section id="sidebar">
 
 			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
+
 			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
 
 			<hr/>
 
-			<!-- <a id="twitchLink" href="https://id.twitch.tv/oauth2/authorize?client_id={{clientId}}&redirect_uri={{redirectUri}}&response_type=token+id_token&scope=openid" role="button">
-				<div id="twitchConnect">
-					<img src="images/Glitch_White_RGB.svg" alt="Glitch Logo"> Login with Twitch!
-				</div>
-			</a>
-
-			<h3 id="welcomeMessage">Welcome back, fellow marble friend!</h3>
-
-			<hr/> -->
-
-			<div id="gameInfo">
+			<div id="gameInfo" class="hidden">
 				<div id="gameState">
 					<h2 id="state">Enter marbles now!</h2>
 					<div id="timer" class="themeNumber">
@@ -105,6 +96,7 @@
 							Marbles - <span id="entries" class="themeNumber">0</span> entries
 						</h2>
 					</div>
+
 					<div id="marbleList">
 						<div class="marbleListEntry" id="marbleListTemplate">
 							<span class="rank">#</span>
@@ -113,14 +105,11 @@
 							<span class="time">...</span>
 						</div>
 					</div>
-
 				</div>
 			</div>
 
 			<div id="chat">
-
 				<iframe src="/chat" frameborder="0"></iframe>
-
 			</div>
 		</section>
 	</body>

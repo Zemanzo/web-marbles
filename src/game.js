@@ -1,9 +1,14 @@
 const log = require("./log");
 
-module.exports = function(config, physics, socketManager) {
+module.exports = function(config, physics) {
 	return {
 		// Game logic
-		state: "started", // "enter", "started"
+		state: "started", // "waiting", "enter", "starting", "started"
+		setState(newState) {
+			this._socketManager.emit(newState, "state");
+			this.state = newState;
+			log.info("Current state: ".magenta, this.state);
+		},
 		_startDelay: 2825, // length in ms of audio
 		startTime: undefined,
 		_entered: [],
@@ -11,7 +16,7 @@ module.exports = function(config, physics, socketManager) {
 		_waitingForEntry: true,
 		addMarble(id, name, color) {
 			// Only allow marbles during entering phase
-			if (this.state === "enter") {
+			if (this.state === "waiting" || this.state === "enter") {
 
 				// Make sure this person hasn't entered in this round yet
 				if (!this._entered.includes(id)) {
@@ -21,6 +26,7 @@ module.exports = function(config, physics, socketManager) {
 					// Wait for a human entering the round before starting it
 					if (this._waitingForEntry) {
 						this._waitingForEntry = false;
+						this.setState("enter");
 
 						// Start the game after the entering period is over
 						clearTimeout(this.enterTimeout);
@@ -37,7 +43,7 @@ module.exports = function(config, physics, socketManager) {
 			let body = physics.marbles.createMarble(name, color);
 
 			// Send client info on new marble
-			socketManager.emit(JSON.stringify(body.tags), "new_marble");
+			this._socketManager.emit(JSON.stringify(body.tags), "new_marble");
 		},
 
 		getTimeRemaining() {
@@ -46,9 +52,6 @@ module.exports = function(config, physics, socketManager) {
 
 		end() {
 			if (this.state === "started") {
-				this.state = "enter";
-				log.info("Current state: ".magenta, this.state);
-
 				// Wait for a human to start the next round
 				this._waitingForEntry = true;
 
@@ -73,8 +76,8 @@ module.exports = function(config, physics, socketManager) {
 				// Clear the array of people that entered
 				this._entered = [];
 
-				// Send clients game restart so they can clean up on their side
-				socketManager.emit("true", "clear");
+				// Set state and inform the client
+				this.setState("waiting");
 
 				return true;
 			} else {
@@ -83,14 +86,12 @@ module.exports = function(config, physics, socketManager) {
 		},
 
 		start() {
-			if (this.state === "enter") {
-				this.state = "started";
-
-				log.info("Current state: ".magenta, this.state);
-
-				socketManager.emit("true", "start");
+			if (this.state === "enter" || this.state === "waiting") {
+				this.setState("starting");
 
 				setTimeout(() => {
+					this.setState("started");
+
 					this.startTime = Date.now();
 
 					physics.openGate();
@@ -124,7 +125,7 @@ module.exports = function(config, physics, socketManager) {
 					time = physics.marbles.list[finished[i]].tags.time = finishTime - this.startTime;
 
 				// Send client info on finished marble
-				socketManager.emit(JSON.stringify({
+				this._socketManager.emit(JSON.stringify({
 					id: finished[i],
 					rank,
 					time
@@ -144,6 +145,10 @@ module.exports = function(config, physics, socketManager) {
 					setTimeout(this.end.bind(this), 2000);
 				}
 			}
+		},
+
+		setSocketManager(socketManager) {
+			this._socketManager = socketManager;
 		}
 	};
 };
