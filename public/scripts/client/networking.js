@@ -1,6 +1,6 @@
 import { network as config } from "../../config";
 import ReconnectingWebSocket from "reconnecting-websocket";
-import { TypedSocketHelper } from "./TypedSocketHelper";
+import { TypedSocketHelper } from "./typed-socket-helper";
 import * as game from "./game";
 
 let ws = new ReconnectingWebSocket("ws://localhost:3014/gameplay", [], {
