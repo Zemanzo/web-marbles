@@ -118,7 +118,12 @@ a:hover {
 	#gameInfo {
 		min-height: 350px;
 		padding: 9px;
+		visibility: visible;
 	}
+
+		#gameInfo.hidden {
+			visibility: hidden;
+		}
 
 		#gameInfo.enter #timer,
 		#gameInfo.started #timer {

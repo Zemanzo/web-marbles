@@ -39,8 +39,10 @@ net.socketReady = new Promise((resolve) => {
 
 		switch(type) {
 		case "initial_data":
-			net.marbleData = JSON.parse(message);
-			resolve(true);
+			message = JSON.parse(message);
+			net.marbleData = message.initialMarbleData;
+			game.setInitialState(Promise.resolve(message));
+			resolve(message);
 			break;
 		case "request_physics":
 			message = JSON.parse(message);
@@ -57,11 +59,8 @@ net.socketReady = new Promise((resolve) => {
 		case "finished_marble":
 			game.finishMarble(JSON.parse(message));
 			break;
-		case "start":
-			game.start();
-			break;
-		case "clear":
-			game.end();
+		case "state":
+			game.setState(message);
 			break;
 		}
 	});

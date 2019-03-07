@@ -1,7 +1,7 @@
 const SocketManager = require("./websocket-manager");
 const log = require("../log");
 
-const setupGameplay = function(db, physics) {
+const setupGameplay = function(db, physics, config, game) {
 	// Gameplay socket
 	let gameplaySocketManager = new SocketManager(
 		"/gameplay",
@@ -41,7 +41,17 @@ const setupGameplay = function(db, physics) {
 					});
 				}
 
-				ws.sendTyped(JSON.stringify(initialMarbleData), "initial_data");
+				let intialData = {
+					gameState: game.state,
+					roundTimerStart: game.startTime,
+					timeToEnter: game.getTimeRemaining(),
+					enterPeriod: config.marbles.rules.enterPeriod,
+					maxRoundLength: config.marbles.rules.maxRoundLength,
+					mapId: config.marbles.mapRotation[0].name,
+					initialMarbleData
+				};
+
+				ws.sendTyped(JSON.stringify(intialData), "initial_data");
 			},
 			close: function(ws) {
 				log.info("A user disconnected...".red + ws.meta.name);
@@ -54,8 +64,8 @@ const setupGameplay = function(db, physics) {
 			if (physics.marbles.list.length !== 0) {
 
 				let marbleTransformations = physics.marbles.getMarbleTransformations();
-				let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
-				let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
+				// let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
+				// let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
 
 				ws.sendTyped(
 					JSON.stringify({
