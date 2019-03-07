@@ -3,11 +3,12 @@ const config = require("../../config");
 const socketMessageTypes = require("./socket-message-types");
 const log = require("../log");
 
-const app = uWS.App({
-	key_file_name: "misc/key.pem",
-	cert_file_name: "misc/cert.pem",
-	passphrase: "1234"
-});
+const appOptions = {
+	key_file_name: config.uwebsockets.keyFileName,
+	cert_file_name: config.uwebsockets.certFileName,
+	passphrase: config.uwebsockets.passphrase
+};
+const app = config.uwebsockets.ssl ? uWS.SSLApp(appOptions) : uWS.App();
 
 function WebSocketManager(
 	route,
