@@ -1,14 +1,14 @@
 import * as THREE from "three";
-import "three/examples/js/loaders/GLTFLoader";
 import * as inspector from "./inspector";
 import { models } from "./models";
 import { prefabs } from "./prefabs";
 import { world } from "./world";
+import { Project } from "./project";
 import { setEditorLogElement, editorLog } from "./log";
 import { scene, init as renderInit } from "./render";
 
 let editor = {
-	log: undefined,
+	project: undefined,
 	menu: {},
 	groups: {
 		models: undefined,
@@ -30,6 +30,8 @@ window.addEventListener("DOMContentLoaded", function() {
 	};
 
 	setEditorLogElement( document.getElementById("log") );
+
+	editor.project = new Project();
 
 	inspector.initialize(editor);
 
@@ -186,7 +188,7 @@ editor.serialization.preparePayload = function() {
 
 	let models = {};
 	for (let model in editor.models) {
-		if(model === "initialize") continue; // HOTFIX
+		if(typeof editor.models[model] === "function") continue; // Hotfix for something that's going to be replaced anyway!
 		models[model] = {
 			scene: editor.models[model].scene.toJSON(),
 			userData: {}
