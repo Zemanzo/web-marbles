@@ -43,7 +43,7 @@ let inspector = {
 		// Reset any disabled inputs. Will be disabled again when necessary.
 		inspector.disabled.all(false);
 
-		if (entity.model) document.getElementById("inspectorModel").value = entity.model;
+		if (entity.model) document.getElementById("inspectorModelList").value = entity.model;
 
 		// If a collider shape is selected, fill the inputs with the appropriate values
 		if (entity.shape) {
@@ -134,7 +134,7 @@ let inspector = {
 		// Inspector elements
 		inspector.elements = {
 			name: document.getElementById("inspectorName"),
-			model: document.getElementById("inspectorModel"),
+			model: document.getElementById("inspectorModelList"),
 			shape: document.getElementById("inspectorShape"),
 			transform: {
 				input: {
