@@ -5,6 +5,7 @@
 			"request_physics": 1,
 			"new_marble": 2,
 			"state": 3,
+			"notification": 4,
 			"finished_marble": 5
 		}
 	}

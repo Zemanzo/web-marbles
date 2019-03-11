@@ -1,6 +1,7 @@
 import { network as config } from "../../config";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
+import { HUDNotification } from "./hud-notification";
 import * as game from "./game";
 
 let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/gameplay`;
@@ -61,6 +62,11 @@ net.socketReady = new Promise((resolve) => {
 			break;
 		case "state":
 			game.setState(message);
+			break;
+		case "notification":
+			message = JSON.parse(message);
+			console.log(message);
+			new HUDNotification(message.content, message.style);
 			break;
 		}
 	});
