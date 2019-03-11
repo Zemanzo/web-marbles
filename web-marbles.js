@@ -249,6 +249,11 @@ app.get("/editor", function(req, res) {
 		res.render("editor-disabled", {});
 });
 
+app.get("/shutdown", function(req, res) {
+	res.send("wow ok then");
+	shutdown();
+});
+
 // Express listener
 let server = http.listen(config.express.port, function() {
 	let port = server.address().port;
@@ -257,3 +262,46 @@ let server = http.listen(config.express.port, function() {
 
 // Start the game loop
 game.end();
+
+// Graceful shutdown
+process.on("exit", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
+function shutdown() {
+	log.warn("Termination signal received. Shutting down web-marbles...".yellow);
+
+	// Inform any connected clients
+	socketGameplay.emit(JSON.stringify({
+		content: "The server is shutting down.",
+		style: {
+			backgroundColor: "#d00"
+		}
+	}), "notification");
+
+	// Express
+	server.close(() => {
+		log.warn("EXPRESS server closed");
+	});
+
+	// Discord
+	discordClient.destroy()
+		.then(() => {
+			log.warn("DISCORD main client stopped");
+		});
+
+	chatWebhook.destroy();
+	log.warn("DISCORD chat webhook stopped");
+
+	// Database
+	db.close();
+	log.warn("DATABASE connection closed");
+
+	// µWebSockets
+	socketChat.close();
+	socketGameplay.close();
+	sockets.close();
+	log.warn("µWS server closed");
+
+	log.info("Successfully shut down web-marbles. Smell ya later!".green);
+}

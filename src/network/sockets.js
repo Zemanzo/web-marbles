@@ -1,9 +1,9 @@
-const SocketManager = require("./websocket-manager");
+const socketManager = require("./websocket-manager");
 const log = require("../log");
 
 const setupGameplay = function(db, physics, config, game) {
 	// Gameplay socket
-	let gameplaySocketManager = new SocketManager(
+	let gameplaySocketManager = new socketManager.Socket(
 		"/gameplay",
 		{
 			compression: 0,
@@ -85,7 +85,7 @@ const setupGameplay = function(db, physics, config, game) {
 
 const setupChat = function(db, chat, chatWebhook) {
 	// Chat socket (Discord chat embed)
-	let chatSocketManager = new SocketManager(
+	let chatSocketManager = new socketManager.Socket(
 		"/chat",
 		{
 			compression: 1,
@@ -126,7 +126,12 @@ const setupChat = function(db, chat, chatWebhook) {
 	return chatSocketManager;
 };
 
+function close() {
+	socketManager.stopListening();
+}
+
 module.exports = {
+	close,
 	setupChat,
 	setupGameplay
 };
