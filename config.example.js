@@ -37,6 +37,7 @@ config.marbles.bots.names = [
 
 // Game rules -- Move this to the mapRotation and have it set per map.
 config.marbles.rules = {};
+config.marbles.rules.maxMarbleCount = 250; // Max amount of marbles that can be entered during a single round
 config.marbles.rules.enterPeriod = 40; // Time in seconds
 config.marbles.rules.maxRoundLength = 160; // Time in seconds
 config.marbles.rules.waitAfterFinish = 40; // Time in seconds

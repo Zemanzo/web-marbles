@@ -13,6 +13,7 @@ module.exports = function(config, physics) {
 		startTime: undefined,
 		_entered: [],
 
+		limitReached: false,
 		_waitingForEntry: true,
 		addMarble(id, name, color) {
 			// Only allow marbles during entering phase
@@ -20,20 +21,24 @@ module.exports = function(config, physics) {
 
 				// Make sure this person hasn't entered in this round yet
 				if (!this._entered.includes(id)) {
-					this._entered.push(id);
-					this.spawnMarble(name, color);
 
-					// Wait for a human entering the round before starting it
-					if (this._waitingForEntry) {
-						this._waitingForEntry = false;
-						this.setState("enter");
+					// Check whether we have reached the maximum marble limit
+					if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
+						this._entered.push(id);
+						this.spawnMarble(name, color);
 
-						// Start the game after the entering period is over
-						clearTimeout(this.enterTimeout);
-						this.enterTimeout = setTrackableTimeout(
-							this.start.bind(this),
-							config.marbles.rules.enterPeriod * 1000
-						);
+						// Wait for a human entering the round before starting it
+						if (this._waitingForEntry) {
+							this._waitingForEntry = false;
+							this.setState("enter");
+
+							// Start the game after the entering period is over
+							clearTimeout(this.enterTimeout);
+							this.enterTimeout = setTrackableTimeout(
+								this.start.bind(this),
+								config.marbles.rules.enterPeriod * 1000
+							);
+						}
 					}
 				}
 			}
@@ -44,6 +49,16 @@ module.exports = function(config, physics) {
 
 			// Send client info on new marble
 			this._socketManager.emit(JSON.stringify(body.tags), "new_marble");
+
+			// Check for marble limit
+			if (physics.marbles.list.length >= config.marbles.rules.maxMarbleCount && !this.limitReached) {
+				this.limitReached = true;
+				this._socketManager.emit(JSON.stringify({
+					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
+				}), "notification");
+				this.start();
+				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
+			}
 		},
 
 		getTimeRemaining() {
@@ -75,6 +90,9 @@ module.exports = function(config, physics) {
 
 				// Clear the array of people that entered
 				this._entered = [];
+
+				// If we had hit the marble limit on the previous round, that's no longer true
+				this.limitReached = false;
 
 				// Set state and inform the client
 				this.setState("waiting");
@@ -140,7 +158,6 @@ module.exports = function(config, physics) {
 				}
 
 				// If all marbles have finished, end the game
-				console.log(this._rank, physics.marbles.list.length);
 				if (this._rank === physics.marbles.list.length) {
 					setTimeout(this.end.bind(this), 2000);
 				}
