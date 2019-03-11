@@ -145,9 +145,10 @@ function Socket(
 	};
 }
 
+let _listenSocket;
 app.listen(config.uwebsockets.port, (token) => {
 	if (token) {
-		this._listenSocket = token;
+		_listenSocket = token;
 		log.info(`µWS: Listening to port ${config.uwebsockets.port}`.cyan);
 	} else {
 		log.info(`µWS: Failed to listen to port ${config.uwebsockets.port}`.cyan);
@@ -155,7 +156,7 @@ app.listen(config.uwebsockets.port, (token) => {
 });
 
 function stopListening() {
-	uWS.us_listen_socket_close(this._listenSocket);
+	uWS.us_listen_socket_close(_listenSocket);
 }
 
 module.exports = {

@@ -10,7 +10,7 @@ module.exports = function(config) {
 		gateBody: world.gateBody,
 		openGate: world.openGate,
 		closeGate: world.closeGate,
-
+		stopUpdateInterval: world.stopUpdateInterval,
 		marbles
 	};
 };

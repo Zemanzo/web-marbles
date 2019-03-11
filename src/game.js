@@ -166,41 +166,6 @@ module.exports = function(config, physics) {
 			}
 		},
 
-<<<<<<< HEAD
-=======
-		_rank: 0,
-		_firstFinish: false,
-		_checkFinishedInterval: undefined,
-		_checkFinished() {
-			let finishTime = Date.now();
-			let finished = physics.marbles.getFinishedMarbles();
-			for (let i = 0; i < finished.length; i++) {
-				let rank = physics.marbles.list[finished[i]].tags.rank = this._rank++,
-					time = physics.marbles.list[finished[i]].tags.time = finishTime - this.startTime;
-
-				// Send client info on finished marble
-				this._socketManager.emit(JSON.stringify({
-					id: finished[i],
-					rank,
-					time
-				}), "finished_marble");
-
-				if (this._firstFinish === false) {
-					this._firstFinish = true;
-					this.gameplayFinishTimeout = setTrackableTimeout(
-						this.end.bind(this),
-						config.marbles.rules.waitAfterFinish * 1000
-					);
-				}
-
-				// If all marbles have finished, end the game
-				if (this._rank === physics.marbles.list.length) {
-					setTimeout(this.end.bind(this), 2000);
-				}
-			}
-		},
-
->>>>>>> Max. marble count config rule; Basic client HUD notification system
 		setSocketManager(socketManager) {
 			_socketManager = socketManager;
 		}

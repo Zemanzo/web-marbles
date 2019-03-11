@@ -268,40 +268,64 @@ process.on("exit", shutdown);
 process.on("SIGTERM", shutdown);
 process.on("SIGINT", shutdown);
 
+let shuttingDown = false;
 function shutdown() {
-	log.warn("Termination signal received. Shutting down web-marbles...".yellow);
+	if (!shuttingDown) {
+		shuttingDown = true;
 
-	// Inform any connected clients
-	socketGameplay.emit(JSON.stringify({
-		content: "The server is shutting down.",
-		style: {
-			backgroundColor: "#d00"
-		}
-	}), "notification");
+		log.warn("Termination signal received. Shutting down web-marbles...".yellow);
 
-	// Express
-	server.close(() => {
-		log.warn("EXPRESS server closed");
-	});
+		// Inform any connected clients
+		socketGameplay.emit(JSON.stringify({
+			content: "The server is shutting down.",
+			style: {
+				backgroundColor: "#d00"
+			}
+		}), "notification");
 
-	// Discord
-	discordClient.destroy()
-		.then(() => {
-			log.warn("DISCORD main client stopped");
+		// Create a list of promises that all have to resolve before we can consider being shut down
+		let promises = [];
+
+		// Express
+		promises.push(
+			new Promise((resolve) => {
+				server.close(() => {
+					log.warn("EXPRESS server closed");
+					resolve();
+				});
+			})
+		);
+
+		// Discord
+		promises.push(
+			discordClient.destroy().then(() => {
+				log.warn("DISCORD main client stopped");
+			})
+		);
+
+		chatWebhook.destroy();
+		log.warn("DISCORD chat webhook stopped");
+
+		// Database
+		db.close();
+		log.warn("DATABASE connection closed");
+
+		// Stopped physics simulation
+		physics.stopUpdateInterval();
+		log.warn("PHYSICS stopped");
+
+		// µWebSockets
+		socketChat.close();
+		socketGameplay.close();
+		sockets.close();
+		log.warn("µWS server closed");
+
+		// Once promises resolve, we should be done
+		Promise.all(promises).then(() => {
+			log.warn("Successfully shut down web-marbles. Smell ya later!".green);
+		}, (reason) => {
+			shuttingDown = false;
+			log.error("Failed to shut down gracefully, try again?", reason);
 		});
-
-	chatWebhook.destroy();
-	log.warn("DISCORD chat webhook stopped");
-
-	// Database
-	db.close();
-	log.warn("DATABASE connection closed");
-
-	// µWebSockets
-	socketChat.close();
-	socketGameplay.close();
-	sockets.close();
-	log.warn("µWS server closed");
-
-	log.info("Successfully shut down web-marbles. Smell ya later!".green);
+	}
 }
