@@ -1,23 +1,77 @@
-import { BoxBufferGeometry, Mesh, Group } from "three";
+import { BoxBufferGeometry, Mesh, Group, Vector3 } from "three";
 import { generateTinyUUID } from "../generateTinyUUID";
 import { hslToHex } from "../hslToHex";
-import { selected, select, deselect } from "./inspector";
+import { inspector } from "./inspector";
 import { physicsMaterial } from "./materials";
-import { defaultModel } from "./render";
+import { scene, defaultModel } from "./render";
+import { editor } from "./editor";
 
-let prefabs = {},
-	editor;
 
-prefabs.initialize = function(global) {
-	editor = global;
+let prefabsTab = function() {
 
-	// Register new prefab event
-	document.getElementById("newPrefab").addEventListener("click", function() {
-		let uuid = generateTinyUUID();
-		// TODO: Check for ID duplicates
-		addPrefab(uuid);
-	}, false);
-};
+	return {
+		prefabs: {},
+		group: undefined,
+
+		initialize: function() {
+			this.group = new Group();
+			scene.add(this.group);
+
+			// Register new prefab event
+			document.getElementById("newPrefab").addEventListener("click", function() {
+				let uuid = generateTinyUUID();
+				// TODO: Check for ID duplicates
+				addPrefab(uuid);
+			}, false);
+		},
+
+		onTabActive: function() {
+			prefabsTab.group.visible = true;
+		},
+
+		onTabInactive: function() {
+			prefabsTab.group.visible = false;
+
+			// Update changed prefabs
+			// TODO: Figure out what it actually does..?
+			for (let uuid in prefabsTab.prefabs) {
+				if (prefabsTab.prefabs[uuid].changed) {
+					let containsStart = Object.keys( prefabsTab.prefabs[uuid].entities ).some(
+						(key)=>{
+							let userData = prefabsTab.prefabs[uuid].entities[key].sceneObject.userData;
+							return (userData.functionality && userData.functionality === "startarea");
+						}
+					);
+
+					for (let key in prefabsTab.prefabs[uuid].instances) {
+						let instance = prefabsTab.prefabs[uuid].instances[key];
+						let old = instance.sceneObject;
+
+						let clone = prefabsTab.prefabs[uuid].group.clone();
+
+						clone.position.copy(old.position);
+
+						if (containsStart) {
+							clone.rotation.setFromVector3( new Vector3(0, 0, 0) );
+						} else {
+							clone.rotation.copy(old.rotation);
+						}
+
+						old.parent.add(clone);
+
+						old.parent.remove(old);
+
+						instance.sceneObject = clone;
+						instance.sceneObject.visible = true; // Do not copy visibility setting from prefab
+					}
+
+					// world instances are updated
+					prefabsTab.prefabs[uuid].changed = false;
+				}
+			}
+		}
+	};
+}();
 
 // Collapse prefab
 let collapse = function() {
@@ -41,22 +95,20 @@ let deleteEntity = function(event) {
 	let name = parent.getElementsByClassName("name")[0].innerHTML;
 	if ( !event || confirm(`Are you sure you want to delete this entity? (${name}) (${uuid})`) ) {
 		// Deselect inspector if it shows currently selected object
-		// TODO: Make this work
-		if (selected === parent)
-			deselect();
+		if (inspector.selected === parent) inspector.deselect();
 
 		// Remove element
 		parent.parentNode.removeChild(parent);
 
 		// Remove threejs object
-		editor.prefabs[prefabUuid].group.remove(
-			editor.prefabs[prefabUuid].entities[uuid].sceneObject
+		prefabsTab.prefabs[prefabUuid].group.remove(
+			prefabsTab.prefabs[prefabUuid].entities[uuid].sceneObject
 		);
 
-		delete editor.prefabs[prefabUuid].entities[uuid];
+		delete prefabsTab.prefabs[prefabUuid].entities[uuid];
 
 	}
-	editor.prefabs[prefabUuid].changed = true;
+	prefabsTab.prefabs[prefabUuid].changed = true;
 };
 
 // Delete prefab
@@ -67,7 +119,7 @@ let deletePrefab = function() {
 	if ( confirm(`Are you sure you want to delete this prefab? (${name}) (${parent.dataset.uuid})`) ) {
 		// Deselect inspector
 		// TODO: add deselect condition (only need to deselect when selected object is in prefab)
-		deselect();
+		inspector.deselect();
 
 		let children = parent.getElementsByClassName("objectList")[0].children;
 		for (let i = children.length; i > 0; i--) {
@@ -76,15 +128,15 @@ let deletePrefab = function() {
 		}
 
 		// Remove world select option element
-		editor.elements.worldPrefab.removeChild(editor.prefabs[prefabUuid].option);
+		editor.elements.worldPrefab.removeChild(prefabsTab.prefabs[prefabUuid].option);
 
 		if (editor.elements.worldPrefab.children.length == 1) {
 			editor.elements.worldPrefab.disabled = true;
 		}
 
 		// Remove world instances
-		for (let key in editor.prefabs[prefabUuid].instances) {
-			let instance = editor.prefabs[prefabUuid].instances[key];
+		for (let key in prefabsTab.prefabs[prefabUuid].instances) {
+			let instance = prefabsTab.prefabs[prefabUuid].instances[key];
 			instance.element.parentNode.removeChild(instance.element);
 			instance.sceneObject.parent.remove(instance.sceneObject);
 		}
@@ -92,7 +144,10 @@ let deletePrefab = function() {
 		// Remove element
 		parent.parentNode.removeChild(parent);
 
-		delete editor.prefabs[prefabUuid];
+		// Remove from group
+		prefabsTab.group.remove(prefabsTab.prefabs[prefabUuid].group);
+
+		delete prefabsTab.prefabs[prefabUuid];
 	}
 };
 
@@ -105,15 +160,15 @@ let addTemplateElement = function(type, parent) {
 	clone.dataset.prefabUuid = parent.dataset.uuid;
 	clone.dataset.uuid = uuid;
 	clone.dataset.type = "entities";
-	clone.getElementsByClassName("name")[0].innerHTML = type + editor.entityCount++;
+	clone.getElementsByClassName("name")[0].innerHTML = type + prefabsTab.prefabs[parent.dataset.uuid].entityCount++;
 	clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
 	clone.getElementsByClassName("delete")[0].addEventListener("click", deleteEntity, false);
-	clone.addEventListener("click", select, false);
+	clone.addEventListener("click", inspector.select, false);
 	clone = parent.getElementsByClassName("objectList")[0].appendChild(clone);
-	editor.prefabs[parent.dataset.uuid].entities[uuid] = {
+	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid] = {
 		element: clone
 	};
-	editor.prefabs[parent.dataset.uuid].changed = true;
+	prefabsTab.prefabs[parent.dataset.uuid].changed = true;
 	return uuid;
 };
 
@@ -123,10 +178,10 @@ let addObject = function() {
 	let uuid = addTemplateElement.call(this, "Object", parent);
 
 	let clone = defaultModel.clone();
-	editor.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
-	editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
-	editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject.userData.functionality = "static";
-	editor.prefabs[parent.dataset.uuid].group.add(clone);
+	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
+	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
+	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject.userData.functionality = "static";
+	prefabsTab.prefabs[parent.dataset.uuid].group.add(clone);
 };
 
 // Add collider to prefab
@@ -136,21 +191,21 @@ let addCollider = function() {
 
 	let geometry = new BoxBufferGeometry( 1, 1, 1 );
 	let box = new Mesh(geometry, physicsMaterial );
-	editor.prefabs[parent.dataset.uuid].entities[uuid].shape = "box";
-	let sceneObject = editor.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
+	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].shape = "box";
+	let sceneObject = prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
 	sceneObject.userData.radius = 1;
 	sceneObject.userData.width = 1;
 	sceneObject.userData.height = 1;
 	sceneObject.userData.depth = 1;
 	sceneObject.userData.functionality = "static";
-	editor.prefabs[parent.dataset.uuid].group.add(box);
+	prefabsTab.prefabs[parent.dataset.uuid].group.add(box);
 };
 
 // Toggle prefab visibility
 let showPrefab = function() {
 	let parent = this.closest(".prefab");
 	let prefabUuid = parent.dataset.uuid;
-	let prefabGroup = editor.prefabs[prefabUuid].group;
+	let prefabGroup = prefabsTab.prefabs[prefabUuid].group;
 	let icon = this.getElementsByTagName("i")[0];
 
 	if (prefabGroup.visible) {
@@ -166,9 +221,9 @@ let showPrefab = function() {
 let namePrefab = function() {
 	let parent = this.closest(".prefab");
 	let prefabUuid = parent.dataset.uuid;
-	editor.prefabs[prefabUuid].option.text = `${this.value  } (${  prefabUuid  })`;
-	for (let key of Object.keys(editor.prefabs[prefabUuid].instances) ) {
-		let instance = editor.prefabs[prefabUuid].instances[key];
+	prefabsTab.prefabs[prefabUuid].option.text = `${this.value  } (${  prefabUuid  })`;
+	for (let key of Object.keys(prefabsTab.prefabs[prefabUuid].instances) ) {
+		let instance = prefabsTab.prefabs[prefabUuid].instances[key];
 		instance.element.getElementsByClassName("prefabName")[0].innerText = this.value;
 	}
 };
@@ -177,8 +232,8 @@ let namePrefab = function() {
 let colorPrefab = function() {
 	let parent = this.closest(".prefab");
 	let prefabUuid = parent.dataset.uuid;
-	for (let key of Object.keys(editor.prefabs[prefabUuid].instances) ) {
-		let instance = editor.prefabs[prefabUuid].instances[key];
+	for (let key of Object.keys(prefabsTab.prefabs[prefabUuid].instances) ) {
+		let instance = prefabsTab.prefabs[prefabUuid].instances[key];
 		instance.element.getElementsByClassName("prefabName")[0].style.background = this.value;
 	}
 };
@@ -213,11 +268,12 @@ let addPrefab = function(uuid) {
 	clone.getElementsByClassName("detailsID")[0].innerHTML = uuid;
 
 	// Add to editor object
-	editor.prefabs[uuid] = {
+	prefabsTab.prefabs[uuid] = {
 		uuid: uuid,
 		group: new Group(),
 		entities: {},
-		instances: {}
+		instances: {},
+		entityCount: 0 // This is definitely changing, but at least it's out of the editor object! :D
 	};
 
 	// Add option to prefab world list
@@ -225,16 +281,16 @@ let addPrefab = function(uuid) {
 	let option = document.createElement("option");
 	option.text = `(${  uuid  })`;
 	option.value = uuid;
-	editor.prefabs[uuid].option = select.appendChild(option);
+	prefabsTab.prefabs[uuid].option = select.appendChild(option);
 
 	if (select.disabled) select.disabled = false;
 
 	// Add threejs group to scene
-	editor.groups.prefabs.add(editor.prefabs[uuid].group);
+	prefabsTab.group.add(prefabsTab.prefabs[uuid].group);
 
 	// Add to DOM
 	let prefabList = document.getElementById("prefabsList");
-	editor.prefabs[uuid].element = clone = prefabList.insertBefore(clone, document.getElementById("addPrefab"));
+	prefabsTab.prefabs[uuid].element = clone = prefabList.insertBefore(clone, document.getElementById("addPrefab"));
 
 	// Focus to name input so user can start typing right away
 	clone.getElementsByClassName("prefabName")[0].focus();
@@ -242,4 +298,4 @@ let addPrefab = function(uuid) {
 	
 };
 
-export { prefabs };
+export { prefabsTab };
