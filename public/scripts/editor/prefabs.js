@@ -16,6 +16,7 @@ let prefabsTab = function() {
 		initialize: function() {
 			this.group = new Group();
 			scene.add(this.group);
+			this.group.visible = false;
 
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
