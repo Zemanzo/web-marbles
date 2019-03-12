@@ -1,4 +1,4 @@
-![Discord](https://img.shields.io/discord/478527288854708226.svg?label=discord)
+[![Discord](https://img.shields.io/discord/478527288854708226.svg?label=discord)](https://discord.gg/XB3k9T5)
 
 # web-marbles
 
