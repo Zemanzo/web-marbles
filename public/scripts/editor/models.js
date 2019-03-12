@@ -17,6 +17,7 @@ let modelsTab = function() {
 			_GLTFLoader = new THREE.GLTFLoader();
 			this.group = new THREE.Group();
 			scene.add(this.group);
+			this.group.visible = false;
 
 			// Add models button
 			document.getElementById("addModelFile").addEventListener("change", function() {

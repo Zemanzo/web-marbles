@@ -14,6 +14,7 @@ let worldTab = function() {
 		initialize: function() {
 			this.group = new THREE.Group();
 			scene.add(this.group);
+			this.group.visible = false;
 
 			// Change water level
 			let changeWaterLevel = function() {
