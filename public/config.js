@@ -5,11 +5,11 @@ config.controls.camera = {};
 config.controls.camera.speed = 150;
 
 config.network = {};
+config.network.ssl = false;
 config.network.tickrate = 10;
 config.network.ticksToLerp = 2;
 config.network.websockets = {};
 config.network.websockets.port = 3014;
-config.network.websockets.ssl = false;
 
 config.graphics = {};
 config.graphics.castShadow = {};

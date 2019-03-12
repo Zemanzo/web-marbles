@@ -80,13 +80,13 @@ config.express.cache = false;
 /* µWebSockets */
 config.uwebsockets = {};
 config.uwebsockets.port = clientConfig.network.websockets.port;
-config.uwebsockets.ssl = clientConfig.network.websockets.ssl;
 config.uwebsockets.keyFileName = "misc/key.pem";
 config.uwebsockets.certFileName = "misc/cert.pem";
 config.uwebsockets.passphrase = "1234";
 
 /* Network */
 config.network = {};
+config.network.ssl = clientConfig.network.ssl;
 config.network.tickrate = 20; // Max amount of times physics data should be sent to clients per second.
 
 module.exports = config;

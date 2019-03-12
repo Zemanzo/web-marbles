@@ -266,7 +266,8 @@ header {
 	}
 
 /* Popout variant */
-#success {
+#success,
+#failure {
 	text-align: center;
 	display: none;
 }

@@ -43,7 +43,7 @@ const setupGameplay = function(db, physics, config, game) {
 
 				let intialData = {
 					gameState: game.state,
-					roundTimerStart: game.startTime,
+					roundTimerStartTime: game.startTime,
 					timeToEnter: game.getTimeRemaining(),
 					enterPeriod: config.marbles.rules.enterPeriod,
 					maxRoundLength: config.marbles.rules.maxRoundLength,

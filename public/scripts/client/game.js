@@ -5,74 +5,37 @@ let audio = {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
 	},
-	marbles = [],
-	state = {};
+	_marbles = [],
+	_state = {
+		gameState: undefined,
+		roundTimerStart: undefined,
+		timeToEnter: undefined,
+		enterPeriod: undefined,
+		maxRoundLength: undefined,
+		mapId: undefined,
+		initialMarbleData: undefined
+	},
+	_enterTimerInterval,
+	_startTimerIsRunning = false,
+	_domReadyTimestamp,
+	_elements = {},
+	_requestComplete,
+	_requestStart = Date.now();
 
-export function setState(newState, initial = false) {
-	state.gameState = newState;
+// DOM ready
+domReady.then(() => {
+	_domReadyTimestamp = (new Date()).getTime();
 
-	elements.gameInfo.className = newState;
-	switch(newState) {
+	// Get element references
+	_elements.timer = document.getElementById("timer");
+	_elements.state = document.getElementById("state");
+	_elements.entries = document.getElementById("entries");
+	_elements.gameInfo = document.getElementById("gameInfo");
+	_elements.marbleList = document.getElementById("marbleList");
+	_elements.marbleListTemplate = document.getElementById("marbleListTemplate");
+});
 
-	// Round end
-	case "waiting":
-		if (!initial) {
-			audio.end.play();
-		}
-		_startTimerIsRunning = false;
-		state.roundTimer = false;
-		marbles = [];
-		renderer.clearMarbleMeshes();
-		elements.marbleList.innerHTML = elements.marbleListTemplate.outerHTML;
-		elements.entries.innerText = "0";
-		elements.state.innerText = "Enter marbles now!";
-		elements.timer.innerText = Math.ceil(state.enterPeriod);
-		break;
-
-	// First marble has been entered
-	case "enter":
-		if (initial) {
-			// Remove document load time & request time
-			state.timeToEnter -= (
-				(requestComplete - requestStart) + (requestComplete - domReadyTimestamp)
-			);
-		} else {
-			state.timeToEnter = state.enterPeriod * 1000;
-		}
-
-		// Start timer interval
-		startTimerInterval(state.timeToEnter / 1000);
-
-		// Show the timer
-		elements.timer.innerText = Math.ceil(state.timeToEnter / 1000).toFixed(0);
-		break;
-
-	// Marbles can no longer be entered
-	case "starting":
-		if (!initial) {
-			audio.start.play();
-		}
-		clearInterval(_timerInterval);
-		elements.state.innerHTML = "The race is starting...";
-		break;
-
-	// The game has started
-	case "started":
-		if (initial) {
-			state.timerStart = state.roundTimerStart;
-		} else {
-			state.timerStart = Date.now();
-		}
-		state.roundTimer = true;
-		roundTimer();
-		elements.state.innerHTML = "Race started!";
-		break;
-	}
-}
-
-let _timerInterval,
-	_startTimerIsRunning = false;
-function startTimerInterval(s) {
+let _startTimerInterval = function(s) {
 	if (!_startTimerIsRunning) {
 		_startTimerIsRunning = true;
 
@@ -82,86 +45,128 @@ function startTimerInterval(s) {
 		setTimeout(() => {
 			let timeLeft = Math.floor(s);
 
-			_timerInterval = setInterval(() => {
+			_enterTimerInterval = setInterval(() => {
 				if (timeLeft <= 0) {
-					clearInterval(_timerInterval);
+					clearInterval(_enterTimerInterval);
 				} else {
-					elements.timer.innerText = timeLeft;
+					_elements.timer.innerText = timeLeft;
 				}
 				timeLeft--;
 			}, 1000);
 
-			elements.timer.innerText = timeLeft;
+			_elements.timer.innerText = timeLeft;
 
 			timeLeft--;
 		}, ms - Math.floor(s) * 1000); // milliseconds only, i.e. 23941 becomes 941
 	}
-}
+};
 
-let roundTimer = function() {
-	if (state.roundTimer) {
-		requestAnimationFrame(roundTimer);
-		elements.timer.innerText = ((Date.now() - state.timerStart) * .001).toFixed(1);
+let _roundTimer = function() {
+	if (_state.roundTimerIsVisible) {
+		requestAnimationFrame(_roundTimer);
+		_elements.timer.innerText = ((Date.now() - _state.timerStart) * .001).toFixed(1);
 	}
 };
 
+export function setState(newState, initial = false) {
+	_state.gameState = newState;
+	_elements.gameInfo.className = newState;
+
+	switch(newState) {
+	// Round end
+	case "waiting":
+		if (!initial) {
+			audio.end.play();
+		}
+		_startTimerIsRunning = false;
+		_state.roundTimerIsVisible = false;
+		_marbles = [];
+		renderer.clearMarbleMeshes();
+		_elements.marbleList.innerHTML = _elements.marbleListTemplate.outerHTML;
+		_elements.entries.innerText = "0";
+		_elements.state.innerText = "Enter marbles now!";
+		_elements.timer.innerText = Math.ceil(_state.enterPeriod);
+		break;
+
+	// First marble has been entered
+	case "enter":
+		if (initial) {
+			// Remove document load time & request time
+			_state.timeToEnter -= (
+				(_requestComplete - _requestStart) + (_requestComplete - _domReadyTimestamp)
+			);
+		} else {
+			_state.timeToEnter = _state.enterPeriod * 1000;
+		}
+
+		// Start timer interval
+		_startTimerInterval(_state.timeToEnter / 1000);
+
+		// Show the timer
+		_elements.timer.innerText = Math.ceil(_state.timeToEnter / 1000).toFixed(0);
+		break;
+
+	// Marbles can no longer be entered
+	case "starting":
+		if (!initial) {
+			audio.start.play();
+		}
+		clearInterval(_enterTimerInterval);
+		_elements.state.innerHTML = "The race is starting...";
+		break;
+
+	// The game has started
+	case "started":
+		if (initial) {
+			// The round has already started, so give the timer a head-start
+			_state.timerStart = _state.roundTimerStartTime;
+		} else {
+			// The round started just now, so use the current date
+			_state.timerStart = Date.now();
+		}
+		_state.roundTimerIsVisible = true;
+		_roundTimer();
+		_elements.state.innerHTML = "Race started!";
+		break;
+	}
+}
+
 export function spawnMarble(tags) {
 	// Add to list
-	marbles[tags.id] = tags;
+	_marbles[tags.id] = tags;
 
 	// Add mesh
 	renderer.spawnMarbleMesh(tags);
 
 	// Add UI stuff
-	let listEntry = elements.marbleListTemplate.cloneNode(true);
+	let listEntry = _elements.marbleListTemplate.cloneNode(true);
 	listEntry.removeAttribute("id");
 	listEntry.getElementsByClassName("name")[0].innerText = tags.name;
 	listEntry.getElementsByClassName("color")[0].style.background = tags.color;
 	listEntry.getElementsByClassName("time")[0].innerText = tags.time ? `🏁 ${(tags.time * .001).toFixed(2)}s` : "";
 	listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(tags.rank) ? `#${tags.rank + 1}` : "";
 	listEntry.style.order = tags.rank;
-	marbles[tags.id].listEntryElement = listEntry;
+	_marbles[tags.id].listEntryElement = listEntry;
 
-	elements.marbleList.appendChild(listEntry);
-	elements.entries.innerHTML = renderer.marbleMeshes.length;
+	_elements.marbleList.appendChild(listEntry);
+	_elements.entries.innerHTML = renderer.marbleMeshes.length;
 }
 
 export function finishMarble(tags) {
-	marbles[tags.id].rank = tags.rank;
-	marbles[tags.id].time = tags.time;
+	_marbles[tags.id].rank = tags.rank;
+	_marbles[tags.id].time = tags.time;
 
-	marbles[tags.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${tags.rank + 1}`;
-	marbles[tags.id].listEntryElement.style.order = tags.rank;
-	marbles[tags.id].listEntryElement.getElementsByClassName("time")[0].innerText = `🏁 ${(tags.time * .001).toFixed(2)}s`;
+	_marbles[tags.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${tags.rank + 1}`;
+	_marbles[tags.id].listEntryElement.style.order = tags.rank;
+	_marbles[tags.id].listEntryElement.getElementsByClassName("time")[0].innerText = `🏁 ${(tags.time * .001).toFixed(2)}s`;
 }
-
-// DOM ready
-let domReadyTimestamp,
-	elements = {};
-
-domReady.then(() => {
-	domReadyTimestamp = (new Date()).getTime();
-
-	// Get element references
-	elements.timer = document.getElementById("timer");
-	elements.state = document.getElementById("state");
-	elements.entries = document.getElementById("entries");
-	elements.gameInfo = document.getElementById("gameInfo");
-	elements.marbleList = document.getElementById("marbleList");
-	elements.marbleListTemplate = document.getElementById("marbleListTemplate");
-});
-
-
-// Initial gamestate
-let requestComplete,
-	requestStart = Date.now();
 
 // Fill gamestate properties in UI
 export function setInitialState(gameStateReady) {
-	requestComplete = Date.now();
+	_requestComplete = Date.now();
 	Promise.all([gameStateReady, domReady]).then((values) => {
-		state = values[0];
+		_state = values[0];
 
-		setState(state.gameState, true);
+		setState(_state.gameState, true);
 	});
 }

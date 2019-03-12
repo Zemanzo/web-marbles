@@ -2,14 +2,13 @@ import { network as config } from "../../config";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
-let wsUri = `ws${config.websockets.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/chat`;
+let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/chat`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,
 	reconnectionDelayGrowFactor: 2
 });
 
-// Origin window variant
 let cookieData;
 
 function init() {
@@ -217,17 +216,4 @@ function isAuthorized(data) {
 	document.getElementById("chatInputContainer").className = "authorized";
 }
 
-/* Popout variant */
-if (user_data) {
-
-	let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
-	Cookies.set("user_data", user_data, { expires: days });
-
-	window.opener.postMessage({
-		success: true,
-		response: user_data
-	}, window.location.origin);
-
-} else {
-	window.addEventListener("DOMContentLoaded", init, false);
-}
+window.addEventListener("DOMContentLoaded", init, false);
