@@ -4,6 +4,7 @@ module.exports = function(Ammo, world) {
 		_marblesTransformAux: new Ammo.btTransform(),
 		_pos: undefined,
 		_rot: undefined,
+		_id: 0,
 
 		createMarble(name, color) {
 			// Create physics body
@@ -25,13 +26,14 @@ module.exports = function(Ammo, world) {
 				ammoBody: ammoBody,
 				tags: {}
 			};
+			body.tags.id = this._id++;
 			body.tags.color = color || randomHexColor();
 			body.tags.size = size;
 			body.tags.useFancy = (Math.random() > .99);
 			body.tags.name = name || "Nightbot";
 
 			// Add to physics world
-			this.list.push(body);
+			this.list[body.tags.id] = body;
 			world.physics.addRigidBody(body.ammoBody);
 
 			return body;
@@ -65,12 +67,33 @@ module.exports = function(Ammo, world) {
 			};
 		},
 
+		_finishedMarbles: [],
+		getFinishedMarbles() {
+			let finished = [];
+			for (let i = 0; i < this.list.length; i++) {
+				let ms = this.list[i].ammoBody.getMotionState();
+				if (ms) {
+					ms.getWorldTransform(this._marblesTransformAux);
+					let p = this._marblesTransformAux.getOrigin();
+
+					if ( p.y() < 5 && this._finishedMarbles[i] !== true ) {
+						this._finishedMarbles[i] = true;
+						finished.push(i);
+					}
+				}
+			}
+
+			return finished;
+		},
+
 		destroyAllMarbles() {
 			for (let i = this.list.length - 1; i >= 0; --i) {
 				world.physics.removeRigidBody(this.list[i].ammoBody);
 			}
 
+			this._finishedMarbles = [];
 			this.list = [];
+			this._id = 0;
 		}
 	};
 };

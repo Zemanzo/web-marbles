@@ -4,8 +4,8 @@
 			"initial_data": 0,
 			"request_physics": 1,
 			"new_marble": 2,
-			"start": 3,
-			"clear": 4
+			"state": 3,
+			"finished_marble": 5
 		}
 	}
 }

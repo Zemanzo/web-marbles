@@ -11,12 +11,3 @@ Promise.all([networking.socketReady, domReady]).then(() => {
 	renderer.init();
 	document.getElementById("entries").innerHTML = networking.marbleData.length;
 });
-
-window.addEventListener("DOMContentLoaded", function() {
-	// Fix camera
-	/* document.getElementById("fixCam").addEventListener("click", function(){
-		controls.getObject().position.x = 0;
-		controls.getObject().position.y = 0;
-		controls.getObject().position.z = 0;
-	},false); */
-}, false);

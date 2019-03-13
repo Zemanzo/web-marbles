@@ -1,3 +1,23 @@
+/* do-hyeon-regular - latin */
+@font-face {
+	font-family: "Do Hyeon";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Do Hyeon Regular"),
+		local("DoHyeon-Regular"),
+		url("../fonts/do-hyeon/do-hyeon-v8-latin-regular.woff2") format("woff2");
+}
+
+/* share-tech-mono-regular - latin */
+@font-face {
+	font-family: "Share Tech Mono";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Share Tech Mono"),
+		local("ShareTechMono-Regular"),
+		url("../fonts/share-tech-mono/share-tech-mono-v8-latin-regular.woff2") format("woff2");
+}
+
 * {
 	margin: 0;
 	box-sizing: border-box;
@@ -9,13 +29,11 @@ html {
 }
 
 body {
-	font-family: "Do Hyeon",monospace;
+	font-family: "Do Hyeon", sans-serif;
 	background: var(--theme-color);
 	height: calc(100vh - 2px);
 	overflow: hidden;
 	display: flex;
-	/* padding: 1px; */
-	/* border: 1px solid var(--theme-color); */
 }
 
 a {
@@ -44,15 +62,15 @@ a:hover {
 		width: 100%;
 		display: flex;
 		flex-direction: row-reverse;
-		pointer-events:  none;
+		pointer-events: none;
 	}
 
 	#viewportOverlay > * {
-		pointer-events:  all;
+		pointer-events: all;
 	}
 
 	#viewportOverlay button {
-		height:  2em;
+		height: 2em;
 	}
 
 #sidebar {
@@ -96,10 +114,35 @@ a:hover {
 		font-size: 1.3em;
 		text-decoration: none;
 	}
+
 	#gameInfo {
 		min-height: 350px;
 		padding: 9px;
+		visibility: visible;
 	}
+
+		#gameInfo.hidden {
+			visibility: hidden;
+		}
+
+		#gameInfo.enter #timer,
+		#gameInfo.started #timer {
+			display: block;
+		}
+
+		#gameInfo.starting #timer {
+			display: none;
+		}
+
+		#gameInfo.enter #state {
+			width: 260px;
+		}
+
+		#gameInfo.starting #state,
+		#gameInfo.started #state {
+			width: auto;
+			flex: 2;
+		}
 
 		#gameState {
 			display: flex;
@@ -111,8 +154,7 @@ a:hover {
 			#state {
 				margin: 0px 8px;
 				font-size: 1.7em;
-				text-align:  center;
-				width: 260px;
+				text-align: center;
 			}
 
 			#timer {
@@ -140,6 +182,8 @@ a:hover {
 	}
 
 .themeNumber {
+	font-family: "Share Tech Mono", monospace;
+	font-weight: 600;
 	color: var(--theme-color);
 	text-shadow: 2px 2px var(--theme-color-dark);
 }
@@ -176,6 +220,8 @@ p {
 	min-height: 240px;
 	max-height: 240px;
 	overflow: auto;
+	display: flex;
+	flex-direction: column;
 }
 
 #marbleListTemplate {
@@ -185,6 +231,7 @@ p {
 .marbleListEntry {
 	margin: 0px 8px;
 	display: flex;
+	order: 9999;
 }
 
 	.marbleListEntry .rank {

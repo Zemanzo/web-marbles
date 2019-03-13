@@ -3,11 +3,12 @@ const webpack = require("webpack");
 const IgnoreNotFoundExportPlugin = require("./ignorenotfoundexportplugin.js");
 
 module.exports = {
-	mode: "development",
+	mode: process.env.NODE_ENV !== "production" ? "development" : "production",
 	entry: {
 		client: "./public/scripts/client/client.js",
 		editor: "./public/scripts/editor/editor.js",
-		chat: "./public/scripts/chat/chat.js"
+		chat: "./public/scripts/chat/chat.js",
+		discordApiRedirect: "./public/scripts/chat/discord-api-redirect.js"
 	},
 	output: {
 		filename: "[name].js",

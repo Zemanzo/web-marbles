@@ -12,15 +12,12 @@
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
-		<script>
-			let user_data;
-			{{#user_data}}
-			user_data = JSON.parse('{{{user_data}}}');
-			{{/user_data}}
-		</script>
-
+		{{#success}}
+		<script src="scripts/dist/discordApiRedirect.js"></script>
+		{{/success}}
+		{{^success}}
 		<script src="scripts/dist/chat.js"></script>
-
+		{{/success}}
 	</head>
 	<body>
 		{{#success}}
@@ -32,6 +29,11 @@
 			<h1>Success!</h1>
 			<p>You can now close this window, if it doesn't do so automatically.</p>
 		</div>
+		<div id="failure">
+			<h1>Failure...</h1>
+			<p>Hmmm, something went wrong. Close this window and try again?</p>
+		</div>
+		<div id="response" data-response='{{{user_data}}}'></div> <!-- single quotes because the JSON contains double quotes -->
 		{{/success}}
 		{{^success}}
 		<header>

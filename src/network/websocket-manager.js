@@ -8,7 +8,7 @@ const appOptions = {
 	cert_file_name: config.uwebsockets.certFileName,
 	passphrase: config.uwebsockets.passphrase
 };
-const app = config.uwebsockets.ssl ? uWS.SSLApp(appOptions) : uWS.App();
+const app = config.network.ssl ? uWS.SSLApp(appOptions) : uWS.App();
 
 function WebSocketManager(
 	route,

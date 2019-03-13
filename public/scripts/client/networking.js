@@ -3,7 +3,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import * as game from "./game";
 
-let wsUri = `ws${config.websockets.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/gameplay`;
+let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,
@@ -39,8 +39,10 @@ net.socketReady = new Promise((resolve) => {
 
 		switch(type) {
 		case "initial_data":
-			net.marbleData = JSON.parse(message);
-			resolve(true);
+			message = JSON.parse(message);
+			net.marbleData = message.initialMarbleData;
+			game.setInitialState(Promise.resolve(message));
+			resolve(message);
 			break;
 		case "request_physics":
 			message = JSON.parse(message);
@@ -54,11 +56,11 @@ net.socketReady = new Promise((resolve) => {
 		case "new_marble":
 			game.spawnMarble(JSON.parse(message));
 			break;
-		case "start":
-			game.start();
+		case "finished_marble":
+			game.finishMarble(JSON.parse(message));
 			break;
-		case "clear":
-			game.end();
+		case "state":
+			game.setState(message);
 			break;
 		}
 	});
