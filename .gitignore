@@ -50,3 +50,6 @@ process
 
 # Webpack
 public/scripts/dist/
+
+# VSCode
+.vscode/
