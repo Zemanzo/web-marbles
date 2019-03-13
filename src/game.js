@@ -16,7 +16,7 @@ module.exports = function(config, physics) {
 					time = physics.marbles.list[finished[i]].tags.time = finishTime - this.startTime;
 
 				// Send client info on finished marble
-				this._socketManager.emit(JSON.stringify({
+				_socketManager.emit(JSON.stringify({
 					id: finished[i],
 					rank,
 					time
@@ -87,7 +87,7 @@ module.exports = function(config, physics) {
 			// Check for marble limit
 			if (physics.marbles.list.length >= config.marbles.rules.maxMarbleCount && !this.limitReached) {
 				this.limitReached = true;
-				this._socketManager.emit(JSON.stringify({
+				_socketManager.emit(JSON.stringify({
 					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
 				}), "notification");
 				this.start();
