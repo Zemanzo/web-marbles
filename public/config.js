@@ -10,6 +10,7 @@ config.network.tickrate = 10;
 config.network.ticksToLerp = 2;
 config.network.websockets = {};
 config.network.websockets.port = 3014;
+config.network.websockets.localReroute = false; // Setting this to true removes the port from client WS requests, useful for local proxying over :80 or :443
 
 config.graphics = {};
 config.graphics.castShadow = {};

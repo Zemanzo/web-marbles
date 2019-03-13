@@ -249,6 +249,11 @@ app.get("/editor", function(req, res) {
 		res.render("editor-disabled", {});
 });
 
+app.get("/shutdown", function(req, res) {
+	res.send("wow ok then");
+	shutdown();
+});
+
 // Express listener
 let server = http.listen(config.express.port, function() {
 	let port = server.address().port;
@@ -257,3 +262,70 @@ let server = http.listen(config.express.port, function() {
 
 // Start the game loop
 game.end();
+
+// Graceful shutdown
+process.on("exit", shutdown);
+process.on("SIGTERM", shutdown);
+process.on("SIGINT", shutdown);
+
+let shuttingDown = false;
+function shutdown() {
+	if (!shuttingDown) {
+		shuttingDown = true;
+
+		log.warn("Termination signal received. Shutting down web-marbles...".yellow);
+
+		// Inform any connected clients
+		socketGameplay.emit(JSON.stringify({
+			content: "The server is shutting down.",
+			style: {
+				backgroundColor: "#d00"
+			}
+		}), "notification");
+
+		// Create a list of promises that all have to resolve before we can consider being shut down
+		let promises = [];
+
+		// Express
+		promises.push(
+			new Promise((resolve) => {
+				server.close(() => {
+					log.warn("EXPRESS server closed");
+					resolve();
+				});
+			})
+		);
+
+		// Discord
+		promises.push(
+			discordClient.destroy().then(() => {
+				log.warn("DISCORD main client stopped");
+			})
+		);
+
+		chatWebhook.destroy();
+		log.warn("DISCORD chat webhook stopped");
+
+		// Database
+		db.close();
+		log.warn("DATABASE connection closed");
+
+		// Stopped physics simulation
+		physics.stopUpdateInterval();
+		log.warn("PHYSICS stopped");
+
+		// µWebSockets
+		socketChat.close();
+		socketGameplay.close();
+		sockets.close();
+		log.warn("µWS server closed");
+
+		// Once promises resolve, we should be done
+		Promise.all(promises).then(() => {
+			log.warn("Successfully shut down web-marbles. Smell ya later!".green);
+		}, (reason) => {
+			shuttingDown = false;
+			log.error("Failed to shut down gracefully, try again?", reason);
+		});
+	}
+}

@@ -12,11 +12,11 @@ module.exports = function(config, physics) {
 			let finishTime = Date.now();
 			let finished = physics.marbles.getFinishedMarbles();
 			for (let i = 0; i < finished.length; i++) {
-				let rank = physics.marbles.list[finished[i]].tags.rank = _rank++,
-					time = physics.marbles.list[finished[i]].tags.time = finishTime - this.startTime;
+				let rank = physics.marbles.list[finished[i]].meta.rank = _rank++,
+					time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
 
 				// Send client info on finished marble
-				this._socketManager.emit(JSON.stringify({
+				_socketManager.emit(JSON.stringify({
 					id: finished[i],
 					rank,
 					time
@@ -41,6 +41,7 @@ module.exports = function(config, physics) {
 	return {
 		state: "started", // "waiting", "enter", "starting", "started"
 		startTime: undefined,
+		limitReached: false,
 
 		setState(newState) {
 			_socketManager.emit(newState, "state");
@@ -54,30 +55,59 @@ module.exports = function(config, physics) {
 
 				// Make sure this person hasn't entered in this round yet
 				if (!_entered.includes(id)) {
-					_entered.push(id);
-					this.spawnMarble(name, color);
 
-					// Wait for a human entering the round before starting it
-					if (_waitingForEntry) {
-						_waitingForEntry = false;
-						this.setState("enter");
+					// Check whether we have reached the maximum player limit
+					if (_entered.length < config.marbles.rules.maxPlayerCount) {
+						_entered.push(id);
+						this.spawnMarble(name, color);
 
-						// Start the game after the entering period is over
-						clearTimeout(this.enterTimeout);
-						this.enterTimeout = setTrackableTimeout(
-							this.start.bind(this),
-							config.marbles.rules.enterPeriod * 1000
-						);
+						// Wait for a human entering the round before starting it
+						if (_waitingForEntry) {
+							_waitingForEntry = false;
+							this.setState("enter");
+
+							// Start the game after the entering period is over
+							clearTimeout(this.enterTimeout);
+							this.enterTimeout = setTrackableTimeout(
+								this.start.bind(this),
+								config.marbles.rules.enterPeriod * 1000
+							);
+						}
 					}
 				}
 			}
 		},
 
 		spawnMarble(name, color) {
-			let body = physics.marbles.createMarble(name, color);
+			// Check whether we have reached the maximum marble limit
+			if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
+				let meta = {
+					useFancy: (Math.random() > .99),
+					color: color || randomHexColor(),
+					name: name || "Nightbot"
+				};
 
-			// Send client info on new marble
-			_socketManager.emit(JSON.stringify(body.tags), "new_marble");
+				let body = physics.marbles.createMarble(meta);
+
+				// Send client info on new marble
+				_socketManager.emit(JSON.stringify(body.meta), "new_marble");
+
+				// Check for player / marble limits
+				if (
+					(
+						physics.marbles.list.length >= config.marbles.rules.maxPlayerCount
+						|| _entered.length >= config.marbles.rules.maxMarbleCount
+					)
+					&& !this.limitReached
+				) {
+					this.limitReached = true;
+					_socketManager.emit(JSON.stringify({
+						content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
+					}), "notification");
+					this.start();
+					log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
+				}
+			}
 		},
 
 		getTimeRemaining() {
@@ -109,6 +139,9 @@ module.exports = function(config, physics) {
 
 				// Clear the array of people that entered
 				_entered = [];
+
+				// If we had hit the marble limit on the previous round, that's no longer true
+				this.limitReached = false;
 
 				// Set state and inform the client
 				this.setState("waiting");
@@ -173,4 +206,12 @@ function getTimeout(id) {
 
 	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
 	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
+}
+
+function randomHexColor() {
+	let color = (Math.random() * 0xffffff | 0).toString(16);
+	if (color.length !== 6) {
+		color = (`00000${color}`).slice(-6);
+	}
+	return `#${color}`;
 }

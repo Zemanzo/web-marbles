@@ -10,7 +10,7 @@ const appOptions = {
 };
 const app = config.network.ssl ? uWS.SSLApp(appOptions) : uWS.App();
 
-function WebSocketManager(
+function Socket(
 	route,
 	options
 ) {
@@ -92,8 +92,8 @@ function WebSocketManager(
 	this.messageFunctions = [];
 
 	// Create the socket endpoint
-	this._socket = app.ws(
-		route,
+	app.ws(
+		`/ws${route}`,
 		Object.assign(
 			{
 				// Handlers
@@ -136,19 +136,30 @@ function WebSocketManager(
 			options
 		)
 	);
+
+	this.close = function() {
+		for (let socket of this._list) {
+			// HTTP 503 Service Unavailable
+			socket.end(503);
+		}
+	};
 }
 
-app.any("/*", (res) => {
-	res.end("Websockets are ready.");
-});
-
-
+let _listenSocket;
 app.listen(config.uwebsockets.port, (token) => {
 	if (token) {
+		_listenSocket = token;
 		log.info(`µWS: Listening to port ${config.uwebsockets.port}`.cyan);
 	} else {
 		log.info(`µWS: Failed to listen to port ${config.uwebsockets.port}`.cyan);
 	}
 });
 
-module.exports = WebSocketManager;
+function stopListening() {
+	uWS.us_listen_socket_close(_listenSocket);
+}
+
+module.exports = {
+	stopListening,
+	Socket
+};

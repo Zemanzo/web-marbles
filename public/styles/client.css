@@ -54,24 +54,67 @@ a:hover {
 		border-radius: 15px;
 	}
 
-	#viewportOverlay {
+	#viewport .overlay {
 		position: absolute;
 		left: 0px;
 		top: 0px;
 		height: 100%;
 		width: 100%;
 		display: flex;
-		flex-direction: row-reverse;
+		justify-content: center;
 		pointer-events: none;
 	}
 
-	#viewportOverlay > * {
+	#viewport .overlay > * {
 		pointer-events: all;
 	}
 
-	#viewportOverlay button {
+	#viewport .overlay button {
 		height: 2em;
 	}
+
+	#notifications {
+		align-self: flex-end;
+		margin-bottom: 20px;
+		text-align: center;
+		max-width: 80ch;
+	}
+
+		@keyframes notification-appear {
+			0%		{
+				display: inline-block;
+				max-width: 0ch;
+				max-height: 0em;
+			}
+			100% 	{
+				max-width: 80ch;
+				max-height: 5em;
+			}
+		}
+
+		#notification-template {
+			display: none;
+		}
+
+		#notifications .notification {
+			font-size: 1.5em;
+			animation-name: notification-appear;
+			animation-duration: .7s;
+			animation-fill-mode: forwards;
+			animation-iteration-count: 1;
+			margin-top: 8px;
+		}
+
+		#notifications .notification-content {
+			overflow: hidden;
+			padding: 4px 16px;
+			background-color: var(--theme-color);
+			text-align: center;
+			color: #eee;
+			border-radius: 15px;
+			text-shadow: 1px 1px 0px #111;
+			box-shadow: 0px 3px 5px #111;
+		}
 
 #sidebar {
 	right: 0px;

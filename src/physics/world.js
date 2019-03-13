@@ -127,11 +127,15 @@ module.exports = function(Ammo, config) {
 
 	}
 
+	function stopUpdateInterval() {
+		clearInterval(physStepInterval);
+	}
+
 	return {
 		physics: physicsWorld,
 		map: mapObj,
 		gateBody,
-		physStepInterval,
+		stopUpdateInterval,
 
 		openGate() {
 			let origin = this.gateBody.getWorldTransform().getOrigin();
