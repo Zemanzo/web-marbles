@@ -93,7 +93,7 @@ function Socket(
 
 	// Create the socket endpoint
 	app.ws(
-		route,
+		`/ws${route}`,
 		Object.assign(
 			{
 				// Handlers

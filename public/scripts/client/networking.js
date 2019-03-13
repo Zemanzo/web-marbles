@@ -4,7 +4,7 @@ import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import * as game from "./game";
 
-let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/gameplay`;
+let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/ws/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,

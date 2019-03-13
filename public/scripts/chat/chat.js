@@ -2,7 +2,7 @@ import { network as config } from "../../config";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
-let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/chat`;
+let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}:${config.websockets.port}/ws/chat`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
 	minReconnectionDelay: 1000,
 	maxReconnectionDelay: 30000,
