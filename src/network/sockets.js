@@ -37,7 +37,7 @@ const setupGameplay = function(db, physics, config, game) {
 					initialMarbleData.push({
 						pos: physics.marbles.list[i].position,
 						id: physics.marbles.list[i].id,
-						tags: physics.marbles.list[i].tags
+						meta: physics.marbles.list[i].meta
 					});
 				}
 

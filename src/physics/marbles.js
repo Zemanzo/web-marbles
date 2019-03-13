@@ -6,7 +6,7 @@ module.exports = function(Ammo, world) {
 		_rot: undefined,
 		_id: 0,
 
-		createMarble(name, color) {
+		createMarble(meta) {
 			// Create physics body
 			let size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
 			let sphereShape = new Ammo.btSphereShape(size);
@@ -24,16 +24,14 @@ module.exports = function(Ammo, world) {
 			// Add metadata
 			let body = {
 				ammoBody: ammoBody,
-				tags: {}
+				meta: {}
 			};
-			body.tags.id = this._id++;
-			body.tags.color = color || randomHexColor();
-			body.tags.size = size;
-			body.tags.useFancy = (Math.random() > .99);
-			body.tags.name = name || "Nightbot";
+			body.meta.id = this._id++;
+			body.meta.size = size;
+			Object.assign(body.meta, meta);
 
 			// Add to physics world
-			this.list[body.tags.id] = body;
+			this.list[body.meta.id] = body;
 			world.physics.addRigidBody(body.ammoBody);
 
 			return body;
@@ -97,11 +95,3 @@ module.exports = function(Ammo, world) {
 		}
 	};
 };
-
-function randomHexColor() {
-	let color = (Math.random() * 0xffffff | 0).toString(16);
-	if(color.length !== 6) {
-		color = (`00000${color}`).slice(-6);
-	}
-	return `#${color}`;
-}

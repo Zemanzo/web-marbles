@@ -12,8 +12,8 @@ module.exports = function(config, physics) {
 			let finishTime = Date.now();
 			let finished = physics.marbles.getFinishedMarbles();
 			for (let i = 0; i < finished.length; i++) {
-				let rank = physics.marbles.list[finished[i]].tags.rank = _rank++,
-					time = physics.marbles.list[finished[i]].tags.time = finishTime - this.startTime;
+				let rank = physics.marbles.list[finished[i]].meta.rank = _rank++,
+					time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
 
 				// Send client info on finished marble
 				_socketManager.emit(JSON.stringify({
@@ -56,8 +56,8 @@ module.exports = function(config, physics) {
 				// Make sure this person hasn't entered in this round yet
 				if (!_entered.includes(id)) {
 
-					// Check whether we have reached the maximum marble limit
-					if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
+					// Check whether we have reached the maximum player limit
+					if (_entered.length < config.marbles.rules.maxPlayerCount) {
 						_entered.push(id);
 						this.spawnMarble(name, color);
 
@@ -79,19 +79,34 @@ module.exports = function(config, physics) {
 		},
 
 		spawnMarble(name, color) {
-			let body = physics.marbles.createMarble(name, color);
+			// Check whether we have reached the maximum marble limit
+			if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
+				let meta = {
+					useFancy: (Math.random() > .99),
+					color: color || randomHexColor(),
+					name: name || "Nightbot"
+				};
 
-			// Send client info on new marble
-			_socketManager.emit(JSON.stringify(body.tags), "new_marble");
+				let body = physics.marbles.createMarble(meta);
 
-			// Check for marble limit
-			if (physics.marbles.list.length >= config.marbles.rules.maxMarbleCount && !this.limitReached) {
-				this.limitReached = true;
-				_socketManager.emit(JSON.stringify({
-					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
-				}), "notification");
-				this.start();
-				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
+				// Send client info on new marble
+				_socketManager.emit(JSON.stringify(body.meta), "new_marble");
+
+				// Check for player / marble limits
+				if (
+					(
+						physics.marbles.list.length >= config.marbles.rules.maxPlayerCount
+						|| _entered.length >= config.marbles.rules.maxMarbleCount
+					)
+					&& !this.limitReached
+				) {
+					this.limitReached = true;
+					_socketManager.emit(JSON.stringify({
+						content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
+					}), "notification");
+					this.start();
+					log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
+				}
 			}
 		},
 
@@ -191,4 +206,12 @@ function getTimeout(id) {
 
 	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
 	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
+}
+
+function randomHexColor() {
+	let color = (Math.random() * 0xffffff | 0).toString(16);
+	if (color.length !== 6) {
+		color = (`00000${color}`).slice(-6);
+	}
+	return `#${color}`;
 }
