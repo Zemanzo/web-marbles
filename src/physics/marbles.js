@@ -99,5 +99,9 @@ module.exports = function(Ammo, world) {
 };
 
 function randomHexColor() {
-	return `#${(Math.random() * 0xffffff | 0).toString(16)}`;
+	let color = (Math.random() * 0xffffff | 0).toString(16);
+	if(color.length !== 6) {
+		color = (`00000${color}`).slice(-6);
+	}
+	return `#${color}`;
 }
