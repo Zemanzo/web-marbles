@@ -54,11 +54,11 @@ let editor = function() {
 
 	return {
 		elements: {
-			inspector: undefined
+			inspector: null
 		},
-		project: undefined,
+		project: null,
 		menu: {
-			overflowTimeout: undefined
+			overflowTimeout: null
 		},
 
 		initialize: function() {
