@@ -7,6 +7,48 @@ import { setEditorLogElement, editorLog } from "./log";
 import { initializeRenderer } from "./render";
 
 
+// Object template used by prefabObject, prefabCollider, and worldObject
+function EditorObject(type, uuid) {
+	this.type = type;
+	this.uuid = uuid;
+	this.name = null;
+	this.sceneObject = null;
+	this.element = null;
+}
+
+EditorObject.prototype.getPosition = function() {
+	return this.sceneObject.position.clone();
+};
+
+EditorObject.prototype.setPosition = function(position) {
+	this.sceneObject.position.copy(position);
+};
+
+// Returns rotation in euler angles (rad)
+EditorObject.prototype.getRotation = function() {
+	return this.sceneObject.rotation.clone();
+};
+
+// Sets rotation in euler angles (rad)
+EditorObject.prototype.setRotation = function(rotation) {
+	this.sceneObject.rotation.copy(rotation);
+};
+
+EditorObject.prototype.getScale = function() {
+	return this.sceneObject.scale.clone();
+};
+
+EditorObject.prototype.setScale = function(scale) {
+	this.sceneObject.scale.copy(scale);
+};
+
+EditorObject.prototype.setName = function(name) {
+	this.name = name;
+	this.element.getElementsByClassName("name")[0].innerText = name;
+};
+
+
+
 let editor = function() {
 	let _activeTab = 0;
 
@@ -235,4 +277,4 @@ window.onbeforeunload = function(e) {
 	return dialogText;
 };
 
-export { editor };
+export { editor, EditorObject };
