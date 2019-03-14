@@ -311,7 +311,7 @@ body {
 	justify-content: space-around;
 }
 
-	#worldPrefab {
+	#worldPrefabList {
 		width: 190px;
 	}
 
@@ -321,12 +321,12 @@ body {
 		margin: 0px;
 	}
 
-	#worldPrefab:disabled ~ #worldAddPrefabButton {
+	#worldPrefabList:disabled ~ #worldAddPrefabButton {
 		color: #666;
 		cursor: not-allowed;
 	}
 
-	#worldPrefab:disabled ~ #worldAddPrefabButton:hover span {
+	#worldPrefabList:disabled ~ #worldAddPrefabButton:hover span {
 		text-decoration: none;
 	}
 
@@ -361,6 +361,7 @@ body {
 	}
 	#inspector.objectSelection h3:after { content:" - Object" }
 	#inspector.colliderSelection h3:after { content:" - Collider" }
+	#inspector.worldObjectSelection h3:after { content:" - WorldObject" }
 
 	#inspector table {
 		border-collapse: collapse;
@@ -451,11 +452,11 @@ body {
 
 	}
 
-	#worldPrefabTemplate {
+	#worldObjectTemplate {
 		display: none;
 	}
 
-	.worldPrefab {
+	.worldObject {
 		cursor: pointer;
 		margin: 2px 0px;
 		padding-left: 2px;
@@ -463,40 +464,40 @@ body {
 		align-items: center;
 	}
 
-	.worldPrefab:hover {
+	.worldObject:hover {
 		background: #333333;
 	}
 
-	.worldPrefab.selected {
+	.worldObject.selected {
 		background: #444;
 	}
 
-	.worldPrefab .uuid {
+	.worldObject .uuid {
 		font-family: monospace;
 		font-size: 1.1em;
 		padding-right: 3px;
 		color: #666;
 	}
 
-	.worldPrefab .delete {
+	.worldObject .delete {
 		padding: 0px;
 		visibility: hidden;
 	}
 
-	.worldPrefab:hover .delete {
+	.worldObject:hover .delete {
 		visibility: visible;
 	}
-	.worldPrefab:hover .delete:hover i {
+	.worldObject:hover .delete:hover i {
 		color: #eee;
 	}
 
-	.worldPrefab .name {
+	.worldObject .name {
 		flex: 1;
 		display: flex;
 		align-items: center;
 	}
 
-	.worldPrefab .prefabName {
+	.worldObject .prefabName {
 		margin: 1px 4px 1px 2px;
 		padding: 0px 2px;
 		background: #000;
