@@ -1,10 +1,378 @@
-import { BoxBufferGeometry, Mesh, Group, Vector3 } from "three";
+import * as THREE from "three";
 import { generateTinyUUID } from "../generateTinyUUID";
 import { hslToHex } from "../hslToHex";
 import { inspector } from "./inspector";
-import { physicsMaterial } from "./materials";
+import * as materials from "./materials";
 import { scene, defaultModel } from "./render";
-import { editor } from "./editor";
+import { editor, EditorObject } from "./editor";
+import { modelsTab } from "./models";
+
+// Prefab object
+function Prefab(uuid, color) {
+	this.uuid = uuid;
+	this.name = "";
+	this.color = color;
+	this.group = new THREE.Group();
+	this.entities = {};
+	this.worldInstances = {};
+	this.changed = false;
+
+	prefabsTab.group.add(this.group);
+
+	this.element = document.getElementById("prefabTemplate").cloneNode(true); // deep clone;
+	this.element.removeAttribute("id");
+	this.element.getElementsByClassName("prefabColor")[0].value = color;
+
+	// Add events
+	let self = this;
+	this.element.getElementsByClassName("showPrefab")[0].addEventListener("click", function() { self.toggleVisibility(); }, false);
+	this.element.getElementsByClassName("prefabName")[0].addEventListener("input", function() { self.onNameChange(this.value); }, false);
+	this.element.getElementsByClassName("prefabName")[0].addEventListener("change", function() { self.onNameChange(this.value); }, false);
+	this.element.getElementsByClassName("prefabColor")[0].addEventListener("change", function() { self.onColorChange(this.value); }, false);
+	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
+	this.element.getElementsByClassName("addObject")[0].addEventListener("click", function() { 
+		let uuid = generateTinyUUID();
+		self.addObject(uuid);
+	}, false);
+	this.element.getElementsByClassName("addCollider")[0].addEventListener("click", function() {
+		let uuid = generateTinyUUID();
+		self.addCollider(uuid);
+	}, false);
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+		if( !confirm(`Are you sure you want to delete prefab ${self.name} (${self.uuid})?`)) return;
+		prefabsTab.deletePrefab(self.uuid);
+	}, false);
+
+	// Remove entity templates from clone
+	this.element.getElementsByClassName("objectList")[0].innerHTML = "";
+
+	// Display UUID
+	this.element.getElementsByClassName("detailsID")[0].innerHTML = uuid;
+
+	// Add to DOM
+	let prefabList = document.getElementById("prefabsList");
+	this.element = prefabList.insertBefore(this.element, document.getElementById("addPrefab"));
+}
+
+Prefab.prototype.toggleVisibility = function() {
+	let icon = this.element.getElementsByClassName("showPrefab")[0].children[0];
+	if(this.group.visible) {
+		this.group.visible = false;
+		icon.className = "icofont-eye-blocked";
+	} else {
+		this.group.visible = true;
+		icon.className = "icofont-eye";
+	}
+};
+
+Prefab.prototype.onNameChange = function(name) {
+	this.name = name;
+	// Former todo: Update worldPrefabList
+	// TODO: For all worldObjects using this prefab:
+	// worldObject.element.getElementsByClassName("prefabName")[0].innerText = name;
+};
+
+Prefab.prototype.onColorChange = function(color) {
+	this.color = color;
+	// TODO: For all worldObjects using this prefab:
+	// worldObject.element.getElementsByClassName("prefabName")[0].style.background = color;
+};
+
+Prefab.prototype.toggleCollapse = function() {
+	let caret = this.element.getElementsByClassName("collapse")[0].children[0];
+
+	if ( this.element.className.indexOf("collapsed") === -1 ) {
+		caret.className = "icofont-caret-right";
+		this.element.className = "prefab collapsed";
+	} else {
+		caret.className = "icofont-caret-right rotated";
+		this.element.className = "prefab";
+	}
+};
+
+Prefab.prototype.addObject = function(uuid) {
+	this.entities[uuid] = new PrefabObject(uuid, this);
+	this.changed = true;
+};
+
+Prefab.prototype.addCollider = function(uuid) {
+	this.entities[uuid] = new PrefabCollider(uuid, this);
+	this.changed = true;
+};
+
+Prefab.prototype.deleteEntity = function(uuid) {
+	let thisObject = this.entities[uuid];
+
+	// Deselect inspector if this is currently selected
+	if(inspector.selected === thisObject) inspector.deselect();
+
+	this.group.remove(thisObject.sceneObject);
+	thisObject.element.parentNode.removeChild(thisObject.element);
+
+	delete this.entities[uuid];
+
+	this.changed = true;
+};
+
+Prefab.prototype.updateInstances = function() {
+	if(!this.changed) return;
+
+	let containsStart = Object.keys( this.entities ).some(
+		(key)=>{
+			let functionality = this.entities[key].functionality;
+			return (functionality && functionality === "startarea");
+		}
+	);
+
+	for (let key in this.worldInstances) {
+		let worldInstance = this.worldInstances[key];
+		let old = worldInstance.sceneObject;
+
+		let clone = this.group.clone();
+
+		clone.position.copy(old.position);
+
+		if (containsStart) {
+			clone.rotation.setFromVector3( new THREE.Vector3(0, 0, 0) );
+		} else {
+			clone.rotation.copy(old.rotation);
+		}
+
+		old.parent.add(clone);
+		old.parent.remove(old);
+
+		worldInstance.sceneObject = clone;
+		worldInstance.sceneObject.visible = true; // Do not copy visibility setting from prefab
+	}
+
+	this.changed = false;
+};
+
+
+
+// prefabEntity object, base for prefabObject and prefabCollider, inherits from EditorObject
+function PrefabEntity(type, uuid, parent) {
+	EditorObject.call(this, type, uuid);
+	this.parent = parent;
+	this.functionality = "static";
+	
+	// Sets default name to Object# or Collider#, where # is lowest non-duplicate
+	for(let i = 0; !this.name; i++) {
+		let name = `${type}${i}`;
+		let nameExists = false;
+		for(let entity in parent.entities) {
+			if(parent.entities[entity].name === name) nameExists = true;
+		}
+		if(!nameExists) {
+			this.name = name;
+		}
+	}
+	
+	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
+	this.element.removeAttribute("id");
+	this.element.getElementsByClassName("name")[0].innerHTML = this.name;
+	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
+
+	// Add events
+	let self = this;
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { 
+		if( !confirm(`Are you sure you want to delete this ${type}: ${self.name} (${self.uuid})?`)) return;
+		self.parent.deleteEntity(self.uuid);
+	}, false);
+	this.element.addEventListener("click", function() {inspector.select(self);}, false);
+
+	// Add to object list
+	this.element = parent.element.getElementsByClassName("objectList")[0].appendChild(this.element);
+
+}
+
+PrefabEntity.prototype = Object.create(EditorObject.prototype);
+Object.defineProperty(PrefabEntity.prototype, "constructor", {
+	value: PrefabEntity,
+	enumerable: false,
+	writable: true
+});
+
+PrefabEntity.prototype.setFunctionality = function(functionality) {
+
+	switch(functionality) {
+	case "startarea":
+		this.sceneObject.material = materials.startMaterial;
+		this.setRotation(new THREE.Vector3(0, 0, 0));
+		break;
+	case "startgate":
+		this.sceneObject.material = materials.gateMaterial;
+		break;
+	case "endarea":
+		this.sceneObject.material = materials.endMaterial;
+		break;
+	case "static":
+		this.sceneObject.material = materials.physicsMaterial;
+		break;
+	default:
+		console.error(`Attempted to set unknown functionality "${functionality}" on an ${this.type}.`);
+		return;
+	}
+	this.functionality = functionality;
+	this.parent.changed = true;
+};
+
+PrefabEntity.prototype.setPosition = function(position) {
+	EditorObject.prototype.setPosition.call(this, position);
+	this.parent.changed = true;
+};
+
+PrefabEntity.prototype.setRotation = function(position) {
+	EditorObject.prototype.setRotation.call(this, position);
+	this.parent.changed = true;
+};
+
+PrefabEntity.prototype.setScale = function(position) {
+	EditorObject.prototype.setScale.call(this, position);
+	this.parent.changed = true;
+};
+
+
+
+
+
+
+// prefabObject object, inherits from prefabEntity
+function PrefabObject(uuid, parent) {
+	PrefabEntity.call(this, "Object", uuid, parent);
+	this.model = null;
+	this.sceneObject = defaultModel.clone();
+	this.parent.group.add(this.sceneObject);
+}
+
+PrefabObject.prototype = Object.create(PrefabEntity.prototype);
+Object.defineProperty(PrefabObject.prototype, "constructor", {
+	value: PrefabObject,
+	enumerable: false,
+	writable: true
+});
+
+PrefabObject.prototype.setModel = function(modelName) {
+	// Remove old model
+	this.parent.group.remove(this.sceneObject);
+
+	// Set new model
+	this.model = modelName;
+	let position = this.sceneObject.position;
+	let rotation = this.sceneObject.rotation;
+	let scale = this.sceneObject.scale;
+	this.sceneObject = modelsTab.models[modelName].scene.clone();
+	this.sceneObject.position.copy(position);
+	this.sceneObject.rotation.copy(rotation);
+	this.sceneObject.scale.copy(scale);
+	this.sceneObject.visible = true;
+	this.parent.group.add(this.sceneObject);
+	this.parent.changed = true;
+};
+
+
+
+// prefabCollider object, inherits from prefabEntity
+function PrefabCollider(uuid, parent) {
+	PrefabEntity.call(this, "Collider", uuid, parent);
+
+	this.colliderData = {
+		shape: "box",
+		width: 1,
+		height: 1,
+		depth: 1
+	};
+	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
+	this.parent.group.add(this.sceneObject);
+}
+
+PrefabCollider.prototype = Object.create(PrefabEntity.prototype);
+Object.defineProperty(PrefabCollider.prototype, "constructor", {
+	value: PrefabCollider,
+	enumerable: false,
+	writable: true
+});
+
+PrefabCollider.prototype.setShape = function(shapeType) {
+	switch(shapeType) {
+	case "box":
+		this.colliderData = {
+			shape: shapeType,
+			width: 1,
+			height: 1,
+			depth: 1
+		};
+		this.sceneObject.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+		this.sceneObject.scale.set(1, 1, 1);
+		break;
+	case "sphere":
+		this.colliderData = {
+			shape: shapeType,
+			radius: 1
+		};
+		this.sceneObject.geometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
+		this.sceneObject.scale.set(1, 1, 1);
+		break;
+	case "cylinder":
+		this.colliderData = {
+			shape: shapeType,
+			radius: 1,
+			height: 1
+		};
+		this.sceneObject.geometry = new THREE.CylinderBufferGeometry( 1, 1, 1, 12 );
+		this.sceneObject.scale.set(1, 1, 1);
+		break;
+	case "cone":
+		this.colliderData = {
+			shape: shapeType,
+			radius: 1,
+			height: 1
+		};
+		this.sceneObject.geometry = new THREE.ConeBufferGeometry( 1, 1, 12 );
+		this.sceneObject.scale.set(1, 1, 1);
+		break;
+	default:
+		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
+		return;
+	}
+	this.parent.changed = true;
+};
+
+PrefabCollider.prototype.setWidth = function(width) {
+	if("width" in this.colliderData) {
+		this.colliderData.width = width;
+		this.sceneObject.scale.x = width;
+		this.parent.changed = true;
+	}
+};
+
+PrefabCollider.prototype.setHeight = function(height) {
+	if("height" in this.colliderData) {
+		this.colliderData.height = height;
+		this.sceneObject.scale.y = height;
+		this.parent.changed = true;
+	}
+};
+
+PrefabCollider.prototype.setDepth = function(depth) {
+	if("depth" in this.colliderData) {
+		this.colliderData.depth = depth;
+		this.sceneObject.scale.z = depth;
+		this.parent.changed = true;
+	}
+};
+
+PrefabCollider.prototype.setRadius = function(radius) {
+	if("radius" in this.colliderData) {
+		this.colliderData.radius = radius;
+		this.sceneObject.scale.x = radius;
+		this.sceneObject.scale.z = radius;
+		if(this.colliderData.shape === "sphere") this.sceneObject.scale.y = radius;
+		this.parent.changed = true;
+	}
+};
+
 
 
 let prefabsTab = function() {
@@ -14,16 +382,85 @@ let prefabsTab = function() {
 		group: undefined,
 
 		initialize: function() {
-			this.group = new Group();
+			this.group = new THREE.Group();
 			scene.add(this.group);
 			this.group.visible = false;
 
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
+
 				let uuid = generateTinyUUID();
 				// TODO: Check for ID duplicates
-				addPrefab(uuid);
+				prefabsTab.addPrefab(uuid,	hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20));
+				
+				// Focus to name input so user can start typing right away
+				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
+				
 			}, false);
+		},
+
+		// Add a prefab with the provided uuid
+		addPrefab: function(uuid, color) {
+			prefabsTab.prefabs[uuid] = new Prefab(uuid, color);
+
+			// TODO: Move
+			// Add option to prefab world list
+			let select = editor.elements.worldPrefabList;
+			let option = document.createElement("option");
+			option.text = `(${  uuid  })`;
+			option.value = uuid;
+			prefabsTab.prefabs[uuid].option = select.appendChild(option);
+		
+			if (select.disabled) select.disabled = false;
+		},
+
+		// Deletes a prefab with the provided uuid
+		deletePrefab: function(uuid) {
+			let thisPrefab = prefabsTab.prefabs[uuid];
+
+			// Delete worldObjects referencing this
+			
+			// Delete entities
+			while(Object.keys(thisPrefab.entities).length > 0) {
+				let thisEntity = thisPrefab.entities[Object.keys(thisPrefab.entities)[0]];
+				thisPrefab.deleteEntity(thisEntity.uuid);
+			}
+
+			// (If inspector had those selected, deselect)
+			inspector.deselect();
+
+			// Clean up prefab object
+			prefabsTab.group.remove(thisPrefab.group);
+			thisPrefab.element.parentNode.removeChild(thisPrefab.element);
+
+			// Remove world select option element?
+
+			// Later: Delete from project
+
+			delete prefabsTab.prefabs[uuid];
+
+
+			/* Leftovers
+			let parent = this.closest(".prefab");
+			let prefabUuid = parent.dataset.uuid;
+			let name = parent.getElementsByClassName("prefabName")[0].value;
+			if ( confirm(`Are you sure you want to delete this prefab? (${name}) (${parent.dataset.uuid})`) ) {
+
+				// Remove world select option element
+				editor.elements.worldPrefabList.removeChild(prefabsTab.prefabs[prefabUuid].option);
+
+				if (editor.elements.worldPrefabList.children.length == 1) {
+					editor.elements.worldPrefabList.disabled = true;
+				}
+
+				// Remove world instances
+				for (let key in prefabsTab.prefabs[prefabUuid].instances) {
+					let instance = prefabsTab.prefabs[prefabUuid].instances[key];
+					instance.element.parentNode.removeChild(instance.element);
+					instance.sceneObject.parent.remove(instance.sceneObject);
+				}
+			}
+			*/
 		},
 
 		onTabActive: function() {
@@ -34,269 +471,11 @@ let prefabsTab = function() {
 			prefabsTab.group.visible = false;
 
 			// Update changed prefabs
-			// TODO: Figure out what it actually does..?
 			for (let uuid in prefabsTab.prefabs) {
-				if (prefabsTab.prefabs[uuid].changed) {
-					let containsStart = Object.keys( prefabsTab.prefabs[uuid].entities ).some(
-						(key)=>{
-							let userData = prefabsTab.prefabs[uuid].entities[key].sceneObject.userData;
-							return (userData.functionality && userData.functionality === "startarea");
-						}
-					);
-
-					for (let key in prefabsTab.prefabs[uuid].instances) {
-						let instance = prefabsTab.prefabs[uuid].instances[key];
-						let old = instance.sceneObject;
-
-						let clone = prefabsTab.prefabs[uuid].group.clone();
-
-						clone.position.copy(old.position);
-
-						if (containsStart) {
-							clone.rotation.setFromVector3( new Vector3(0, 0, 0) );
-						} else {
-							clone.rotation.copy(old.rotation);
-						}
-
-						old.parent.add(clone);
-
-						old.parent.remove(old);
-
-						instance.sceneObject = clone;
-						instance.sceneObject.visible = true; // Do not copy visibility setting from prefab
-					}
-
-					// world instances are updated
-					prefabsTab.prefabs[uuid].changed = false;
-				}
+				prefabsTab.prefabs[uuid].updateInstances();
 			}
 		}
 	};
 }();
-
-// Collapse prefab
-let collapse = function() {
-	let parent = this.closest(".prefab");
-	if ( parent.className.indexOf("collapsed") === -1 ) {
-		this.children[0].className = "icofont-caret-right";
-		parent.className = "prefab collapsed";
-	} else {
-		this.children[0].className = "icofont-caret-right rotated";
-		parent.className = "prefab";
-	}
-};
-
-// Delete entity
-// TODO: Rename
-let deleteEntity = function(event) {
-	if (event) event.stopPropagation();
-	let parent = this.closest(".objectList > div");
-	let prefabUuid = parent.dataset.prefabUuid;
-	let uuid = parent.dataset.uuid;
-	let name = parent.getElementsByClassName("name")[0].innerHTML;
-	if ( !event || confirm(`Are you sure you want to delete this entity? (${name}) (${uuid})`) ) {
-		// Deselect inspector if it shows currently selected object
-		if (inspector.selected === parent) inspector.deselect();
-
-		// Remove element
-		parent.parentNode.removeChild(parent);
-
-		// Remove threejs object
-		prefabsTab.prefabs[prefabUuid].group.remove(
-			prefabsTab.prefabs[prefabUuid].entities[uuid].sceneObject
-		);
-
-		delete prefabsTab.prefabs[prefabUuid].entities[uuid];
-
-	}
-	prefabsTab.prefabs[prefabUuid].changed = true;
-};
-
-// Delete prefab
-let deletePrefab = function() {
-	let parent = this.closest(".prefab");
-	let prefabUuid = parent.dataset.uuid;
-	let name = parent.getElementsByClassName("prefabName")[0].value;
-	if ( confirm(`Are you sure you want to delete this prefab? (${name}) (${parent.dataset.uuid})`) ) {
-		// Deselect inspector
-		// TODO: add deselect condition (only need to deselect when selected object is in prefab)
-		inspector.deselect();
-
-		let children = parent.getElementsByClassName("objectList")[0].children;
-		for (let i = children.length; i > 0; i--) {
-			let child = children[i - 1];
-			deleteEntity.call(child);
-		}
-
-		// Remove world select option element
-		editor.elements.worldPrefabList.removeChild(prefabsTab.prefabs[prefabUuid].option);
-
-		if (editor.elements.worldPrefabList.children.length == 1) {
-			editor.elements.worldPrefabList.disabled = true;
-		}
-
-		// Remove world instances
-		for (let key in prefabsTab.prefabs[prefabUuid].instances) {
-			let instance = prefabsTab.prefabs[prefabUuid].instances[key];
-			instance.element.parentNode.removeChild(instance.element);
-			instance.sceneObject.parent.remove(instance.sceneObject);
-		}
-
-		// Remove element
-		parent.parentNode.removeChild(parent);
-
-		// Remove from group
-		prefabsTab.group.remove(prefabsTab.prefabs[prefabUuid].group);
-
-		delete prefabsTab.prefabs[prefabUuid];
-	}
-};
-
-// Add template element to prefab
-let addTemplateElement = function(type, parent) {
-	let clone = document.getElementById(`prefab${  type  }Template`).cloneNode(true);
-	let uuid = generateTinyUUID();
-
-	clone.removeAttribute("id");
-	clone.dataset.prefabUuid = parent.dataset.uuid;
-	clone.dataset.uuid = uuid;
-	clone.dataset.type = "entities";
-	clone.getElementsByClassName("name")[0].innerHTML = type + prefabsTab.prefabs[parent.dataset.uuid].entityCount++;
-	clone.getElementsByClassName("uuid")[0].innerHTML = uuid;
-	clone.getElementsByClassName("delete")[0].addEventListener("click", deleteEntity, false);
-	clone.addEventListener("click", inspector.select, false);
-	clone = parent.getElementsByClassName("objectList")[0].appendChild(clone);
-	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid] = {
-		element: clone
-	};
-	prefabsTab.prefabs[parent.dataset.uuid].changed = true;
-	return uuid;
-};
-
-// Add object to prefab
-let addObject = function() {
-	let parent = this.closest(".prefab");
-	let uuid = addTemplateElement.call(this, "Object", parent);
-
-	let clone = defaultModel.clone();
-	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].model = "null";
-	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = clone;
-	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject.userData.functionality = "static";
-	prefabsTab.prefabs[parent.dataset.uuid].group.add(clone);
-};
-
-// Add collider to prefab
-let addCollider = function() {
-	let parent = this.closest(".prefab");
-	let uuid = addTemplateElement.call(this, "Collider", parent);
-
-	let geometry = new BoxBufferGeometry( 1, 1, 1 );
-	let box = new Mesh(geometry, physicsMaterial );
-	prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].shape = "box";
-	let sceneObject = prefabsTab.prefabs[parent.dataset.uuid].entities[uuid].sceneObject = box;
-	sceneObject.userData.radius = 1;
-	sceneObject.userData.width = 1;
-	sceneObject.userData.height = 1;
-	sceneObject.userData.depth = 1;
-	sceneObject.userData.functionality = "static";
-	prefabsTab.prefabs[parent.dataset.uuid].group.add(box);
-};
-
-// Toggle prefab visibility
-let showPrefab = function() {
-	let parent = this.closest(".prefab");
-	let prefabUuid = parent.dataset.uuid;
-	let prefabGroup = prefabsTab.prefabs[prefabUuid].group;
-	let icon = this.getElementsByTagName("i")[0];
-
-	if (prefabGroup.visible) {
-		prefabGroup.visible = false;
-		icon.className = "icofont-eye-blocked";
-	} else {
-		prefabGroup.visible = true;
-		icon.className = "icofont-eye";
-	}
-};
-
-// Change prefab name
-let namePrefab = function() {
-	let parent = this.closest(".prefab");
-	let prefabUuid = parent.dataset.uuid;
-	prefabsTab.prefabs[prefabUuid].option.text = `${this.value  } (${  prefabUuid  })`;
-	for (let key of Object.keys(prefabsTab.prefabs[prefabUuid].instances) ) {
-		let instance = prefabsTab.prefabs[prefabUuid].instances[key];
-		instance.element.getElementsByClassName("prefabName")[0].innerText = this.value;
-	}
-};
-
-// Change prefab color
-let colorPrefab = function() {
-	let parent = this.closest(".prefab");
-	let prefabUuid = parent.dataset.uuid;
-	for (let key of Object.keys(prefabsTab.prefabs[prefabUuid].instances) ) {
-		let instance = prefabsTab.prefabs[prefabUuid].instances[key];
-		instance.element.getElementsByClassName("prefabName")[0].style.background = this.value;
-	}
-};
-
-// Add a prefab with the provided uuid
-let addPrefab = function(uuid) {
-	let clone = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
-	clone.removeAttribute("id");
-	clone.dataset.uuid = uuid;
-
-	// Add events
-	clone.getElementsByClassName("showPrefab")[0].addEventListener("click", showPrefab, false);
-	clone.getElementsByClassName("prefabName")[0].addEventListener("input", namePrefab, false);
-	clone.getElementsByClassName("prefabName")[0].addEventListener("change", namePrefab, false);
-	clone.getElementsByClassName("prefabColor")[0].addEventListener("change", colorPrefab, false);
-	clone.getElementsByClassName("collapse")[0].addEventListener("click", collapse, false);
-	clone.getElementsByClassName("delete")[0].addEventListener("click", deletePrefab, false);
-	clone.getElementsByClassName("addObject")[0].addEventListener("click", addObject, false);
-	clone.getElementsByClassName("addCollider")[0].addEventListener("click", addCollider, false);
-
-	// Set random color
-	clone.getElementsByClassName("prefabColor")[0].value = hslToHex(
-		Math.random() * 360,
-		100,
-		Math.random() * 20 + 20
-	);
-
-	// Remove entity templates from clone
-	clone.getElementsByClassName("objectList")[0].innerHTML = "";
-
-	// Display UUID
-	clone.getElementsByClassName("detailsID")[0].innerHTML = uuid;
-
-	// Add to editor object
-	prefabsTab.prefabs[uuid] = {
-		uuid: uuid,
-		group: new Group(),
-		entities: {},
-		instances: {},
-		entityCount: 0 // This is definitely changing, but at least it's out of the editor object! :D
-	};
-
-	// Add option to prefab world list
-	let select = editor.elements.worldPrefabList;
-	let option = document.createElement("option");
-	option.text = `(${  uuid  })`;
-	option.value = uuid;
-	prefabsTab.prefabs[uuid].option = select.appendChild(option);
-
-	if (select.disabled) select.disabled = false;
-
-	// Add threejs group to scene
-	prefabsTab.group.add(prefabsTab.prefabs[uuid].group);
-
-	// Add to DOM
-	let prefabList = document.getElementById("prefabsList");
-	prefabsTab.prefabs[uuid].element = clone = prefabList.insertBefore(clone, document.getElementById("addPrefab"));
-
-	// Focus to name input so user can start typing right away
-	clone.getElementsByClassName("prefabName")[0].focus();
-
-	
-};
 
 export { prefabsTab };
