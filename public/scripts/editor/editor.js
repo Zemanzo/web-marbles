@@ -54,7 +54,6 @@ let editor = function() {
 
 	return {
 		elements: {
-			worldPrefabList: undefined, // TODO: Prefab list for world tab, will be moved to world.js
 			inspector: undefined
 		},
 		project: undefined,
@@ -63,7 +62,6 @@ let editor = function() {
 		},
 
 		initialize: function() {
-			this.elements.worldPrefabList = document.getElementById("worldPrefabList");
 			this.elements.inspector = document.getElementById("inspector");
 
 			setEditorLogElement( document.getElementById("log") );

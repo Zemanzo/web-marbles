@@ -4,8 +4,9 @@ import { hslToHex } from "../hslToHex";
 import { inspector } from "./inspector";
 import * as materials from "./materials";
 import { scene, defaultModel } from "./render";
-import { editor, EditorObject } from "./editor";
+import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
+import { worldTab } from "./world";
 
 // Prefab object
 function Prefab(uuid, color) {
@@ -67,15 +68,16 @@ Prefab.prototype.toggleVisibility = function() {
 
 Prefab.prototype.onNameChange = function(name) {
 	this.name = name;
-	// Former todo: Update worldPrefabList
-	// TODO: For all worldObjects using this prefab:
-	// worldObject.element.getElementsByClassName("prefabName")[0].innerText = name;
+	for (let key in this.worldInstances) {
+		this.worldInstances[key].updatePrefabInfo();
+	}
 };
 
 Prefab.prototype.onColorChange = function(color) {
 	this.color = color;
-	// TODO: For all worldObjects using this prefab:
-	// worldObject.element.getElementsByClassName("prefabName")[0].style.background = color;
+	for (let key in this.worldInstances) {
+		this.worldInstances[key].updatePrefabInfo();
+	}
 };
 
 Prefab.prototype.toggleCollapse = function() {
@@ -149,13 +151,16 @@ Prefab.prototype.updateInstances = function() {
 };
 
 
-
-// prefabEntity object, base for prefabObject and prefabCollider, inherits from EditorObject
+// prefabEntity object, base for prefabObject and prefabCollider
 function PrefabEntity(type, uuid, parent) {
 	EditorObject.call(this, type, uuid);
 	this.parent = parent;
 	this.functionality = "static";
 	
+	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
+	this.element.removeAttribute("id");
+	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
+
 	// Sets default name to Object# or Collider#, where # is lowest non-duplicate
 	for(let i = 0; !this.name; i++) {
 		let name = `${type}${i}`;
@@ -164,15 +169,10 @@ function PrefabEntity(type, uuid, parent) {
 			if(parent.entities[entity].name === name) nameExists = true;
 		}
 		if(!nameExists) {
-			this.name = name;
+			this.setName(name);
 		}
 	}
 	
-	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
-	this.element.removeAttribute("id");
-	this.element.getElementsByClassName("name")[0].innerHTML = this.name;
-	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
-
 	// Add events
 	let self = this;
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { 
@@ -198,7 +198,7 @@ PrefabEntity.prototype.setFunctionality = function(functionality) {
 	switch(functionality) {
 	case "startarea":
 		this.sceneObject.material = materials.startMaterial;
-		this.setRotation(new THREE.Vector3(0, 0, 0));
+		this.setRotation(new THREE.Euler(0, 0, 0, "XYZ"));
 		break;
 	case "startgate":
 		this.sceneObject.material = materials.gateMaterial;
@@ -233,10 +233,6 @@ PrefabEntity.prototype.setScale = function(position) {
 };
 
 
-
-
-
-
 // prefabObject object, inherits from prefabEntity
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "Object", uuid, parent);
@@ -269,7 +265,6 @@ PrefabObject.prototype.setModel = function(modelName) {
 	this.parent.group.add(this.sceneObject);
 	this.parent.changed = true;
 };
-
 
 
 // prefabCollider object, inherits from prefabEntity
@@ -388,37 +383,27 @@ let prefabsTab = function() {
 
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
-
 				let uuid = generateTinyUUID();
-				// TODO: Check for ID duplicates
 				prefabsTab.addPrefab(uuid,	hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20));
 				
 				// Focus to name input so user can start typing right away
 				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
-				
 			}, false);
 		},
 
 		// Add a prefab with the provided uuid
 		addPrefab: function(uuid, color) {
 			prefabsTab.prefabs[uuid] = new Prefab(uuid, color);
-
-			// TODO: Move
-			// Add option to prefab world list
-			let select = editor.elements.worldPrefabList;
-			let option = document.createElement("option");
-			option.text = `(${  uuid  })`;
-			option.value = uuid;
-			prefabsTab.prefabs[uuid].option = select.appendChild(option);
-		
-			if (select.disabled) select.disabled = false;
 		},
 
 		// Deletes a prefab with the provided uuid
 		deletePrefab: function(uuid) {
 			let thisPrefab = prefabsTab.prefabs[uuid];
 
-			// Delete worldObjects referencing this
+			// Delete worldObjects referencing this prefab
+			while(Object.keys(thisPrefab.worldInstances).length > 0) {
+				worldTab.deleteWorldObject(Object.keys(thisPrefab.worldInstances)[0]);
+			}
 			
 			// Delete entities
 			while(Object.keys(thisPrefab.entities).length > 0) {
@@ -426,41 +411,13 @@ let prefabsTab = function() {
 				thisPrefab.deleteEntity(thisEntity.uuid);
 			}
 
-			// (If inspector had those selected, deselect)
-			inspector.deselect();
-
 			// Clean up prefab object
 			prefabsTab.group.remove(thisPrefab.group);
 			thisPrefab.element.parentNode.removeChild(thisPrefab.element);
 
-			// Remove world select option element?
-
 			// Later: Delete from project
 
 			delete prefabsTab.prefabs[uuid];
-
-
-			/* Leftovers
-			let parent = this.closest(".prefab");
-			let prefabUuid = parent.dataset.uuid;
-			let name = parent.getElementsByClassName("prefabName")[0].value;
-			if ( confirm(`Are you sure you want to delete this prefab? (${name}) (${parent.dataset.uuid})`) ) {
-
-				// Remove world select option element
-				editor.elements.worldPrefabList.removeChild(prefabsTab.prefabs[prefabUuid].option);
-
-				if (editor.elements.worldPrefabList.children.length == 1) {
-					editor.elements.worldPrefabList.disabled = true;
-				}
-
-				// Remove world instances
-				for (let key in prefabsTab.prefabs[prefabUuid].instances) {
-					let instance = prefabsTab.prefabs[prefabUuid].instances[key];
-					instance.element.parentNode.removeChild(instance.element);
-					instance.sceneObject.parent.remove(instance.sceneObject);
-				}
-			}
-			*/
 		},
 
 		onTabActive: function() {
