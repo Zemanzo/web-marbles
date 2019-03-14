@@ -57,14 +57,14 @@ let worldTab = function() {
 
 	return {
 		elements: {
-			prefabList: undefined
+			prefabList: null
 		},
 		worldObjects: {},
 		worldParameters: {
 			waterLevel: -9,
 			sunInclination: 0.49
 		},
-		group: undefined,
+		group: null,
 
 		initialize: function() {
 			this.elements.prefabList = document.getElementById("worldPrefabList");

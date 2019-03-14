@@ -40,7 +40,14 @@ function Prefab(uuid, color) {
 		self.addCollider(uuid);
 	}, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
-		if( !confirm(`Are you sure you want to delete prefab ${self.name} (${self.uuid})?`)) return;
+
+		let worldText = "";
+		let worldObjectCount = Object.keys(self.worldInstances).length;
+		if( worldObjectCount > 0) {
+			worldText = `\nThis will remove ${worldObjectCount} object${worldObjectCount === 1 ? "" : "s"} from the world!`;
+		}
+
+		if( !confirm(`Are you sure you want to delete prefab ${self.name} (${self.uuid})?${worldText}`)) return;
 		prefabsTab.deletePrefab(self.uuid);
 	}, false);
 
@@ -236,7 +243,7 @@ PrefabEntity.prototype.setScale = function(position) {
 // prefabObject object, inherits from prefabEntity
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "Object", uuid, parent);
-	this.model = null;
+	this.model = "null"; // Note: HAS to be a string for inspector purposes!
 	this.sceneObject = defaultModel.clone();
 	this.parent.group.add(this.sceneObject);
 }
@@ -249,15 +256,31 @@ Object.defineProperty(PrefabObject.prototype, "constructor", {
 });
 
 PrefabObject.prototype.setModel = function(modelName) {
+
 	// Remove old model
 	this.parent.group.remove(this.sceneObject);
+	if(this.model !== "null") {
+		delete modelsTab.models[this.model].prefabEntities[this.uuid];
+	}
 
-	// Set new model
-	this.model = modelName;
 	let position = this.sceneObject.position;
 	let rotation = this.sceneObject.rotation;
 	let scale = this.sceneObject.scale;
-	this.sceneObject = modelsTab.models[modelName].scene.clone();
+
+	let model = null;
+
+	// For null, use default model
+	if(!modelName || modelName === "null") {
+		this.model = "null";
+		model = defaultModel;
+	} else {
+		this.model = modelName;
+		modelsTab.models[this.model].prefabEntities[this.uuid] = this;
+		model = modelsTab.models[modelName].sceneObject;
+	}
+
+	// Set new model
+	this.sceneObject = model.clone();
 	this.sceneObject.position.copy(position);
 	this.sceneObject.rotation.copy(rotation);
 	this.sceneObject.scale.copy(scale);
@@ -373,10 +396,14 @@ PrefabCollider.prototype.setRadius = function(radius) {
 let prefabsTab = function() {
 
 	return {
+		elements: {
+			modelList: null
+		},
 		prefabs: {},
-		group: undefined,
+		group: null,
 
 		initialize: function() {
+			this.elements.modelList = document.getElementById("inspectorModelList");
 			this.group = new THREE.Group();
 			scene.add(this.group);
 			this.group.visible = false;
@@ -422,6 +449,19 @@ let prefabsTab = function() {
 
 		onTabActive: function() {
 			prefabsTab.group.visible = true;
+
+			// Clear out the model list, except for "<Select model>"
+			while(prefabsTab.elements.modelList.children.length > 1) {
+				prefabsTab.elements.modelList.removeChild(prefabsTab.elements.modelList.children[1]);
+			}
+
+			// Add an option for every existing model
+			for(let key in modelsTab.models) {
+				let option = document.createElement("option");
+				option.value = key;
+				option.text = key;
+				prefabsTab.elements.modelList.appendChild(option);
+			}
 		},
 
 		onTabInactive: function() {

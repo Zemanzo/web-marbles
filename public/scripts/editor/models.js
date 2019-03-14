@@ -4,14 +4,61 @@ import { editorLog } from "./log";
 import { editor } from "./editor";
 import { scene } from "./render";
 
+// model object
+function Model(name, sceneObject) {
+	this.name = name;
+	this.sceneObject = sceneObject;
+	this.element = null;
+	this.prefabEntities = {};
+
+	// Add to scene
+	modelsTab.group.add(this.sceneObject);
+	this.sceneObject.visible = false;
+
+	// Deep clone for editor
+	this.element = document.getElementById("modelTemplate").cloneNode(true);
+
+	// Add to model list
+	this.element.id = name;
+	this.element.getElementsByClassName("name")[0].innerHTML = name;
+	this.element.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
+		modelsTab.select(name);
+	}, false);
+
+	// Delete model button
+	let self = this;
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+
+		let prefabText = "";
+		if(Object.keys(self.prefabEntities).length > 0) {
+
+			// This is quite a silly unique prefab counter isn't it?
+			let uniquePrefabs = {};
+			for(let key in self.prefabEntities) {
+				uniquePrefabs[self.prefabEntities[key].parent.uuid] = {};
+			}
+			let entityCount = Object.keys(self.prefabEntities).length;
+			let prefabCount = Object.keys(uniquePrefabs).length;
+			prefabText = `\nThis will alter ${entityCount} object${entityCount === 1 ? "" : "s"} in ${prefabCount} prefab${prefabCount === 1 ? "" : "s"}!`;
+		}
+
+		if( confirm(`Are you sure you want to delete model ${name}?${prefabText}`) ) {
+			modelsTab.removeModel(name);
+		}
+	}, false);
+
+	// Add to DOM
+	this.element = document.getElementById("models").appendChild(this.element);
+}
+
 
 let modelsTab = function() {
-	let _GLTFLoader = undefined;
+	let _GLTFLoader = null;
 	let _selectedModel = null;
 
 	return {
 		models: {},
-		group: undefined,
+		group: null,
 
 		initialize: function() {
 			_GLTFLoader = new THREE.GLTFLoader();
@@ -44,62 +91,30 @@ let modelsTab = function() {
 			}, false);
 		},
 
+		select: function(name) {
+			if (_selectedModel) {
+				_selectedModel.sceneObject.visible = false;
+				_selectedModel.element.className = "model";
+			}
+			_selectedModel = modelsTab.models[name];
+			_selectedModel.sceneObject.visible = true;
+			_selectedModel.element.className = "model selected";
+		},
+
+		deselect: function() {
+			if(_selectedModel) {
+				_selectedModel.sceneObject.visible = false;
+				_selectedModel.element.className = "model";
+			}
+			_selectedModel = null;
+		},
+
 		// Loads the model into the editor, adds it to the project if isNewModel is true
 		loadModel: function(modelName, fileContents, isNewModel) {
 			try {
 				_GLTFLoader.parse(fileContents, null,
 					function(model) {
-
-						// Deep clone for editor
-						let clone = document.getElementById("modelTemplate").cloneNode(true);
-
-						// Add model to editor data
-						model.userData.name = modelName;
-						modelsTab.models[modelName] = {
-							scene: model.scene,
-							name: modelName,
-							editorNode: clone
-						};
-						let thisModel = modelsTab.models[modelName];
-
-						// Add to scene
-						modelsTab.group.add(thisModel.scene);
-						thisModel.scene.visible = false;
-
-						// Add to model list
-						clone.id = modelName;
-						clone.getElementsByClassName("name")[0].innerHTML = modelName;
-						clone.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
-							if (_selectedModel) {
-								modelsTab.models[_selectedModel].scene.visible = false;
-								document.getElementById(_selectedModel).className = "model";
-							}
-							_selectedModel = this.parentNode.id;
-							modelsTab.models[_selectedModel].scene.visible = true;
-							document.getElementById(_selectedModel).className = "model selected";
-						}, false);
-
-						// Delete model button
-						clone.getElementsByClassName("delete")[0].addEventListener("click", function() {
-							let id = this.parentNode.id;
-
-							// TODO: Mention references from prefabs if there are any
-							if( confirm(`Are you sure you want to delete model (${id})?`) ) {
-								modelsTab.removeModel(id);
-								delete editor.project.models[id];
-							}
-						}, false);
-
-						// Add to select drop-down
-						let select = document.getElementById("inspectorModelList");
-						let option = document.createElement("option");
-						option.text = modelName;
-						option.value = modelName;
-						select.add(option);
-
-						// Add to DOM
-						let modelList = document.getElementById("models");
-						clone = modelList.appendChild(clone);
+						modelsTab.models[modelName] = new Model(modelName, model.scene);
 
 						editorLog(`Loaded model: ${modelName}`, "info");
 						
@@ -126,23 +141,20 @@ let modelsTab = function() {
 			}
 		
 			// Deselect
-			if (_selectedModel === name) _selectedModel = null;
+			if (_selectedModel === name) this.deselect();
+
+			let thisModel = this.models[name];
 		
 			// Remove from scene group
-			modelsTab.group.remove(this.models[name].scene);
-			
-			// Remove from select drop-down (prefabs)
-			let select = document.getElementById("inspectorModelList");
-			let index = Array.from(select.children).findIndex((el)=>{
-				return el.value === name;
-			}, false);
-			select.remove(index);
+			modelsTab.group.remove(thisModel.sceneObject);
 		
-			// TODO: Remove from all prefabs currently using this model
-			// I'll do this once prefabs has been refactored far enough
+			// Remove from all prefab objects currently using this model
+			while(Object.keys(thisModel.prefabEntities).length > 0) {
+				thisModel.prefabEntities[Object.keys(thisModel.prefabEntities)[0]].setModel(null);
+			}
 		
 			// Remove from editor
-			this.models[name].editorNode.parentNode.removeChild(this.models[name].editorNode);
+			thisModel.element.parentNode.removeChild(thisModel.element);
 			delete this.models[name];
 		
 			// Remove from project
