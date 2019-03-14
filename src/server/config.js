@@ -59,20 +59,20 @@ config.editor.enabled = true;
 /* Discord integration */
 config.discord = {};
 
-config.discord.clientId = "<your-client-id-here>";
-config.discord.clientSecret = "<your-client-secret-here>";
+config.discord.clientId = "<USE CONFIG.USER.JS OVERRIDE>";
+config.discord.clientSecret = "<USE CONFIG.USER.JS OVERRIDE>";
 
-config.discord.botToken = "<your-bot-token-here>";
+config.discord.botToken = "<USE CONFIG.USER.JS OVERRIDE>";
 config.discord.redirectUriRoot = "http://localhost:3004/"; // Be sure to add trailing slash
 config.discord.scope = "connections identify"; // Space separated
 config.discord.useOAuth2State = false; // More secure, but not implemented yet...
 
 // Server variables
 config.discord.inviteLink = "https://discord.gg/1234567";
-config.discord.gameplayChannelId = "<discord-channel-id-here>";
+config.discord.gameplayChannelId = "<USE CONFIG.USER.JS OVERRIDE>";
 
-config.discord.webhookId = "<webhook-id-here>"; // Create a default webhook to your gameplay channel
-config.discord.webhookToken = "<webhook-token-here>";
+config.discord.webhookId = "<USE CONFIG.USER.JS OVERRIDE>"; // Create a default webhook to your gameplay channel
+config.discord.webhookToken = "<USE CONFIG.USER.JS OVERRIDE>";
 
 /* Physics */
 config.physics = {};
@@ -121,5 +121,13 @@ for(let key in userConfig) {
 		console.warn(`Warning: Cannot override non-existing config property: config.${key}`);
 	}
 }
+
+// Environment variable overrides
+if (process.env.DISCORD_CLIENT_ID)				config.discord.clientId				= process.env.DISCORD_CLIENT_ID;
+if (process.env.DISCORD_CLIENT_SECRET)			config.discord.clientSecret			= process.env.DISCORD_CLIENT_SECRET;
+if (process.env.DISCORD_BOT_TOKEN)				config.discord.botToken				= process.env.DISCORD_BOT_TOKEN;
+if (process.env.DISCORD_GAMEPLAY_CHANNEL_ID)	config.discord.gameplayChannelId	= process.env.DISCORD_GAMEPLAY_CHANNEL_ID;
+if (process.env.DISCORD_WEBHOOK_ID)				config.discord.webhookId			= process.env.DISCORD_WEBHOOK_ID;
+if (process.env.DISCORD_WEBHOOK_TOKEN)			config.discord.webhookToken			= process.env.DISCORD_WEBHOOK_TOKEN;
 
 module.exports = config;
