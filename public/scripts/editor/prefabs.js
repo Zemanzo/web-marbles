@@ -129,10 +129,10 @@ let deletePrefab = function() {
 		}
 
 		// Remove world select option element
-		editor.elements.worldPrefab.removeChild(prefabsTab.prefabs[prefabUuid].option);
+		editor.elements.worldPrefabList.removeChild(prefabsTab.prefabs[prefabUuid].option);
 
-		if (editor.elements.worldPrefab.children.length == 1) {
-			editor.elements.worldPrefab.disabled = true;
+		if (editor.elements.worldPrefabList.children.length == 1) {
+			editor.elements.worldPrefabList.disabled = true;
 		}
 
 		// Remove world instances
@@ -278,7 +278,7 @@ let addPrefab = function(uuid) {
 	};
 
 	// Add option to prefab world list
-	let select = editor.elements.worldPrefab;
+	let select = editor.elements.worldPrefabList;
 	let option = document.createElement("option");
 	option.text = `(${  uuid  })`;
 	option.value = uuid;

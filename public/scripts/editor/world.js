@@ -33,13 +33,13 @@ let worldTab = function() {
 
 
 			// Add world prefab
-			let addWorldPrefab = function() {
-				let prefabUuid = editor.elements.worldPrefab.value;
+			let addWorldObject = function() {
+				let prefabUuid = editor.elements.worldPrefabList.value;
 				if (
-					!editor.elements.worldPrefab.disabled
+					!editor.elements.worldPrefabList.disabled
 					&& prefabUuid !== "null"
 				) {
-					let clone = document.getElementById("worldPrefabTemplate").cloneNode(true); // deep clone
+					let clone = document.getElementById("worldObjectTemplate").cloneNode(true); // deep clone
 					let uuid = generateTinyUUID();
 					clone.removeAttribute("id");
 					clone.dataset.uuid = uuid;
@@ -48,6 +48,7 @@ let worldTab = function() {
 
 					// Add select event
 					clone.addEventListener("click", inspector.select, false);
+					clone.testText = "Here's some test-like text!";
 
 					// Add name & prefab name
 					clone.getElementsByClassName("name")[0].innerText =
@@ -70,7 +71,7 @@ let worldTab = function() {
 
 					// Add to DOM
 					let hierarchy = document.getElementById("worldHierarchy");
-					let element = hierarchy.insertBefore(clone, document.getElementById("worldPrefabTemplate"));
+					let element = hierarchy.insertBefore(clone, document.getElementById("worldObjectTemplate"));
 
 					// Add instance reference to parent prefab
 					prefabsTab.prefabs[prefabUuid].instances[uuid] = {
@@ -82,7 +83,7 @@ let worldTab = function() {
 				}
 			};
 
-			document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldPrefab, false);
+			document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldObject, false);
 		},
 
 		onTabActive: function() {
