@@ -1,4 +1,4 @@
-import domReady from "../domReady";
+import domReady from "../dom-ready";
 
 // Notification already exists as a JavaScript object
 const notifications = [];

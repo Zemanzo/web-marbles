@@ -1,7 +1,6 @@
 import * as THREE from "three";
 
 let inspector = function() {
-	
 	return {
 		selected: null,
 
@@ -115,7 +114,6 @@ let inspector = function() {
 			// Change functionality
 			let inspectorChangeFunction = function() {
 				if (inspector.selected) {
-
 					inspector.selected.setFunctionality(this.value);
 
 					let rotationInputs = inspector.elements.transform.input.rotate;
@@ -379,7 +377,7 @@ let inspector = function() {
 
 			document.getElementById("inspectorFunction").value = selected.functionality;
 			// Disable rotations for startarea
-			if (selected.functionality === "startarea") { 
+			if (selected.functionality === "startarea") {
 				inspector.disabled.rotation(true);
 				inspector.disabled.shape(true);
 			}

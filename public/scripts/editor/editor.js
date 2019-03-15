@@ -48,7 +48,6 @@ EditorObject.prototype.setName = function(name) {
 };
 
 
-
 let editor = function() {
 	let _activeTab = 0;
 
@@ -130,7 +129,7 @@ let editor = function() {
 					default:
 						console.error(`Attempted to deactive unknown tab with id ${_activeTab}`);
 					}
-					
+
 					switch(parseInt(this.dataset.nthChild)) {
 					case 0:
 						modelsTab.onTabActive();
@@ -159,7 +158,6 @@ let editor = function() {
 }();
 
 window.addEventListener("DOMContentLoaded", function() {
-
 	editor.initialize();
 
 	// TODO: Move this out to the project script?
@@ -195,9 +193,8 @@ window.addEventListener("DOMContentLoaded", function() {
 
 // Spawn serialization worker
 editor.serialization = {};
-editor.serialization.worker = new Worker("scripts/editor/serialize_worker.js");
+editor.serialization.worker = new Worker("scripts/editor/serialize-worker.js");
 editor.serialization.preparePayload = function() {
-
 	// Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
 	for (let key in prefabsTab.prefabs) {

@@ -1,4 +1,4 @@
-import domReady from "../domReady";
+import domReady from "../dom-ready";
 import * as renderer from "./render";
 import { net as networking } from "./networking";
 import { spawnMarble } from "./game";

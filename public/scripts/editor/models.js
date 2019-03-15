@@ -28,10 +28,8 @@ function Model(name, sceneObject) {
 	// Delete model button
 	let self = this;
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
-
 		let prefabText = "";
 		if(Object.keys(self.prefabEntities).length > 0) {
-
 			// This is quite a silly unique prefab counter isn't it?
 			let uniquePrefabs = {};
 			for(let key in self.prefabEntities) {
@@ -117,11 +115,10 @@ let modelsTab = function() {
 						modelsTab.models[modelName] = new Model(modelName, model.scene);
 
 						editorLog(`Loaded model: ${modelName}`, "info");
-						
+
 						if(isNewModel) {
 							editor.project.addModel(modelName, fileContents);
 						}
-
 					}, function(error) {
 						editorLog(`Unable to load model (${modelName}): ${error}`, "error");
 						console.log(error);
@@ -139,27 +136,27 @@ let modelsTab = function() {
 			if(name in this.models === false) {
 				console.log(`Attempted to remove model ${name}, but no such model exists!`);
 			}
-		
+
 			// Deselect
 			if (_selectedModel === name) this.deselect();
 
 			let thisModel = this.models[name];
-		
+
 			// Remove from scene group
 			modelsTab.group.remove(thisModel.sceneObject);
-		
+
 			// Remove from all prefab objects currently using this model
 			while(Object.keys(thisModel.prefabEntities).length > 0) {
 				thisModel.prefabEntities[Object.keys(thisModel.prefabEntities)[0]].setModel(null);
 			}
-		
+
 			// Remove from editor
 			thisModel.element.parentNode.removeChild(thisModel.element);
 			delete this.models[name];
-		
+
 			// Remove from project
 			delete editor.project.models[name];
-		
+
 			editorLog(`Removed model: ${name}`, "info");
 		},
 
@@ -172,7 +169,6 @@ let modelsTab = function() {
 		}
 
 	};
-
 }();
 
 export { modelsTab };

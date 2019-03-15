@@ -1,4 +1,4 @@
-import domReady from "../domReady";
+import domReady from "../dom-ready";
 import * as renderer from "./render";
 
 let audio = {

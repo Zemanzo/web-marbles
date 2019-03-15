@@ -109,7 +109,6 @@ let cubeCamera = new THREE.CubeCamera( 1, 20000, 256 );
 cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
 
 function updateSun() {
-
 	let theta = Math.PI * ( parameters.inclination - 0.5 );
 	let phi = 2 * Math.PI * ( parameters.azimuth - 0.5 );
 
@@ -131,7 +130,6 @@ function updateSun() {
 	water.material.uniforms.sunDirection.value.copy( light.position ).normalize();
 
 	cubeCamera.update( renderer, scene );
-
 }
 
 //
@@ -305,7 +303,6 @@ function createMapMaterial() {
 	mtl.metalness = new THREE.FloatNode( 0 );
 
 	function createUv(scale, offset) {
-
 		let uvOffset = new THREE.FloatNode( offset || 0 );
 		let uvScale = new THREE.FloatNode( scale || 1 );
 
@@ -358,7 +355,6 @@ function createMapMaterial() {
 
 function makeTextSprite( message )
 {
-
 	let fontface = "Courier New";
 	let fontsize = 24;
 

@@ -121,7 +121,6 @@ let cubeCamera = new THREE.CubeCamera( 1, 20000, 256 );
 cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
 
 function updateSun() {
-
 	let theta = Math.PI * ( sunParameters.inclination - 0.5 );
 	let phi = 2 * Math.PI * ( sunParameters.azimuth - 0.5 );
 
@@ -143,7 +142,6 @@ function updateSun() {
 	water.material.uniforms.sunDirection.value.copy( light.position ).normalize();
 
 	cubeCamera.update( renderer, scene );
-
 }
 
 //

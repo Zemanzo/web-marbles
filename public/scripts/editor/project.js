@@ -1,9 +1,7 @@
-
-
 function Project() {
 	this.mapName = "New map";
 	this.authorName = "Nameless marblemapmaker";
-	
+
 	this.gameplay = {
 		defaultEnterPeriod: 40,
 		roundLength: 160,

@@ -35,6 +35,10 @@
         "space-infix-ops":
             "error",
         "space-before-function-paren":
-            ["error", "never"]
+            ["error", "never"],
+        "padded-blocks":
+            ["error", "never"],
+        "no-multiple-empty-lines":
+            ["error", {"max": 2}]
     }
 }

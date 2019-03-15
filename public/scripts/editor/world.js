@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { updateSun, water, sunParameters, scene } from "./render";
-import { generateTinyUUID } from "../generateTinyUUID";
+import { generateTinyUUID } from "../generate-tiny-uuid";
 import { EditorObject } from "./editor";
 import { prefabsTab } from "./prefabs";
 import { inspector } from "./inspector";
@@ -20,11 +20,11 @@ function WorldObject(uuid, prefab) {
 	let self = this;
 	this.element.addEventListener("click", function() { inspector.select(self); }, false);
 	// TODO: Delete event
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { 
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
 		if( !confirm(`Are you sure you want to delete this object: ${self.name} (${self.uuid})?`)) return;
 		worldTab.deleteWorldObject(self.uuid);
 	}, false);
-	
+
 	// Add to DOM
 	let hierarchy = document.getElementById("worldHierarchy");
 	this.element = hierarchy.insertBefore(this.element, document.getElementById("worldObjectTemplate"));
@@ -52,9 +52,7 @@ WorldObject.prototype.updatePrefabInfo = function() {
 };
 
 
-
 let worldTab = function() {
-
 	return {
 		elements: {
 			prefabList: null
@@ -119,7 +117,7 @@ let worldTab = function() {
 
 			worldTab.group.remove(thisObject.sceneObject);
 			thisObject.element.parentNode.removeChild(thisObject.element);
-			
+
 			delete thisObject.prefab.worldInstances[uuid];
 			delete worldTab.worldObjects[uuid];
 		},

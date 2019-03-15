@@ -1,6 +1,6 @@
 import * as THREE from "three";
-import { generateTinyUUID } from "../generateTinyUUID";
-import { hslToHex } from "../hslToHex";
+import { generateTinyUUID } from "../generate-tiny-uuid";
+import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
 import * as materials from "./materials";
 import { scene, defaultModel } from "./render";
@@ -31,7 +31,7 @@ function Prefab(uuid, color) {
 	this.element.getElementsByClassName("prefabName")[0].addEventListener("change", function() { self.onNameChange(this.value); }, false);
 	this.element.getElementsByClassName("prefabColor")[0].addEventListener("change", function() { self.onColorChange(this.value); }, false);
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
-	this.element.getElementsByClassName("addObject")[0].addEventListener("click", function() { 
+	this.element.getElementsByClassName("addObject")[0].addEventListener("click", function() {
 		let uuid = generateTinyUUID();
 		self.addObject(uuid);
 	}, false);
@@ -40,7 +40,6 @@ function Prefab(uuid, color) {
 		self.addCollider(uuid);
 	}, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
-
 		let worldText = "";
 		let worldObjectCount = Object.keys(self.worldInstances).length;
 		if( worldObjectCount > 0) {
@@ -163,7 +162,7 @@ function PrefabEntity(type, uuid, parent) {
 	EditorObject.call(this, type, uuid);
 	this.parent = parent;
 	this.functionality = "static";
-	
+
 	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
 	this.element.removeAttribute("id");
 	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
@@ -179,10 +178,10 @@ function PrefabEntity(type, uuid, parent) {
 			this.setName(name);
 		}
 	}
-	
+
 	// Add events
 	let self = this;
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { 
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
 		if( !confirm(`Are you sure you want to delete this ${type}: ${self.name} (${self.uuid})?`)) return;
 		self.parent.deleteEntity(self.uuid);
 	}, false);
@@ -190,7 +189,6 @@ function PrefabEntity(type, uuid, parent) {
 
 	// Add to object list
 	this.element = parent.element.getElementsByClassName("objectList")[0].appendChild(this.element);
-
 }
 
 PrefabEntity.prototype = Object.create(EditorObject.prototype);
@@ -201,7 +199,6 @@ Object.defineProperty(PrefabEntity.prototype, "constructor", {
 });
 
 PrefabEntity.prototype.setFunctionality = function(functionality) {
-
 	switch(functionality) {
 	case "startarea":
 		this.sceneObject.material = materials.startMaterial;
@@ -256,7 +253,6 @@ Object.defineProperty(PrefabObject.prototype, "constructor", {
 });
 
 PrefabObject.prototype.setModel = function(modelName) {
-
 	// Remove old model
 	this.parent.group.remove(this.sceneObject);
 	if(this.model !== "null") {
@@ -392,9 +388,7 @@ PrefabCollider.prototype.setRadius = function(radius) {
 };
 
 
-
 let prefabsTab = function() {
-
 	return {
 		elements: {
 			modelList: null
@@ -412,7 +406,7 @@ let prefabsTab = function() {
 			document.getElementById("newPrefab").addEventListener("click", function() {
 				let uuid = generateTinyUUID();
 				prefabsTab.addPrefab(uuid,	hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20));
-				
+
 				// Focus to name input so user can start typing right away
 				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
 			}, false);
@@ -431,7 +425,7 @@ let prefabsTab = function() {
 			while(Object.keys(thisPrefab.worldInstances).length > 0) {
 				worldTab.deleteWorldObject(Object.keys(thisPrefab.worldInstances)[0]);
 			}
-			
+
 			// Delete entities
 			while(Object.keys(thisPrefab.entities).length > 0) {
 				let thisEntity = thisPrefab.entities[Object.keys(thisPrefab.entities)[0]];

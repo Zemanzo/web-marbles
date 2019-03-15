@@ -1,5 +1,5 @@
 import * as Cookies from "js-cookie";
-import domReady from "../domReady";
+import domReady from "../dom-ready";
 
 domReady.then(() => {
 	let response = document.getElementById("response").dataset.response;
