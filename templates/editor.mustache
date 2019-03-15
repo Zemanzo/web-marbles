@@ -25,7 +25,7 @@
 		<!-- Actual document stuff -->
 		<section id="viewport">
 			<!-- Things are rendered here -->
-			<div id="viewportOverlay">
+			<div class="overlay">
 				<button id="fixCam">Fix camera</button>
 				<button id="togglePhysics">Toggle physics</button>
 			</div>
@@ -39,10 +39,10 @@
 
 			<h2 id="mode">EDITOR MODE</h2>
 			<div id="editorMode">
-				<div data-scene-group="models" class="selected">MODELS</div>
-				<div data-scene-group="prefabs">PREFABS</div>
-				<div data-scene-group="world">WORLD</div>
-				<div data-scene-group="world">PORTATION</div>
+				<div class="selected">MODELS</div>
+				<div>PREFABS</div>
+				<div>WORLD</div>
+				<div>PORTATION</div>
 				<div>SETTINGS</div>
 			</div>
 
@@ -130,7 +130,7 @@
 										Model
 									</td>
 									<td>
-										<select id="inspectorModel" disabled >
+										<select id="inspectorModelList" disabled >
 											<option value="null" selected >&lt; Select model &gt;</option>
 										</select>
 									</td>
@@ -159,7 +159,7 @@
 											<option value="cylinder">Cylinder</option>
 											<option value="cone">Cone</option>
 											<option value="capsule" disabled>Capsule</option>
-											<option value="terrain">Terrain</option>
+											<option value="terrain" disabled>Terrain</option>
 										</select>
 									</td>
 								</tr>
@@ -239,15 +239,15 @@
 					<h3>Hierarchy</h3>
 					<div id="worldHierarchy">
 
-						<div class="worldPrefab" id="worldPrefabTemplate">
+						<div class="worldObject" id="worldObjectTemplate">
 							<div class="prefabName"></div>
 							<div class="name"></div>
 							<div class="uuid"></div>
-							<button class="delete" title="Remove prefab"><i class="icofont-close delete"></i></button>
+							<button class="delete" title="Remove object"><i class="icofont-close delete"></i></button>
 						</div>
 
 						<div id="worldAddPrefab">
-							<select id="worldPrefab" disabled >
+							<select id="worldPrefabList" disabled >
 								<option value="null" selected >&lt; Select prefab &gt;</option>
 							</select>
 							<div id="worldAddPrefabButton" class="add">

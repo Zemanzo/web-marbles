@@ -1,135 +1,174 @@
-import * as THREE from "three";
-import "three/examples/js/loaders/GLTFLoader";
-import * as inspector from "./inspector";
-import { models } from "./models";
-import { prefabs } from "./prefabs";
-import { world } from "./world";
+import { inspector } from "./inspector";
+import { modelsTab } from "./models";
+import { prefabsTab } from "./prefabs";
+import { worldTab } from "./world";
+import { Project } from "./project";
 import { setEditorLogElement, editorLog } from "./log";
-import { scene, init as renderInit } from "./render";
+import { initializeRenderer } from "./render";
 
-let editor = {
-	log: undefined,
-	menu: {},
-	groups: {
-		models: undefined,
-		prefabs: undefined,
-		world: undefined
-	},
-	models: undefined,
-	prefabs: {},
-	world: undefined,
-	inspector: undefined,
-	selectedModel: null,
-	entityCount: 0
+
+// Object template used by prefabObject, prefabCollider, and worldObject
+function EditorObject(type, uuid) {
+	this.type = type;
+	this.uuid = uuid;
+	this.name = null;
+	this.sceneObject = null;
+	this.element = null;
+}
+
+EditorObject.prototype.getPosition = function() {
+	return this.sceneObject.position.clone();
 };
 
-window.addEventListener("DOMContentLoaded", function() {
-	editor.elements = {
-		worldPrefab: document.getElementById("worldPrefab"),
-		inspector: document.getElementById("inspector")
-	};
+EditorObject.prototype.setPosition = function(position) {
+	this.sceneObject.position.copy(position);
+};
 
-	setEditorLogElement( document.getElementById("log") );
+// Returns rotation in euler angles (rad)
+EditorObject.prototype.getRotation = function() {
+	return this.sceneObject.rotation.clone();
+};
 
-	inspector.initialize(editor);
+// Sets rotation in euler angles (rad)
+EditorObject.prototype.setRotation = function(rotation) {
+	this.sceneObject.rotation.copy(rotation);
+};
 
-	renderInit();
-	
-	models.initialize(editor);
+EditorObject.prototype.getScale = function() {
+	return this.sceneObject.scale.clone();
+};
 
-	prefabs.initialize(editor);
+EditorObject.prototype.setScale = function(scale) {
+	this.sceneObject.scale.copy(scale);
+};
 
-	world.initialize(editor);
+EditorObject.prototype.setName = function(name) {
+	this.name = name;
+	this.element.getElementsByClassName("name")[0].innerText = name;
+};
 
-	// Editor groups
-	for (let key in editor.groups) {
-		editor.groups[key] = new THREE.Group();
-		scene.add(editor.groups[key]);
-		if (key !== "models") editor.groups[key].visible = false;
-	}
 
-	// Menu
-	let childValue = 0;
-	for (let child of document.getElementById("editorMode").children) {
-		child.dataset.nthChild = childValue++;
-		child.addEventListener("click", function() {
-			let firstElement = document.getElementById("properties").firstElementChild;
-			firstElement.style.marginLeft = `-${parseInt(this.dataset.nthChild) * 100 }%`;
 
-			for (let c of this.parentNode.children) {
-				c.className = "";
-			}
+let editor = function() {
+	let _activeTab = 0;
 
-			for (let key in editor.groups) {
-				editor.groups[key].visible = false;
-			}
+	return {
+		elements: {
+			inspector: null
+		},
+		project: null,
+		menu: {
+			overflowTimeout: null
+		},
 
-			inspector.deselect();
+		initialize: function() {
+			this.elements.inspector = document.getElementById("inspector");
 
-			if (parseInt(this.dataset.nthChild) >= 2) {
-				editor.elements.inspector.style.transform = "translateX(100%)";
-				if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
-				document.getElementById("prefabs").style.overflow = "visible";
-			} else {
-				editor.elements.inspector.style.transform = "translateX(0%)";
-				editor.menu.overflowTimeout = setTimeout(function() {
-					document.getElementById("prefabs").style.overflow = "auto";
-				}, 400);
-			}
+			setEditorLogElement( document.getElementById("log") );
 
-			if (parseInt(this.dataset.nthChild) === 2) { // World
-				for (let uuid in editor.prefabs) {
-					if (editor.prefabs[uuid].changed) {
-						// update prefab
+			this.project = new Project();
+			inspector.initialize();
+			initializeRenderer();
+			modelsTab.initialize();
+			prefabsTab.initialize();
+			worldTab.initialize();
 
-						let containsStart = Object.keys( editor.prefabs[uuid].entities ).some(
-							(key)=>{
-								let userData = editor.prefabs[uuid].entities[key].sceneObject.userData;
-								return (userData.functionality && userData.functionality === "startarea");
-							}
-						);
+			// Models tab is the active tab on load
+			modelsTab.onTabActive();
 
-						for (let key in editor.prefabs[uuid].instances) {
-							let instance = editor.prefabs[uuid].instances[key];
-							let old = instance.sceneObject;
 
-							let clone = editor.prefabs[uuid].group.clone();
+			// Menu
+			let childValue = 0;
+			for (let child of document.getElementById("editorMode").children) {
+				child.dataset.nthChild = childValue++;
 
-							clone.position.copy(old.position);
-
-							if (containsStart) {
-								clone.rotation.setFromVector3( new THREE.Vector3(0, 0, 0) );
-							} else {
-								clone.rotation.copy(old.rotation);
-							}
-
-							old.parent.add(clone);
-
-							old.parent.remove(old);
-
-							instance.sceneObject = clone;
-							instance.sceneObject.visible = true; // Do not copy visibility setting from prefab
-						}
-
-						// world instances are updated
-						editor.prefabs[uuid].changed = false;
+				// Add click event for every tab
+				child.addEventListener("click", function() {
+					// Nothing changes if the active tab is clicked
+					if(this.dataset.nthChild === _activeTab) {
+						return;
 					}
-				}
+
+					// Update element class
+					this.parentNode.children[_activeTab].className = "";
+					this.className = "selected";
+
+
+					// Transition effect
+					let firstElement = document.getElementById("properties").firstElementChild;
+					firstElement.style.marginLeft = `-${parseInt(this.dataset.nthChild) * 100 }%`;
+
+					if (parseInt(this.dataset.nthChild) >= 2) {
+						editor.elements.inspector.style.transform = "translateX(100%)";
+						if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
+						document.getElementById("prefabs").style.overflow = "visible";
+					} else {
+						editor.elements.inspector.style.transform = "translateX(0%)";
+						editor.menu.overflowTimeout = setTimeout(function() {
+							document.getElementById("prefabs").style.overflow = "auto";
+						}, 400);
+					}
+
+					inspector.deselect();
+
+					switch(_activeTab) {
+					case 0:
+						modelsTab.onTabInactive();
+						break;
+					case 1:
+						prefabsTab.onTabInactive();
+						break;
+					case 2:
+						worldTab.onTabInactive();
+						break;
+					case 3:
+						// Project tab
+						break;
+					case 4:
+						// Editor settings tab
+						break;
+					default:
+						console.error(`Attempted to deactive unknown tab with id ${_activeTab}`);
+					}
+					
+					switch(parseInt(this.dataset.nthChild)) {
+					case 0:
+						modelsTab.onTabActive();
+						break;
+					case 1:
+						prefabsTab.onTabActive();
+						break;
+					case 2:
+						worldTab.onTabActive();
+						break;
+					case 3:
+						// Project tab
+						break;
+					case 4:
+						// Editor settings tab
+						break;
+					default:
+						console.error(`Attempted to switch to unknown tab ${parseInt(this.dataset.nthChild)}`);
+					}
+
+					_activeTab = parseInt(this.dataset.nthChild);
+				}, false);
 			}
+		}
+	};
+}();
 
-			if (this.dataset.sceneGroup) editor.groups[this.dataset.sceneGroup].visible = true;
+window.addEventListener("DOMContentLoaded", function() {
 
-			this.className = "selected";
+	editor.initialize();
 
-		}, false);
-	}
-
+	// TODO: Move this out to the project script?
 	// Serialisation
 	let exportPublishBinary = function() {
 		let serializationStart = new Date();
 		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
 		let payload = editor.serialization.preparePayload();
-		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
+		editorLog(`- Payload prepared (${(new Date()) - serializationStart}ms)`);
 		editor.serialization.worker.postMessage({
 			type: "exportPublishBinary",
 			payload: payload,
@@ -161,39 +200,39 @@ editor.serialization.preparePayload = function() {
 
 	// Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
-	for (let key in editor.prefabs) {
+	for (let key in prefabsTab.prefabs) {
 		prefabs[key] = {
-			group: editor.prefabs[key].group.toJSON(),
+			group: prefabsTab.prefabs[key].group.toJSON(),
 			uuid: key,
 			entities: {}
 		};
 
-		for (let entity in editor.prefabs[key].entities) {
+		for (let entity in prefabsTab.prefabs[key].entities) {
 			prefabs[key].entities[entity] = {
-				sceneObject: editor.prefabs[key].entities[entity].sceneObject.toJSON(),
-				model: editor.prefabs[key].entities[entity].model,
-				shape: editor.prefabs[key].entities[entity].shape
+				sceneObject: prefabsTab.prefabs[key].entities[entity].sceneObject.toJSON(),
+				model: prefabsTab.prefabs[key].entities[entity].model,
+				shape: prefabsTab.prefabs[key].entities[entity].shape
 			};
 		}
 
 		for (let instance in prefabs[key].instances) {
 			prefabs[key].instances[instance] = {
-				sceneObject: editor.prefabs[key].instances[instance].sceneObject.toJSON(),
+				sceneObject: prefabsTab.prefabs[key].instances[instance].sceneObject.toJSON(),
 				uuid: instance
 			};
 		}
 	}
 
 	let models = {};
-	for (let model in editor.models) {
-		if(model === "initialize") continue; // HOTFIX
+	for (let model in modelsTab.models) {
+		if(typeof modelsTab.models[model] === "function") continue; // Hotfix for something that's going to be replaced anyway!
 		models[model] = {
-			scene: editor.models[model].scene.toJSON(),
+			scene: modelsTab.models[model].scene.toJSON(),
 			userData: {}
 		};
 
-		for (let key in editor.models[model].userData) {
-			models[model].userData[key] = editor.models[model].userData[key];
+		for (let key in modelsTab.models[model].userData) {
+			models[model].userData[key] = modelsTab.models[model].userData[key];
 		}
 	}
 
@@ -235,3 +274,5 @@ window.onbeforeunload = function(e) {
 	e.returnValue = dialogText;
 	return dialogText;
 };
+
+export { editor, EditorObject };

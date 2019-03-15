@@ -11,7 +11,7 @@ import { editorLog } from "./log";
 let viewport, camera, renderer, stats, controls,
 	scene = new THREE.Scene();
 
-function init() {
+function initializeRenderer() {
 	viewport = document.getElementById("viewport");
 	camera = new THREE.PerspectiveCamera(75, viewport.clientWidth / viewport.clientHeight, 0.1, 5000);
 
@@ -43,7 +43,7 @@ function init() {
 	});
 
 	// Fix camera
-	document.getElementById("fixCam").addEventListener("click", function () {
+	document.getElementById("fixCam").addEventListener("click", function() {
 		controls.stop();
 		controls.toDefaults();
 	}, false);
@@ -79,7 +79,7 @@ let water = new THREE.Water(
 	{
 		textureWidth: 512,
 		textureHeight: 512,
-		waterNormals: new THREE.TextureLoader().load( "scripts/lib/threejs/textures/waternormals.jpg", function ( texture ) {
+		waterNormals: new THREE.TextureLoader().load( "scripts/lib/threejs/textures/waternormals.jpg", function( texture ) {
 			texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
 		}),
 		alpha: 1.0,
@@ -161,13 +161,13 @@ GLTFLoader.load(
 	"resources/models/default.gltf",
 
 	// called when the resource is loaded
-	function (gltf) {
+	function(gltf) {
 		defaultModel = gltf.scene;
 	},
 
 	null,
 
-	function (error) {
+	function(error) {
 		console.error("An error occurred when loading the model", error );
 	}
 );
@@ -196,7 +196,7 @@ function animate() {
 
 export {
 	scene,
-	init,
+	initializeRenderer,
 	defaultModel,
 	updateSun,
 	sunParameters,

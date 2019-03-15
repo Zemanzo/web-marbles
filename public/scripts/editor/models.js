@@ -1,104 +1,178 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
+import { editor } from "./editor";
+import { scene } from "./render";
 
-let models = {},
-	editor;
+// model object
+function Model(name, sceneObject) {
+	this.name = name;
+	this.sceneObject = sceneObject;
+	this.element = null;
+	this.prefabEntities = {};
 
-models.initialize = function(global) {
-	editor = global;
-	editor.models = this;
+	// Add to scene
+	modelsTab.group.add(this.sceneObject);
+	this.sceneObject.visible = false;
 
-	
-	// Add models
-	let GLTFLoader = new THREE.GLTFLoader();
-	document.getElementById("addModelFile").addEventListener("change", function() {
-		Array.from(this.files).forEach(function(file) {
-			file.reader = new FileReader();
-			file.reader.onload = function() {
-				let result = file.reader.result;
+	// Deep clone for editor
+	this.element = document.getElementById("modelTemplate").cloneNode(true);
 
-				// parse using your corresponding loader
-				try {
-					GLTFLoader.parse(
-						result,	null,
-						function(model) {
-							model.userData.name = file.name;
-							// Check if model is already loaded
-							if (!Object
-								.keys(editor.models)
-								.some( (key) => {
-									return key === file.name;
-								} )
-							) {
-								// Add to model list
-								let clone = document.getElementById("modelTemplate").cloneNode(true); // deep clone
-								clone.id = file.name;
-								clone.getElementsByClassName("name")[0].innerHTML = file.name;
-								clone.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
-									if (editor.selectedModel) {
-										editor.models[editor.selectedModel].scene.visible = false;
-										document.getElementById(editor.selectedModel).className = "model";
-									}
-									editor.selectedModel = this.parentNode.id;
-									editor.models[editor.selectedModel].scene.visible = true;
-									document.getElementById(editor.selectedModel).className = "model selected";
-								}, false);
-
-								// Delete model
-								clone.getElementsByClassName("delete")[0].addEventListener("click", function() {
-									let parent = this.parentNode;
-									let id = parent.id;
-									if ( confirm(`Are you sure you want to delete this model? (${id})`) ) {
-										if (editor.selectedModel === id) editor.selectedModel = null;
-										editor.groups.models.remove(editor.models[id].scene);
-										delete editor.models[id];
-										let select = document.getElementById("inspectorModel");
-										let index = Array.from(select.children).findIndex((el)=>{
-											return el.value === id;
-										}, false);
-										select.remove(index);
-										parent.parentNode.removeChild(parent); // oofies
-										editorLog(`Removed model (${id})`, "warn");
-									}
-								}, false);
-
-								// Add to select drop-down
-								let select = document.getElementById("inspectorModel");
-								let option = document.createElement("option");
-								option.text = file.name;
-								option.value = file.name;
-								select.add(option);
-
-								// Add to DOM
-								let modelList = document.getElementById("models");
-								clone = modelList.appendChild(clone);
-
-								// Add to scene
-								editor.groups.models.add(model.scene);
-								model.scene.visible = false;
-
-								editor.models[file.name] = model;
-								editorLog(`Loaded model: ${file.name}`, "info");
-							} else {
-								editorLog(`Model already loaded. (${file.name})`, "error");
-							}
-						}, function(error) {
-							editorLog(`Unable to load model (${file.name}): ${error}`, "error");
-							console.log(error);
-						}
-					);
-				}
-				catch(error) {
-					// Invalid JSON/GLTF files may end up here
-					editorLog(`Unable to load model (${file.name}): ${error}`, "error");
-					console.log(error);
-				}
-			};
-			file.reader.readAsText(file, "utf-8");
-		});
+	// Add to model list
+	this.element.id = name;
+	this.element.getElementsByClassName("name")[0].innerHTML = name;
+	this.element.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
+		modelsTab.select(name);
 	}, false);
 
-};
+	// Delete model button
+	let self = this;
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
 
-export { models };
+		let prefabText = "";
+		if(Object.keys(self.prefabEntities).length > 0) {
+
+			// This is quite a silly unique prefab counter isn't it?
+			let uniquePrefabs = {};
+			for(let key in self.prefabEntities) {
+				uniquePrefabs[self.prefabEntities[key].parent.uuid] = {};
+			}
+			let entityCount = Object.keys(self.prefabEntities).length;
+			let prefabCount = Object.keys(uniquePrefabs).length;
+			prefabText = `\nThis will alter ${entityCount} object${entityCount === 1 ? "" : "s"} in ${prefabCount} prefab${prefabCount === 1 ? "" : "s"}!`;
+		}
+
+		if( confirm(`Are you sure you want to delete model ${name}?${prefabText}`) ) {
+			modelsTab.removeModel(name);
+		}
+	}, false);
+
+	// Add to DOM
+	this.element = document.getElementById("models").appendChild(this.element);
+}
+
+
+let modelsTab = function() {
+	let _GLTFLoader = null;
+	let _selectedModel = null;
+
+	return {
+		models: {},
+		group: null,
+
+		initialize: function() {
+			_GLTFLoader = new THREE.GLTFLoader();
+			this.group = new THREE.Group();
+			scene.add(this.group);
+			this.group.visible = false;
+
+			// Add models button
+			document.getElementById("addModelFile").addEventListener("change", function() {
+				Array.from(this.files).forEach(function(file) {
+					// If a model with this file name already exists, don't load it
+					if(file.name in editor.project.models) {
+						editorLog(`Model ${file.name} already loaded.`, "warn");
+						return;
+					}
+
+					file.reader = new FileReader();
+					file.reader.onload = function() {
+						// Attempt to load model and add it to the project
+						modelsTab.loadModel(file.name, file.reader.result, true);
+					};
+
+					file.reader.onerror = function() {
+						editorLog(`Unable to read model (${file.name}): ${file.reader.error.message}`, "error");
+						file.reader.abort();
+					};
+
+					file.reader.readAsText(file, "utf-8");
+				});
+			}, false);
+		},
+
+		select: function(name) {
+			if (_selectedModel) {
+				_selectedModel.sceneObject.visible = false;
+				_selectedModel.element.className = "model";
+			}
+			_selectedModel = modelsTab.models[name];
+			_selectedModel.sceneObject.visible = true;
+			_selectedModel.element.className = "model selected";
+		},
+
+		deselect: function() {
+			if(_selectedModel) {
+				_selectedModel.sceneObject.visible = false;
+				_selectedModel.element.className = "model";
+			}
+			_selectedModel = null;
+		},
+
+		// Loads the model into the editor, adds it to the project if isNewModel is true
+		loadModel: function(modelName, fileContents, isNewModel) {
+			try {
+				_GLTFLoader.parse(fileContents, null,
+					function(model) {
+						modelsTab.models[modelName] = new Model(modelName, model.scene);
+
+						editorLog(`Loaded model: ${modelName}`, "info");
+						
+						if(isNewModel) {
+							editor.project.addModel(modelName, fileContents);
+						}
+
+					}, function(error) {
+						editorLog(`Unable to load model (${modelName}): ${error}`, "error");
+						console.log(error);
+					}
+				);
+			}
+			catch(error) {
+				// Invalid JSON/GLTF files may end up here
+				editorLog(`Unable to load model (${name}): ${error}`, "error");
+				console.log(error);
+			}
+		},
+
+		removeModel: function(name) {
+			if(name in this.models === false) {
+				console.log(`Attempted to remove model ${name}, but no such model exists!`);
+			}
+		
+			// Deselect
+			if (_selectedModel === name) this.deselect();
+
+			let thisModel = this.models[name];
+		
+			// Remove from scene group
+			modelsTab.group.remove(thisModel.sceneObject);
+		
+			// Remove from all prefab objects currently using this model
+			while(Object.keys(thisModel.prefabEntities).length > 0) {
+				thisModel.prefabEntities[Object.keys(thisModel.prefabEntities)[0]].setModel(null);
+			}
+		
+			// Remove from editor
+			thisModel.element.parentNode.removeChild(thisModel.element);
+			delete this.models[name];
+		
+			// Remove from project
+			delete editor.project.models[name];
+		
+			editorLog(`Removed model: ${name}`, "info");
+		},
+
+		onTabActive: function() {
+			modelsTab.group.visible = true;
+		},
+
+		onTabInactive: function() {
+			modelsTab.group.visible = false;
+		}
+
+	};
+
+}();
+
+export { modelsTab };
