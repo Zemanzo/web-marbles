@@ -1,20 +1,20 @@
 const path = require("path");
 const webpack = require("webpack");
-const IgnoreNotFoundExportPlugin = require("./ignorenotfoundexportplugin.js");
+const IgnoreNotFoundExportPlugin = require("./src/pipelines/ignore-not-found-export-plugin.js");
 
 module.exports = {
 	mode: process.env.NODE_ENV !== "production" ? "development" : "production",
 	entry: {
-		client: "./public/scripts/client/client.js",
-		editor: "./public/scripts/editor/editor.js",
-		chat: "./public/scripts/chat/chat.js",
-		discordApiRedirect: "./public/scripts/chat/discord-api-redirect.js"
+		client: "./src/client/client/client.js",
+		editor: "./src/client/editor/editor.js",
+		chat: "./src/client/chat/chat.js",
+		discordApiRedirect: "./src/client/chat/discord-api-redirect.js"
 	},
 	output: {
 		filename: "[name].js",
 		chunkFilename: "[name].bundle.js",
-		path: path.resolve(__dirname, "public/scripts/dist"),
-		publicPath: "scripts/dist/"
+		path: path.resolve(__dirname, "public/dist"),
+		publicPath: "dist/"
 	},
 	devtool: "source-map",
 	plugins: [
@@ -22,5 +22,13 @@ module.exports = {
 			THREE: "three"
 		}),
 		new IgnoreNotFoundExportPlugin()
-	]
+	],
+	module: {
+		rules: [
+			{
+				test: /\.worker\.js$/,
+				use: { loader: "worker-loader" }
+			}
+		]
+	}
 };

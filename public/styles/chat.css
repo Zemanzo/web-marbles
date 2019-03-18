@@ -153,6 +153,14 @@ header {
 			text-shadow: 0px 1px 1px #111;
 		}
 
+		#unauthenticated > a.disabled {
+			background: #555;
+			border-bottom: 2px solid #363636;
+			color: #888;
+			text-shadow: none;
+			cursor: not-allowed;
+		}
+
 		#chatInputContainer.authorized > #unauthenticated {
 			display: none;
 		}
