@@ -1,4 +1,5 @@
 const clientConfig = require("../client/config");
+const userConfig = require("./config.user");
 const config = {};
 
 /* Marbles */
@@ -49,7 +50,7 @@ config.database.path = "web-marbles.db3";
 
 /* Editor */
 config.editor = {};
-config.editor.enabled = false;
+config.editor.enabled = true;
 
 /* Discord integration */
 config.discord = {};
@@ -90,5 +91,31 @@ config.uwebsockets.passphrase = "1234";
 config.network = {};
 config.network.ssl = clientConfig.network.ssl;
 config.network.tickrate = 20; // Max amount of times physics data should be sent to clients per second.
+
+/* Override any user properties set in config.user.js */
+for(let key in userConfig) {
+	let obj = config;
+	let property;
+
+	key.split(".").forEach( function(val) {
+		if(obj) {
+			if(obj[val]) {
+				if(typeof obj[val] === "object") {
+					obj = obj[val]; // change to child object
+				} else {
+					property = val; // obj[property] is the property to set
+				}
+			} else {
+				obj = null; // Property doesn't exist
+			}
+		}
+	} );
+
+	if(obj && property) {
+		obj[property] = userConfig[key];
+	} else {
+		console.warn(`Warning: Cannot override non-existing config property: config.${key}`);
+	}
+}
 
 module.exports = config;
