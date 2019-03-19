@@ -117,6 +117,11 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	this.group.remove(thisObject.sceneObject);
 	thisObject.element.parentNode.removeChild(thisObject.element);
 
+	// Remove from model references
+	if(thisObject.model && thisObject.model !== "null") {
+		delete modelsTab.models[thisObject.model].prefabEntities[uuid];
+	}
+
 	delete this.entities[uuid];
 
 	this.changed = true;
@@ -181,7 +186,8 @@ function PrefabEntity(type, uuid, parent) {
 
 	// Add events
 	let self = this;
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function(event) {
+		event.stopPropagation(); // Don't fire the "select" event in parent node
 		if( !confirm(`Are you sure you want to delete this ${type}: ${self.name} (${self.uuid})?`)) return;
 		self.parent.deleteEntity(self.uuid);
 	}, false);
@@ -460,11 +466,6 @@ let prefabsTab = function() {
 
 		onTabInactive: function() {
 			prefabsTab.group.visible = false;
-
-			// Update changed prefabs
-			for (let uuid in prefabsTab.prefabs) {
-				prefabsTab.prefabs[uuid].updateInstances();
-			}
 		}
 	};
 }();

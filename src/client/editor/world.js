@@ -19,8 +19,8 @@ function WorldObject(uuid, prefab) {
 	// Add events
 	let self = this;
 	this.element.addEventListener("click", function() { inspector.select(self); }, false);
-	// TODO: Delete event
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function(event) {
+		event.stopPropagation(); // Don't fire the "select" event in parent node
 		if( !confirm(`Are you sure you want to delete this object: ${self.name} (${self.uuid})?`)) return;
 		worldTab.deleteWorldObject(self.uuid);
 	}, false);
@@ -133,10 +133,13 @@ let worldTab = function() {
 			}
 			worldTab.elements.prefabList.disabled = true;
 
-			// Add an option for every existing prefab
 			for(let key in prefabsTab.prefabs) {
 				worldTab.elements.prefabList.disabled = false;
 
+				// Update any instances using this prefab
+				prefabsTab.prefabs[key].updateInstances();
+
+				// Add an option for every existing prefab
 				let option = document.createElement("option");
 				option.value = key;
 				option.text = `${prefabsTab.prefabs[key].name} (${key})`;
