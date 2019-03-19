@@ -2,9 +2,9 @@
   "name": "web-marbles",
   "version": "1.0.0",
   "description": "Aims to recreate Marble Racing from the ground up, as a fully web based game ",
-  "main": "web-marbles.js",
+  "main": "src/web-marbles.js",
   "scripts": {
-    "start": "node web-marbles.js",
+    "start": "node src/web-marbles.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack"
   },
@@ -21,6 +21,7 @@
     "js-cookie": "^2.2.0",
     "mustache-express": "^1.2.5",
     "obj-file-parser": "^0.5.0",
+    "pako": "^1.0.10",
     "reconnecting-websocket": "4.1.9",
     "request": "^2.88.0",
     "stats-js": "^1.0.0",
@@ -36,6 +37,7 @@
     "eslint": "5.x",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3",
-    "webpack-dev-server": "^3.1.14"
+    "webpack-dev-server": "^3.1.14",
+    "worker-loader": "^2.0.0"
   }
 }

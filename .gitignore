@@ -42,14 +42,14 @@ jspm_packages/
 # Process pictures
 process
 
-# Root config file (contains sensitive information)
-/config.js
+# Server config file (contains sensitive information)
+src/server/config.js
 
 # Database file
 *.db3
 
 # Webpack
-public/scripts/dist/
+public/dist/
 
 # VSCode
 .vscode/

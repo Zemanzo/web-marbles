@@ -13,10 +13,10 @@
 
 		<!-- Scripts -->
 		{{#success}}
-		<script src="scripts/dist/discordApiRedirect.js"></script>
+		<script src="dist/discordApiRedirect.js"></script>
 		{{/success}}
 		{{^success}}
-		<script src="scripts/dist/chat.js"></script>
+		<script src="dist/chat.js"></script>
 		{{/success}}
 	</head>
 	<body>
@@ -65,7 +65,7 @@
 					data-redirect_uri="{{redirect_uri}}"
 					{{#state}}data-state={{state}}{{/state}}
 				>Log in with Discord</a>
-				<a href="" target="_blank" style="flex:2">Play as guest</a>
+				<a target="_blank" style="flex:2" class="disabled" title="This is not supported yet!">Play as guest</a>
 			</div>
 			<div id="authenticated">
 				<div>
