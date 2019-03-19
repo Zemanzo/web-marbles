@@ -133,10 +133,13 @@ let worldTab = function() {
 			}
 			worldTab.elements.prefabList.disabled = true;
 
-			// Add an option for every existing prefab
 			for(let key in prefabsTab.prefabs) {
 				worldTab.elements.prefabList.disabled = false;
 
+				// Update any instances using this prefab
+				prefabsTab.prefabs[key].updateInstances();
+
+				// Add an option for every existing prefab
 				let option = document.createElement("option");
 				option.value = key;
 				option.text = `${prefabsTab.prefabs[key].name} (${key})`;

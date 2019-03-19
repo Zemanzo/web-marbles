@@ -117,6 +117,11 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	this.group.remove(thisObject.sceneObject);
 	thisObject.element.parentNode.removeChild(thisObject.element);
 
+	// Remove from model references
+	if(thisObject.model && thisObject.model !== "null") {
+		delete modelsTab.models[thisObject.model].prefabEntities[uuid];
+	}
+
 	delete this.entities[uuid];
 
 	this.changed = true;
@@ -460,11 +465,6 @@ let prefabsTab = function() {
 
 		onTabInactive: function() {
 			prefabsTab.group.visible = false;
-
-			// Update changed prefabs
-			for (let uuid in prefabsTab.prefabs) {
-				prefabsTab.prefabs[uuid].updateInstances();
-			}
 		}
 	};
 }();
