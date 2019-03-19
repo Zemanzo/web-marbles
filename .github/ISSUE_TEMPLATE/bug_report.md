@@ -19,8 +19,5 @@ A clear and concise description of what actually happens.
 3. Scroll down to '....'
 4. See error
 
-**Blocks issues**
-Add related issues that this issue blocks e.g. #42
-
 **Additional context**
 Add any other context about the problem here.
