@@ -186,7 +186,8 @@ function PrefabEntity(type, uuid, parent) {
 
 	// Add events
 	let self = this;
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function(event) {
+		event.stopPropagation(); // Don't fire the "select" event in parent node
 		if( !confirm(`Are you sure you want to delete this ${type}: ${self.name} (${self.uuid})?`)) return;
 		self.parent.deleteEntity(self.uuid);
 	}, false);
