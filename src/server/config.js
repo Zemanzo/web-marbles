@@ -1,3 +1,7 @@
+// Note: Do NOT modify this config file directly!
+// If you want to override any settings,
+// please do so in config.user.js!
+
 const clientConfig = require("../client/config");
 const userConfig = require("./config.user");
 const config = {};
