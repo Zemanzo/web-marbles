@@ -5,7 +5,7 @@
   "main": "src/web-marbles.js",
   "scripts": {
     "start": "node src/web-marbles.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha tests --timeout 30000",
     "build": "webpack"
   },
   "author": "Merlijn van der Kamp",
@@ -34,7 +34,11 @@
   },
   "devDependencies": {
     "babel-eslint": "10",
+    "chai": "^4.2.0",
+    "chromedriver": "^2.46.0",
     "eslint": "5.x",
+    "mocha": "^6.0.2",
+    "selenium-webdriver": "^4.0.0-alpha.1",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.2.3",
     "webpack-dev-server": "^3.1.14",
