@@ -1,18 +1,23 @@
 import * as THREE from "three";
 import { updateSun, water, sunParameters, scene } from "./render";
 import { generateTinyUUID } from "../generate-tiny-uuid";
-import { EditorObject } from "./editor";
+import { editor, EditorObject } from "./editor";
 import { prefabsTab } from "./prefabs";
 import { inspector } from "./inspector";
 
 
-function WorldObject(uuid, prefab) {
-	EditorObject.call(this, "WorldObject", uuid);
+function WorldObject(uuid, prefab, project) {
+	EditorObject.call(this, "WorldObject", uuid, project);
 	this.prefab = prefab;
 
 	this.element = document.getElementById("worldObjectTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
-	this.setName(prefab.name); // By default, use the prefab name as worldObject name
+
+	if(this.project.name) {
+		this.setName(this.project.name);
+	} else {
+		this.setName(prefab.name); // Use the prefab name as worldObject name, if it wasn't set in the project object
+	}
 	this.element.getElementsByClassName("uuid")[0].innerHTML = uuid;
 	this.updatePrefabInfo();
 
@@ -34,6 +39,7 @@ function WorldObject(uuid, prefab) {
 
 	// Add threejs group to scene
 	this.sceneObject = prefab.group.clone();
+	this.updateTransformFromProject();
 	worldTab.group.add( this.sceneObject );
 	this.sceneObject.visible = true;
 }
@@ -58,10 +64,7 @@ let worldTab = function() {
 			prefabList: null
 		},
 		worldObjects: {},
-		worldParameters: {
-			waterLevel: -9,
-			sunInclination: 0.49
-		},
+		worldParameters: null,
 		group: null,
 
 		initialize: function() {
@@ -69,6 +72,12 @@ let worldTab = function() {
 			this.group = new THREE.Group();
 			scene.add(this.group);
 			this.group.visible = false;
+
+			this.worldParameters = editor.project.world;
+			this.setWaterLevel(this.worldParameters.waterLevel);
+			document.getElementById("envWaterHeight").value = this.worldParameters.waterLevel;
+			this.setSunInclination(this.worldParameters.sunInclination);
+			document.getElementById("envSunInclination").value = this.worldParameters.sunInclination;
 
 			// Change water level
 			document.getElementById("envWaterHeight").addEventListener("change", function() { worldTab.setWaterLevel( parseFloat(this.value) ); }, false);
@@ -88,24 +97,27 @@ let worldTab = function() {
 				) return;
 
 				let uuid = generateTinyUUID();
-				worldTab.addWorldObject(uuid, prefabsTab.prefabs[prefabUuid]);
+				let projectWorldObject = editor.project.addWorldObject(uuid, prefabUuid);
+				worldTab.addWorldObject(uuid, prefabsTab.prefabs[prefabUuid], projectWorldObject);
 			};
 			document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldObject, false);
 		},
 
 		setWaterLevel: function(height) {
 			this.worldParameters.waterLevel = height;
+			//editor.project.world.waterLevel = height;
 			water.position.y = height;
 		},
 
 		setSunInclination: function(inclination) {
 			this.worldParameters.sunInclination = inclination;
+			//editor.project.world.sunInclination = inclination;
 			sunParameters.inclination = inclination;
 			updateSun();
 		},
 
-		addWorldObject: function(uuid, prefab) {
-			worldTab.worldObjects[uuid] = new WorldObject(uuid, prefab);
+		addWorldObject: function(uuid, prefab, project) {
+			worldTab.worldObjects[uuid] = new WorldObject(uuid, prefab, project);
 		},
 
 		deleteWorldObject: function(uuid) {
@@ -120,6 +132,7 @@ let worldTab = function() {
 
 			delete thisObject.prefab.worldInstances[uuid];
 			delete worldTab.worldObjects[uuid];
+			delete editor.project.worldObjects[uuid];
 		},
 
 		onTabActive: function() {

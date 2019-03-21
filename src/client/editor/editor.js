@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { inspector } from "./inspector";
 import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
@@ -9,13 +10,22 @@ import SerializeWorker from "./serialize.worker";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
-function EditorObject(type, uuid) {
+function EditorObject(type, uuid, project) {
 	this.type = type;
 	this.uuid = uuid;
 	this.name = null;
 	this.sceneObject = null;
 	this.element = null;
+	this.project = project; // Refers to the project-side object
 }
+
+// Updates the sceneObject's transform based on the loaded project, if it exists
+// This should be called after a sceneObject has been created
+EditorObject.prototype.updateTransformFromProject = function() {
+	if(this.project.position) this.setPosition( new THREE.Vector3(this.project.position.x, this.project.position.y, this.project.position.z) );
+	if(this.project.rotation) this.sceneObject.quaternion = new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w);
+	if(this.project.scale) this.setScale( new THREE.Vector3(this.project.scale.x, this.project.scale.y, this.project.scale.z) );
+};
 
 EditorObject.prototype.getPosition = function() {
 	return this.sceneObject.position.clone();
@@ -23,6 +33,11 @@ EditorObject.prototype.getPosition = function() {
 
 EditorObject.prototype.setPosition = function(position) {
 	this.sceneObject.position.copy(position);
+	this.project.position = {
+		x: position.x,
+		y: position.y,
+		z: position.z
+	};
 };
 
 // Returns rotation in euler angles (rad)
@@ -33,6 +48,12 @@ EditorObject.prototype.getRotation = function() {
 // Sets rotation in euler angles (rad)
 EditorObject.prototype.setRotation = function(rotation) {
 	this.sceneObject.rotation.copy(rotation);
+	this.project.rotation = {
+		x: this.sceneObject.quaternion.x,
+		y: this.sceneObject.quaternion.y,
+		z: this.sceneObject.quaternion.z,
+		w: this.sceneObject.quaternion.w
+	};
 };
 
 EditorObject.prototype.getScale = function() {
@@ -41,10 +62,16 @@ EditorObject.prototype.getScale = function() {
 
 EditorObject.prototype.setScale = function(scale) {
 	this.sceneObject.scale.copy(scale);
+	this.project.scale = {
+		x: scale.x,
+		y: scale.y,
+		z: scale.z
+	};
 };
 
 EditorObject.prototype.setName = function(name) {
 	this.name = name;
+	this.project.name = name;
 	this.element.getElementsByClassName("name")[0].innerText = name;
 };
 
@@ -181,7 +208,7 @@ window.addEventListener("DOMContentLoaded", function() {
 		let serializationStart = new Date();
 		editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
 		let payload = editor.serialization.preparePayload();
-		editorLog(`- Payload perpared (${(new Date()) - serializationStart}ms)`);
+		editorLog(`- Payload prepared (${(new Date()) - serializationStart}ms)`);
 		editor.serialization.worker.postMessage({
 			type: "exportPublishPlain",
 			payload: payload,
@@ -196,6 +223,7 @@ window.addEventListener("DOMContentLoaded", function() {
 editor.serialization = {};
 editor.serialization.worker = new SerializeWorker();
 editor.serialization.preparePayload = function() {
+	console.log(editor.project);
 	// Recreate necessary object structure so it can be "deep cloned"
 	let prefabs = {};
 	for (let key in prefabsTab.prefabs) {

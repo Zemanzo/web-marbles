@@ -10,9 +10,10 @@ function Project() {
 
 	this.models = {};
 	this.prefabs = {};
+	this.worldObjects = {};
 
 	this.world = {
-		waterHeight: -9,
+		waterLevel: -9,
 		sunInclination: 0.25
 	};
 }
@@ -22,6 +23,20 @@ Project.prototype.addModel = function(name, fileContents) {
 		data: fileContents
 	};
 	return this.models[name];
+};
+
+Project.prototype.addPrefab = function(uuid) {
+	this.prefabs[uuid] = {
+		entities: {}
+	};
+	return this.prefabs[uuid];
+};
+
+Project.prototype.addWorldObject = function(uuid, prefabUuid) {
+	this.worldObjects[uuid] = {
+		prefab: prefabUuid
+	};
+	return this.worldObjects[uuid];
 };
 
 Project.prototype.import = function() {
