@@ -1,5 +1,5 @@
 [![Discord](https://img.shields.io/discord/478527288854708226.svg?label=discord)](https://discord.gg/XB3k9T5)
-![Dependencies](https://img.shields.io/david/Zemanzo/web-marbles.svg)
+[![Dependencies](https://img.shields.io/david/Zemanzo/web-marbles.svg)](https://david-dm.org/Zemanzo/web-marbles)
 [![TravisCI](https://img.shields.io/travis/com/Zemanzo/web-marbles.svg)](https://travis-ci.com/Zemanzo/web-marbles)
 
 # web-marbles
