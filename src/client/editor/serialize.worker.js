@@ -16,8 +16,35 @@ let exportProject = function(data, exportAsLevel, useCompression) {
 		let fileName = data.mapName;
 
 		if(exportAsLevel) {
-			sendLog("exportAsLevel enabled, but currently not implemented.", "warn");
-			// Code to omit any unused objects goes here
+			// Remove all unused prefabs
+			let unusedPrefabs = Object.keys(data.prefabs);
+			for(let key in data.worldObjects) {
+				let index = unusedPrefabs.indexOf(data.worldObjects[key].prefab);
+				if(index !== -1) {
+					unusedPrefabs.splice(index, 1);
+				}
+			}
+			for(let i = 0; i < unusedPrefabs.length; i++) {
+				delete data.prefabs[unusedPrefabs[i]];
+			}
+
+			// Remove all unused models
+			let unusedModels = Object.keys(data.models);
+			for(let key in data.prefabs) {
+				let prefab = data.prefabs[key];
+				for(let ent in prefab.entities) {
+					let entity = prefab.entities[ent];
+					if("model" in entity) {
+						let index = unusedModels.indexOf(entity.model);
+						if(index !== -1) {
+							unusedModels.splice(index, 1);
+						}
+					}
+				}
+			}
+			for(let i = 0; i < unusedModels.length; i++) {
+				delete data.models[unusedModels[i]];
+			}
 		}
 
 		// Converting to file-ready format
