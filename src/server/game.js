@@ -1,18 +1,26 @@
 const log = require("../log");
+const config = require("./config");
+const physics = require("./physics/manager");
 
-module.exports = function(config, physics) {
+let game = function() {
 	let _startDelay = 2825, // length in ms of audio
-		_entered = [],
-		_waitingForEntry = true,
 		_socketManager = undefined,
-		_rank = 0,
-		_firstFinish = false,
+
+		_playersEnteredList = [],
+		_marblesFinished = 0,
+		_isWaitingForEntry = true,
+		_firstMarbleHasFinished = false,
 		_checkFinishedInterval = undefined,
+
 		_checkFinished = function() {
 			let finishTime = Date.now();
+
+			// Request newly finished marbles since the last check
 			let finished = physics.marbles.getFinishedMarbles();
+
+			// For each finished marble, set their rank and final time
 			for (let i = 0; i < finished.length; i++) {
-				let rank = physics.marbles.list[finished[i]].meta.rank = _rank++,
+				let rank = physics.marbles.list[finished[i]].meta.rank = _marblesFinished++,
 					time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
 
 				// Send client info on finished marble
@@ -22,66 +30,74 @@ module.exports = function(config, physics) {
 					time
 				}), "finished_marble");
 
-				if (_firstFinish === false) {
-					_firstFinish = true;
-					this.gameplayFinishTimeout = setTrackableTimeout(
+				// If this is the first marble that finished, set a timeout to end the game soon
+				if (_firstMarbleHasFinished === false) {
+					_firstMarbleHasFinished = true;
+					this.gameplayFinishTimeout = _setTrackableTimeout(
 						this.end.bind(this),
 						config.marbles.rules.waitAfterFinish * 1000
 					);
 				}
 
 				// If all marbles have finished, end the game
-				console.log(_rank, physics.marbles.list.length);
-				if (_rank === physics.marbles.list.length) {
+				console.log(_marblesFinished, physics.marbles.list.length);
+				if (_marblesFinished === physics.marbles.list.length) {
 					setTimeout(this.end.bind(this), 2000);
 				}
 			}
 		};
 
 	return {
-		state: "started", // "waiting", "enter", "starting", "started"
+		currentGameState: "started", // "waiting", "enter", "starting", "started"
 		startTime: undefined,
 		limitReached: false,
+		enterTimeout: undefined,
 
-		setState(newState) {
+		// Sets currentGameState and informs all connected clients about the state change
+		setCurrentGameState(newState) {
 			_socketManager.emit(newState, "state");
-			this.state = newState;
-			log.info("Current state: ".magenta, this.state);
+			this.currentGameState = newState;
+			log.info("Current state: ".magenta, this.currentGameState);
 		},
 
-		addMarble(id, name, color) {
-			// Only allow marbles during entering phase
-			if (this.state === "waiting" || this.state === "enter") {
+		// Adds a single marble if allowed. This function assumes
+		addPlayerMarble(id, name, color) {
+			if (
+				// Only allow marbles during entering phase
+				( this.currentGameState === "waiting" || this.currentGameState === "enter" )
+
 				// Make sure this person hasn't entered in this round yet
-				if (!_entered.includes(id)) {
-					// Check whether we have reached the maximum player limit
-					if (_entered.length < config.marbles.rules.maxPlayerCount) {
-						_entered.push(id);
-						this.spawnMarble(name, color);
+				&& !_playersEnteredList.includes(id)
 
-						// Wait for a human entering the round before starting it
-						if (_waitingForEntry) {
-							_waitingForEntry = false;
-							this.setState("enter");
+				// Check whether we have reached the maximum player limit
+				&& _playersEnteredList.length < config.marbles.rules.maxPlayerCount
+			) {
+				// Add the player to the list of entries and spawn the marble
+				_playersEnteredList.push(id);
+				this.spawnMarble(name, color);
 
-							// Start the game after the entering period is over
-							clearTimeout(this.enterTimeout);
-							this.enterTimeout = setTrackableTimeout(
-								this.start.bind(this),
-								config.marbles.rules.enterPeriod * 1000
-							);
-						}
-					}
+				// Wait for a human entering the round before starting it
+				if (_isWaitingForEntry) {
+					_isWaitingForEntry = false;
+					this.setCurrentGameState("enter");
+
+					// Start the game after the entering period is over
+					clearTimeout(this.enterTimeout);
+					this.enterTimeout = _setTrackableTimeout(
+						this.start.bind(this),
+						config.marbles.rules.enterPeriod * 1000
+					);
 				}
 			}
 		},
 
+		// Spawns marble unless the maximum amount of marbles has been hit
 		spawnMarble(name, color) {
 			// Check whether we have reached the maximum marble limit
 			if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
 				let meta = {
 					useFancy: (Math.random() > .99),
-					color: color || randomHexColor(),
+					color: color || _randomHexColor(),
 					name: name || "Nightbot"
 				};
 
@@ -93,8 +109,8 @@ module.exports = function(config, physics) {
 				// Check for player / marble limits
 				if (
 					(
-						physics.marbles.list.length >= config.marbles.rules.maxPlayerCount
-						|| _entered.length >= config.marbles.rules.maxMarbleCount
+						physics.marbles.list.length >= config.marbles.rules.maxMarbleCount
+						|| _playersEnteredList.length >= config.marbles.rules.maxPlayerCount
 					)
 					&& !this.limitReached
 				) {
@@ -108,14 +124,10 @@ module.exports = function(config, physics) {
 			}
 		},
 
-		getTimeRemaining() {
-			return getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
-		},
-
 		end() {
-			if (this.state === "started") {
+			if (this.currentGameState === "started") {
 				// Wait for a human to start the next round
-				_waitingForEntry = true;
+				_isWaitingForEntry = true;
 
 				// Stop checking for finished marbles
 				clearInterval(_checkFinishedInterval);
@@ -125,8 +137,8 @@ module.exports = function(config, physics) {
 				clearTimeout(this.gameplayFinishTimeout);
 
 				// Finishing variables back to default
-				_rank = 0;
-				_firstFinish = false;
+				_marblesFinished = 0;
+				_firstMarbleHasFinished = false;
 				this.startTime = undefined;
 
 				// Close the gate
@@ -136,13 +148,13 @@ module.exports = function(config, physics) {
 				physics.marbles.destroyAllMarbles();
 
 				// Clear the array of people that entered
-				_entered = [];
+				_playersEnteredList = [];
 
 				// If we had hit the marble limit on the previous round, that's no longer true
 				this.limitReached = false;
 
 				// Set state and inform the client
-				this.setState("waiting");
+				this.setCurrentGameState("waiting");
 
 				return true;
 			} else {
@@ -151,11 +163,11 @@ module.exports = function(config, physics) {
 		},
 
 		start() {
-			if (this.state === "enter" || this.state === "waiting") {
-				this.setState("starting");
+			if (this.currentGameState === "enter" || this.currentGameState === "waiting") {
+				this.setCurrentGameState("starting");
 
 				setTimeout(() => {
-					this.setState("started");
+					this.setCurrentGameState("started");
 
 					this.startTime = Date.now();
 
@@ -168,7 +180,7 @@ module.exports = function(config, physics) {
 				_checkFinishedInterval = setInterval(_checkFinished.bind(this), 50);
 
 				// Set end of game timer
-				this.gameplayMaxTimeout = setTrackableTimeout(
+				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
 					config.marbles.rules.maxRoundLength * 1000
 				);
@@ -179,37 +191,44 @@ module.exports = function(config, physics) {
 			}
 		},
 
+		getEnterPeriodTimeRemaining() {
+			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
+		},
+
 		setSocketManager(socketManager) {
 			_socketManager = socketManager;
 		}
 	};
-};
+}();
 
 // Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
-let timeoutMap = {};
-function setTrackableTimeout(callback, delay) {
+let _timeoutMap = {};
+function _setTrackableTimeout(callback, delay) {
 	// Run the original, and store the id
 	let id = setTimeout(callback, delay);
 
 	// Store the start date and delay
-	timeoutMap[id] = [Date.now(), delay];
+	_timeoutMap[id] = [Date.now(), delay];
 
 	// Return the id
 	return id;
 }
 
 // The actual getTimeLeft function
-function getTimeout(id) {
-	let m = timeoutMap[id]; // Find the timeout in map
+function _getTimeout(id) {
+	let m = _timeoutMap[id]; // Find the timeout in map
 
 	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
 	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
 }
 
-function randomHexColor() {
+// Generates a random color in the HEX format
+function _randomHexColor() {
 	let color = (Math.random() * 0xffffff | 0).toString(16);
 	if (color.length !== 6) {
 		color = (`00000${color}`).slice(-6);
 	}
 	return `#${color}`;
 }
+
+module.exports = game;

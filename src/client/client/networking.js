@@ -2,7 +2,7 @@ import { network as config } from "../config";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
-import * as game from "./game";
+import { game } from "./game";
 
 let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
@@ -42,7 +42,9 @@ net.socketReady = new Promise((resolve) => {
 		case "initial_data":
 			message = JSON.parse(message);
 			net.marbleData = message.initialMarbleData;
-			game.setInitialState(Promise.resolve(message));
+			delete message.initialMarbleData; // Unused anywhere else, cleaner to get rid of it now.
+			console.log(message);
+			game.setInitialGameState(Promise.resolve(message));
 			resolve(message);
 			break;
 		case "request_physics":
@@ -61,7 +63,7 @@ net.socketReady = new Promise((resolve) => {
 			game.finishMarble(JSON.parse(message));
 			break;
 		case "state":
-			game.setState(message);
+			game.setCurrentGameState(message);
 			break;
 		case "notification":
 			message = JSON.parse(message);

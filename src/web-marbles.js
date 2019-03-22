@@ -14,10 +14,10 @@ db.setCurrentDatabase(
 );
 
 // Set up physics world
-const physics = require("./server/physics/manager")(config);
+const physics = require("./server/physics/manager");
 
 // Set up game logic
-const game = require("./server/game")(config, physics);
+const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");

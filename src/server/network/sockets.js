@@ -42,12 +42,14 @@ const setupGameplay = function(db, physics, config, game) {
 				}
 
 				let intialData = {
-					gameState: game.state,
-					roundTimerStartTime: game.startTime,
-					timeToEnter: game.getTimeRemaining(),
-					enterPeriod: config.marbles.rules.enterPeriod,
+					currentGameState: game.currentGameState,
+					roundStartTime: game.startTime,
 					maxRoundLength: config.marbles.rules.maxRoundLength,
+					enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
+					enterPeriodLength: config.marbles.rules.enterPeriod,
+
 					mapId: config.marbles.mapRotation[0].name,
+
 					initialMarbleData
 				};
 
