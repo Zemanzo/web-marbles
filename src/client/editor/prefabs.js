@@ -4,9 +4,10 @@ import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
 import * as materials from "./materials";
 import { scene, defaultModel } from "./render";
-import { editor, EditorObject } from "./editor";
+import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
+import { projectTab } from "./project";
 
 // Prefab object
 function Prefab(uuid, project) {
@@ -450,7 +451,7 @@ let prefabsTab = function() {
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
 				let uuid = generateTinyUUID();
-				let projectPrefab = editor.project.addPrefab(uuid);
+				let projectPrefab = projectTab.project.addPrefab(uuid);
 				prefabsTab.addPrefab(uuid, projectPrefab);
 				// Focus to name input so user can start typing right away
 				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
@@ -482,7 +483,7 @@ let prefabsTab = function() {
 			thisPrefab.element.parentNode.removeChild(thisPrefab.element);
 
 			delete prefabsTab.prefabs[uuid];
-			delete editor.project.prefabs[uuid];
+			delete projectTab.project.prefabs[uuid];
 		},
 
 		onTabActive: function() {

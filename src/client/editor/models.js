@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
-import { editor } from "./editor";
+import { projectTab } from "./project";
 import { scene } from "./render";
 
 // model object
@@ -68,7 +68,7 @@ let modelsTab = function() {
 			document.getElementById("addModelFile").addEventListener("change", function() {
 				Array.from(this.files).forEach(function(file) {
 					// If a model with this file name already exists, don't load it
-					if(file.name in editor.project.models) {
+					if(file.name in projectTab.project.models) {
 						editorLog(`Model ${file.name} already loaded.`, "warn");
 						return;
 					}
@@ -117,7 +117,7 @@ let modelsTab = function() {
 						editorLog(`Loaded model: ${modelName}`, "info");
 
 						if(isNewModel) {
-							editor.project.addModel(modelName, fileContents);
+							projectTab.project.addModel(modelName, fileContents);
 						}
 					}, function(error) {
 						editorLog(`Unable to load model (${modelName}): ${error}`, "error");
@@ -155,7 +155,7 @@ let modelsTab = function() {
 			delete this.models[name];
 
 			// Remove from project
-			delete editor.project.models[name];
+			delete projectTab.project.models[name];
 
 			editorLog(`Removed model: ${name}`, "info");
 		},
