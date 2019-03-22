@@ -109,27 +109,34 @@ let modelsTab = function() {
 
 		// Loads the model into the editor, adds it to the project if isNewModel is true
 		loadModel: function(modelName, fileContents, isNewModel) {
-			try {
-				_GLTFLoader.parse(fileContents, null,
-					function(model) {
-						modelsTab.models[modelName] = new Model(modelName, model.scene);
+			let promise = new Promise( (resolve, reject) => {
+				try {
+					_GLTFLoader.parse(fileContents, null,
+						function(model) {
+							modelsTab.models[modelName] = new Model(modelName, model.scene);
 
-						editorLog(`Loaded model: ${modelName}`, "info");
+							editorLog(`Loaded model: ${modelName}`, "info");
 
-						if(isNewModel) {
-							projectTab.project.addModel(modelName, fileContents);
+							if(isNewModel) {
+								projectTab.project.addModel(modelName, fileContents);
+							}
+							resolve();
+						}, function(error) {
+							editorLog(`Unable to load model (${modelName}): ${error}`, "error");
+							console.log(error);
+							reject();
 						}
-					}, function(error) {
-						editorLog(`Unable to load model (${modelName}): ${error}`, "error");
-						console.log(error);
-					}
-				);
-			}
-			catch(error) {
-				// Invalid JSON/GLTF files may end up here
-				editorLog(`Unable to load model (${name}): ${error}`, "error");
-				console.log(error);
-			}
+					);
+				}
+				catch(error) {
+					// Invalid JSON/GLTF files may end up here
+					editorLog(`Unable to load model (${name}): ${error}`, "error");
+					console.log(error);
+					reject();
+				}
+			} );
+			
+			return promise;
 		},
 
 		removeModel: function(name) {

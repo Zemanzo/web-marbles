@@ -8,6 +8,7 @@ import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
+import { editorLog } from "./log";
 
 // Prefab object
 function Prefab(uuid, project) {
@@ -34,6 +35,7 @@ function Prefab(uuid, project) {
 
 	this.element = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
+	this.element.getElementsByClassName("prefabName")[0].value = this.name;
 	this.element.getElementsByClassName("prefabColor")[0].value = this.color;
 
 	// Add events
@@ -73,10 +75,15 @@ function Prefab(uuid, project) {
 	this.element = prefabList.insertBefore(this.element, document.getElementById("addPrefab"));
 
 	// Add any existing entities from the project
-	// for( let key in this.project.entities) {
-	// 	let entity = this.project.entities[key];
-	// 	// TODO
-	// }
+	// The rest is handled in their constructors
+	for( let key in this.project.entities) {
+		let entity = this.project.entities[key];
+		if(entity.type === "Object") {
+			this.addObject(key);
+		} else {
+			this.addCollider(key);
+		}
+	}
 }
 
 Prefab.prototype.toggleVisibility = function() {
@@ -277,10 +284,17 @@ PrefabEntity.prototype.setScale = function(position) {
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "Object", uuid, parent);
 	this.model = "null"; // Note: HAS to be a string for inspector purposes!
-	this.project.model = null;
 	this.sceneObject = defaultModel.clone();
 	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
+
+	// Load any object data from project
+	if("model" in this.project) {
+		this.setModel(this.project.model);
+	} else {
+		this.project.model = null;
+	}
+	this.setFunctionality(this.project.functionality);
 }
 
 PrefabObject.prototype = Object.create(PrefabEntity.prototype);
@@ -329,18 +343,60 @@ PrefabObject.prototype.setModel = function(modelName) {
 // prefabCollider object, inherits from prefabEntity
 function PrefabCollider(uuid, parent) {
 	PrefabEntity.call(this, "Collider", uuid, parent);
-
 	this.colliderData = {
 		shape: "box",
 		width: 1,
 		height: 1,
 		depth: 1
 	};
-	this.project.colliderData = this.colliderData;
 	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
 	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
+
+	// Load any collider data from project
+	if("colliderData" in this.project) {
+		let projectData = this.project.colliderData;
+		switch(projectData.shape) {
+		case "box": {
+			let width = projectData.width;
+			let height = projectData.height;
+			let depth = projectData.depth;
+			this.setShape("box");
+			this.setWidth(width);
+			this.setHeight(height);
+			this.setDepth(depth);
+			break;
+		}
+		case "sphere": {
+			let radius = projectData.radius;
+			this.setShape("sphere");
+			this.setRadius(radius);
+			break;
+		}
+		case "cylinder": {
+			let radius = projectData.radius;
+			let height = projectData.height;
+			this.setShape("cylinder");
+			this.setRadius(radius);
+			this.setHeight(height);
+			break;
+		}
+		case "cone": {
+			let radius = projectData.radius;
+			let height = projectData.height;
+			this.setShape("cone");
+			this.setRadius(radius);
+			this.setHeight(height);
+			break;
+		}
+		default:
+			break;
+		}
+	} else {
+		this.project.colliderData = this.colliderData;
+	}
+	this.setFunctionality(this.project.functionality);
 }
 
 PrefabCollider.prototype = Object.create(PrefabEntity.prototype);
