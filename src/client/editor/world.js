@@ -43,6 +43,7 @@ function WorldObject(uuid, prefab, project) {
 	this.updateTransformFromProject();
 	worldTab.group.add( this.sceneObject );
 	this.sceneObject.visible = true;
+	this.updateTransformFromProject();
 }
 
 WorldObject.prototype = Object.create(EditorObject.prototype);
@@ -74,11 +75,7 @@ let worldTab = function() {
 			scene.add(this.group);
 			this.group.visible = false;
 
-			this.worldParameters = projectTab.project.world;
-			this.setWaterLevel(this.worldParameters.waterLevel);
-			document.getElementById("envWaterHeight").value = this.worldParameters.waterLevel;
-			this.setSunInclination(this.worldParameters.sunInclination);
-			document.getElementById("envSunInclination").value = this.worldParameters.sunInclination;
+			this.onProjectLoad(projectTab.project);
 
 			// Change water level
 			document.getElementById("envWaterHeight").addEventListener("change", function() { worldTab.setWaterLevel( parseFloat(this.value) ); }, false);
@@ -132,6 +129,14 @@ let worldTab = function() {
 			delete thisObject.prefab.worldInstances[uuid];
 			delete worldTab.worldObjects[uuid];
 			delete projectTab.project.worldObjects[uuid];
+		},
+
+		onProjectLoad: function(project) {
+			this.worldParameters = project.world;
+			this.setWaterLevel(this.worldParameters.waterLevel);
+			document.getElementById("envWaterHeight").value = this.worldParameters.waterLevel;
+			this.setSunInclination(this.worldParameters.sunInclination);
+			document.getElementById("envSunInclination").value = this.worldParameters.sunInclination;
 		},
 
 		onTabActive: function() {

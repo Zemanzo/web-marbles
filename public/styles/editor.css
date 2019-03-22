@@ -84,15 +84,15 @@ body {
 		text-decoration: underline;
 	}
 
+.addFileInput {
+	display: none;
+}
+
 #addModel {
 	-webkit-appearance: none;
 	-moz-appearance: none;
 	appearance: none;
 }
-
-	#addModelFile {
-		display: none;
-	}
 
 	#models {
 		font-size: 1.3em;

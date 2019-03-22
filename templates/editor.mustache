@@ -56,7 +56,7 @@
 						</div>
 					</div>
 					<div id="addModel" class="add" onclick="document.getElementById('addModelFile').click();">
-						<input type="file" id="addModelFile" multiple accept=".gltf,.glb" />
+						<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
 						<i class="icofont-plus"></i>
 						<span>Add model(s)</span>
 					</div>
@@ -345,19 +345,14 @@
 					<table>
 						<tbody>
 							<tr>
-								<th>
-									IMPORT
-								</th>
-								<th>
-									EXPORT
-								</th>
-							</tr>
-							<tr>
 								<td>
-									N/A
+									<button id="importProject" onclick="document.getElementById('importProjectFile').click();">
+										<input type="file" class="addFileInput" id="importProjectFile" accept=".mmb" />
+										<span>Load Project</span>
+									</button>
 								</td>
 								<td>
-									N/A
+									<button id="exportProject" value="" />Save Project</button>
 								</td>
 							</tr>
 						</tbody>

@@ -4,7 +4,7 @@ import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
-import { setEditorLogElement, editorLog } from "./log";
+import { setEditorLogElement } from "./log";
 import { initializeRenderer } from "./render";
 
 
@@ -22,7 +22,7 @@ function EditorObject(type, uuid, project) {
 // This should be called after a sceneObject has been created
 EditorObject.prototype.updateTransformFromProject = function() {
 	if(this.project.position) this.setPosition( new THREE.Vector3(this.project.position.x, this.project.position.y, this.project.position.z) );
-	if(this.project.rotation) this.sceneObject.quaternion = new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w);
+	if(this.project.rotation) this.sceneObject.quaternion.copy(new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w));
 	if(this.project.scale) this.setScale( new THREE.Vector3(this.project.scale.x, this.project.scale.y, this.project.scale.z) );
 };
 
