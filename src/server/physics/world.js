@@ -33,7 +33,6 @@ module.exports = function(Ammo, config) {
 			p2 = 0;
 		for ( let j = 0; j < mapObj.depth; j ++ ) {
 			for ( let i = 0; i < mapObj.width; i ++ ) {
-
 				// write 32-bit float data to memory
 				Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[ p ];
 				p++;
@@ -122,9 +121,7 @@ module.exports = function(Ammo, config) {
 	}, 1000 / config.physics.steps);
 
 	function updatePhysics( deltaTime ) {
-
 		physicsWorld.stepSimulation( deltaTime, 10 );
-
 	}
 
 	function stopUpdateInterval() {

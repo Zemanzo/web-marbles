@@ -1,6 +1,5 @@
 import domReady from "../dom-ready";
 
-// Notification already exists as a JavaScript object
 const notifications = [];
 const domNodes = domReady.then(() => {
 	return {
@@ -9,7 +8,8 @@ const domNodes = domReady.then(() => {
 	};
 });
 
-export function HUDNotification(content, duration = 5, styles) {
+// "Notification" already exists as a JavaScript object
+function HUDNotification(content, duration = 5, styles) {
 	this.content = content;
 	this.styles = styles;
 
@@ -36,3 +36,5 @@ HUDNotification.prototype.remove = function() {
 		elements.notifications.removeChild(this.node);
 	});
 };
+
+export { HUDNotification };

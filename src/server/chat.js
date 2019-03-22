@@ -6,7 +6,7 @@ module.exports = function(game) {
 			let match = messageContent.match(colorRegEx);
 			let color = (match === null ? undefined : match[0]);
 
-			game.addMarble(
+			game.addPlayerMarble(
 				id,
 				username,
 				color

@@ -2,34 +2,34 @@ import * as socketMessageTypes from "../../socket-message-types.json";
 
 function TypedSocketHelper(route) {
 	this.route = route;
-
-	this.extractSocketMessageType = function(message) {
-		let type;
-		if (typeof message === "string") {
-			type = Object.keys(socketMessageTypes.routes[route]).find(
-				key => socketMessageTypes.routes[route][key] === parseInt(message.substr(0, 1))
-			);
-			message = message.substr(1);
-		} else if (message instanceof ArrayBuffer || message instanceof Blob) {
-			type = socketMessageTypes.routes[route][Uint8Array.from(message)[0]];
-			message = message.slice(1);
-		}
-
-		return { type, message };
-	};
-
-	this.addMessageType = function(message, type) {
-		if (typeof message === "string") {
-			// maybe convert this to Uint8Array and back to string...
-			message = socketMessageTypes.routes[route][type] + message;
-		} else if (message instanceof ArrayBuffer) {
-			type = new Uint8Array([socketMessageTypes.routes[route][type]]);
-			message = appendBuffer(type, message);
-		}
-
-		return message;
-	};
 }
+
+TypedSocketHelper.prototype.extractSocketMessageType = function(message) {
+	let type;
+	if (typeof message === "string") {
+		type = Object.keys(socketMessageTypes.routes[this.route]).find(
+			key => socketMessageTypes.routes[this.route][key] === parseInt(message.substr(0, 1))
+		);
+		message = message.substr(1);
+	} else if (message instanceof ArrayBuffer || message instanceof Blob) {
+		type = socketMessageTypes.routes[this.route][Uint8Array.from(message)[0]];
+		message = message.slice(1);
+	}
+
+	return { type, message };
+};
+
+TypedSocketHelper.prototype.addMessageType = function(message, type) {
+	if (typeof message === "string") {
+		// maybe convert this to Uint8Array and back to string...
+		message = socketMessageTypes.routes[this.route][type] + message;
+	} else if (message instanceof ArrayBuffer) {
+		type = new Uint8Array([socketMessageTypes.routes[this.route][type]]);
+		message = appendBuffer(type, message);
+	}
+
+	return message;
+};
 
 function appendBuffer(buffer1, buffer2) {
 	var tmp = new Uint8Array(buffer1.byteLength + buffer2.byteLength);
