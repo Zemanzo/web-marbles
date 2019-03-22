@@ -8,7 +8,6 @@ import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
-import { editorLog } from "./log";
 
 // Prefab object
 function Prefab(uuid, project) {

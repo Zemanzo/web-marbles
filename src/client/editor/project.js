@@ -199,7 +199,7 @@ let projectTab = function() {
 
 			//Initialize loaded project
 			this.project = loadedProject;
-			this.project.prototype = Project.prototype;
+			Object.setPrototypeOf(this.project, Project.prototype);
 
 			let modelLoaders = [];
 			for(let key in this.project.models) {
@@ -222,6 +222,8 @@ let projectTab = function() {
 				document.getElementById("paramEnterPeriod").value = this.project.gameplay.defaultEnterPeriod;
 				document.getElementById("paramMaxRoundLength").value = this.project.gameplay.roundLength;
 				document.getElementById("paramWaitAfterFinish").value = this.project.gameplay.timeUntilDnf;
+
+				editorLog("Project loaded successfully!", "success");
 			});
 		},
 
