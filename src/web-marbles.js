@@ -71,8 +71,10 @@ discordClient.login(config.discord.botToken);
 const express = require("express");
 const mustacheExpress = require("mustache-express");
 const compression = require("compression");
+const helmet = require("helmet");
 const app = express();
 const http = require("http").Server(app);
+app.use(helmet());
 app.use(compression({
 	filter: function() { return true; }
 }));
