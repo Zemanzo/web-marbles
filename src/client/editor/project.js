@@ -215,7 +215,7 @@ let projectTab = function() {
 				editorLog("Unable to load project: Invalid project file.", "error");
 				return;
 			}
-			console.log(loadedProject);
+
 			// Project without these aren't considered valid
 			if(typeof loadedProject.models !== "object"
 				|| typeof loadedProject.prefabs !== "object"
@@ -290,11 +290,11 @@ let projectTab = function() {
 		},
 
 		onTabActive: function() {
-
+			worldTab.onTabActive();
 		},
 
 		onTabInactive: function() {
-
+			worldTab.onTabInactive();
 		}
 
 	};

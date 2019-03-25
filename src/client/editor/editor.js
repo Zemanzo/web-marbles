@@ -163,7 +163,7 @@ let editor = function() {
 						worldTab.onTabInactive();
 						break;
 					case 3:
-						// Project tab
+						projectTab.onTabInactive();
 						break;
 					case 4:
 						// Editor settings tab
@@ -183,7 +183,7 @@ let editor = function() {
 						worldTab.onTabActive();
 						break;
 					case 3:
-						// Project tab
+						projectTab.onTabActive();
 						break;
 					case 4:
 						// Editor settings tab
