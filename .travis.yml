@@ -17,6 +17,7 @@ addons:
   chrome: stable
 before_install:
 - cp src/server/config.user.example.js src/server/config.user.js
+- cp src/client/config.user.example.js src/client/config.user.js
 install:
 - yarn
 - yarn run build

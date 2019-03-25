@@ -42,8 +42,8 @@ jspm_packages/
 # Process pictures
 process
 
-# Server config file (contains sensitive information)
-src/server/config.user.js
+# User config files (contains sensitive information / should not be committed)
+config.user.js
 
 # Database file
 *.db3

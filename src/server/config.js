@@ -103,7 +103,7 @@ for(let key in userConfig) {
 
 	key.split(".").forEach( function(val) {
 		if(obj) {
-			if(obj[val]) {
+			if(typeof obj[val] !== "undefined") {
 				if(typeof obj[val] === "object") {
 					obj = obj[val]; // change to child object
 				} else {
