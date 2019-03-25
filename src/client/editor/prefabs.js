@@ -8,6 +8,7 @@ import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
+import { editorLog } from "./log";
 
 // Prefab object
 function Prefab(uuid, project) {
@@ -79,8 +80,11 @@ function Prefab(uuid, project) {
 		let entity = this.project.entities[key];
 		if(entity.type === "Object") {
 			this.addObject(key);
-		} else {
+		} else if (entity.type === "Collider") {
 			this.addCollider(key);
+		} else {
+			editorLog(`Attempted to load unknown prefab entity of type ${entity.type}`, "error");
+			delete this.project.entities[key];
 		}
 	}
 }
@@ -316,16 +320,24 @@ PrefabObject.prototype.setModel = function(modelName) {
 
 	let model = null;
 
-	// For null, use default model
+	// For null or non-existing models, use default
+	if(modelName && modelName !== "null") {
+		if(!modelsTab.models[modelName]) {
+			editorLog(`Unable to set prefab model to ${modelName} because it doesn't exist!`, "error");
+			modelName = "null";
+		} else {
+			this.model = modelName;
+			this.project.model = modelName;
+			modelsTab.models[this.model].prefabEntities[this.uuid] = this;
+			model = modelsTab.models[modelName].sceneObject;
+		}
+	}
+
+	// Not as an else, in case the above "fails"
 	if(!modelName || modelName === "null") {
 		this.model = "null";
 		this.project.model = null;
 		model = defaultModel;
-	} else {
-		this.model = modelName;
-		this.project.model = modelName;
-		modelsTab.models[this.model].prefabEntities[this.uuid] = this;
-		model = modelsTab.models[modelName].sceneObject;
 	}
 
 	// Set new model

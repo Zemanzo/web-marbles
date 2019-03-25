@@ -21,9 +21,25 @@ function EditorObject(type, uuid, project) {
 // Updates the sceneObject's transform based on the loaded project, if it exists
 // This should be called after a sceneObject has been created
 EditorObject.prototype.updateTransformFromProject = function() {
-	if(this.project.position) this.setPosition( new THREE.Vector3(this.project.position.x, this.project.position.y, this.project.position.z) );
-	if(this.project.rotation) this.sceneObject.quaternion.copy(new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w));
-	if(this.project.scale) this.setScale( new THREE.Vector3(this.project.scale.x, this.project.scale.y, this.project.scale.z) );
+	if(this.project.position) {
+		this.setPosition( new THREE.Vector3(
+			typeof this.project.position.x === "number" ? this.project.position.x : 0,
+			typeof this.project.position.y === "number" ? this.project.position.y : 0,
+			typeof this.project.position.z === "number" ? this.project.position.z : 0) );
+	}
+	if(this.project.rotation
+		&& typeof this.project.rotation.x === "number"
+		&& typeof this.project.rotation.y === "number"
+		&& typeof this.project.rotation.z === "number"
+		&& typeof this.project.rotation.w === "number") {
+		this.sceneObject.quaternion.copy(new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w));
+	}
+	if(this.project.scale) {
+		this.setScale( new THREE.Vector3(
+			typeof this.project.scale.x === "number" ? this.project.scale.x : 1,
+			typeof this.project.scale.y === "number" ? this.project.scale.y : 1,
+			typeof this.project.scale.z === "number" ? this.project.scale.z : 1) );
+	}
 };
 
 EditorObject.prototype.getPosition = function() {
