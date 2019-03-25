@@ -7,22 +7,36 @@ import { scene, defaultModel } from "./render";
 import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
+import { projectTab } from "./project";
+import { editorLog } from "./log";
 
 // Prefab object
-function Prefab(uuid, color) {
+function Prefab(uuid, project) {
 	this.uuid = uuid;
-	this.name = "";
-	this.color = color;
+	this.project = project;
 	this.group = new THREE.Group();
 	this.entities = {};
 	this.worldInstances = {};
 	this.changed = false;
 
+	// Load prefab-related data if it exists in the project
+	if(this.project.name) {
+		this.name = this.project.name;
+	} else {
+		this.name = this.project.name = "";
+	}
+	if(this.project.color) {
+		this.color = this.project.color;
+	} else {
+		this.color = this.project.color = hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20);
+	}
+
 	prefabsTab.group.add(this.group);
 
-	this.element = document.getElementById("prefabTemplate").cloneNode(true); // deep clone;
+	this.element = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
-	this.element.getElementsByClassName("prefabColor")[0].value = color;
+	this.element.getElementsByClassName("prefabName")[0].value = this.name;
+	this.element.getElementsByClassName("prefabColor")[0].value = this.color;
 
 	// Add events
 	let self = this;
@@ -59,6 +73,20 @@ function Prefab(uuid, color) {
 	// Add to DOM
 	let prefabList = document.getElementById("prefabsList");
 	this.element = prefabList.insertBefore(this.element, document.getElementById("addPrefab"));
+
+	// Add any existing entities from the project
+	// The rest is handled in their constructors
+	for( let key in this.project.entities) {
+		let entity = this.project.entities[key];
+		if(entity.type === "Object") {
+			this.addObject(key);
+		} else if (entity.type === "Collider") {
+			this.addCollider(key);
+		} else {
+			editorLog(`Attempted to load unknown prefab entity of type ${entity.type}`, "error");
+			delete this.project.entities[key];
+		}
+	}
 }
 
 Prefab.prototype.toggleVisibility = function() {
@@ -74,6 +102,7 @@ Prefab.prototype.toggleVisibility = function() {
 
 Prefab.prototype.onNameChange = function(name) {
 	this.name = name;
+	this.project.name = name;
 	for (let key in this.worldInstances) {
 		this.worldInstances[key].updatePrefabInfo();
 	}
@@ -81,6 +110,7 @@ Prefab.prototype.onNameChange = function(name) {
 
 Prefab.prototype.onColorChange = function(color) {
 	this.color = color;
+	this.project.color = color;
 	for (let key in this.worldInstances) {
 		this.worldInstances[key].updatePrefabInfo();
 	}
@@ -123,6 +153,7 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	}
 
 	delete this.entities[uuid];
+	delete this.project.entities[uuid];
 
 	this.changed = true;
 };
@@ -164,13 +195,21 @@ Prefab.prototype.updateInstances = function() {
 
 // prefabEntity object, base for prefabObject and prefabCollider
 function PrefabEntity(type, uuid, parent) {
-	EditorObject.call(this, type, uuid);
+	if(uuid in parent.project.entities === false) {
+		parent.project.entities[uuid] = {
+			type: type,
+			functionality: "static"
+		};
+	}
+	EditorObject.call(this, type, uuid, parent.project.entities[uuid]);
 	this.parent = parent;
 	this.functionality = "static";
 
 	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
 	this.element.removeAttribute("id");
 	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
+
+	if(this.project.name) this.setName(this.project.name);
 
 	// Sets default name to Object# or Collider#, where # is lowest non-duplicate
 	for(let i = 0; !this.name; i++) {
@@ -224,6 +263,7 @@ PrefabEntity.prototype.setFunctionality = function(functionality) {
 		return;
 	}
 	this.functionality = functionality;
+	this.project.functionality = functionality;
 	this.parent.changed = true;
 };
 
@@ -248,7 +288,16 @@ function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "Object", uuid, parent);
 	this.model = "null"; // Note: HAS to be a string for inspector purposes!
 	this.sceneObject = defaultModel.clone();
+	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
+
+	// Load any object data from project
+	if("model" in this.project) {
+		this.setModel(this.project.model);
+	} else {
+		this.project.model = null;
+	}
+	this.setFunctionality(this.project.functionality);
 }
 
 PrefabObject.prototype = Object.create(PrefabEntity.prototype);
@@ -271,14 +320,24 @@ PrefabObject.prototype.setModel = function(modelName) {
 
 	let model = null;
 
-	// For null, use default model
+	// For null or non-existing models, use default
+	if(modelName && modelName !== "null") {
+		if(!modelsTab.models[modelName]) {
+			editorLog(`Unable to set prefab model to ${modelName} because it doesn't exist!`, "error");
+			modelName = "null";
+		} else {
+			this.model = modelName;
+			this.project.model = modelName;
+			modelsTab.models[this.model].prefabEntities[this.uuid] = this;
+			model = modelsTab.models[modelName].sceneObject;
+		}
+	}
+
+	// Not as an else, in case the above "fails"
 	if(!modelName || modelName === "null") {
 		this.model = "null";
+		this.project.model = null;
 		model = defaultModel;
-	} else {
-		this.model = modelName;
-		modelsTab.models[this.model].prefabEntities[this.uuid] = this;
-		model = modelsTab.models[modelName].sceneObject;
 	}
 
 	// Set new model
@@ -295,7 +354,6 @@ PrefabObject.prototype.setModel = function(modelName) {
 // prefabCollider object, inherits from prefabEntity
 function PrefabCollider(uuid, parent) {
 	PrefabEntity.call(this, "Collider", uuid, parent);
-
 	this.colliderData = {
 		shape: "box",
 		width: 1,
@@ -304,7 +362,52 @@ function PrefabCollider(uuid, parent) {
 	};
 	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
+	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
+
+	// Load any collider data from project
+	if("colliderData" in this.project) {
+		let projectData = this.project.colliderData;
+		switch(projectData.shape) {
+		case "box": {
+			let width = projectData.width;
+			let height = projectData.height;
+			let depth = projectData.depth;
+			this.setShape("box");
+			this.setWidth(width);
+			this.setHeight(height);
+			this.setDepth(depth);
+			break;
+		}
+		case "sphere": {
+			let radius = projectData.radius;
+			this.setShape("sphere");
+			this.setRadius(radius);
+			break;
+		}
+		case "cylinder": {
+			let radius = projectData.radius;
+			let height = projectData.height;
+			this.setShape("cylinder");
+			this.setRadius(radius);
+			this.setHeight(height);
+			break;
+		}
+		case "cone": {
+			let radius = projectData.radius;
+			let height = projectData.height;
+			this.setShape("cone");
+			this.setRadius(radius);
+			this.setHeight(height);
+			break;
+		}
+		default:
+			break;
+		}
+	} else {
+		this.project.colliderData = this.colliderData;
+	}
+	this.setFunctionality(this.project.functionality);
 }
 
 PrefabCollider.prototype = Object.create(PrefabEntity.prototype);
@@ -323,6 +426,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			height: 1,
 			depth: 1
 		};
+		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 		this.sceneObject.scale.set(1, 1, 1);
 		break;
@@ -331,6 +435,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			shape: shapeType,
 			radius: 1
 		};
+		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
 		this.sceneObject.scale.set(1, 1, 1);
 		break;
@@ -340,6 +445,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
+		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.CylinderBufferGeometry( 1, 1, 1, 12 );
 		this.sceneObject.scale.set(1, 1, 1);
 		break;
@@ -349,6 +455,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
+		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.ConeBufferGeometry( 1, 1, 12 );
 		this.sceneObject.scale.set(1, 1, 1);
 		break;
@@ -411,16 +518,16 @@ let prefabsTab = function() {
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
 				let uuid = generateTinyUUID();
-				prefabsTab.addPrefab(uuid,	hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20));
-
+				let projectPrefab = projectTab.project.addPrefab(uuid);
+				prefabsTab.addPrefab(uuid, projectPrefab);
 				// Focus to name input so user can start typing right away
 				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
 			}, false);
 		},
 
-		// Add a prefab with the provided uuid
-		addPrefab: function(uuid, color) {
-			prefabsTab.prefabs[uuid] = new Prefab(uuid, color);
+		// Add a prefab with the provided uuid and project-side object
+		addPrefab: function(uuid, project) {
+			prefabsTab.prefabs[uuid] = new Prefab(uuid, project);
 		},
 
 		// Deletes a prefab with the provided uuid
@@ -442,9 +549,8 @@ let prefabsTab = function() {
 			prefabsTab.group.remove(thisPrefab.group);
 			thisPrefab.element.parentNode.removeChild(thisPrefab.element);
 
-			// Later: Delete from project
-
 			delete prefabsTab.prefabs[uuid];
+			delete projectTab.project.prefabs[uuid];
 		},
 
 		onTabActive: function() {

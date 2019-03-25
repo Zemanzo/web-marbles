@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
-import { editor } from "./editor";
+import { projectTab } from "./project";
 import { scene } from "./render";
 
 // model object
@@ -68,7 +68,7 @@ let modelsTab = function() {
 			document.getElementById("addModelFile").addEventListener("change", function() {
 				Array.from(this.files).forEach(function(file) {
 					// If a model with this file name already exists, don't load it
-					if(file.name in editor.project.models) {
+					if(file.name in projectTab.project.models) {
 						editorLog(`Model ${file.name} already loaded.`, "warn");
 						return;
 					}
@@ -109,27 +109,34 @@ let modelsTab = function() {
 
 		// Loads the model into the editor, adds it to the project if isNewModel is true
 		loadModel: function(modelName, fileContents, isNewModel) {
-			try {
-				_GLTFLoader.parse(fileContents, null,
-					function(model) {
-						modelsTab.models[modelName] = new Model(modelName, model.scene);
+			let promise = new Promise( (resolve, reject) => {
+				try {
+					_GLTFLoader.parse(fileContents, null,
+						function(model) {
+							modelsTab.models[modelName] = new Model(modelName, model.scene);
 
-						editorLog(`Loaded model: ${modelName}`, "info");
+							editorLog(`Loaded model: ${modelName}`, "info");
 
-						if(isNewModel) {
-							editor.project.addModel(modelName, fileContents);
+							if(isNewModel) {
+								projectTab.project.addModel(modelName, fileContents);
+							}
+							resolve("success");
+						}, function(error) {
+							editorLog(`Unable to load model (${modelName}): ${error}`, "error");
+							console.log(error);
+							reject("error");
 						}
-					}, function(error) {
-						editorLog(`Unable to load model (${modelName}): ${error}`, "error");
-						console.log(error);
-					}
-				);
-			}
-			catch(error) {
-				// Invalid JSON/GLTF files may end up here
-				editorLog(`Unable to load model (${name}): ${error}`, "error");
-				console.log(error);
-			}
+					);
+				}
+				catch(error) {
+					// Invalid JSON/GLTF files may end up here
+					editorLog(`Unable to load model (${name}): ${error}`, "error");
+					console.log(error);
+					reject("error");
+				}
+			} );
+			
+			return promise;
 		},
 
 		removeModel: function(name) {
@@ -155,7 +162,7 @@ let modelsTab = function() {
 			delete this.models[name];
 
 			// Remove from project
-			delete editor.project.models[name];
+			delete projectTab.project.models[name];
 
 			editorLog(`Removed model: ${name}`, "info");
 		},
