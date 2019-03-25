@@ -120,11 +120,11 @@ let modelsTab = function() {
 							if(isNewModel) {
 								projectTab.project.addModel(modelName, fileContents);
 							}
-							resolve();
+							resolve("success");
 						}, function(error) {
 							editorLog(`Unable to load model (${modelName}): ${error}`, "error");
 							console.log(error);
-							reject();
+							reject("error");
 						}
 					);
 				}
@@ -132,7 +132,7 @@ let modelsTab = function() {
 					// Invalid JSON/GLTF files may end up here
 					editorLog(`Unable to load model (${name}): ${error}`, "error");
 					console.log(error);
-					reject();
+					reject("error");
 				}
 			} );
 			

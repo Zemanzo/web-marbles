@@ -46,6 +46,30 @@ Project.prototype.addWorldObject = function(uuid, prefabUuid) {
 	return this.worldObjects[uuid];
 };
 
+Project.prototype.validateProject = function() {
+	// Fix/add any project properties that can easily be fixed
+	// This may also help with backward compatibility later
+
+	let validateObject = function(source, template) {
+		for(let key in template) {
+			if(typeof source[key] !== typeof template[key]) {
+				source[key] = template[key];
+				console.log(`Reset value for ${key}`);
+			}
+		}
+		for(let key in source) {
+			if(typeof source[key] !== typeof template[key]) {
+				delete source[key];
+				console.log(`Removed unused property ${key}`);
+			}
+		}
+	};
+	let template = new Project();
+	validateObject(this, template);
+	validateObject(this.world, template.world);
+	validateObject(this.gameplay, template.gameplay);
+};
+
 
 let projectTab = function() {
 	let _worker = new SerializeWorker();
@@ -180,11 +204,27 @@ let projectTab = function() {
 		},
 
 		importProject: function(loadedFile) {
-			let data = pako.inflate(loadedFile);
-			let string = new TextDecoder("utf-8").decode(data);
-			let loadedProject = JSON.parse(string);
-
-			// Project validation here? Incl. checking models
+			editorLog("Loading project...");
+			let loadedProject;
+			try {
+				let data = pako.inflate(loadedFile);
+				let string = new TextDecoder("utf-8").decode(data);
+				loadedProject = JSON.parse(string);
+			}
+			catch(error) {
+				editorLog("Unable to load project: Invalid project file.", "error");
+				return;
+			}
+			console.log(loadedProject);
+			// Project without these aren't considered valid
+			if(typeof loadedProject.models !== "object"
+				|| typeof loadedProject.prefabs !== "object"
+				|| typeof loadedProject.worldObjects !== "object"
+				|| typeof loadedProject.gameplay !== "object"
+				|| typeof loadedProject.world !== "object") {
+				editorLog("Unable to load project: Missing project properties.", "error");
+				return;
+			}
 
 			// Clear out current active project
 			while(Object.keys(worldTab.worldObjects).length > 0) {
@@ -200,19 +240,34 @@ let projectTab = function() {
 			//Initialize loaded project
 			this.project = loadedProject;
 			Object.setPrototypeOf(this.project, Project.prototype);
+			this.project.validateProject();
 
 			let modelLoaders = [];
 			for(let key in this.project.models) {
-				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, false));
+				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, false).catch( error => {return error;}) );
 			}
 
 			// Wait for all models to load before continuing
-			Promise.all(modelLoaders).then( () => {
+			let modelPromise = Promise.all(modelLoaders);
+
+			modelPromise.then( (results) => {
+				let allSuccesses = true;
+				for(let i = 0; i < results.length; i++) {
+					if(results[i] === "error") {
+						allSuccesses = false;
+						delete this.project.models[i];
+					}
+				}
+
 				for(let uuid in this.project.prefabs) {
 					prefabsTab.addPrefab(uuid, this.project.prefabs[uuid]);
 				}
 				for(let uuid in this.project.worldObjects) {
-					worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.project.worldObjects[uuid].prefab], this.project.worldObjects[uuid]);
+					if(this.project.worldObjects[uuid].prefab in this.project.prefabs) 
+						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.project.worldObjects[uuid].prefab], this.project.worldObjects[uuid]);
+					else {
+						editorLog(`Unable to load worldObject ${this.project.worldObjects[uuid].name} because prefab with UUID ${this.project.worldObjects[uuid].prefab} doesn't exist.`, "error");
+					}
 				}
 
 				// Non-model/prefab/object loading
@@ -223,8 +278,15 @@ let projectTab = function() {
 				document.getElementById("paramMaxRoundLength").value = this.project.gameplay.roundLength;
 				document.getElementById("paramWaitAfterFinish").value = this.project.gameplay.timeUntilDnf;
 
-				editorLog("Project loaded successfully!", "success");
-			});
+				if(!allSuccesses) {
+					editorLog("Not all models loaded correctly. Some prefabs may be affected.", "warn");
+				} else {
+					editorLog("Project loaded successfully!", "success");
+				}
+			}).catch( (error) => {
+				editorLog("Project failed to load. Check the console for details.", "error");
+				console.error(error);
+			} );
 		},
 
 		onTabActive: function() {
