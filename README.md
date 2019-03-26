@@ -11,16 +11,7 @@ Aims to recreate Marble Racing from the ground up, as a fully web based game. Th
 This project is very much a work in progress.
 
 ## Project configuration
-You can easily configure the game settings by tweaking the values in `config.js`.
-
-## nginx configuration
-To make sure websockets work when using nginx, add the following to your `location /` section:
-```
-proxy_http_version 1.1;
-proxy_set_header Upgrade $http_upgrade;
-proxy_set_header Connection "upgrade";
-proxy_set_header Host $host;
-```
+You can find how to set up the project [here](https://github.com/Zemanzo/web-marbles/wiki/Tutorials-%E2%80%95-setup).
 
 ## Concept
 To keep server load to a minimum, all it does is handle basic game logic and the physics simulation. It runs the physics simulation locally and sends over the resulting data to all the clients. Only positions and rotations of the marbles have to be synced real-time, other data can be pre-loaded and generated based on RPCs.
@@ -38,6 +29,3 @@ Since the client has to render their own scene, I won't be able to guarantee the
 Since the client has to render their own scene, they can completely independently pick their own camera angles. Even so, a shared camera is still possbile through identical tracking algorithms.
 
 Only the physics run on the server which are relatively resource efficient. My $5 DigitalOcean VPS handles it nicely up to *at least* 100 marbles. Slowdowns do happen with more marbles, but it keeps on going nonetheless.
-
-## Disclaimers
-During the first phases of this project I will not be focusing on clean code too much. This is very much a learning project for me, and will only later accept pull requests, after I cleaned up the codebase.
