@@ -40,7 +40,6 @@ let game = function() {
 				}
 
 				// If all marbles have finished, end the game
-				console.log(_marblesFinished, physics.marbles.list.length);
 				if (_marblesFinished === physics.marbles.list.length) {
 					setTimeout(this.end.bind(this), 2000);
 				}

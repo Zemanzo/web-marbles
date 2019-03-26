@@ -1,4 +1,4 @@
-const Ammo = require("ammo-node");
+const Ammo = require("ammo")();
 const config = require("../config");
 
 const world = require("./world")(Ammo, config);

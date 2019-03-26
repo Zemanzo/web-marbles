@@ -1,17 +1,37 @@
 {
   "name": "web-marbles",
   "version": "1.0.0",
-  "description": "Aims to recreate Marble Racing from the ground up, as a fully web based game ",
+  "description": "Aims to recreate Marble Racing from the ground up, as a fully web based game",
+  "homepage": "https://github.com/Zemanzo/web-marbles#readme",
+  "bugs": "https://github.com/Zemanzo/web-marbles/issues",
+  "keywords": [
+    "game",
+    "multiplayer",
+    "browser",
+    "marble",
+    "racing"
+  ],
   "main": "src/web-marbles.js",
   "scripts": {
     "start": "node src/web-marbles.js",
     "test": "mocha tests --timeout 30000",
     "build": "webpack"
   },
-  "author": "Merlijn van der Kamp",
-  "license": "ISC",
+  "author": {
+    "name": "Merlijn van der Kamp",
+    "email": "merlijnvanderkamp@gmail.com",
+    "url": "https://merlijn.me/"
+  },
+  "contributors": [
+    {
+      "name": "Angelo van der Mark",
+      "email": "angelo.vd.mark@gmail.com",
+      "url": "http://angelovandermark.me/"
+    }
+  ],
+  "license": "GPL-3.0-only",
   "dependencies": {
-    "ammo-node": "^1.0.0",
+    "ammo": "kripken/ammo.js#ac08f42d3995cfa2b719aa8a9bb5b766c7f63404",
     "better-sqlite3": "^5.0.1",
     "body-parser": "^1.18.2",
     "colors": "^1.2.1",
@@ -27,7 +47,7 @@
     "request": "^2.88.0",
     "stats-js": "^1.0.0",
     "three": "^0.102.1",
-    "uWebSockets.js": "uNetworking/uWebSockets.js#v15.2.0"
+    "uWebSockets.js": "uNetworking/uWebSockets.js#v15.8.0"
   },
   "repository": {
     "type": "git",
