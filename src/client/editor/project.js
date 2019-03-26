@@ -133,11 +133,10 @@ let projectTab = function() {
 
 				file.reader.readAsArrayBuffer(file);
 			}, false);
-			document.getElementById("exportProject").addEventListener("click", function() {projectTab.exportProject(false, true);}, false);	
-		
+			document.getElementById("exportProject").addEventListener("click", function() {projectTab.exportProject(false, true);}, false);
+
 			// Publish button events
-			document.getElementById("exportPublishBinary").addEventListener("click", function() {projectTab.exportProject(true, true);}, false);		
-			document.getElementById("exportPublishPlain").addEventListener("click", function() {projectTab.exportProject(true, false);}, false);
+			document.getElementById("exportPublishBinary").addEventListener("click", function() {projectTab.exportProject(true, true);}, false);
 
 
 			// The following events aren't on the project tab. Some will be, or will be moved elsewhere eventually
@@ -263,7 +262,7 @@ let projectTab = function() {
 					prefabsTab.addPrefab(uuid, this.project.prefabs[uuid]);
 				}
 				for(let uuid in this.project.worldObjects) {
-					if(this.project.worldObjects[uuid].prefab in this.project.prefabs) 
+					if(this.project.worldObjects[uuid].prefab in this.project.prefabs)
 						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.project.worldObjects[uuid].prefab], this.project.worldObjects[uuid]);
 					else {
 						editorLog(`Unable to load worldObject ${this.project.worldObjects[uuid].name} because prefab with UUID ${this.project.worldObjects[uuid].prefab} doesn't exist.`, "error");

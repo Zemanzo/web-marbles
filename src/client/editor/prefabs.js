@@ -247,7 +247,6 @@ PrefabEntity.prototype.setFunctionality = function(functionality) {
 	switch(functionality) {
 	case "startarea":
 		this.sceneObject.material = materials.startMaterial;
-		this.setRotation(new THREE.Euler(0, 0, 0, "XYZ"));
 		break;
 	case "startgate":
 		this.sceneObject.material = materials.gateMaterial;
