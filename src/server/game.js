@@ -141,7 +141,7 @@ let game = function() {
 				this.startTime = undefined;
 
 				// Close the gate
-				physics.closeGate();
+				physics.world.toggleGates("close");
 
 				// Remove all marbles
 				physics.marbles.destroyAllMarbles();
@@ -170,7 +170,7 @@ let game = function() {
 
 					this.startTime = Date.now();
 
-					physics.openGate();
+					physics.world.toggleGates("open");
 
 					// Add bot marble to ensure physics not freezing
 					this.spawnMarble("Nightbot", "#000000");

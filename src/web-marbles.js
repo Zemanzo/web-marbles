@@ -13,6 +13,8 @@ db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
 
+const maps = require("./server/maps/manager");
+
 // Set up physics world
 const physics = require("./server/physics/manager");
 
