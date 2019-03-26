@@ -46,12 +46,10 @@ function init() {
 	if (cookieData) {
 		// See if current date is later than origin date + expiration period
 		if ( now(true) < cookieData.access_granted + cookieData.expires_in * 1000 ) {
-
 			// Request a fresh token
 			var xhr = new XMLHttpRequest();
 			xhr.onreadystatechange = function() {
 				if (this.readyState == 4 && this.status == 200) {
-
 					let response = JSON.parse(xhr.responseText);
 					response.id = cookieData.id;
 					response.username = cookieData.username;
@@ -73,7 +71,6 @@ function init() {
 					clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
 
 					chatMessages.insertAdjacentElement("beforeend", clone);
-
 				}
 			};
 			xhr.open("POST", "/chat", true);
@@ -167,7 +164,6 @@ function init() {
 			// Clean input
 			this.value = "";
 		}
-
 	}, false);
 
 	// Make SEND button functional
@@ -186,7 +182,6 @@ function init() {
 	chatButtonMarble.addEventListener("click", function() {
 		sendMessage("!marble");
 	}, false);
-
 }
 
 let authWindow;

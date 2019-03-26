@@ -26,16 +26,15 @@ function Model(name, sceneObject) {
 	}, false);
 
 	// Delete model button
-	let self = this;
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", () => {
 		let prefabText = "";
-		if(Object.keys(self.prefabEntities).length > 0) {
+		if(Object.keys(this.prefabEntities).length > 0) {
 			// This is quite a silly unique prefab counter isn't it?
 			let uniquePrefabs = {};
-			for(let key in self.prefabEntities) {
-				uniquePrefabs[self.prefabEntities[key].parent.uuid] = {};
+			for(let key in this.prefabEntities) {
+				uniquePrefabs[this.prefabEntities[key].parent.uuid] = {};
 			}
-			let entityCount = Object.keys(self.prefabEntities).length;
+			let entityCount = Object.keys(this.prefabEntities).length;
 			let prefabCount = Object.keys(uniquePrefabs).length;
 			prefabText = `\nThis will alter ${entityCount} object${entityCount === 1 ? "" : "s"} in ${prefabCount} prefab${prefabCount === 1 ? "" : "s"}!`;
 		}
@@ -135,7 +134,7 @@ let modelsTab = function() {
 					reject("error");
 				}
 			} );
-			
+
 			return promise;
 		},
 
