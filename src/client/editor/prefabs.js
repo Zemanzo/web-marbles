@@ -362,6 +362,7 @@ function PrefabCollider(uuid, parent) {
 	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
 	this.updateTransformFromProject();
+	if(this.project.scale) delete this.project.scale;
 	this.parent.group.add(this.sceneObject);
 
 	// Load any collider data from project
