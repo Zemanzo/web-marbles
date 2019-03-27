@@ -44,6 +44,7 @@ function WorldObject(uuid, prefab, project) {
 	worldTab.group.add( this.sceneObject );
 	this.sceneObject.visible = true;
 	this.updateTransformFromProject();
+	if(this.project.scale) delete this.project.scale;
 }
 
 WorldObject.prototype = Object.create(EditorObject.prototype);

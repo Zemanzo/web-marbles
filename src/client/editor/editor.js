@@ -26,6 +26,8 @@ EditorObject.prototype.updateTransformFromProject = function() {
 			typeof this.project.position.x === "number" ? this.project.position.x : 0,
 			typeof this.project.position.y === "number" ? this.project.position.y : 0,
 			typeof this.project.position.z === "number" ? this.project.position.z : 0) );
+	} else {
+		this.project.position = {x: 0, y: 0, z: 0};
 	}
 	if(this.project.rotation
 		&& typeof this.project.rotation.x === "number"
@@ -33,12 +35,16 @@ EditorObject.prototype.updateTransformFromProject = function() {
 		&& typeof this.project.rotation.z === "number"
 		&& typeof this.project.rotation.w === "number") {
 		this.sceneObject.quaternion.copy(new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w));
+	} else {
+		this.project.rotation = {x: 0, y: 0, z: 0, w: 1};
 	}
 	if(this.project.scale) {
 		this.setScale( new THREE.Vector3(
 			typeof this.project.scale.x === "number" ? this.project.scale.x : 1,
 			typeof this.project.scale.y === "number" ? this.project.scale.y : 1,
 			typeof this.project.scale.z === "number" ? this.project.scale.z : 1) );
+	} else {
+		this.project.scale = {x: 1, y: 1, z: 1};
 	}
 };
 

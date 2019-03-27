@@ -78,9 +78,9 @@ function Prefab(uuid, project) {
 	// The rest is handled in their constructors
 	for( let key in this.project.entities) {
 		let entity = this.project.entities[key];
-		if(entity.type === "Object") {
+		if(entity.type === "object") {
 			this.addObject(key);
-		} else if (entity.type === "Collider") {
+		} else if (entity.type === "collider") {
 			this.addCollider(key);
 		} else {
 			editorLog(`Attempted to load unknown prefab entity of type ${entity.type}`, "error");
@@ -205,7 +205,11 @@ function PrefabEntity(type, uuid, parent) {
 	this.parent = parent;
 	this.functionality = "static";
 
-	this.element = document.getElementById(`prefab${type}Template`).cloneNode(true);
+	if(type === "object") {
+		this.element = document.getElementById("prefabObjectTemplate").cloneNode(true);
+	} else if(type === "collider") {
+		this.element = document.getElementById("prefabColliderTemplate").cloneNode(true);
+	}
 	this.element.removeAttribute("id");
 	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
 
@@ -284,7 +288,7 @@ PrefabEntity.prototype.setScale = function(position) {
 
 // prefabObject object, inherits from prefabEntity
 function PrefabObject(uuid, parent) {
-	PrefabEntity.call(this, "Object", uuid, parent);
+	PrefabEntity.call(this, "object", uuid, parent);
 	this.model = "null"; // Note: HAS to be a string for inspector purposes!
 	this.sceneObject = defaultModel.clone();
 	this.updateTransformFromProject();
@@ -352,7 +356,7 @@ PrefabObject.prototype.setModel = function(modelName) {
 
 // prefabCollider object, inherits from prefabEntity
 function PrefabCollider(uuid, parent) {
-	PrefabEntity.call(this, "Collider", uuid, parent);
+	PrefabEntity.call(this, "collider", uuid, parent);
 	this.colliderData = {
 		shape: "box",
 		width: 1,
@@ -362,6 +366,7 @@ function PrefabCollider(uuid, parent) {
 	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
 	this.updateTransformFromProject();
+	if(this.project.scale) delete this.project.scale;
 	this.parent.group.add(this.sceneObject);
 
 	// Load any collider data from project

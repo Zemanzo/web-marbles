@@ -292,10 +292,10 @@ let inspector = function() {
 			// Reset any disabled inputs. Will be disabled again when necessary.
 			inspector.disabled.all(false);
 
-			if (selected.type === "Object" && selected.model) document.getElementById("inspectorModelList").value = selected.model;
+			if (selected.type === "object" && selected.model) document.getElementById("inspectorModelList").value = selected.model;
 
 			// If a collider shape is selected, fill the inputs with the appropriate values
-			if (selected.type === "Collider") {
+			if (selected.type === "collider") {
 				let colliderData = selected.colliderData;
 
 				inspector.elements.shape.value = colliderData.shape;
