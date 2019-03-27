@@ -1,10 +1,34 @@
-module.exports = function(Ammo, world) {
+module.exports = function(Ammo, world, mapBuilder) {
+	let _marblesTransformAux = new Ammo.btTransform(),
+		_pos = undefined,
+		_rot = undefined,
+		_id = 0,
+		_finishedMarbles = [];
+
+	function randomPositionInStartAreas() {
+		let startAreas = mapBuilder.getStartAreas();
+		let area = startAreas[Math.floor(startAreas.length * Math.random())];
+		console.log(area);
+
+		let transform = new Ammo.btTransform();
+		transform.setIdentity();
+		transform.setOrigin(
+			new Ammo.btVector3(
+				Math.random() * (area.prefabEntity.colliderData.width  - area.prefabEntity.colliderData.width  * .5),
+				Math.random() * (area.prefabEntity.colliderData.height - area.prefabEntity.colliderData.height * .5),
+				Math.random() * (area.prefabEntity.colliderData.depth  - area.prefabEntity.colliderData.depth  * .5)
+			)
+		);
+
+		let newTransform = area.transform.op_mul(transform);
+
+		let origin = newTransform.getOrigin();
+
+		return origin;
+	}
+
 	return {
 		list: [],
-		_marblesTransformAux: new Ammo.btTransform(),
-		_pos: undefined,
-		_rot: undefined,
-		_id: 0,
 
 		createMarble(meta) {
 			// Create physics body
@@ -16,7 +40,7 @@ module.exports = function(Ammo, world) {
 			sphereShape.calculateLocalInertia( mass, localInertia );
 			let transform = new Ammo.btTransform();
 			transform.setIdentity();
-			transform.setOrigin( new Ammo.btVector3( Math.random() * 3 - 20, world.map.maxZ + 1, Math.random() * 3 + 1 ) );
+			transform.setOrigin( randomPositionInStartAreas() );
 			let motionState = new Ammo.btDefaultMotionState( transform );
 			let bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 			let ammoBody = new Ammo.btRigidBody( bodyInfo );
@@ -26,56 +50,55 @@ module.exports = function(Ammo, world) {
 				ammoBody: ammoBody,
 				meta: {}
 			};
-			body.meta.id = this._id++;
+			body.meta.id = _id++;
 			body.meta.size = size;
 			Object.assign(body.meta, meta);
 
 			// Add to physics world
 			this.list[body.meta.id] = body;
-			world.physics.addRigidBody(body.ammoBody);
+			world.physicsWorld.addRigidBody(body.ammoBody);
 
 			return body;
 		},
 
 		getMarbleTransformations() {
-			this._pos = new Float32Array(this.list.length * 3);
-			this._rot = new Float32Array(this.list.length * 4);
+			_pos = new Float32Array(this.list.length * 3);
+			_rot = new Float32Array(this.list.length * 4);
 
 			for (let i = 0; i < this.list.length; i++) {
 				let ms = this.list[i].ammoBody.getMotionState();
 				if (ms) {
-					ms.getWorldTransform( this._marblesTransformAux );
-					let p = this._marblesTransformAux.getOrigin();
-					let q = this._marblesTransformAux.getRotation();
+					ms.getWorldTransform( _marblesTransformAux );
+					let p = _marblesTransformAux.getOrigin();
+					let q = _marblesTransformAux.getRotation();
 
-					this._pos[i * 3 + 0] = p.x();
-					this._pos[i * 3 + 1] = p.z();
-					this._pos[i * 3 + 2] = p.y();
+					_pos[i * 3 + 0] = p.x();
+					_pos[i * 3 + 1] = p.z();
+					_pos[i * 3 + 2] = p.y();
 
-					this._rot[i * 4 + 0] = q.x();
-					this._rot[i * 4 + 1] = q.z();
-					this._rot[i * 4 + 2] = q.y();
-					this._rot[i * 4 + 3] = q.w();
+					_rot[i * 4 + 0] = q.x();
+					_rot[i * 4 + 1] = q.z();
+					_rot[i * 4 + 2] = q.y();
+					_rot[i * 4 + 3] = q.w();
 				}
 			}
 
 			return {
-				position: this._pos,
-				rotation: this._rot
+				position: _pos,
+				rotation: _rot
 			};
 		},
 
-		_finishedMarbles: [],
 		getFinishedMarbles() {
 			let finished = [];
 			for (let i = 0; i < this.list.length; i++) {
 				let ms = this.list[i].ammoBody.getMotionState();
 				if (ms) {
-					ms.getWorldTransform(this._marblesTransformAux);
-					let p = this._marblesTransformAux.getOrigin();
+					ms.getWorldTransform(_marblesTransformAux);
+					let p = _marblesTransformAux.getOrigin();
 
-					if ( p.y() < 5 && this._finishedMarbles[i] !== true ) {
-						this._finishedMarbles[i] = true;
+					if ( p.y() < -5 && _finishedMarbles[i] !== true ) {
+						_finishedMarbles[i] = true;
 						finished.push(i);
 					}
 				}
@@ -86,12 +109,12 @@ module.exports = function(Ammo, world) {
 
 		destroyAllMarbles() {
 			for (let i = this.list.length - 1; i >= 0; --i) {
-				world.physics.removeRigidBody(this.list[i].ammoBody);
+				world.physicsWorld.removeRigidBody(this.list[i].ammoBody);
 			}
 
-			this._finishedMarbles = [];
+			_finishedMarbles = [];
 			this.list = [];
-			this._id = 0;
+			_id = 0;
 		}
 	};
 };

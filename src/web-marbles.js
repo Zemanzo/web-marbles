@@ -13,7 +13,8 @@ db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
 
-const maps = require("./server/maps/manager");
+// Fetch maps & build primary map
+const map = require("./server/maps/manager");
 
 // Set up physics world
 const physics = require("./server/physics/manager");
@@ -258,7 +259,9 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-game.end();
+map.then(() => {
+	game.end();
+});
 
 // Graceful shutdown
 process.on("exit", shutdown);
@@ -308,7 +311,7 @@ function shutdown() {
 		log.warn("DATABASE connection closed");
 
 		// Stopped physics simulation
-		physics.stopUpdateInterval();
+		physics.world.stopUpdateInterval();
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets

@@ -3,20 +3,20 @@ module.exports = function(Ammo, config) {
 		_dispatcher,
 		_broadphase,
 		_solver,
-		_physicsWorld;
+		physicsWorld;
 
 	// Physics configuration
 	_collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
 	_dispatcher = new Ammo.btCollisionDispatcher(_collisionConfiguration );
 	_broadphase = new Ammo.btDbvtBroadphase();
 	_solver = new Ammo.btSequentialImpulseConstraintSolver();
-	_physicsWorld = new Ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
-	_physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
+	physicsWorld = new Ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
+	physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
 
 	let _lastPhysicsUpdate = Date.now();
 
 	function _updatePhysics( deltaTime ) {
-		_physicsWorld.stepSimulation( deltaTime, 10 );
+		physicsWorld.stepSimulation( deltaTime, 10 );
 	}
 
 	let _updateInterval;
@@ -33,11 +33,11 @@ module.exports = function(Ammo, config) {
 
 	return {
 		map: undefined,
+		physicsWorld,
 		updateInterval: undefined,
 		gates: [],
 
 		toggleGates(override) {
-			console.log(this);
 			for (let gate of this.gates) {
 				let offset = 0;
 				if (override === "close" || gate.state === "closed") {
@@ -121,7 +121,7 @@ module.exports = function(Ammo, config) {
 				break;
 			}
 
-			_physicsWorld.addRigidBody(rigidBody);
+			physicsWorld.addRigidBody(rigidBody);
 
 			return {
 				rigidBody,
@@ -215,7 +215,7 @@ module.exports = function(Ammo, config) {
 			let groundBody = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
 			groundBody.setCollisionFlags(1); // Set static
 
-			_physicsWorld.addRigidBody(groundBody);
+			physicsWorld.addRigidBody(groundBody);
 
 			this.map = mapObj;
 		}
