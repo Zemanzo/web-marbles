@@ -82,7 +82,22 @@ module.exports = function(Ammo, config) {
 				);
 				break;
 			case "sphere":
-				shape = new Ammo.btSphereShape( new Ammo.btScalar(collider.colliderData.radius) );
+				shape = new Ammo.btSphereShape( collider.colliderData.radius );
+				break;
+			case "cone":
+				shape = new Ammo.btConeShape(
+					collider.colliderData.radius,
+					collider.colliderData.height * .5
+				);
+				break;
+			case "cylinder":
+				shape = new Ammo.btCylinderShape(
+					new Ammo.btVector3(
+						collider.colliderData.radius,
+						collider.colliderData.height * .5,
+						collider.colliderData.radius
+					)
+				);
 				break;
 			}
 

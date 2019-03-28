@@ -8,7 +8,6 @@ module.exports = function(Ammo, world, mapBuilder) {
 	let _randomPositionInStartAreas = function() {
 		let startAreas = mapBuilder.getStartAreas();
 		let area = startAreas[Math.floor(startAreas.length * Math.random())];
-		console.log(area);
 
 		let transform = new Ammo.btTransform();
 		transform.setIdentity();

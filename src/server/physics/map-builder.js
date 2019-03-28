@@ -50,8 +50,6 @@ module.exports = function(Ammo, world, map) {
 
 					transform.op_mul(prefabEntityTransform); // Modifies "newTransform"
 
-					console.log(transform.getOrigin().x());
-
 					switch (prefabEntity.functionality) {
 					case "static":
 					default:
