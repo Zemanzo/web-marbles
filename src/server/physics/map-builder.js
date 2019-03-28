@@ -2,15 +2,8 @@ module.exports = function(Ammo, world, map) {
 	let _startAreas = [],
 		_endAreas = [];
 
-	map.then((map) => {
+	map.currentMapData.then((map) => {
 		function transformFromEntity(entity) {
-			if (!entity.position) {
-				entity.position = { x: 0, y: 0, z: 0 };
-			}
-			if (!entity.rotation) {
-				entity.rotation = { x: 0, y: 0, z: 0, w: 1 };
-			}
-
 			let transform = new Ammo.btTransform();
 			transform.setIdentity();
 			transform.setOrigin(
@@ -44,7 +37,7 @@ module.exports = function(Ammo, world, map) {
 				console.log(prefabEntity.type);
 
 				switch (prefabEntity.type) {
-				case "Collider":
+				case "collider":
 					worldEntityTransform = transformFromEntity(worldEntity);
 					prefabEntityTransform = transformFromEntity(prefabEntity);
 
@@ -65,7 +58,7 @@ module.exports = function(Ammo, world, map) {
 					}
 
 					break;
-				case "Object":
+				case "object":
 
 					break;
 				}

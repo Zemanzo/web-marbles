@@ -14,7 +14,7 @@ db.setCurrentDatabase(
 );
 
 // Fetch maps & build primary map
-const map = require("./server/maps/manager");
+const maps = require("./server/maps/manager");
 
 // Set up physics world
 const physics = require("./server/physics/manager");
@@ -24,7 +24,7 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, physics, config, game);
+const socketGameplay = sockets.setupGameplay(db, physics, config, game, maps);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
@@ -259,7 +259,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-map.then(() => {
+maps.currentMapData.then(() => {
 	game.end();
 });
 

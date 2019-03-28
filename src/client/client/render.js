@@ -3,14 +3,16 @@ import "three/examples/js/objects/Water";
 import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/OBJLoader";
+import "three/examples/js/loaders/GLTFLoader";
 import "three/examples/js/nodes/THREE.Nodes";
 import * as Stats from "stats-js";
+import * as pako from "../../../node_modules/pako/dist/pako";
 import * as config from "../config";
 import { net as networking } from "./networking";
 import { CameraFlyControls } from "../cameras";
-
 let viewport, camera, renderer, stats, controls,
-	scene = new THREE.Scene();
+	scene = new THREE.Scene(),
+	_GLTFLoader = new THREE.GLTFLoader();
 
 function init() {
 	viewport = document.getElementById("viewport");
@@ -28,7 +30,7 @@ function init() {
 
 	updateSun();
 
-	addMap();
+	addLegacyMap();
 
 	controls = new CameraFlyControls(scene, renderer, {
 		pointerLockElement: viewport,
@@ -204,7 +206,7 @@ function animate() {
 }
 
 let mapMesh;
-function addMap() {
+function addLegacyMap() {
 	fetch("/client?dlmap=map2")
 		.then((response) => {
 			return response.text();
@@ -394,10 +396,91 @@ let clearMarbleMeshes = function() {
 	marbleMeshes = [];
 };
 
+let addMap = function(mapName) {
+	fetch(`/resources/maps/${mapName}`)
+		.then((response) => {
+			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
+			return response.arrayBuffer();
+		})
+		.then((buffer) => {
+			try {
+				let mapData = pako.inflate(buffer);
+				mapData = new TextDecoder("utf-8").decode(mapData);
+				mapData = JSON.parse(mapData);
+
+				console.log(mapData);
+
+				// Load models
+				let modelPromises = {};
+				for (let modelName in mapData.models) {
+					modelPromises[modelName] = new Promise((resolve, reject) => {
+						try {
+							_GLTFLoader.parse(mapData.models[modelName].data, null,
+								function(model) {
+									resolve(model.scene);
+								}, function(error) {
+									console.warn(`Unable to load model (${modelName})`, error);
+									reject("error");
+								}
+							);
+						}
+						catch (error) {
+							// Invalid JSON/GLTF files may end up here
+							console.warn(`Unable to load model (${modelName})`, error);
+							reject("error");
+						}
+					});
+				}
+
+				let prefabPromises = {};
+				Promise.all(Object.values(modelPromises)).then(() => {
+					for (let prefabUuid in mapData.prefabs) {
+						prefabPromises[prefabUuid] = new Promise((resolve) => {
+							let group = new THREE.Group();
+
+							for (let entity of Object.values(mapData.prefabs[prefabUuid].entities)) {
+								if (entity.type === "object" && entity.model) {
+									console.log(modelPromises, entity.model);
+									modelPromises[entity.model].then((scene) => {
+										let clone = scene.clone();
+
+										clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
+										clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
+										clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
+										group.add(clone);
+									});
+								}
+							}
+
+							resolve(group);
+						});
+					}
+				}).then(() => {
+					Promise.all(Object.values(prefabPromises)).then(() => {
+						for (let object of Object.values(mapData.worldObjects)) {
+							console.log(prefabPromises, object.prefab);
+							prefabPromises[object.prefab].then((prefabGroup) => {
+								let clone = prefabGroup.clone();
+								clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
+								clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
+								scene.add(clone);
+							});
+						}
+					});
+				});
+			}
+			catch(error) {
+				console.error(error);
+				return;
+			}
+		});
+};
+
 export {
 	scene,
 	marbleMeshes,
 	spawnMarbleMesh,
 	clearMarbleMeshes,
-	init
+	init,
+	addMap
 };

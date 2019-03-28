@@ -5,7 +5,7 @@ module.exports = function(Ammo, world, mapBuilder) {
 		_id = 0,
 		_finishedMarbles = [];
 
-	function randomPositionInStartAreas() {
+	let _randomPositionInStartAreas = function() {
 		let startAreas = mapBuilder.getStartAreas();
 		let area = startAreas[Math.floor(startAreas.length * Math.random())];
 		console.log(area);
@@ -14,18 +14,24 @@ module.exports = function(Ammo, world, mapBuilder) {
 		transform.setIdentity();
 		transform.setOrigin(
 			new Ammo.btVector3(
-				Math.random() * (area.prefabEntity.colliderData.width  - area.prefabEntity.colliderData.width  * .5),
-				Math.random() * (area.prefabEntity.colliderData.height - area.prefabEntity.colliderData.height * .5),
-				Math.random() * (area.prefabEntity.colliderData.depth  - area.prefabEntity.colliderData.depth  * .5)
+				Math.random() * area.prefabEntity.colliderData.width  - ( area.prefabEntity.colliderData.width  * .5 ),
+				Math.random() * area.prefabEntity.colliderData.height - ( area.prefabEntity.colliderData.height * .5 ),
+				Math.random() * area.prefabEntity.colliderData.depth  - ( area.prefabEntity.colliderData.depth  * .5 )
 			)
 		);
 
-		let newTransform = area.transform.op_mul(transform);
+		// Clone the transform because op_mul modifies the transform it is called on
+		let newTransform = new Ammo.btTransform();
+		newTransform.setIdentity();
+		newTransform.setOrigin(area.transform.getOrigin());
+		newTransform.setRotation(area.transform.getRotation());
+
+		newTransform.op_mul(transform); // Modifies "newTransform"
 
 		let origin = newTransform.getOrigin();
 
 		return origin;
-	}
+	};
 
 	return {
 		list: [],
@@ -40,7 +46,7 @@ module.exports = function(Ammo, world, mapBuilder) {
 			sphereShape.calculateLocalInertia( mass, localInertia );
 			let transform = new Ammo.btTransform();
 			transform.setIdentity();
-			transform.setOrigin( randomPositionInStartAreas() );
+			transform.setOrigin( _randomPositionInStartAreas() );
 			let motionState = new Ammo.btDefaultMotionState( transform );
 			let bodyInfo = new Ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
 			let ammoBody = new Ammo.btRigidBody( bodyInfo );

@@ -1,9 +1,9 @@
 const Ammo = require("ammo")();
 const config = require("../config");
-const map = require("../maps/manager");
+const maps = require("../maps/manager");
 
 const world = require("./world")(Ammo, config);
-const mapBuilder = require("./map-builder")(Ammo, world, map);
+const mapBuilder = require("./map-builder")(Ammo, world, maps);
 const marbles = require("./marbles")(Ammo, world, mapBuilder);
 
 module.exports = {

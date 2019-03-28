@@ -41,11 +41,23 @@ function loadMap(mapName) {
 	});
 }
 
-let map = retrieveMaps()
+let loadedMaps = retrieveMaps()
 	.then((maps) => {
-		return loadMap(maps[0]);
-	}).then((map) => {
-		return map;
+		return maps;
 	});
 
-module.exports = map;
+let currentMapName = loadedMaps
+	.then((maps) => {
+		return maps[0];
+	});
+
+let currentMapData = loadedMaps
+	.then((maps) => {
+		return loadMap(maps[0]);
+	});
+
+module.exports = {
+	loadedMaps,
+	currentMapName,
+	currentMapData
+};

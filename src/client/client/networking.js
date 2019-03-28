@@ -3,6 +3,7 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
+import { addMap } from "./render";
 
 let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
@@ -41,10 +42,19 @@ net.socketReady = new Promise((resolve) => {
 		switch(type) {
 		case "initial_data":
 			message = JSON.parse(message);
+
+			// Initial marble sizes, colors and names
 			net.marbleData = message.initialMarbleData;
-			delete message.initialMarbleData; // Unused anywhere else, cleaner to get rid of it now.
+			addMap(message.mapId);
+
+			// Unused anywhere else, cleaner to get rid of it now.
+			delete message.initialMarbleData;
+			delete message.mapId;
+
 			console.log(message);
+
 			game.setInitialGameState(Promise.resolve(message));
+
 			resolve(message);
 			break;
 		case "request_physics":
