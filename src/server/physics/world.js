@@ -39,12 +39,17 @@ module.exports = function(Ammo, config) {
 
 		toggleGates(override) {
 			for (let gate of this.gates) {
-				let offset = 0;
-				if (override === "close" || gate.state === "closed") {
-					offset = ( gate.collider.colliderData.height + 2 );
+				let offset;
+				if (override === "close" || gate.state === "opened") {
+					gate.state = "closed";
+					offset = 0;
+				} else {
+					gate.state = "opened";
+					offset = (gate.collider.colliderData.height + 2);
 				}
 
 				let origin = gate.rigidBody.getWorldTransform().getOrigin();
+
 				origin.setY(
 					gate.collider.position.y - offset
 				);
@@ -52,8 +57,8 @@ module.exports = function(Ammo, config) {
 			}
 		},
 
-		addStartGate(collider) {
-			let gate = this.addPrimitiveCollider(collider);
+		addStartGate(collider, transform) {
+			let gate = this.addPrimitiveCollider(collider, transform);
 
 			// Gates are closed by default
 			gate.state = "closed";
@@ -70,9 +75,9 @@ module.exports = function(Ammo, config) {
 			default:
 				shape = new Ammo.btBoxShape(
 					new Ammo.btVector3(
-						collider.colliderData.width,
-						collider.colliderData.height,
-						collider.colliderData.depth
+						collider.colliderData.width * .5,
+						collider.colliderData.height * .5,
+						collider.colliderData.depth * .5
 					)
 				);
 				break;

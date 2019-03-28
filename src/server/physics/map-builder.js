@@ -32,28 +32,39 @@ module.exports = function(Ammo, world, map) {
 			for (let prefabEntityUuid in prefab.entities) {
 				let prefabEntity = prefab.entities[prefabEntityUuid];
 
-				let worldEntityTransform, prefabEntityTransform, transform;
+				let worldEntityTransform, prefabEntityTransform;
 
-				console.log(prefabEntity.type);
+				//console.log(prefabEntity.type);
 
+				let transform;
 				switch (prefabEntity.type) {
 				case "collider":
 					worldEntityTransform = transformFromEntity(worldEntity);
 					prefabEntityTransform = transformFromEntity(prefabEntity);
 
-					transform = worldEntityTransform.op_mul(prefabEntityTransform);
+					// Clone the transform because op_mul modifies the transform it is called on
+					transform = new Ammo.btTransform();
+					transform.setIdentity();
+					transform.setOrigin(worldEntityTransform.getOrigin());
+					transform.setRotation(worldEntityTransform.getRotation());
+
+					transform.op_mul(prefabEntityTransform); // Modifies "newTransform"
+
+					console.log(transform.getOrigin().x());
 
 					switch (prefabEntity.functionality) {
 					case "static":
-					case "startgate":
 					default:
 						world.addPrimitiveCollider(prefabEntity, transform);
 						break;
+					case "startgate":
+						world.addStartGate(prefabEntity, transform);
+						break;
 					case "startarea":
-						_startAreas.push({prefabEntity, transform});
+						_startAreas.push({ prefabEntity, transform});
 						break;
 					case "endarea":
-						_endAreas.push({prefabEntity, transform});
+						_endAreas.push({ prefabEntity, transform});
 						break;
 					}
 
