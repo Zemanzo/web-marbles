@@ -1,3 +1,13 @@
+/* Quicksand - latin */
+@font-face {
+	font-family: "Quicksand";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Quicksand"),
+		local("Quicksand-Regular"),
+		url("../fonts/quicksand/quicksand-latin-regular.woff2") format("woff2");
+}
+
 html {
 	display: flex;
 	justify-content: center;
@@ -7,7 +17,8 @@ html {
 
 body {
 	flex: 1;
-	font-family: sans-serif;
+	font-family: "Quicksand", sans-serif;
+	font-size: 13px;
 	background: #111;
 	color: #eee;
 	height: 100vh;
@@ -33,26 +44,33 @@ header {
 	header > * {
 		display: flex;
 		align-items: center;
+		font-family: "Uni Sans Heavy";
+		font-size: .75em;
 	}
 
 	header > a {
 		display: inline-block;
 		color: #09f;
+		margin-right: 4px;
 	}
 
+		header > a > img {
+			height: .6rem;
+			padding: .2rem 0;
+		}
+
 		header > a:hover {
-			color: #3df;
+			filter: brightness(130%);
 		}
 
 	header > div {
-		font-style: italic;
-		font-weight: 600;
-		color: #999;
+		color: #eee;
 	}
 
 	header > div > img {
 		height: 1.5rem;
 		margin-left: 4px;
+		transform: translate(0, 1.2px)
 	}
 
 #chatMessages {
@@ -74,13 +92,14 @@ header {
 		align-items: baseline;
 		max-width: 100%;
 		overflow: hidden;
+		padding: 0 8px;
 	}
 
 	.message:nth-child(odd) {
 		background-color: #0C0C0C;
 	}
 		.message > .timestamp {
-			font-size: .7em;
+			font-size: .8em;
 			font-family: "Droid Sans Mono", sans-serif;
 			color: #999;
 			margin-right: 4px;
@@ -110,6 +129,7 @@ header {
 #chatInputContainer {
 	display: flex;
 	min-height: 2em;
+	position: relative;
 }
 
 	#chatInputContainer > div {
@@ -185,8 +205,8 @@ header {
 			}
 
 				#user > img {
-					height:  2rem;
-					width:  2rem;
+					height: 2rem;
+					width: 2rem;
 				}
 
 				#user > div {
@@ -204,28 +224,43 @@ header {
 
 			#chatInput {
 				flex: 1;
-				font-size: 1rem;
+				font-size: 13px;
 				padding-left: 4px;
+				font-family: "Quicksand", sans-serif;
+				padding-right: 2em;
+				border-radius: 4px;
+			}
+
+			#buttonSend {
+				font-size: 22px;
+				position: absolute;
+				right: 8px;
+				top: 8px;
+				cursor: pointer;
+				color: #444;
+			}
+
+			#buttonSend:hover {
+				color: #eee;
 			}
 
 		#chatButtons {
-			justify-content: flex-end;
+			justify-content: space-between;
+			padding: 0 8px;
 		}
 
 			#chatButtons > button {
-				text-transform: uppercase;
-				margin: 0px 4px;
+				font-family: "Quicksand", sans-serif;
 				padding: 2px 4px;
-				background: var(--theme-color-dark);
+				background: #060606;
 				color: #eee;
-				/* border: 1px solid  */
+				border-radius: 3px;
 			}
 
-			#chatButtons > button:first-child {
+			button#buttonLogOut {
 				margin-left: 0;
-			}
-			#chatButtons > button:last-child {
-				margin-right: 0;
+				color: #999;
+				font-size:.9em;
 			}
 
 			#chatButtons > button:hover {
@@ -233,10 +268,6 @@ header {
 				/* border: 1px solid var(--theme-color); */
 				color: #eee;
 				text-decoration: none;
-			}
-
-			#chatButtons > #buttonSettings {
-				margin-right: auto;
 			}
 
 	input[type=number] {

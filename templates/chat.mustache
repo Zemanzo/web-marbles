@@ -8,6 +8,7 @@
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 		<!-- Stylesheets -->
+		<link href="icofont/css/icofont.css" rel="stylesheet">
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
 
@@ -37,8 +38,8 @@
 		{{/success}}
 		{{^success}}
 		<header>
-			<div>Chat powered by <img src="images/discord_logo.svg" alt="Discord"/></div>
-			{{#invitelink}}<a href="{{invitelink}}" target="_blank">Join the server!</a>{{/invitelink}}
+			<div><img src="images/discord_powered.svg" alt="DISCORD POWERED"/></div>
+			{{#invitelink}}<a href="{{invitelink}}" target="_blank"><img src="images/join_the_server.svg" alt="JOIN THE SERVER!"/></a>{{/invitelink}}
 		</header>
 		<div id="chatMessages">
 			<div class="message" id="messageTemplate">
@@ -76,11 +77,11 @@
 						</div>
 					</div>
 					<input type="text" placeholder="Message #game-chat" id="chatInput" maxlength="2000"/>
+					<i class="icofont-arrow-right" id="buttonSend"></i>
 				</div>
 				<div id="chatButtons">
-					<!-- <button id="buttonSettings">&#8997; Settings</button> -->
+					<button id="buttonLogOut"><i class="icofont-logout"></i> log out</button>
 					<button id="buttonMarble">!marble</button>
-					<button id="buttonSend">Send &#10173;</button>
 				</div>
 			</div>
 		</div>
