@@ -40,7 +40,7 @@ module.exports = function(Ammo, config) {
 		toggleGates(override) {
 			for (let gate of this.gates) {
 				let offset;
-				if (override === "close" || gate.state === "opened") {
+				if (override === "close" || (typeof override === "undefined" && gate.state === "opened")) {
 					gate.state = "closed";
 					offset = 0;
 				} else {
@@ -51,7 +51,7 @@ module.exports = function(Ammo, config) {
 				let origin = gate.rigidBody.getWorldTransform().getOrigin();
 
 				origin.setY(
-					gate.collider.position.y - offset
+					gate.transform.getOrigin().y() - offset
 				);
 				gate.rigidBody.activate();
 			}
@@ -131,7 +131,7 @@ module.exports = function(Ammo, config) {
 			let rigidBody = new Ammo.btRigidBody(rigidBodyInfo);
 
 			switch (collider.functionality) {
-			case "startGate":
+			case "startgate":
 			case "dynamic":
 				rigidBody.setCollisionFlags(2);
 				break;
@@ -145,7 +145,8 @@ module.exports = function(Ammo, config) {
 
 			return {
 				rigidBody,
-				collider
+				collider,
+				transform
 			};
 		},
 
@@ -158,7 +159,7 @@ module.exports = function(Ammo, config) {
 			clearInterval(_updateInterval);
 		},
 
-		addTerrainShape() {
+		addTerrainCollider(mapObj) {
 			function createTerrainShape() {
 				// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
 				let upAxis = 1;
@@ -211,33 +212,19 @@ module.exports = function(Ammo, config) {
 				return heightFieldShape;
 			}
 
-			// Load obj as heightfield
-			let OBJHeightfield = require("../model-import/obj-heightfield");
-			let fs = require("fs");
-			let file = fs.readFileSync(config.marbles.resources + config.marbles.mapRotation[0].name, "utf-8");
-			let mapObj = new OBJHeightfield(file); // X forward, Z up. Write normals & Objects as OBJ Objects.
-			mapObj.centerOrigin("xyz");
-
-			// Collision flags
-			// BODYFLAG_STATIC_OBJECT: 1,
-			// BODYFLAG_KINEMATIC_OBJECT: 2,
-			// BODYFLAG_NORESPONSE_OBJECT: 4,
-
-			/* Create the terrain body */
+			// Create the terrain body
 			let groundShape = createTerrainShape(mapObj);
 			let groundTransform = new Ammo.btTransform();
 			groundTransform.setIdentity();
-			// Shifts the terrain, since bullet re-centers it on its bounding box.
-			//groundTransform.setOrigin( new Ammo.btVector3( 0, ( mapObj.maxHeight + mapObj.minHeight ) / 2, 0 ) );
 			let groundMass = 0;
 			let groundLocalInertia = new Ammo.btVector3(0, 0, 0);
 			let groundMotionState = new Ammo.btDefaultMotionState(groundTransform);
 			let groundBody = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
-			groundBody.setCollisionFlags(1); // Set static
+
+			// Set static
+			groundBody.setCollisionFlags(1);
 
 			physicsWorld.addRigidBody(groundBody);
-
-			this.map = mapObj;
 		}
 	};
 };

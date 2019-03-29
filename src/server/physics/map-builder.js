@@ -71,6 +71,15 @@ module.exports = function(Ammo, world, map) {
 
 					break;
 				}
+
+				// Terrain, someday:
+
+				// // Load obj as heightfield
+				// let OBJHeightfield = require("../model-import/obj-heightfield");
+				// let fs = require("fs");
+				// let file = fs.readFileSync(config.marbles.resources + config.marbles.mapRotation[0].name, "utf-8");
+				// let mapObj = new OBJHeightfield(file); // X forward, Z up. Write normals & Objects as OBJ Objects.
+				// mapObj.centerOrigin("xyz");
 			}
 		}
 	});
