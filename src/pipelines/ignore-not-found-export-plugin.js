@@ -1,9 +1,9 @@
 // Source: https://github.com/TypeStrong/ts-loader/issues/653#issuecomment-444266993
 
-const ModuleDependencyWarning = require('webpack/lib/ModuleDependencyWarning');
+const ModuleDependencyWarning = require("webpack/lib/ModuleDependencyWarning");
 
 // ↓ Based on https://github.com/sindresorhus/escape-string-regexp
-const escapeStringForRegExp = string => string.replace(/[|\\{}()[\]^$+*?.]/g, '\\$&');
+const escapeStringForRegExp = string => string.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&");
 
 module.exports = class IgnoreNotFoundExportPlugin {
 	constructor(exportsToIgnore) {
@@ -12,8 +12,10 @@ module.exports = class IgnoreNotFoundExportPlugin {
 
 	getMessageRegExp() {
 		if (this.exportsToIgnore.length > 0) {
-			const exportsPattern = '(' + this.exportsToIgnore.map(escapeStringForRegExp).join('|') + ')';
-			return new RegExp( `export '${this.exportsToIgnore}'( \\(imported as '.*'\\))? was not found in`, );
+			const exportsPattern = `(${  this.exportsToIgnore.map(escapeStringForRegExp).join("|")  })`;
+			// Original checks for export, current implementation changed to checking where it tries to find it
+			//return new RegExp( `export '${this.exportsToIgnore}'( \\(imported as '.*'\\))? was not found in`, );
+			return new RegExp( `export '.*'( \\(imported as '.*'\\))? was not found in '${exportsPattern}'`, );
 		} else {
 			return /export '.*'( \(imported as '.*'\))? was not found in/;
 		}
@@ -21,20 +23,20 @@ module.exports = class IgnoreNotFoundExportPlugin {
 
 	apply(compiler) {
 		const messageRegExp = this.getMessageRegExp();
-		
+
 		const doneHook = stats => {
 			stats.compilation.warnings = stats.compilation.warnings.filter( warn => {
 				if ( warn instanceof ModuleDependencyWarning && messageRegExp.test(warn.message) ) {
 					return false;
 				}
-			return true;
+				return true;
 			}, );
 		};
 
 		if (compiler.hooks) {
-			compiler.hooks.done.tap('IgnoreNotFoundExportPlugin', doneHook);
+			compiler.hooks.done.tap("IgnoreNotFoundExportPlugin", doneHook);
 		} else {
-			compiler.plugin('done', doneHook);
+			compiler.plugin("done", doneHook);
 		}
-	} 
+	}
 };

@@ -21,7 +21,7 @@ module.exports = {
 		new webpack.ProvidePlugin({
 			THREE: "three"
 		}),
-		new IgnoreNotFoundExportPlugin()
+		new IgnoreNotFoundExportPlugin(["three"])
 	],
 	module: {
 		rules: [
