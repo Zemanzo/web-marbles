@@ -214,7 +214,7 @@ let projectTab = function() {
 				let worldObject = this.project.worldObjects[key];
 				for(let ent in this.project.prefabs[worldObject.prefab].entities) {
 					let entity = this.project.prefabs[worldObject.prefab].entities[ent];
-					if(entity.type !== "Collider") continue; // Check colliders only
+					if(entity.type !== "collider") continue; // Check colliders only
 					switch(entity.functionality) {
 					case "startarea":
 						startAreas++;
