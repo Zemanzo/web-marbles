@@ -79,12 +79,12 @@ let worldTab = function() {
 			this.onProjectLoad(projectTab.project);
 
 			// Change water level
-			document.getElementById("envWaterHeight").addEventListener("change", function() { worldTab.setWaterLevel( parseFloat(this.value) ); }, false);
-			document.getElementById("envWaterHeight").addEventListener("input", function() { worldTab.setWaterLevel( parseFloat(this.value) ); }, false);
+			document.getElementById("envWaterHeight").addEventListener("change", function() { worldTab.setWaterLevel( this.valueAsNumber ); }, false);
+			document.getElementById("envWaterHeight").addEventListener("input", function() { worldTab.setWaterLevel( this.valueAsNumber ); }, false);
 
 			// Change sun inclination
-			document.getElementById("envSunInclination").addEventListener("change", function() { worldTab.setSunInclination( parseFloat(this.value) ); }, false);
-			document.getElementById("envSunInclination").addEventListener("input", function() { worldTab.setSunInclination( parseFloat(this.value) ); }, false);
+			document.getElementById("envSunInclination").addEventListener("change", function() { worldTab.setSunInclination( this.valueAsNumber ); }, false);
+			document.getElementById("envSunInclination").addEventListener("input", function() { worldTab.setSunInclination( this.valueAsNumber ); }, false);
 
 			// addWorldObject event
 			let addWorldObject = function() {

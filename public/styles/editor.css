@@ -513,25 +513,62 @@ body {
 		text-shadow: 0px 1px 1px #111;
 	}
 
-/* PORTATION */
-#portation {
+/* PROJECT */
+#project {
 	padding-top: 16px;
 }
 
-	#portation > h2 {
-		text-align: center;
-		color: #999;
+	#project > h4 {
+		font-family: "Do Hyeon", monospace;
+		letter-spacing: 0.05em;
+		font-size: 1.1em;
+		text-transform: uppercase;
 	}
 
-	#portation > h2 + p {
+	#project .publish {
+		font-size: 2.3em;
+		justify-content: space-around;
+		align-items: center;
 		text-align: center;
-		color: #777;
+		color: var(--theme-color-dark);
+		margin: 12px;
+		text-transform: uppercase;
+		cursor: pointer;
+		padding: 4px 8px;
+	}
+		#project .publish i {
+			font-size: 1.3em;
+		}
+		#project .publish:hover {
+			color: var(--theme-color);
+		}
+		#project .publish:disabled {
+			color: #666;
+			cursor: not-allowed;
+			text-decoration: none;
+		}
+
+	#project table.buttons td {
+		text-align: center;
 	}
 
-	#portation table td {
-		text-align: center;
+	#project table.checklist td {
+		text-align: left;
+		padding: 0px;
 	}
 
+	#project table.checklist td {
+		font-size: 0.95em;
+		font-weight: 600;
+		color: #666;
+	}
+		#project table.checklist td.fail {
+			color: #d00;
+		}
+
+		#project table.checklist td.success {
+			color: #2c2;
+		}
 
 /* Other things */
 

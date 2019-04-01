@@ -41,7 +41,7 @@
 				<div class="selected">MODELS</div>
 				<div>PREFABS</div>
 				<div>WORLD</div>
-				<div>PORTATION</div>
+				<div>PROJECT</div>
 				<div>SETTINGS</div>
 			</div>
 
@@ -51,11 +51,11 @@
 					<h3>Models</h3>
 					<div id="models">
 						<div class="model" id="modelTemplate">
-							<div class="name">tree1a_lod0.gltf</div>
+							<div class="name">template.gltf</div>
 							<button class="delete" title="Delete model"><i class="icofont-ui-delete"></i></button>
 						</div>
 					</div>
-					<div id="addModel" class="add" onclick="document.getElementById('addModelFile').click();">
+					<div id="addModel" class="add">
 						<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
 						<i class="icofont-plus"></i>
 						<span>Add model(s)</span>
@@ -267,6 +267,26 @@
 						</tbody>
 					</table>
 
+				</div>
+
+				<div id="project">
+					<h3>EDITOR PROJECT</h3>
+					<p>With this you can save your project and continue with it later.</p>
+					<table class="buttons">
+						<tbody>
+							<tr>
+								<td>
+									<button id="exportProject" value="" />Save Project</button>
+								</td>
+								<td>
+									<button id="importProject">
+										<input type="file" class="addFileInput" id="importProjectFile" accept=".mmb" />
+										<span>Load Project</span>
+									</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 
 					<h3>Gameplay parameters</h3>
 					<table>
@@ -276,7 +296,7 @@
 									Map name
 								</td>
 								<td>
-									<input type="text" maxlength="40" id="paramMapName"/>
+									<input type="text" maxlength="40" placeholder="New map" id="paramMapName"/>
 								</td>
 							</tr>
 							<tr>
@@ -284,19 +304,15 @@
 									Author name
 								</td>
 								<td>
-									<input type="text" maxlength="40" id="paramAuthorName"/>
+									<input type="text" maxlength="40" placeholder="Unknown" id="paramAuthorName"/>
 								</td>
 							</tr>
-						</tbody>
-					</table>
-					<table>
-						<tbody>
 							<tr>
 								<td>
 									Default entering period
 								</td>
 								<td>
-									<input type="number" value="40" id="paramEnterPeriod" step="1"/>
+									<input type="number" value="40" id="paramEnterPeriod" step="1" min="5" required/>
 								</td>
 							</tr>
 							<tr>
@@ -304,53 +320,58 @@
 									Maximum round length
 								</td>
 								<td>
-									<input type="number" value="160" id="paramMaxRoundLength" step="1"/>
+									<input type="number" value="160" id="paramMaxRoundLength" step="1" min="5" required/>
 								</td>
 							</tr>
 							<tr>
 								<td>
-									Maximum wait after first marble finish
+									Time until DNF after first finish
 								</td>
 								<td>
-									<input type="number" value="40" id="paramWaitAfterFinish" step="1"/>
+									<input type="number" value="40" id="paramWaitAfterFinish" step="1" min="5" required/>
 								</td>
 							</tr>
 						</tbody>
 					</table>
 
-				</div>
-
-				<div id="portation">
-					<h2 id="mapTitle">
-						UNNAMED MAP
-					</h2>
-					<p id="mapAuthor">
-						by Zemanzo
-					</p>
-					<h3>EDITOR PROJECT</h3>
-					<p>With this you can save your project and continue with it later.</p>
-					<table>
-						<tbody>
-							<tr>
-								<td>
-									<button id="importProject" onclick="document.getElementById('importProjectFile').click();">
-										<input type="file" class="addFileInput" id="importProjectFile" accept=".mmb" />
-										<span>Load Project</span>
-									</button>
-								</td>
-								<td>
-									<button id="exportProject" value="" />Save Project</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
 					<h3>PUBLISH</h3>
 					<p>This will generate a file that you can deploy on the web-marbles server.</p>
-					<table>
+					<table class="buttons">
 						<tbody>
 							<tr>
 								<td>
-									<button id="exportPublishBinary" value="" />Download binary</button>
+									<button class="publish" disabled id="exportPublish" value="" />Publish Level</button>
+								</td>
+							</tr>
+						</tbody>
+					</table>
+
+					<h4>Level publishing checklist</h4>
+					<table class="checklist">
+						<tbody>
+							<tr>
+								<td id="checkStartArea">
+									✘ The level needs a starting area - but the script failed to check.
+								</td>
+							</tr>
+							<tr>
+								<td id="checkStartGate">
+									✘ The level needs a starting gate - but the script failed to check.
+								</td>
+							</tr>
+							<tr>
+								<td id="checkFinishLine">
+									✘ The level needs a finish line - but the script failed to check.
+								</td>
+							</tr>
+							<tr>
+								<td id="checkGameplayParams">
+									✘ The level needs a valid gameplay parameters - but the script failed to check.
+								</td>
+							</tr>
+							<tr>
+								<td>
+									? The level has not been tested... (Coming soon!)
 								</td>
 							</tr>
 						</tbody>

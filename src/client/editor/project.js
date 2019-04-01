@@ -74,6 +74,16 @@ Project.prototype.validateProject = function() {
 let projectTab = function() {
 	let _worker = new SerializeWorker();
 	let _exportActive = false;
+	let _elements = {
+		exportPublish: null,
+		startArea: null,
+		startGate: null,
+		finishLine: null,
+		gameplayParams: null,
+		paramEnterPeriod: null,
+		paramMaxRoundLength: null,
+		paramWaitAfterFinish: null
+	};
 
 	_worker.onmessage = function(message) {
 		switch(message.data.type) {
@@ -118,7 +128,19 @@ let projectTab = function() {
 		initialize: function() {
 			this.project = new Project();
 
+			// Setting elements
+			_elements.exportPublish = document.getElementById("exportPublish");
+			_elements.startArea = document.getElementById("checkStartArea");
+			_elements.startGate = document.getElementById("checkStartGate");
+			_elements.finishLine = document.getElementById("checkFinishLine");
+			_elements.gameplayParams = document.getElementById("checkGameplayParams");
+
+			_elements.paramEnterPeriod = document.getElementById("paramEnterPeriod");
+			_elements.paramMaxRoundLength = document.getElementById("paramMaxRoundLength");
+			_elements.paramWaitAfterFinish = document.getElementById("paramWaitAfterFinish");
+
 			// Project button events
+			document.getElementById("importProject").addEventListener("click", function() {document.getElementById("importProjectFile").click();}, false);
 			document.getElementById("importProjectFile").addEventListener("change", function() {
 				let file = this.files[0];
 				file.reader = new FileReader();
@@ -135,11 +157,9 @@ let projectTab = function() {
 			}, false);
 			document.getElementById("exportProject").addEventListener("click", function() {projectTab.exportProject(false, true);}, false);
 
-			// Publish button events
-			document.getElementById("exportPublishBinary").addEventListener("click", function() {projectTab.exportProject(true, true);}, false);
+			// Publish button event
+			_elements.exportPublish.addEventListener("click", function() {projectTab.exportProject(true, true);}, false);
 
-
-			// The following events aren't on the project tab. Some will be, or will be moved elsewhere eventually
 			// Change map name
 			document.getElementById("paramMapName").addEventListener("change", function() { projectTab.setMapName( this.value ); }, false);
 			document.getElementById("paramMapName").addEventListener("input", function() { projectTab.setMapName( this.value ); }, false);
@@ -149,16 +169,16 @@ let projectTab = function() {
 			document.getElementById("paramAuthorName").addEventListener("input", function() { projectTab.setAuthorName( this.value ); }, false);
 
 			// Change default enter period
-			document.getElementById("paramEnterPeriod").addEventListener("change", function() { projectTab.setEnterPeriod( parseInt(this.value) ); }, false);
-			document.getElementById("paramEnterPeriod").addEventListener("input", function() { projectTab.setEnterPeriod( parseInt(this.value) ); }, false);
+			_elements.paramEnterPeriod.addEventListener("change", function() { projectTab.setEnterPeriod( this.valueAsNumber ); }, false);
+			_elements.paramEnterPeriod.addEventListener("input", function() { projectTab.setEnterPeriod( this.valueAsNumber ); }, false);
 
 			// Change maximum round length
-			document.getElementById("paramMaxRoundLength").addEventListener("change", function() { projectTab.setMaxRoundLength( parseInt(this.value) ); }, false);
-			document.getElementById("paramMaxRoundLength").addEventListener("input", function() { projectTab.setMaxRoundLength( parseInt(this.value) ); }, false);
+			_elements.paramMaxRoundLength.addEventListener("change", function() { projectTab.setMaxRoundLength( this.valueAsNumber ); }, false);
+			_elements.paramMaxRoundLength.addEventListener("input", function() { projectTab.setMaxRoundLength( this.valueAsNumber ); }, false);
 
 			// Change time until DNF
-			document.getElementById("paramWaitAfterFinish").addEventListener("change", function() { projectTab.setWaitAfterFinish( parseInt(this.value) ); }, false);
-			document.getElementById("paramWaitAfterFinish").addEventListener("input", function() { projectTab.setWaitAfterFinish( parseInt(this.value) ); }, false);
+			_elements.paramWaitAfterFinish.addEventListener("change", function() { projectTab.setWaitAfterFinish( this.valueAsNumber ); }, false);
+			_elements.paramWaitAfterFinish.addEventListener("input", function() { projectTab.setWaitAfterFinish( this.valueAsNumber ); }, false);
 		},
 
 		setMapName: function(name) {
@@ -173,14 +193,85 @@ let projectTab = function() {
 
 		setEnterPeriod: function(seconds) {
 			this.project.gameplay.defaultEnterPeriod = seconds;
+			this.checkLevelPublish();
 		},
 
 		setMaxRoundLength: function(seconds) {
 			this.project.gameplay.roundLength = seconds;
+			this.checkLevelPublish();
 		},
 
 		setWaitAfterFinish: function(seconds) {
 			this.project.gameplay.timeUntilDnf = seconds;
+			this.checkLevelPublish();
+		},
+
+		checkLevelPublish() {
+			let isLevelValid = true;
+			let startAreas = 0;
+			let startGates = 0;
+			let finishLines = 0;
+			for(let key in this.project.worldObjects) {
+				let worldObject = this.project.worldObjects[key];
+				for(let ent in this.project.prefabs[worldObject.prefab].entities) {
+					let entity = this.project.prefabs[worldObject.prefab].entities[ent];
+					if(entity.type !== "collider") continue; // Check colliders only
+					switch(entity.functionality) {
+					case "startarea":
+						startAreas++;
+						break;
+					case "startgate":
+						startGates++;
+						break;
+					case "endarea":
+						finishLines++;
+						break;
+					default:
+						break;
+					}
+				}
+			}
+
+			if(startAreas === 0) {
+				isLevelValid = false;
+				_elements.startArea.className = "fail";
+				_elements.startArea.textContent = "✘ The level needs a starting area.";
+			} else {
+				_elements.startArea.className = "success";
+				_elements.startArea.textContent = `✔ The level has ${startAreas === 1 ? "a" : startAreas} starting area${startAreas === 1 ? "" : "s"}.`;
+			}
+			if(startGates === 0) {
+				isLevelValid = false;
+				_elements.startGate.className = "fail";
+				_elements.startGate.textContent = "✘ The level needs a starting gate.";
+			} else {
+				_elements.startGate.className = "success";
+				_elements.startGate.textContent = `✔ The level has ${startGates === 1 ? "a" : startGates} starting gate${startGates === 1 ? "" : "s"}.`;
+			}
+			if(finishLines === 0) {
+				isLevelValid = false;
+				_elements.finishLine.className = "fail";
+				_elements.finishLine.textContent = "✘ The level needs a finish line.";
+			} else {
+				_elements.finishLine.className = "success";
+				_elements.finishLine.textContent = `✔ The level has ${finishLines === 1 ? "a" : finishLines} finish line${finishLines === 1 ? "" : "s"}.`;
+			}
+
+			// Check gameplay parameters. Validity is based on what is considered valid in the HTML
+			let validGameplayParams = _elements.paramEnterPeriod.checkValidity()
+									&& _elements.paramMaxRoundLength.checkValidity()
+									&& _elements.paramWaitAfterFinish.checkValidity();
+
+			if(!validGameplayParams) {
+				isLevelValid = false;
+				_elements.gameplayParams.className = "fail";
+				_elements.gameplayParams.textContent = "✘ The level needs valid gameplay parameters.";
+			} else {
+				_elements.gameplayParams.className = "success";
+				_elements.gameplayParams.textContent = "✔ The level has valid gameplay parameters.";
+			}
+
+			_elements.exportPublish.disabled = !isLevelValid;
 		},
 
 		exportProject: function(exportAsLevel, useCompression) {
@@ -282,6 +373,7 @@ let projectTab = function() {
 				} else {
 					editorLog("Project loaded successfully!", "success");
 				}
+				this.checkLevelPublish();
 			}).catch( (error) => {
 				editorLog("Project failed to load. Check the console for details.", "error");
 				console.error(error);
@@ -290,6 +382,7 @@ let projectTab = function() {
 
 		onTabActive: function() {
 			worldTab.onTabActive();
+			this.checkLevelPublish();
 		},
 
 		onTabInactive: function() {
