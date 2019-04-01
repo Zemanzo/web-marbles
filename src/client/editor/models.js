@@ -64,6 +64,7 @@ let modelsTab = function() {
 			this.group.visible = false;
 
 			// Add models button
+			document.getElementById("addModel").addEventListener("click", function() {document.getElementById("addModelFile").click();}, false);
 			document.getElementById("addModelFile").addEventListener("change", function() {
 				Array.from(this.files).forEach(function(file) {
 					// If a model with this file name already exists, don't load it

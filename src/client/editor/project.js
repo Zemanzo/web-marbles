@@ -140,6 +140,7 @@ let projectTab = function() {
 			_elements.paramWaitAfterFinish = document.getElementById("paramWaitAfterFinish");
 
 			// Project button events
+			document.getElementById("importProject").addEventListener("click", function() {document.getElementById("importProjectFile").click();}, false);
 			document.getElementById("importProjectFile").addEventListener("change", function() {
 				let file = this.files[0];
 				file.reader = new FileReader();
@@ -168,16 +169,16 @@ let projectTab = function() {
 			document.getElementById("paramAuthorName").addEventListener("input", function() { projectTab.setAuthorName( this.value ); }, false);
 
 			// Change default enter period
-			_elements.paramEnterPeriod.addEventListener("change", function() { projectTab.setEnterPeriod( parseInt(this.value) ); }, false);
-			_elements.paramEnterPeriod.addEventListener("input", function() { projectTab.setEnterPeriod( parseInt(this.value) ); }, false);
+			_elements.paramEnterPeriod.addEventListener("change", function() { projectTab.setEnterPeriod( this.valueAsNumber ); }, false);
+			_elements.paramEnterPeriod.addEventListener("input", function() { projectTab.setEnterPeriod( this.valueAsNumber ); }, false);
 
 			// Change maximum round length
-			_elements.paramMaxRoundLength.addEventListener("change", function() { projectTab.setMaxRoundLength( parseInt(this.value) ); }, false);
-			_elements.paramMaxRoundLength.addEventListener("input", function() { projectTab.setMaxRoundLength( parseInt(this.value) ); }, false);
+			_elements.paramMaxRoundLength.addEventListener("change", function() { projectTab.setMaxRoundLength( this.valueAsNumber ); }, false);
+			_elements.paramMaxRoundLength.addEventListener("input", function() { projectTab.setMaxRoundLength( this.valueAsNumber ); }, false);
 
 			// Change time until DNF
-			_elements.paramWaitAfterFinish.addEventListener("change", function() { projectTab.setWaitAfterFinish( parseInt(this.value) ); }, false);
-			_elements.paramWaitAfterFinish.addEventListener("input", function() { projectTab.setWaitAfterFinish( parseInt(this.value) ); }, false);
+			_elements.paramWaitAfterFinish.addEventListener("change", function() { projectTab.setWaitAfterFinish( this.valueAsNumber ); }, false);
+			_elements.paramWaitAfterFinish.addEventListener("input", function() { projectTab.setWaitAfterFinish( this.valueAsNumber ); }, false);
 		},
 
 		setMapName: function(name) {
@@ -257,7 +258,7 @@ let projectTab = function() {
 			}
 
 			// Check gameplay parameters. Validity is based on what is considered valid in the HTML
-			let validGameplayParams = _elements.paramWaitAfterFinish.checkValidity()
+			let validGameplayParams = _elements.paramEnterPeriod.checkValidity()
 									&& _elements.paramMaxRoundLength.checkValidity()
 									&& _elements.paramWaitAfterFinish.checkValidity();
 

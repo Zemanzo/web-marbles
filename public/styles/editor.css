@@ -534,6 +534,7 @@ body {
 		margin: 12px;
 		text-transform: uppercase;
 		cursor: pointer;
+		padding: 4px 8px;
 	}
 		#project .publish i {
 			font-size: 1.3em;
