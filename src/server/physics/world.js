@@ -87,7 +87,7 @@ module.exports = function(Ammo, config) {
 			case "cone":
 				shape = new Ammo.btConeShape(
 					collider.colliderData.radius,
-					collider.colliderData.height * .5
+					collider.colliderData.height
 				);
 				break;
 			case "cylinder":

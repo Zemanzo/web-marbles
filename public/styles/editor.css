@@ -304,35 +304,9 @@ body {
 		margin: 0px 4px;
 	}
 
-/* WORLD */
-
-#worldAddPrefab {
-	display: flex;
-	justify-content: space-around;
-}
-
-	#worldPrefabList {
-		width: 190px;
-	}
-
-	#worldAddPrefabButton {
-		flex: 1;
-		font-size: 1.3em;
-		margin: 0px;
-	}
-
-	#worldPrefabList:disabled ~ #worldAddPrefabButton {
-		color: #666;
-		cursor: not-allowed;
-	}
-
-	#worldPrefabList:disabled ~ #worldAddPrefabButton:hover span {
-		text-decoration: none;
-	}
-
 /* INSPECTOR */
 #inspector {
-	height: 192px;
+	max-height: 192px;
 	overflow-y: auto;
 	transition: transform .4s;
 }
@@ -442,14 +416,18 @@ body {
 
 /* WORLD */
 #world {
-	padding-top: 170px; /* For the inspector */
+	padding-top: 120px; /* For the inspector */
+	display: flex;
+	flex-direction: column;
 }
 
 	#worldHierarchy {
 		background: #111;
 		border: 3px solid #262626;
 		padding: 2px;
-
+		overflow-y: auto;
+		flex:1;
+		min-height: 100px;
 	}
 
 	#worldObjectTemplate {
@@ -512,6 +490,34 @@ body {
 		font-family: 'BenchNine', sans-serif;
 		text-shadow: 0px 1px 1px #111;
 	}
+
+#worldAddPrefab {
+	display: flex;
+	justify-content: space-around;
+}
+
+	#worldPrefabList {
+		width: 180px;
+	}
+
+	#worldAddPrefabButton {
+		flex: 1;
+		font-size: 1.3em;
+		margin: 0px;
+	}
+
+	#worldPrefabList:disabled ~ #worldAddPrefabButton {
+		color: #666;
+		cursor: not-allowed;
+	}
+
+	#worldPrefabList:disabled ~ #worldAddPrefabButton:hover span {
+		text-decoration: none;
+	}
+
+#worldMeta {
+	overflow-y: auto;
+}
 
 /* PROJECT */
 #project {
