@@ -41,15 +41,15 @@ const setupGameplay = function(db, physics, config, game, maps) {
 					});
 				}
 
-				maps.currentMapName.then((name) => {
+				Promise.all([maps.currentMapName, maps.currentMapData]).then((values) => {
 					let intialData = {
 						currentGameState: game.currentGameState,
 						roundStartTime: game.startTime,
-						maxRoundLength: config.marbles.rules.maxRoundLength,
+						maxRoundLength: values[1].gameplay.roundLength,
 						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
-						enterPeriodLength: config.marbles.rules.enterPeriod,
+						enterPeriodLength: values[1].gameplay.defaultEnterPeriod,
 
-						mapId: name,
+						mapId: values[0],
 
 						initialMarbleData
 					};
