@@ -19,7 +19,7 @@ before_install:
 - cp src/server/config.user.example.js src/server/config.user.js
 - cp src/client/config.user.example.js src/client/config.user.js
 install:
-- yarn
+- yarn --frozen-lockfile --non-interactive
 - yarn run build
 before_script:
 - nohup yarn start &
