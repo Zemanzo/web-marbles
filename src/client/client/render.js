@@ -6,7 +6,7 @@ import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/loaders/GLTFLoader";
 import "three/examples/js/nodes/THREE.Nodes";
 import * as Stats from "stats-js";
-import * as pako from "../../../node_modules/pako/dist/pako";
+import * as pako from "pako";
 import * as config from "../config";
 import { net as networking } from "./networking";
 import { CameraFlyControls } from "../cameras";
@@ -295,8 +295,6 @@ let addMap = function(mapName) {
 				mapData = new TextDecoder("utf-8").decode(mapData);
 				mapData = JSON.parse(mapData);
 
-				console.log(mapData);
-
 				// Set water height
 				water.position.y = mapData.world.waterLevel;
 
@@ -334,7 +332,6 @@ let addMap = function(mapName) {
 
 							for (let entity of Object.values(mapData.prefabs[prefabUuid].entities)) {
 								if (entity.type === "object" && entity.model) {
-									console.log(modelPromises, entity.model);
 									modelPromises[entity.model].then((scene) => {
 										let clone = scene.clone();
 
@@ -352,7 +349,6 @@ let addMap = function(mapName) {
 				}).then(() => {
 					Promise.all(Object.values(prefabPromises)).then(() => {
 						for (let object of Object.values(mapData.worldObjects)) {
-							console.log(prefabPromises, object.prefab);
 							prefabPromises[object.prefab].then((prefabGroup) => {
 								let clone = prefabGroup.clone();
 								clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));

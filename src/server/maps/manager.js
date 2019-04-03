@@ -11,7 +11,7 @@ function retrieveMaps() {
 			function(error, files) {
 				if (files && Array.isArray(files)) {
 					// Only read files that have the correct extension
-					let mapFiles = files.filter(file => file.endsWith(".mmp") || file.endsWith(".mmb"));
+					let mapFiles = files.filter(file => file.endsWith(".mmb"));
 					if (mapFiles.length > 0) {
 						return resolve(mapFiles);
 					}

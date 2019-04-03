@@ -32,29 +32,35 @@ module.exports = function(Ammo, config) {
 	_startUpdateInterval();
 
 	return {
-		map: undefined,
+		map: null,
 		physicsWorld,
-		updateInterval: undefined,
+		updateInterval: null,
 		gates: [],
+		startAreas: [],
+		endAreas: [],
 
-		toggleGates(override) {
+		setAllGatesState(newGateState) {
 			for (let gate of this.gates) {
-				let offset;
-				if (override === "close" || (typeof override === "undefined" && gate.state === "opened")) {
-					gate.state = "closed";
-					offset = 0;
-				} else {
-					gate.state = "opened";
-					offset = (gate.collider.colliderData.height + 2);
-				}
-
-				let origin = gate.rigidBody.getWorldTransform().getOrigin();
-
-				origin.setY(
-					gate.transform.getOrigin().y() - offset
-				);
-				gate.rigidBody.activate();
+				this.setGateState(gate, newGateState);
 			}
+		},
+
+		setGateState(gate, newGateState) {
+			let offset;
+			if (newGateState === "close") {
+				gate.state = "closed";
+				offset = 0;
+			} else {
+				gate.state = "opened";
+				offset = (gate.collider.colliderData.height + 2);
+			}
+
+			let origin = gate.rigidBody.getWorldTransform().getOrigin();
+
+			origin.setY(
+				gate.transform.getOrigin().y() - offset
+			);
+			gate.rigidBody.activate();
 		},
 
 		addStartGate(collider, transform) {

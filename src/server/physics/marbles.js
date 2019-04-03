@@ -1,12 +1,12 @@
-module.exports = function(Ammo, world, mapBuilder) {
+module.exports = function(Ammo, world) {
 	let _marblesTransformAux = new Ammo.btTransform(),
-		_pos = undefined,
-		_rot = undefined,
+		_pos = null,
+		_rot = null,
 		_id = 0,
 		_finishedMarbles = [];
 
 	let _randomPositionInStartAreas = function() {
-		let startAreas = mapBuilder.getStartAreas();
+		let startAreas = world.startAreas;
 		let area = startAreas[Math.floor(startAreas.length * Math.random())];
 
 		let transform = new Ammo.btTransform();

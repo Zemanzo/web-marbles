@@ -16,7 +16,6 @@ let game = function() {
 
 	maps.currentMapData.then((map) => {
 		_gameplayParameters = map.gameplay;
-		console.log(map.gameplay);
 	});
 
 	let _checkFinished = function() {
@@ -148,7 +147,7 @@ let game = function() {
 				this.startTime = undefined;
 
 				// Close the gate
-				physics.world.toggleGates("close");
+				physics.world.setAllGatesState("close");
 
 				// Remove all marbles
 				physics.marbles.destroyAllMarbles();
@@ -177,7 +176,7 @@ let game = function() {
 
 					this.startTime = Date.now();
 
-					physics.world.toggleGates("open");
+					physics.world.setAllGatesState("open");
 
 					// Add bot marble to ensure physics not freezing
 					this.spawnMarble("Nightbot", "#000000");
