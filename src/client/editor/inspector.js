@@ -101,9 +101,11 @@ let inspector = function() {
 					inspector.selected.setFunctionality(this.value);
 
 					if(this.value === "startarea") {
-						inspector.elements.shape.value = "box";
 						inspector.elements.shape.disabled = true;
-						inspectorChangeShape();
+						if(inspector.selected.colliderData.shape !== "box") {
+							inspector.elements.shape.value = "box";
+							inspectorChangeShape();
+						}
 					} else {
 						inspector.elements.shape.disabled = false;
 					}
