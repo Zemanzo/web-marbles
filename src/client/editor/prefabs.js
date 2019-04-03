@@ -291,6 +291,7 @@ function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "object", uuid, parent);
 	this.model = "null"; // Note: HAS to be a string for inspector purposes!
 	this.sceneObject = defaultModel.clone();
+	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
 
@@ -317,10 +318,6 @@ PrefabObject.prototype.setModel = function(modelName) {
 		delete modelsTab.models[this.model].prefabEntities[this.uuid];
 	}
 
-	let position = this.sceneObject.position;
-	let rotation = this.sceneObject.rotation;
-	let scale = this.sceneObject.scale;
-
 	let model = null;
 
 	// For null or non-existing models, use default
@@ -342,6 +339,10 @@ PrefabObject.prototype.setModel = function(modelName) {
 		this.project.model = null;
 		model = defaultModel;
 	}
+
+	let position = this.sceneObject.position;
+	let rotation = this.sceneObject.rotation;
+	let scale = this.sceneObject.scale;
 
 	// Set new model
 	this.sceneObject = model.clone();
@@ -365,6 +366,7 @@ function PrefabCollider(uuid, parent) {
 	};
 	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
+	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	if(this.project.scale) delete this.project.scale;
 	this.parent.group.add(this.sceneObject);

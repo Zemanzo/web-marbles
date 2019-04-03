@@ -163,7 +163,7 @@ let inspector = function() {
 					x * Math.PI / 180,
 					y * Math.PI / 180,
 					z * Math.PI / 180,
-					"XYZ"));
+					"YXZ"));
 			};
 
 			// Attach event listeners to inputs and labels
