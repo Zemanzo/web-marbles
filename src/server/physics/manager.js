@@ -1,15 +1,13 @@
 const Ammo = require("ammo")();
 const config = require("../config");
+const maps = require("../maps/manager");
 
 const world = require("./world")(Ammo, config);
-const marbles = require("./marbles")(Ammo, world, config);
+const mapBuilder = require("./map-builder")(Ammo, world, maps);
+const marbles = require("./marbles")(Ammo, world, mapBuilder);
 
 module.exports = {
-	world: world.physics,
-	map: world.map,
-	gateBody: world.gateBody,
-	openGate: world.openGate,
-	closeGate: world.closeGate,
-	stopUpdateInterval: world.stopUpdateInterval,
+	Ammo,
+	world,
 	marbles
 };

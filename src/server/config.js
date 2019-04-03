@@ -48,6 +48,10 @@ config.marbles.rules.enterPeriod = 40; // Time in seconds
 config.marbles.rules.maxRoundLength = 160; // Time in seconds
 config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 
+/* Maps */
+config.maps = {};
+config.maps.folderPath = `${__dirname}/../../public/resources/maps`;
+
 /* Database */
 config.database = {};
 config.database.path = "web-marbles.db3";

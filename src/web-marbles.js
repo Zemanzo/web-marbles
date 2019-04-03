@@ -13,6 +13,9 @@ db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
 
+// Fetch maps & build primary map
+const maps = require("./server/maps/manager");
+
 // Set up physics world
 const physics = require("./server/physics/manager");
 
@@ -21,7 +24,7 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, physics, config, game);
+const socketGameplay = sockets.setupGameplay(db, physics, config, game, maps);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
@@ -256,7 +259,9 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-game.end();
+maps.currentMapData.then(() => {
+	game.end();
+});
 
 // Graceful shutdown
 process.on("exit", shutdown);
@@ -306,7 +311,7 @@ function shutdown() {
 		log.warn("DATABASE connection closed");
 
 		// Stopped physics simulation
-		physics.stopUpdateInterval();
+		physics.world.stopUpdateInterval();
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets

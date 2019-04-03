@@ -1,6 +1,7 @@
 const log = require("../log");
 const config = require("./config");
 const physics = require("./physics/manager");
+const maps = require("./maps/manager");
 
 let game = function() {
 	let _startDelay = 2825, // length in ms of audio
@@ -11,40 +12,45 @@ let game = function() {
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
 		_checkFinishedInterval = undefined,
+		_gameplayParameters = null;
 
-		_checkFinished = function() {
-			let finishTime = Date.now();
+	maps.currentMapData.then((map) => {
+		_gameplayParameters = map.gameplay;
+	});
 
-			// Request newly finished marbles since the last check
-			let finished = physics.marbles.getFinishedMarbles();
+	let _checkFinished = function() {
+		let finishTime = Date.now();
 
-			// For each finished marble, set their rank and final time
-			for (let i = 0; i < finished.length; i++) {
-				let rank = physics.marbles.list[finished[i]].meta.rank = _marblesFinished++,
-					time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
+		// Request newly finished marbles since the last check
+		let finished = physics.marbles.getFinishedMarbles();
 
-				// Send client info on finished marble
-				_socketManager.emit(JSON.stringify({
-					id: finished[i],
-					rank,
-					time
-				}), "finished_marble");
+		// For each finished marble, set their rank and final time
+		for (let i = 0; i < finished.length; i++) {
+			let rank = physics.marbles.list[finished[i]].meta.rank = _marblesFinished++,
+				time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
 
-				// If this is the first marble that finished, set a timeout to end the game soon
-				if (_firstMarbleHasFinished === false) {
-					_firstMarbleHasFinished = true;
-					this.gameplayFinishTimeout = _setTrackableTimeout(
-						this.end.bind(this),
-						config.marbles.rules.waitAfterFinish * 1000
-					);
-				}
+			// Send client info on finished marble
+			_socketManager.emit(JSON.stringify({
+				id: finished[i],
+				rank,
+				time
+			}), "finished_marble");
 
-				// If all marbles have finished, end the game
-				if (_marblesFinished === physics.marbles.list.length) {
-					setTimeout(this.end.bind(this), 2000);
-				}
+			// If this is the first marble that finished, set a timeout to end the game soon
+			if (_firstMarbleHasFinished === false) {
+				_firstMarbleHasFinished = true;
+				this.gameplayFinishTimeout = _setTrackableTimeout(
+					this.end.bind(this),
+					_gameplayParameters.timeUntilDnf * 1000
+				);
 			}
-		};
+
+			// If all marbles have finished, end the game
+			if (_marblesFinished === physics.marbles.list.length) {
+				setTimeout(this.end.bind(this), 2000);
+			}
+		}
+	};
 
 	return {
 		currentGameState: "started", // "waiting", "enter", "starting", "started"
@@ -84,7 +90,7 @@ let game = function() {
 					clearTimeout(this.enterTimeout);
 					this.enterTimeout = _setTrackableTimeout(
 						this.start.bind(this),
-						config.marbles.rules.enterPeriod * 1000
+						_gameplayParameters.defaultEnterPeriod * 1000
 					);
 				}
 			}
@@ -141,7 +147,7 @@ let game = function() {
 				this.startTime = undefined;
 
 				// Close the gate
-				physics.closeGate();
+				physics.world.setAllGatesState("close");
 
 				// Remove all marbles
 				physics.marbles.destroyAllMarbles();
@@ -170,7 +176,7 @@ let game = function() {
 
 					this.startTime = Date.now();
 
-					physics.openGate();
+					physics.world.setAllGatesState("open");
 
 					// Add bot marble to ensure physics not freezing
 					this.spawnMarble("Nightbot", "#000000");
@@ -181,7 +187,7 @@ let game = function() {
 				// Set end of game timer
 				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					config.marbles.rules.maxRoundLength * 1000
+					_gameplayParameters.roundLength * 1000
 				);
 
 				return true;
@@ -191,7 +197,7 @@ let game = function() {
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
+			return _getTimeout(this.enterTimeout) || _gameplayParameters.defaultEnterPeriod;
 		},
 
 		setSocketManager(socketManager) {

@@ -32,8 +32,8 @@ function WorldObject(uuid, prefab, project) {
 	}, false);
 
 	// Add to DOM
-	let hierarchy = document.getElementById("worldHierarchy");
-	this.element = hierarchy.insertBefore(this.element, document.getElementById("worldObjectTemplate"));
+	let objectList = document.getElementById("worldObjectList");
+	this.element = objectList.insertBefore(this.element, document.getElementById("worldObjectTemplate"));
 
 	// Add the worldObject to prefab's instance list
 	this.prefab.worldInstances[uuid] = this;

@@ -304,37 +304,11 @@ body {
 		margin: 0px 4px;
 	}
 
-/* WORLD */
-
-#worldAddPrefab {
-	display: flex;
-	justify-content: space-around;
-}
-
-	#worldPrefabList {
-		width: 190px;
-	}
-
-	#worldAddPrefabButton {
-		flex: 1;
-		font-size: 1.3em;
-		margin: 0px;
-	}
-
-	#worldPrefabList:disabled ~ #worldAddPrefabButton {
-		color: #666;
-		cursor: not-allowed;
-	}
-
-	#worldPrefabList:disabled ~ #worldAddPrefabButton:hover span {
-		text-decoration: none;
-	}
-
 /* INSPECTOR */
 #inspector {
-	height: 192px;
+	max-height: 192px;
 	overflow-y: auto;
-	transition: transform .4s;
+	transition: transform .4s, min-height .4s;
 }
 
 #inspector.noSelection {
@@ -425,7 +399,7 @@ body {
 	height: 90px;
 	font-family: monospace;
 	font-size: .9em;
-	overflow-y: auto; /* fuck u */
+	overflow-y: auto; /* no need to be rude */
 }
 
 #log .error {
@@ -442,76 +416,115 @@ body {
 
 /* WORLD */
 #world {
-	padding-top: 170px; /* For the inspector */
+	padding-top: 120px; /* For the inspector */
+	display: flex;
+	flex-direction: column;
 }
 
 	#worldHierarchy {
 		background: #111;
 		border: 3px solid #262626;
-		padding: 2px;
-
-	}
-
-	#worldObjectTemplate {
-		display: none;
-	}
-
-	.worldObject {
-		cursor: pointer;
-		margin: 2px 0px;
-		padding-left: 2px;
+		flex:1;
+		min-height: 100px;
 		display: flex;
-		align-items: center;
+		flex-direction: column;
 	}
 
-	.worldObject:hover {
-		background: #333333;
-	}
+		#worldObjectList {
+			flex:1;
+			overflow-y: auto;
+		}
 
-	.worldObject.selected {
-		background: #444;
-	}
+			#worldObjectTemplate {
+				display: none;
+			}
 
-	.worldObject .uuid {
-		font-family: monospace;
-		font-size: 1.1em;
-		padding-right: 3px;
-		color: #666;
-	}
+			.worldObject {
+				cursor: pointer;
+				margin: 2px 0px;
+				padding-left: 2px;
+				display: flex;
+				align-items: center;
+			}
 
-	.worldObject .delete {
-		padding: 0px;
-		visibility: hidden;
-	}
+			.worldObject:hover {
+				background: #333333;
+			}
 
-	.worldObject:hover .delete {
-		visibility: visible;
-	}
-	.worldObject:hover .delete:hover i {
-		color: #eee;
-	}
+			.worldObject.selected {
+				background: #444;
+			}
 
-	.worldObject .name {
-		flex: 1;
-		display: flex;
-		align-items: center;
-	}
+			.worldObject .uuid {
+				font-family: monospace;
+				font-size: 1.1em;
+				padding-right: 3px;
+				color: #666;
+			}
 
-	.worldObject .prefabName {
-		margin: 1px 4px 1px 2px;
-		padding: 0px 2px;
-		background: #000;
-		color: #ccc;
-		border: none;
-		overflow: hidden;
-		white-space: nowrap;
-		min-width: 12px;
-		min-height: 12px;
-		max-width: 65px;
-		border-radius: 2px;
-		font-family: 'BenchNine', sans-serif;
-		text-shadow: 0px 1px 1px #111;
-	}
+			.worldObject .delete {
+				padding: 0px;
+				visibility: hidden;
+			}
+
+			.worldObject:hover .delete {
+				visibility: visible;
+			}
+			.worldObject:hover .delete:hover i {
+				color: #eee;
+			}
+
+			.worldObject .name {
+				flex: 1;
+				display: flex;
+				align-items: center;
+			}
+
+			.worldObject .prefabName {
+				margin: 1px 4px 1px 2px;
+				padding: 0px 2px;
+				background: #000;
+				color: #ccc;
+				border: none;
+				overflow: hidden;
+				white-space: nowrap;
+				min-width: 12px;
+				min-height: 12px;
+				max-width: 65px;
+				border-radius: 2px;
+				font-family: 'BenchNine', sans-serif;
+				text-shadow: 0px 1px 1px #111;
+			}
+
+		#worldAddPrefab {
+			background-color: #262626;
+			padding-top: 3px;
+			display: flex;
+			justify-content: space-around;
+		}
+
+			#worldPrefabList {
+				width: 180px;
+			}
+
+			#worldAddPrefabButton {
+				flex: 1;
+				font-size: 1.3em;
+				margin: 0px;
+			}
+
+			#worldPrefabList:disabled ~ #worldAddPrefabButton {
+				color: #666;
+				cursor: not-allowed;
+			}
+
+			#worldPrefabList:disabled ~ #worldAddPrefabButton:hover span {
+				text-decoration: none;
+			}
+
+		#worldMeta {
+			overflow-y: auto;
+		}
 
 /* PROJECT */
 #project {

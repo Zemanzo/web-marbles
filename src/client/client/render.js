@@ -3,14 +3,16 @@ import "three/examples/js/objects/Water";
 import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/OBJLoader";
+import "three/examples/js/loaders/GLTFLoader";
 import "three/examples/js/nodes/THREE.Nodes";
 import * as Stats from "stats-js";
+import * as pako from "pako";
 import * as config from "../config";
 import { net as networking } from "./networking";
 import { CameraFlyControls } from "../cameras";
-
 let viewport, camera, renderer, stats, controls,
-	scene = new THREE.Scene();
+	scene = new THREE.Scene(),
+	_GLTFLoader = new THREE.GLTFLoader();
 
 function init() {
 	viewport = document.getElementById("viewport");
@@ -27,8 +29,6 @@ function init() {
 	document.body.appendChild(stats.dom);
 
 	updateSun();
-
-	addMap();
 
 	controls = new CameraFlyControls(scene, renderer, {
 		pointerLockElement: viewport,
@@ -203,43 +203,6 @@ function animate() {
 	renderer.render( scene, camera );
 }
 
-let mapMesh;
-function addMap() {
-	fetch("/client?dlmap=map2")
-		.then((response) => {
-			return response.text();
-		})
-		.then((response) => {
-			let mapName = response.substr(0, response.lastIndexOf("."));
-
-			console.log(mapName);
-			let manager = new THREE.LoadingManager();
-			manager.onProgress = function(item, loaded, total) {
-				console.log(item, loaded, total);
-			};
-
-			let loader = new THREE.OBJLoader(manager);
-			loader.load(`/resources/${mapName}_optimized.obj`, function(object) {
-				object.traverse(function(child) {
-					if (child.name.indexOf("Terrain") !== -1) {
-						mapMesh = child;
-
-						scene.add(mapMesh);
-
-						mapMesh.setRotationFromEuler(
-							new THREE.Euler(-Math.PI * .5, 0, Math.PI * .5, "XYZ")
-						);
-
-						mapMesh.geometry.computeBoundingBox();
-						mapMesh.geometry.center();
-						mapMesh.material = createMapMaterial();
-						mapMesh.receiveShadow = true;
-					}
-				});
-			}, () => { }, () => { });
-		});
-}
-
 function spawnMarbleMesh(tags) {
 	console.log(tags);
 	let size = tags.size;
@@ -275,80 +238,6 @@ function spawnMarbleMesh(tags) {
 	scene.add(marbleMeshes[marbleMeshes.length - 1]);
 	scene.add(nameSprite);
 	marbleMeshes[marbleMeshes.length - 1].add(nameSprite);
-}
-
-let textures = {
-	dirt: { url: "resources/textures/dirt.jpg" },
-	dirtNormal: { url: "resources/textures/dirt_n.jpg" },
-	grass: { url: "resources/textures/grasslight-big.jpg" },
-	grassNormal: { url: "resources/textures/grasslight-big-nm.jpg" },
-	mask: { url: "resources/textures/mask_alpha.png" }
-};
-
-function getTexture( name ) {
-	let texture = textures[ name ].texture;
-	if ( ! texture ) {
-		texture = textures[ name ].texture = new THREE.TextureLoader().load( textures[ name ].url );
-		texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	}
-	return texture;
-}
-
-function createMapMaterial() {
-	let mtl;
-
-	// MATERIAL
-	mtl = new THREE.StandardNodeMaterial();
-	mtl.roughness = new THREE.FloatNode( .9 );
-	mtl.metalness = new THREE.FloatNode( 0 );
-
-	function createUv(scale, offset) {
-		let uvOffset = new THREE.FloatNode( offset || 0 );
-		let uvScale = new THREE.FloatNode( scale || 1 );
-
-		let uvNode = new THREE.UVNode();
-		let offsetNode = new THREE.OperatorNode(
-			uvOffset,
-			uvNode,
-			THREE.OperatorNode.ADD
-		);
-		let scaleNode = new THREE.OperatorNode(
-			offsetNode,
-			uvScale,
-			THREE.OperatorNode.MUL
-		);
-
-		return scaleNode;
-	}
-
-	let grass = new THREE.TextureNode( getTexture("grass"), createUv(35) );
-	let dirt = new THREE.TextureNode( getTexture("dirt"), createUv(35) );
-	let mask = new THREE.TextureNode( getTexture("mask"), createUv() );
-	let maskAlphaChannel = new THREE.SwitchNode(mask, "w");
-	let blend = new THREE.Math3Node(
-		grass,
-		dirt,
-		maskAlphaChannel,
-		THREE.Math3Node.MIX
-	);
-	mtl.color = blend;
-	mtl.normal = new THREE.NormalMapNode(
-		new THREE.TextureNode( getTexture("dirtNormal"), createUv(35) )
-	);
-
-	let normalMask = new THREE.OperatorNode(
-		new THREE.TextureNode( getTexture("mask"), createUv() ),
-		new THREE.FloatNode(1),
-		THREE.OperatorNode.MUL
-	);
-
-	mtl.normalScale = normalMask;
-
-	// build shader
-	mtl.build();
-
-	// set material
-	return mtl;
 }
 
 //
@@ -394,10 +283,94 @@ let clearMarbleMeshes = function() {
 	marbleMeshes = [];
 };
 
+let addMap = function(mapName) {
+	fetch(`/resources/maps/${mapName}`)
+		.then((response) => {
+			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
+			return response.arrayBuffer();
+		})
+		.then((buffer) => {
+			try {
+				let mapData = pako.inflate(buffer);
+				mapData = new TextDecoder("utf-8").decode(mapData);
+				mapData = JSON.parse(mapData);
+
+				// Set water height
+				water.position.y = mapData.world.waterLevel;
+
+				// Set sun inclination
+				parameters.inclination = mapData.world.sunInclination;
+				updateSun();
+
+				// Load models
+				let modelPromises = {};
+				for (let modelName in mapData.models) {
+					modelPromises[modelName] = new Promise((resolve, reject) => {
+						try {
+							_GLTFLoader.parse(mapData.models[modelName].data, null,
+								function(model) {
+									resolve(model.scene);
+								}, function(error) {
+									console.warn(`Unable to load model (${modelName})`, error);
+									reject("error");
+								}
+							);
+						}
+						catch (error) {
+							// Invalid JSON/GLTF files may end up here
+							console.warn(`Unable to load model (${modelName})`, error);
+							reject("error");
+						}
+					});
+				}
+
+				let prefabPromises = {};
+				Promise.all(Object.values(modelPromises)).then(() => {
+					for (let prefabUuid in mapData.prefabs) {
+						prefabPromises[prefabUuid] = new Promise((resolve) => {
+							let group = new THREE.Group();
+
+							for (let entity of Object.values(mapData.prefabs[prefabUuid].entities)) {
+								if (entity.type === "object" && entity.model) {
+									modelPromises[entity.model].then((scene) => {
+										let clone = scene.clone();
+
+										clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
+										clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
+										clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
+										group.add(clone);
+									});
+								}
+							}
+
+							resolve(group);
+						});
+					}
+				}).then(() => {
+					Promise.all(Object.values(prefabPromises)).then(() => {
+						for (let object of Object.values(mapData.worldObjects)) {
+							prefabPromises[object.prefab].then((prefabGroup) => {
+								let clone = prefabGroup.clone();
+								clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
+								clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
+								scene.add(clone);
+							});
+						}
+					});
+				});
+			}
+			catch(error) {
+				console.error(error);
+				return;
+			}
+		});
+};
+
 export {
 	scene,
 	marbleMeshes,
 	spawnMarbleMesh,
 	clearMarbleMeshes,
-	init
+	init,
+	addMap
 };

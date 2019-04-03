@@ -1,7 +1,7 @@
 const socketManager = require("./websocket-manager");
 const log = require("../../log");
 
-const setupGameplay = function(db, physics, config, game) {
+const setupGameplay = function(db, physics, config, game, maps) {
 	// Gameplay socket
 	let gameplaySocketManager = new socketManager.Socket(
 		"/gameplay",
@@ -41,19 +41,21 @@ const setupGameplay = function(db, physics, config, game) {
 					});
 				}
 
-				let intialData = {
-					currentGameState: game.currentGameState,
-					roundStartTime: game.startTime,
-					maxRoundLength: config.marbles.rules.maxRoundLength,
-					enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
-					enterPeriodLength: config.marbles.rules.enterPeriod,
+				Promise.all([maps.currentMapName, maps.currentMapData]).then((values) => {
+					let intialData = {
+						currentGameState: game.currentGameState,
+						roundStartTime: game.startTime,
+						maxRoundLength: values[1].gameplay.roundLength,
+						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
+						enterPeriodLength: values[1].gameplay.defaultEnterPeriod,
 
-					mapId: config.marbles.mapRotation[0].name,
+						mapId: values[0],
 
-					initialMarbleData
-				};
+						initialMarbleData
+					};
 
-				ws.sendTyped(JSON.stringify(intialData), "initial_data");
+					ws.sendTyped(JSON.stringify(intialData), "initial_data");
+				});
 			},
 			close: function(ws) {
 				log.info("A user disconnected...".red + ws.meta.name);

@@ -147,10 +147,12 @@ let editor = function() {
 
 					if (parseInt(this.dataset.nthChild) >= 2) {
 						editor.elements.inspector.style.transform = "translateX(100%)";
+						editor.elements.inspector.style.minHeight = "120px";
 						if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
 						document.getElementById("prefabs").style.overflow = "visible";
 					} else {
 						editor.elements.inspector.style.transform = "translateX(0%)";
+						editor.elements.inspector.style.minHeight = "192px";
 						editor.menu.overflowTimeout = setTimeout(function() {
 							document.getElementById("prefabs").style.overflow = "auto";
 						}, 400);
