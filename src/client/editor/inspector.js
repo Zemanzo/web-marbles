@@ -136,25 +136,33 @@ let inspector = function() {
 
 			// Translation
 			transformFunctions.translate = function(axis, value) {
+				if(isNaN(value)) value = 0;
 				let position = inspector.selected.getPosition();
-				position[axis] = parseFloat(value);
+				position[axis] = value;
 				inspector.selected.setPosition(position);
 			};
 
 			// Scale
 			transformFunctions.scale = function(axis, value) {
+				if(isNaN(value)) value = 1;
 				let scale = inspector.selected.getScale();
-				scale[axis] = parseFloat(value);
+				scale[axis] = value;
 				inspector.selected.setScale(scale);
 			};
 
 			// Rotate
 			transformFunctions.rotate = function() {
 				let rotation = inspector.elements.transform.input.rotate;
+				let x = rotation.x.valueAsNumber;
+				if(isNaN(x)) x = 0;
+				let y = rotation.y.valueAsNumber;
+				if(isNaN(y)) y = 0;
+				let z = rotation.z.valueAsNumber;
+				if(isNaN(z)) z = 0;
 				inspector.selected.setRotation(new THREE.Euler(
-					parseFloat(rotation.x.value) * Math.PI / 180,
-					parseFloat(rotation.y.value) * Math.PI / 180,
-					parseFloat(rotation.z.value) * Math.PI / 180,
+					x * Math.PI / 180,
+					y * Math.PI / 180,
+					z * Math.PI / 180,
 					"XYZ"));
 			};
 
@@ -166,8 +174,8 @@ let inspector = function() {
 				for (let key in transformElements.input[transform]) {
 					let el = transformElements.input[transform][key];
 					let func = transformFunctions[transform];
-					el.addEventListener("change", function() { func(this.dataset.axis, this.value); }, false);
-					el.addEventListener("input", function() { func(this.dataset.axis, this.value); }, false);
+					el.addEventListener("change", function() { func(this.dataset.axis, this.valueAsNumber); }, false);
+					el.addEventListener("input", function() { func(this.dataset.axis, this.valueAsNumber); }, false);
 				}
 			}
 			// Label
@@ -196,22 +204,30 @@ let inspector = function() {
 
 			// Width
 			shapeChangeFunctions.width = function() {
-				inspector.selected.setWidth(parseFloat(inspector.elements.shapeProperties.input.width.value));
+				let value = inspector.elements.shapeProperties.input.width.valueAsNumber;
+				if(isNaN(value)) value = 1;
+				inspector.selected.setWidth(value);
 			};
 
 			// Height
 			shapeChangeFunctions.height = function() {
-				inspector.selected.setHeight(parseFloat(inspector.elements.shapeProperties.input.height.value));
+				let value = inspector.elements.shapeProperties.input.height.valueAsNumber;
+				if(isNaN(value)) value = 1;
+				inspector.selected.setHeight(value);
 			};
 
 			// Depth
 			shapeChangeFunctions.depth = function() {
-				inspector.selected.setDepth(parseFloat(inspector.elements.shapeProperties.input.depth.value));
+				let value = inspector.elements.shapeProperties.input.depth.valueAsNumber;
+				if(isNaN(value)) value = 1;
+				inspector.selected.setDepth(value);
 			};
 
 			// Radius
 			shapeChangeFunctions.radius = function() {
-				inspector.selected.setRadius(parseFloat(inspector.elements.shapeProperties.input.radius.value));
+				let value = inspector.elements.shapeProperties.input.radius.valueAsNumber;
+				if(isNaN(value)) value = 1;
+				inspector.selected.setRadius(value);
 			};
 
 			// Input
