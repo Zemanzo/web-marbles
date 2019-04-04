@@ -177,9 +177,9 @@ let game = function() {
 					this.startTime = Date.now();
 
 					physics.world.setAllGatesState("open");
-
-					// Add bot marble to ensure physics not freezing
-					this.spawnMarble("Nightbot", "#000000");
+					for(let i = 0; i < physics.marbles.list.length; i++) {
+						physics.marbles.list[i].ammoBody.activate();
+					}
 				}, _startDelay);
 
 				_checkFinishedInterval = setInterval(_checkFinished.bind(this), 50);
