@@ -40,6 +40,7 @@ function WorldObject(uuid, prefab, project) {
 
 	// Add threejs group to scene
 	this.sceneObject = prefab.group.clone();
+	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	worldTab.group.add( this.sceneObject );
 	this.sceneObject.visible = true;

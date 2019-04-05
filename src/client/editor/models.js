@@ -8,6 +8,7 @@ import { scene } from "./render";
 function Model(name, sceneObject) {
 	this.name = name;
 	this.sceneObject = sceneObject;
+	this.sceneObject.rotation.order = "YXZ";
 	this.element = null;
 	this.prefabEntities = {};
 

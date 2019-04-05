@@ -88,25 +88,25 @@
 								<tr class="translate">
 									<td>Position</td>
 									<td>
-										<div><input type="number" value="0" step=".01" disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="0" step=".01" disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="0" step=".01" disabled data-axis="z" /><span class="z">Z</span></div>
+										<div><input type="number" value="0" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="0" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="0" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 								<tr class="rotate">
 									<td>Rotation</td>
 									<td>
-										<div><input type="number" value="0" step=".1" disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="0" step=".1" disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="0" step=".1" disabled data-axis="z" /><span class="z">Z</span></div>
+										<div><input type="number" value="0" step=".1" required disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="0" step=".1" required disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="0" step=".1" required disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 								<tr class="scale objectProperty">
 									<td>Scale</td>
 									<td>
-										<div><input type="number" value="1" step=".01" disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="1" step=".01" disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="1" step=".01" disabled data-axis="z" /><span class="z">Z</span></div>
+										<div><input type="number" value="1" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
+										<div><input type="number" value="1" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
+										<div><input type="number" value="1" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
 									</td>
 								</tr>
 							</tbody>
@@ -154,10 +154,10 @@
 								<tr id="shapeProperties" class="shapeProperties colliderProperty box">
 									<td>Shape properties</td>
 									<td>
-										<div class="sphere cylinder cone capsule"><input type="number" value="1" step=".01" disabled /><span class="q">RADIUS</span></div>
-										<div class="box"><input type="number" value="1" step=".01" disabled /><span class="q">WIDTH</span></div>
-										<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" disabled /><span class="q">HEIGHT</span></div>
-										<div class="box"><input type="number" value="1" step=".01" disabled /><span class="q">DEPTH</span></div>
+										<div class="sphere cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">RADIUS</span></div>
+										<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">WIDTH</span></div>
+										<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">HEIGHT</span></div>
+										<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">DEPTH</span></div>
 										<div class="terrain"><input type="file" id="terPhysics"/></div>
 									</td>
 								</tr>

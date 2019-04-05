@@ -101,9 +101,11 @@ let inspector = function() {
 					inspector.selected.setFunctionality(this.value);
 
 					if(this.value === "startarea") {
-						inspector.elements.shape.value = "box";
 						inspector.elements.shape.disabled = true;
-						inspectorChangeShape();
+						if(inspector.selected.colliderData.shape !== "box") {
+							inspector.elements.shape.value = "box";
+							inspectorChangeShape();
+						}
 					} else {
 						inspector.elements.shape.disabled = false;
 					}
@@ -135,25 +137,22 @@ let inspector = function() {
 			// Translation
 			transformFunctions.translate = function(axis, value) {
 				let position = inspector.selected.getPosition();
-				position[axis] = parseFloat(value);
+				position[axis] = value;
 				inspector.selected.setPosition(position);
 			};
 
 			// Scale
 			transformFunctions.scale = function(axis, value) {
 				let scale = inspector.selected.getScale();
-				scale[axis] = parseFloat(value);
+				scale[axis] = value;
 				inspector.selected.setScale(scale);
 			};
 
 			// Rotate
-			transformFunctions.rotate = function() {
-				let rotation = inspector.elements.transform.input.rotate;
-				inspector.selected.setRotation(new THREE.Euler(
-					parseFloat(rotation.x.value) * Math.PI / 180,
-					parseFloat(rotation.y.value) * Math.PI / 180,
-					parseFloat(rotation.z.value) * Math.PI / 180,
-					"XYZ"));
+			transformFunctions.rotate = function(axis, value) {
+				let rotation = inspector.selected.getRotation();
+				rotation[axis] = value * Math.PI / 180;
+				inspector.selected.setRotation(rotation);
 			};
 
 			// Attach event listeners to inputs and labels
@@ -163,16 +162,25 @@ let inspector = function() {
 			for (let transform in transformElements.input) {
 				for (let key in transformElements.input[transform]) {
 					let el = transformElements.input[transform][key];
-					let func = transformFunctions[transform];
-					el.addEventListener("change", function() { func(this.dataset.axis, this.value); }, false);
-					el.addEventListener("input", function() { func(this.dataset.axis, this.value); }, false);
+					let func = function() {
+						let value = 0;
+						if(el.checkValidity()) value = el.valueAsNumber;
+						transformFunctions[transform](el.dataset.axis, value);
+					};
+
+					el.addEventListener("change", func, false);
+					el.addEventListener("input", func, false);
 				}
 			}
 			// Label
 			for (let transform in transformElements.label) {
 				for (let key in transformElements.label[transform]) {
 					let el = transformElements.label[transform][key];
-					let func = transformFunctions[transform];
+					let func = function() {
+						let value = 0;
+						if(el.previousElementSibling.checkValidity()) value = el.previousElementSibling.valueAsNumber;
+						transformFunctions[transform](el.previousElementSibling.dataset.axis, value);
+					};
 					el.addEventListener("mousedown", function(e) {
 						if (!this.previousElementSibling.disabled) {
 							this.requestPointerLock();
@@ -193,37 +201,47 @@ let inspector = function() {
 			let shapeChangeFunctions = {};
 
 			// Width
-			shapeChangeFunctions.width = function() {
-				inspector.selected.setWidth(parseFloat(inspector.elements.shapeProperties.input.width.value));
+			shapeChangeFunctions.width = function(value) {
+				inspector.selected.setWidth(value);
 			};
 
 			// Height
-			shapeChangeFunctions.height = function() {
-				inspector.selected.setHeight(parseFloat(inspector.elements.shapeProperties.input.height.value));
+			shapeChangeFunctions.height = function(value) {
+				inspector.selected.setHeight(value);
 			};
 
 			// Depth
-			shapeChangeFunctions.depth = function() {
-				inspector.selected.setDepth(parseFloat(inspector.elements.shapeProperties.input.depth.value));
+			shapeChangeFunctions.depth = function(value) {
+				inspector.selected.setDepth(value);
 			};
 
 			// Radius
-			shapeChangeFunctions.radius = function() {
-				inspector.selected.setRadius(parseFloat(inspector.elements.shapeProperties.input.radius.value));
+			shapeChangeFunctions.radius = function(value) {
+				inspector.selected.setRadius(value);
 			};
 
 			// Input
 			for (let key in inspector.elements.shapeProperties.input) {
 				let el = inspector.elements.shapeProperties.input[key];
-				let func = shapeChangeFunctions[key];
-				el.addEventListener("change", function() { func(); }, false);
-				el.addEventListener("input", function() { func(); }, false);
+
+				let func = function() {
+					let value = parseFloat(el.min);
+					if(el.checkValidity()) value = el.valueAsNumber;
+					shapeChangeFunctions[key](value);
+				};
+
+				el.addEventListener("change", func, false);
+				el.addEventListener("input", func, false);
 			}
 
 			// Label
 			for (let key in inspector.elements.shapeProperties.label) {
 				let el = inspector.elements.shapeProperties.label[key];
-				let func = shapeChangeFunctions[key];
+				let func = function() {
+					let value = parseFloat(el.previousElementSibling.min);
+					if(el.previousElementSibling.checkValidity()) value = el.previousElementSibling.valueAsNumber;
+					shapeChangeFunctions[key](value);
+				};
 				el.addEventListener("mousedown", function(e) {
 					if (!this.previousElementSibling.disabled) {
 						this.requestPointerLock();
