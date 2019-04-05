@@ -9,6 +9,10 @@ module.exports = {
 
 	error: function(message, ...args) {
 		console.log(`${currentHourString().red}${message}`, ...args);
+	},
+
+	throw: function(message) {
+		throw `${currentHourString().red}${"[FATAL]".red} ${message}`;
 	}
 };
 

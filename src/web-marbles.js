@@ -50,6 +50,11 @@ discordClient.on("ready", function() {
 discordClient.on("message", function(message) {
 	if (message.channel.id == config.discord.gameplayChannelId) {
 		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
+			if (!db.user.idExists(message.author.id)) {
+				// This is a new user!
+				db.user.insertNewUserDiscord(message.author);
+			}
+
 			// Send it to the client chat
 			socketChat.emit(
 				JSON.stringify({
@@ -59,7 +64,7 @@ discordClient.on("message", function(message) {
 				})
 			);
 
-			chat.testMessage(message.content, message.author.id, message.author.username);
+			chat.testMessage(message.content, message.author.id, message.author.username, message.member);
 
 			if (message.content === "!doot") {
 				message.reply("🎺");
@@ -163,7 +168,7 @@ app.get("/chat", function(req, res) {
 							if (exists)
 								db.user.updateTokenById(token_body, user_body.id);
 							else
-								db.user.insertNewUser(token_body, user_body, config.discord.scope);
+								db.user.insertNewUserEmbed(token_body, user_body, config.discord.scope);
 
 							res.render("chat", {
 								invitelink: config.discord.inviteLink,
