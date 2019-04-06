@@ -12,6 +12,7 @@ module.exports = {
 
 		this.user = require("./users")(db, _common);
 		this.round = require("./rounds")(db);
+		this.personalBest = require("./personal-bests")(db, _common);
 
 		this.close = () => {
 			return this._db.close();

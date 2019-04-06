@@ -16,7 +16,7 @@ let game = function() {
 
 		_gameplayParameters = null,
 
-		_mapName = null,
+		_mapFileName = null,
 
 		_round = null;
 
@@ -24,8 +24,8 @@ let game = function() {
 		_gameplayParameters = map.gameplay;
 	});
 
-	maps.currentMapName.then((mapName) => {
-		_mapName = mapName;
+	maps.currentMapName.then((mapFileName) => {
+		_mapFileName = mapFileName;
 	});
 
 	let _generateNewRoundData = function() {
@@ -33,7 +33,7 @@ let game = function() {
 			start: null,
 			end: null,
 			timeBest: null,
-			mapId: _mapName,
+			mapId: _mapFileName,
 			pointsAwarded: 0,
 			playersEntered: 0,
 			playersFinished: 0,
@@ -64,6 +64,9 @@ let game = function() {
 				// Mark them as finished
 				playerEntry.finished = true;
 				playerEntry.marblesFinished++;
+
+				// Add their time to the entry (so it can be stored in the case of a PB)
+				playerEntry.time = time;
 
 				// Award points based on rank
 				let points = _awardPoints(rank);
@@ -146,8 +149,9 @@ let game = function() {
 				// Add the player to the list of entries and award a single point for entering
 				_playersEnteredList.push({
 					id,
-					pointsEarned: 1,
 					finished: false,
+					time: null,
+					pointsEarned: 1,
 					marblesEntered: 1,
 					marblesFinished: 0
 				});
@@ -219,6 +223,8 @@ let game = function() {
 					db.round.insertNewRound(_round);
 
 					db.user.batchUpdateStatistics(_playersEnteredList);
+
+					db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
 				}
 
 				// Stop checking for finished marbles
@@ -264,6 +270,7 @@ let game = function() {
 			if (this.currentGameState === "enter" || this.currentGameState === "waiting") {
 				this.setCurrentGameState("starting");
 
+				// Have the audio clip play on the cleint before actually starting the race
 				setTimeout(() => {
 					this.setCurrentGameState("started");
 
@@ -275,6 +282,8 @@ let game = function() {
 					}
 				}, _startDelay);
 
+				// During the racing period, check if marbles have finished yet.
+				// TODO: Should be improved using Bullet callbacks (so none of this checking 20 times per second stuff)
 				_checkFinishedInterval = setInterval(_checkFinished.bind(this), 50);
 
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
