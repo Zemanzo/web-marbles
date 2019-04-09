@@ -1,16 +1,19 @@
-module.exports = function(Ammo, world, map) {
+const physics = require("./manager");
+const maps = require("../maps/manager");
+
+module.exports = function() {
 	let _transformFromEntity = function(entity) {
-		let transform = new Ammo.btTransform();
+		let transform = new physics.ammo.btTransform();
 		transform.setIdentity();
 		transform.setOrigin(
-			new Ammo.btVector3(
+			new physics.ammo.btVector3(
 				entity.position.x,
 				entity.position.y,
 				entity.position.z
 			)
 		);
 		transform.setRotation(
-			new Ammo.btQuaternion(
+			new physics.ammo.btQuaternion(
 				entity.rotation.x,
 				entity.rotation.y,
 				entity.rotation.z,
@@ -21,7 +24,7 @@ module.exports = function(Ammo, world, map) {
 		return transform;
 	};
 
-	map.currentMapData.then((map) => {
+	maps.currentMapData.then((map) => {
 		for (let worldObjectUuid in map.worldObjects) {
 			let worldEntity = map.worldObjects[worldObjectUuid];
 			let prefab = map.prefabs[map.worldObjects[worldObjectUuid].prefab];
@@ -36,7 +39,7 @@ module.exports = function(Ammo, world, map) {
 					prefabEntityTransform = _transformFromEntity(prefabEntity);
 
 					// Clone the transform because op_mul modifies the transform it is called on
-					transform = new Ammo.btTransform();
+					transform = new physics.ammo.btTransform();
 					transform.setIdentity();
 					transform.setOrigin(worldEntityTransform.getOrigin());
 					transform.setRotation(worldEntityTransform.getRotation());
@@ -46,16 +49,16 @@ module.exports = function(Ammo, world, map) {
 					switch (prefabEntity.functionality) {
 					case "static":
 					default:
-						world.addPrimitiveCollider(prefabEntity, transform);
+						physics.world.addPrimitiveCollider(prefabEntity, transform);
 						break;
 					case "startgate":
-						world.addStartGate(prefabEntity, transform);
+						physics.world.addStartGate(prefabEntity, transform);
 						break;
 					case "startarea":
-						world.startAreas.push({prefabEntity, transform});
+						physics.world.startAreas.push({prefabEntity, transform});
 						break;
 					case "endarea":
-						world.endAreas.push({prefabEntity, transform});
+						physics.world.endAreas.push({prefabEntity, transform});
 						break;
 					}
 
@@ -66,4 +69,4 @@ module.exports = function(Ammo, world, map) {
 			}
 		}
 	});
-};
+}();

@@ -144,7 +144,7 @@ let game = (function() {
 
 		spawnMarble: function(marble) {
 			// Add to list
-			_enteredMarbleList[marble.id] = marble;
+			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
 			renderer.spawnMarbleMesh(marble);
@@ -155,9 +155,9 @@ let game = (function() {
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
 			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `🏁 ${(marble.time * .001).toFixed(2)}s` : "";
-			listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(marble.rank) ? `#${marble.rank + 1}` : "";
+			listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(marble.rank) && marble.rank !== null ? `#${marble.rank + 1}` : "";
 			listEntry.style.order = marble.rank;
-			_enteredMarbleList[marble.id].listEntryElement = listEntry;
+			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
 			_DOMElements.marbleList.appendChild(listEntry);
 			_DOMElements.entries.innerHTML = renderer.marbleMeshes.length;

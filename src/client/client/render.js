@@ -204,7 +204,6 @@ function animate() {
 }
 
 function spawnMarbleMesh(tags) {
-	console.log(tags);
 	let size = tags.size;
 	let color = tags.color;
 	let name = tags.name;

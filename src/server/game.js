@@ -4,10 +4,32 @@ const physics = require("./physics/manager");
 const maps = require("./maps/manager");
 const db = require("./database/manager");
 
+function Marble(id, entryId, name, color) {
+	this.userId = id;
+	this.entryId = entryId;
+	this.useFancy = Math.random() > .99;
+	this.color = color || _randomHexColor();
+	this.name = name || "Nightbot";
+	this.size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
+	this.ammoBody = null;
+	this.finished = false;
+	this.rank = null;
+	this.time = null;
+}
+
+Marble.prototype.onMarbleFinish = function() {
+	if(this.finished === false) {
+		game.marbleFinished(this);
+		this.finished = true;
+	}
+};
+
+
 let game = function() {
 	let _startDelay = 2825, // length in ms of audio
 		_socketManager = null,
 
+		_marbles = [],
 		_playersEnteredList = [],
 		_marblesFinished = 0,
 		_isWaitingForEntry = true,
@@ -45,63 +67,17 @@ let game = function() {
 	};
 
 	let _checkFinished = function() {
-		let finishTime = Date.now();
-
-		// Request newly finished marbles since the last check
-		let finished = physics.marbles.getFinishedMarbles();
-
-		// For each finished marble, set their rank and final time
-		for (let i = 0; i < finished.length; i++) {
-			let rank = physics.marbles.list[finished[i]].meta.rank = _marblesFinished++,
-				time = physics.marbles.list[finished[i]].meta.time = finishTime - this.startTime;
-
-			// Get playerEntry that belongs to this marble
-			let playerEntry = _playersEnteredList.find((playerEntry) => {
-				return physics.marbles.list[finished[i]].meta.userId === playerEntry.id;
-			});
-
-			if (playerEntry) {
-				// Mark them as finished
-				playerEntry.finished = true;
-				playerEntry.marblesFinished++;
-
-				// Add their time to the entry (so it can be stored in the case of a PB)
-				playerEntry.time = time;
-
-				// Award points based on rank
-				let points = _awardPoints(rank);
-				playerEntry.pointsEarned += points;
-
-				// Also add them to the round total
-				_round.pointsAwarded += points;
-			}
-
-			// Increment the amount of marbles that finished this round
-			_round.marblesFinished++;
-
-			// Send client info on finished marble
-			_socketManager.emit(JSON.stringify({
-				id: finished[i],
-				rank,
-				time
-			}), "finished_marble");
-
-			// If this is the first marble that finished, set a timeout to end the game soon
-			if (_firstMarbleHasFinished === false) {
-				_firstMarbleHasFinished = true;
-
-				// Set round time
-				_round.timeBest = time;
-
-				this.gameplayFinishTimeout = _setTrackableTimeout(
-					this.end.bind(this),
-					_gameplayParameters.timeUntilDnf * 1000
-				);
-			}
-
-			// If all marbles have finished, end the game
-			if (_marblesFinished === physics.marbles.list.length) {
-				setTimeout(this.end.bind(this), 2000);
+		// Check for newly finished marbles
+		// This function is a placeholder for bullet callbacks
+		let transform = new physics.ammo.btTransform();
+		for (let i = 0; i < _marbles.length; i++) {
+			let ms = _marbles[i].ammoBody.getMotionState();
+			if (ms) {
+				ms.getWorldTransform(transform);
+				let p = transform.getOrigin();
+				if ( p.y() < -5) {
+					_marbles[i].onMarbleFinish();
+				}
 			}
 		}
 	};
@@ -177,34 +153,33 @@ let game = function() {
 		// Spawns marble unless the maximum amount of marbles has been hit
 		spawnMarble(id, name, color) {
 			// Check whether we have reached the maximum marble limit
-			if (physics.marbles.list.length < config.marbles.rules.maxMarbleCount) {
-				let meta = {
-					userId: id,
-					useFancy: (Math.random() > .99),
-					color: color || _randomHexColor(),
-					name: name || "Nightbot"
-				};
+			if (_marbles.length >= config.marbles.rules.maxMarbleCount) return;
 
-				let body = physics.marbles.createMarble(meta);
+			let newMarble = new Marble(id, _marbles.length, name, color);
+			physics.world.createMarble(newMarble);
+			_marbles.push(newMarble);
 
-				// Send client info on new marble
-				_socketManager.emit(JSON.stringify(body.meta), "new_marble");
+			// Send client info on new marble, without the ammoBody property
+			function omitter(key, value) {
+				if(key === "ammoBody") return undefined;
+				return value;
+			}
+			_socketManager.emit(JSON.stringify(newMarble, omitter), "new_marble");
 
-				// Check for player / marble limits
-				if (
-					(
-						physics.marbles.list.length >= config.marbles.rules.maxMarbleCount
-						|| _playersEnteredList.length >= config.marbles.rules.maxPlayerCount
-					)
-					&& !this.limitReached
-				) {
-					this.limitReached = true;
-					_socketManager.emit(JSON.stringify({
-						content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
-					}), "notification");
-					this.start();
-					log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
-				}
+			// Check for player / marble limits
+			if (
+				(
+					_marbles.length >= config.marbles.rules.maxMarbleCount
+					|| _playersEnteredList.length >= config.marbles.rules.maxPlayerCount
+				)
+				&& !this.limitReached
+			) {
+				this.limitReached = true;
+				_socketManager.emit(JSON.stringify({
+					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
+				}), "notification");
+				this.start();
+				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
 			}
 		},
 
@@ -216,7 +191,7 @@ let game = function() {
 					_round.playersEntered = _playersEnteredList.length;
 					_round.playersFinished = _playersEnteredList.filter(playerEntry => playerEntry.finished).length;
 					_round.playersNotFinished = _round.playersEntered - _round.playersFinished;
-					_round.marblesEntered = physics.marbles.list.length;
+					_round.marblesEntered = _marbles.length;
 					_round.marblesNotFinished = _round.marblesEntered - _round.marblesFinished;
 
 					db.round.insertNewRound(_round);
@@ -242,7 +217,10 @@ let game = function() {
 				physics.world.setAllGatesState("close");
 
 				// Remove all marbles
-				physics.marbles.destroyAllMarbles();
+				for (let i = _marbles.length - 1; i >= 0; --i) {
+					physics.world.destroyMarble(_marbles[i]);
+				}
+				_marbles = [];
 
 				// Clear the array of people that entered
 				_playersEnteredList = [];
@@ -276,8 +254,8 @@ let game = function() {
 					_round.start = this.startTime = Date.now();
 
 					physics.world.setAllGatesState("open");
-					for(let i = 0; i < physics.marbles.list.length; i++) {
-						physics.marbles.list[i].ammoBody.activate();
+					for(let i = 0; i < _marbles.length; i++) {
+						_marbles[i].ammoBody.activate();
 					}
 				}, _startDelay);
 
@@ -297,12 +275,103 @@ let game = function() {
 			}
 		},
 
+		marbleFinished(marble) {
+			let finishTime = Date.now();
+			// Set their rank and final time
+			let rank = marble.rank = _marblesFinished++,
+				time = marble.time = finishTime - this.startTime;
+
+			// Get playerEntry that belongs to this marble
+			let playerEntry = _playersEnteredList.find((playerEntry) => {
+				return marble.userId === playerEntry.id;
+			});
+
+			if (playerEntry) {
+				// Mark them as finished
+				playerEntry.finished = true;
+				playerEntry.marblesFinished++;
+
+				// Add their time to the entry (so it can be stored in the case of a PB)
+				playerEntry.time = time;
+
+				// Award points based on rank
+				let points = _awardPoints(rank);
+				playerEntry.pointsEarned += points;
+
+				// Also add them to the round total
+				_round.pointsAwarded += points;
+			}
+
+			// Increment the amount of marbles that finished this round
+			_round.marblesFinished++;
+
+			// Send client info on finished marble
+			_socketManager.emit(JSON.stringify({
+				id: marble.entryId,
+				rank,
+				time
+			}), "finished_marble");
+
+			// If this is the first marble that finished, set a timeout to end the game soon
+			if (_firstMarbleHasFinished === false) {
+				_firstMarbleHasFinished = true;
+
+				// Set round time
+				_round.timeBest = time;
+
+				this.gameplayFinishTimeout = _setTrackableTimeout(
+					this.end.bind(this),
+					_gameplayParameters.timeUntilDnf * 1000
+				);
+			}
+
+			// If all marbles have finished, end the game
+			if (_marblesFinished === _marbles.length) {
+				setTimeout(this.end.bind(this), 2000);
+			}
+		},
+
 		getEnterPeriodTimeRemaining() {
 			return _getTimeout(this.enterTimeout) || _gameplayParameters.defaultEnterPeriod;
 		},
 
 		setSocketManager(socketManager) {
 			_socketManager = socketManager;
+		},
+
+		getMarbles() {
+			return _marbles;
+		},
+
+		getMarbleTransformations() {
+			if(_marbles.length === 0) return null;
+
+			let transform = new physics.ammo.btTransform();
+			let _pos = new Float32Array(_marbles.length * 3);
+			let _rot = new Float32Array(_marbles.length * 4);
+
+			for (let i = 0; i < _marbles.length; i++) {
+				let ms = _marbles[i].ammoBody.getMotionState();
+				if (ms) {
+					ms.getWorldTransform( transform );
+					let p = transform.getOrigin();
+					let q = transform.getRotation();
+
+					_pos[i * 3 + 0] = p.x();
+					_pos[i * 3 + 1] = p.z();
+					_pos[i * 3 + 2] = p.y();
+
+					_rot[i * 4 + 0] = q.x();
+					_rot[i * 4 + 1] = q.z();
+					_rot[i * 4 + 2] = q.y();
+					_rot[i * 4 + 3] = q.w();
+				}
+			}
+
+			return {
+				position: _pos,
+				rotation: _rot
+			};
 		}
 	};
 }();

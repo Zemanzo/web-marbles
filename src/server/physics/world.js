@@ -1,22 +1,39 @@
-module.exports = function(Ammo, config) {
+const config = require("../config");
+const physics = require("./manager");
+
+// Constructor for starting area, starting gate, and finish line
+// WIP: Might be useful encapsulation, might be gutter trash
+function LevelCollider(colliderData, transform) {
+	this.colliderData = colliderData;
+	this.transform = transform;
+	this.ammoBody = null; // Unused by starting area
+}
+
+LevelCollider.prototype.removeFromWorld = function() {
+	// For opening starting gate?
+};
+
+
+module.exports = function() {
 	let _collisionConfiguration,
 		_dispatcher,
 		_broadphase,
 		_solver,
-		physicsWorld;
+		_physicsWorld,
+		startAreas = [];
 
 	// Physics configuration
-	_collisionConfiguration = new Ammo.btDefaultCollisionConfiguration();
-	_dispatcher = new Ammo.btCollisionDispatcher(_collisionConfiguration );
-	_broadphase = new Ammo.btDbvtBroadphase();
-	_solver = new Ammo.btSequentialImpulseConstraintSolver();
-	physicsWorld = new Ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
-	physicsWorld.setGravity( new Ammo.btVector3( 0, config.physics.gravity, 0 ) );
+	_collisionConfiguration = new physics.ammo.btDefaultCollisionConfiguration();
+	_dispatcher = new physics.ammo.btCollisionDispatcher(_collisionConfiguration );
+	_broadphase = new physics.ammo.btDbvtBroadphase();
+	_solver = new physics.ammo.btSequentialImpulseConstraintSolver();
+	_physicsWorld = new physics.ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
+	_physicsWorld.setGravity( new physics.ammo.btVector3( 0, config.physics.gravity, 0 ) );
 
 	let _lastPhysicsUpdate = Date.now();
 
 	function _updatePhysics( deltaTime ) {
-		physicsWorld.stepSimulation( deltaTime, 10 );
+		_physicsWorld.stepSimulation( deltaTime, 10 );
 	}
 
 	let _updateInterval;
@@ -31,13 +48,66 @@ module.exports = function(Ammo, config) {
 
 	_startUpdateInterval();
 
+	let _randomPositionInStartAreas = function() {
+		let area = startAreas[Math.floor(startAreas.length * Math.random())];
+
+		let transform = new physics.ammo.btTransform();
+		transform.setIdentity();
+		transform.setOrigin(
+			new physics.ammo.btVector3(
+				Math.random() * area.prefabEntity.colliderData.width  - ( area.prefabEntity.colliderData.width  * .5 ),
+				Math.random() * area.prefabEntity.colliderData.height - ( area.prefabEntity.colliderData.height * .5 ),
+				Math.random() * area.prefabEntity.colliderData.depth  - ( area.prefabEntity.colliderData.depth  * .5 )
+			)
+		);
+
+		// Clone the transform because op_mul modifies the transform it is called on
+		let newTransform = new physics.ammo.btTransform();
+		newTransform.setIdentity();
+		newTransform.setOrigin(area.transform.getOrigin());
+		newTransform.setRotation(area.transform.getRotation());
+
+		newTransform.op_mul(transform); // Modifies "newTransform"
+
+		let origin = newTransform.getOrigin();
+
+		return origin;
+	};
+
 	return {
 		map: null,
-		physicsWorld,
 		updateInterval: null,
 		gates: [],
-		startAreas: [],
+		startAreas,
 		endAreas: [],
+
+		createMarble(marble) {
+			// Create physics body
+			let sphereShape = physics.shapes.defaultMarble;
+			if(0.2 !== marble.size) { // TODO: Magic number
+				sphereShape = new physics.ammo.btSphereShape(marble.size); // Create new collision shape if the radius does not match
+			}
+			sphereShape.setMargin( 0.05 );
+			let mass = (marble.size || 0.5) * 5; // TODO
+			let localInertia = new physics.ammo.btVector3( 0, 0, 0 );
+			sphereShape.calculateLocalInertia( mass, localInertia );
+			let transform = new physics.ammo.btTransform();
+			transform.setIdentity();
+			transform.setOrigin( _randomPositionInStartAreas() );
+			let motionState = new physics.ammo.btDefaultMotionState( transform );
+			let bodyInfo = new physics.ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
+			marble.ammoBody = new physics.ammo.btRigidBody( bodyInfo );
+
+			// For future reference: setUserPointer doesn't work (out of the box, anyway. Maybe not at all for Js objects), setUserIndex only works for numbers
+			//marble.ammoBody.setUserIndex(42);
+
+			// Add to physics world
+			_physicsWorld.addRigidBody(marble.ammoBody);
+		},
+
+		destroyMarble(marble) {
+			_physicsWorld.removeRigidBody(marble.ammoBody);
+		},
 
 		setAllGatesState(newGateState) {
 			for (let gate of this.gates) {
@@ -79,8 +149,8 @@ module.exports = function(Ammo, config) {
 			switch (collider.colliderData.shape) {
 			case "box":
 			default:
-				shape = new Ammo.btBoxShape(
-					new Ammo.btVector3(
+				shape = new physics.ammo.btBoxShape(
+					new physics.ammo.btVector3(
 						collider.colliderData.width * .5,
 						collider.colliderData.height * .5,
 						collider.colliderData.depth * .5
@@ -88,17 +158,17 @@ module.exports = function(Ammo, config) {
 				);
 				break;
 			case "sphere":
-				shape = new Ammo.btSphereShape( collider.colliderData.radius );
+				shape = new physics.ammo.btSphereShape( collider.colliderData.radius );
 				break;
 			case "cone":
-				shape = new Ammo.btConeShape(
+				shape = new physics.ammo.btConeShape(
 					collider.colliderData.radius,
 					collider.colliderData.height
 				);
 				break;
 			case "cylinder":
-				shape = new Ammo.btCylinderShape(
-					new Ammo.btVector3(
+				shape = new physics.ammo.btCylinderShape(
+					new physics.ammo.btVector3(
 						collider.colliderData.radius,
 						collider.colliderData.height * .5,
 						collider.colliderData.radius
@@ -108,17 +178,17 @@ module.exports = function(Ammo, config) {
 			}
 
 			if (!transform) {
-				transform = new Ammo.btTransform();
+				transform = new physics.ammo.btTransform();
 				transform.setIdentity();
 				transform.setOrigin(
-					new Ammo.btVector3(
+					new physics.ammo.btVector3(
 						collider.position.x,
 						collider.position.y,
 						collider.position.z
 					)
 				);
 				transform.setRotation(
-					new Ammo.btQuaternion(
+					new physics.ammo.btQuaternion(
 						collider.rotation.x,
 						collider.rotation.y,
 						collider.rotation.z,
@@ -128,13 +198,13 @@ module.exports = function(Ammo, config) {
 			}
 
 			let mass = 0;
-			let localInertia = new Ammo.btVector3(0, 0, 0);
+			let localInertia = new physics.ammo.btVector3(0, 0, 0);
 
 			shape.calculateLocalInertia(mass, localInertia);
 
-			let motionState = new Ammo.btDefaultMotionState(transform);
-			let rigidBodyInfo = new Ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
-			let rigidBody = new Ammo.btRigidBody(rigidBodyInfo);
+			let motionState = new physics.ammo.btDefaultMotionState(transform);
+			let rigidBodyInfo = new physics.ammo.btRigidBodyConstructionInfo(mass, motionState, shape, localInertia);
+			let rigidBody = new physics.ammo.btRigidBody(rigidBodyInfo);
 
 			switch (collider.functionality) {
 			case "startgate":
@@ -147,7 +217,7 @@ module.exports = function(Ammo, config) {
 				break;
 			}
 
-			physicsWorld.addRigidBody(rigidBody);
+			_physicsWorld.addRigidBody(rigidBody);
 
 			return {
 				rigidBody,
@@ -178,7 +248,7 @@ module.exports = function(Ammo, config) {
 
 				// Creates height data buffer in Ammo heap
 				let ammoHeightData = null;
-				ammoHeightData = Ammo._malloc(4 * mapObj.width * mapObj.depth);
+				ammoHeightData = physics.ammo._malloc(4 * mapObj.width * mapObj.depth);
 
 				// Copy the javascript height data array to the Ammo one.
 				let p = 0,
@@ -187,7 +257,7 @@ module.exports = function(Ammo, config) {
 				for (let j = 0; j < mapObj.depth; j++) {
 					for (let i = 0; i < mapObj.width; i++) {
 						// write 32-bit float data to memory
-						Ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[p];
+						physics.ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[p];
 						p++;
 
 						// 4 bytes/float
@@ -196,7 +266,7 @@ module.exports = function(Ammo, config) {
 				}
 
 				// Creates the heightfield physics shape
-				let heightFieldShape = new Ammo.btHeightfieldTerrainShape(
+				let heightFieldShape = new physics.ammo.btHeightfieldTerrainShape(
 					mapObj.width,
 					mapObj.depth,
 					ammoHeightData,
@@ -211,7 +281,7 @@ module.exports = function(Ammo, config) {
 				// Set horizontal scale
 				let scaleX = mapObj.gridDistance;
 				let scaleZ = mapObj.gridDistance;
-				heightFieldShape.setLocalScaling(new Ammo.btVector3(scaleX, 1, scaleZ));
+				heightFieldShape.setLocalScaling(new physics.ammo.btVector3(scaleX, 1, scaleZ));
 
 				heightFieldShape.setMargin(0.05);
 
@@ -220,17 +290,17 @@ module.exports = function(Ammo, config) {
 
 			// Create the terrain body
 			let groundShape = createTerrainShape(mapObj);
-			let groundTransform = new Ammo.btTransform();
+			let groundTransform = new physics.ammo.btTransform();
 			groundTransform.setIdentity();
 			let groundMass = 0;
-			let groundLocalInertia = new Ammo.btVector3(0, 0, 0);
-			let groundMotionState = new Ammo.btDefaultMotionState(groundTransform);
-			let groundBody = new Ammo.btRigidBody(new Ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
+			let groundLocalInertia = new physics.ammo.btVector3(0, 0, 0);
+			let groundMotionState = new physics.ammo.btDefaultMotionState(groundTransform);
+			let groundBody = new physics.ammo.btRigidBody(new physics.ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
 
 			// Set static
 			groundBody.setCollisionFlags(1);
 
-			physicsWorld.addRigidBody(groundBody);
+			_physicsWorld.addRigidBody(groundBody);
 		}
 	};
-};
+}();
