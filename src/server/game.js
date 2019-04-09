@@ -108,17 +108,16 @@ let game = function() {
 
 	let _awardPoints = function(rank) {
 		let P = _playersEnteredList.length; // Amount of human marbles
-		let G = 1.5; // The first 66% of marbles that finish will receive more than 1 points for finishing
+		let G = config.marbles.scoring.pointScale; // Percentage of marbles that finish that will receive more than 1 points for finishing
 
 		return Math.max(
-
 			Math.ceil(
 				P / ( P ** (G / P) ) ** rank
 			),
 
 			// Finishing always gives you at least 1 additional point
 			1
-		);
+		) + config.marbles.scoring.pointsAwardedForFinishing; // Plus potential bonus for finishing
 	};
 
 	return {
@@ -151,11 +150,11 @@ let game = function() {
 					id,
 					finished: false,
 					time: null,
-					pointsEarned: 1,
+					pointsEarned: config.marbles.scoring.pointsAwardedForEntering,
 					marblesEntered: 1,
 					marblesFinished: 0
 				});
-				_round.pointsAwarded += 1;
+				_round.pointsAwarded += config.marbles.scoring.pointsAwardedForEntering;
 
 				// Spawn a single marble using the player's data
 				this.spawnMarble(id, name, color);
