@@ -48,6 +48,24 @@ config.marbles.rules.enterPeriod = 40; // Time in seconds
 config.marbles.rules.maxRoundLength = 160; // Time in seconds
 config.marbles.rules.waitAfterFinish = 40; // Time in seconds
 
+// Earning points
+config.marbles.scoring = {};
+
+// Points a player will receive for entering. Negative values are also supported.
+config.marbles.scoring.pointsAwardedForEntering = 1;
+
+// Addtional points a player will receive for finishing. Negative values are also supported.
+// NOTE: The current formula always gives at least 1 point for finishing!
+config.marbles.scoring.pointsAwardedForFinishing = 0;
+
+// This value determines the scale at which points are distributed to marbles that finish.
+// The formula used is the following, where G is the value adjustable here and P the amount of player-entered marbles:
+// points = Math.max( Math.ceil( P / (P ** (G / P)) ** rank ), 1 )
+// Examples:
+// G = 1.5; 1 / G = 0.667 = 66.7% of all entrants will receive more than one point for finishing.
+// G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
+config.marbles.scoring.pointScale = 1.5;
+
 /* Maps */
 config.maps = {};
 config.maps.folderPath = `${__dirname}/../../public/resources/maps`;
