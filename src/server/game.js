@@ -15,12 +15,21 @@ function Marble(id, entryId, name, color) {
 	this.finished = false;
 	this.rank = null;
 	this.time = null;
+
+	physics.world.createMarble(this);
 }
 
 Marble.prototype.onMarbleFinish = function() {
 	if(this.finished === false) {
 		game.marbleFinished(this);
 		this.finished = true;
+	}
+};
+
+Marble.prototype.destroyMarble = function() {
+	if(this.ammoBody) {
+		physics.world.destroyMarble(this);
+		this.ammoBody = null;
 	}
 };
 
@@ -139,7 +148,6 @@ let game = function() {
 			if (_marbles.length >= config.marbles.rules.maxMarbleCount) return;
 
 			let newMarble = new Marble(id, _marbles.length, name, color);
-			physics.world.createMarble(newMarble);
 			_marbles.push(newMarble);
 
 			// Send client info on new marble, without the ammoBody property
@@ -199,7 +207,7 @@ let game = function() {
 
 				// Remove all marbles
 				for (let i = _marbles.length - 1; i >= 0; --i) {
-					physics.world.destroyMarble(_marbles[i]);
+					_marbles[i].destroyMarble();
 				}
 				_marbles = [];
 

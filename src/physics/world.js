@@ -11,7 +11,7 @@ function MapCollider(colliderData, functionality, transform, id) {
 }
 
 MapCollider.prototype.addToWorld = function() {
-	if(!this.isInWorld) {
+	if(!this.isInWorld && this.ammoBody) {
 		this.isInWorld = true;
 		physics.world.physicsWorld.addRigidBody(this.ammoBody);
 	}
@@ -31,8 +31,10 @@ module.exports = function() {
 		_broadphase,
 		_solver,
 		physicsWorld,
-		_startAreas = [], // Start areas are kept separate since they're not part of the physics world
-		_mapColliders = [],
+		_mapColliders = [], // Collection of all map colliders
+		_startAreas = [], // Quicklist of start areas
+		_startGates = [], // Quicklist of starting gates
+		_specialColliders = [], // Quicklist of colliders that cause collision callbacks
 		_marbles = [], // List of (active) Marble object references
 		_ids = 1, // Starts at 1 to prevent conflicts with marble entryId 0
 		_timeStep = 1 / 120, // Default, configurable
@@ -75,9 +77,9 @@ module.exports = function() {
 
 				// Find the marble and mapCollider for this collision
 				if(body0 > 0) {
-					for(let m = 0; m < _mapColliders.length; m++) {
-						if(_mapColliders[m].id === body0) {
-							mapCollider = _mapColliders[m];
+					for(let m = 0; m < _specialColliders.length; m++) {
+						if(_specialColliders[m].id === body0) {
+							mapCollider = _specialColliders[m];
 							break;
 						}
 					}
@@ -90,9 +92,9 @@ module.exports = function() {
 					}
 				}
 				if(body1 > 0) {
-					for(let m = 0; m < _mapColliders.length; m++) {
-						if(_mapColliders[m].id === body1) {
-							mapCollider = _mapColliders[m];
+					for(let m = 0; m < _specialColliders.length; m++) {
+						if(_specialColliders[m].id === body1) {
+							mapCollider = _specialColliders[m];
 							break;
 						}
 					}
@@ -151,7 +153,7 @@ module.exports = function() {
 				sphereShape = new physics.ammo.btSphereShape(marble.size); // Create new collision shape if the radius does not match
 			}
 			sphereShape.setMargin( 0.05 );
-			let mass = (marble.size || 0.5) * 5; // TODO
+			let mass = 4 / 3 * Math.PI * (marble.size ** 3);
 			let localInertia = new physics.ammo.btVector3( 0, 0, 0 );
 			sphereShape.calculateLocalInertia( mass, localInertia );
 			let transform = new physics.ammo.btTransform();
@@ -185,6 +187,7 @@ module.exports = function() {
 
 			// For starting areas, we can skip collider creation
 			if(collider.functionality === "startarea") {
+				_mapColliders.push(newCollider);
 				_startAreas.push(newCollider);
 				return newCollider;
 			}
@@ -235,9 +238,11 @@ module.exports = function() {
 
 			switch (collider.functionality) {
 			case "startgate":
+				_startGates.push(newCollider);
 				newCollider.ammoBody.setCollisionFlags(2); // Kinematic
 				break;
 			case "endarea":
+				_specialColliders.push(newCollider);
 				newCollider.ammoBody.setCollisionFlags(5); // Static + no contact reponse
 				break;
 			case "static":
@@ -253,23 +258,39 @@ module.exports = function() {
 		},
 
 		destroyCollider(mapCollider) {
+			// Erase from _startAreas
 			if(mapCollider.type === "startarea") {
-				// Erase from _startAreas
 				for(let i = 0; i < _startAreas.length; i++) {
 					if(_startAreas[i] === mapCollider) {
 						_startAreas.splice(i, 1);
 						return;
 					}
 				}
-			} else {
-				// Erase from _mapColliders
-				// Might want to be careful about removing a rb if it's not in the world...
-				for(let i = 0; i < _mapColliders.length; i++) {
-					if(_mapColliders[i] === mapCollider) {
-						mapCollider.removeFromWorld();
-						_mapColliders.splice(i, 1);
+			}
+			// Erase from _startGates
+			if(mapCollider.type === "startgate") {
+				for(let i = 0; i < _startGates.length; i++) {
+					if(_startGates[i] === mapCollider) {
+						_startGates.splice(i, 1);
 						return;
 					}
+				}
+			}
+			// Erase from _specialColliders, currently "endarea" only
+			if(mapCollider.type === "endarea") {
+				for(let i = 0; i < _specialColliders.length; i++) {
+					if(_specialColliders[i] === mapCollider) {
+						_specialColliders.splice(i, 1);
+						return;
+					}
+				}
+			}
+			// Erase from _mapColliders, remove from world if needed
+			for(let i = 0; i < _mapColliders.length; i++) {
+				if(_mapColliders[i] === mapCollider) {
+					mapCollider.removeFromWorld();
+					_mapColliders.splice(i, 1);
+					return;
 				}
 			}
 		},
@@ -277,6 +298,8 @@ module.exports = function() {
 		// Clears the world of all map colliders
 		clearColliders() {
 			_startAreas = [];
+			_startGates = [];
+			_specialColliders = [];
 			for(let i = 0; i < _mapColliders.length; i++) {
 				_mapColliders[i].removeFromWorld();
 			}
@@ -285,16 +308,14 @@ module.exports = function() {
 		},
 
 		openGates() {
-			for(let i = 0; i < _mapColliders.length; i++) {
-				if(_mapColliders[i].type !== "startgate") continue;
-				_mapColliders[i].removeFromWorld();
+			for(let i = 0; i < _startGates.length; i++) {
+				_startGates[i].removeFromWorld();
 			}
 		},
 
 		closeGates() {
-			for(let i = 0; i < _mapColliders.length; i++) {
-				if(_mapColliders[i].type !== "startgate") continue;
-				_mapColliders[i].addToWorld();
+			for(let i = 0; i < _startGates.length; i++) {
+				_startGates[i].addToWorld();
 			}
 		},
 
