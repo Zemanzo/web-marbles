@@ -34,7 +34,6 @@ let game = function() {
 		_marblesFinished = 0,
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
-		_checkFinishedInterval = null,
 
 		_gameplayParameters = null,
 
@@ -64,22 +63,6 @@ let game = function() {
 			marblesFinished: 0,
 			marblesNotFinished: 0
 		};
-	};
-
-	let _checkFinished = function() {
-		// Check for newly finished marbles
-		// This function is a placeholder for bullet callbacks
-		let transform = new physics.ammo.btTransform();
-		for (let i = 0; i < _marbles.length; i++) {
-			let ms = _marbles[i].ammoBody.getMotionState();
-			if (ms) {
-				ms.getWorldTransform(transform);
-				let p = transform.getOrigin();
-				if ( p.y() < -5) {
-					_marbles[i].onMarbleFinish();
-				}
-			}
-		}
 	};
 
 	let _awardPoints = function(rank) {
@@ -201,9 +184,6 @@ let game = function() {
 					db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
 				}
 
-				// Stop checking for finished marbles
-				clearInterval(_checkFinishedInterval);
-
 				// Clear any remaining timeouts
 				clearTimeout(this.gameplayMaxTimeout);
 				clearTimeout(this.gameplayFinishTimeout);
@@ -214,7 +194,8 @@ let game = function() {
 				this.startTime = undefined;
 
 				// Close the gate
-				physics.world.setAllGatesState("close");
+				//physics.world.setAllGatesState("close");
+				physics.world.closeGates();
 
 				// Remove all marbles
 				for (let i = _marbles.length - 1; i >= 0; --i) {
@@ -253,15 +234,12 @@ let game = function() {
 
 					_round.start = this.startTime = Date.now();
 
-					physics.world.setAllGatesState("open");
+					//physics.world.setAllGatesState("open");
+					physics.world.openGates();
 					for(let i = 0; i < _marbles.length; i++) {
 						_marbles[i].ammoBody.activate();
 					}
 				}, _startDelay);
-
-				// During the racing period, check if marbles have finished yet.
-				// TODO: Should be improved using Bullet callbacks (so none of this checking 20 times per second stuff)
-				_checkFinishedInterval = setInterval(_checkFinished.bind(this), 50);
 
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 				this.gameplayMaxTimeout = _setTrackableTimeout(

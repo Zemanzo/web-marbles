@@ -31,41 +31,21 @@ module.exports = function() {
 
 			for (let prefabEntityUuid in prefab.entities) {
 				let prefabEntity = prefab.entities[prefabEntityUuid];
-				let worldEntityTransform, prefabEntityTransform, transform;
 
-				switch (prefabEntity.type) {
-				case "collider":
-					worldEntityTransform = _transformFromEntity(worldEntity);
-					prefabEntityTransform = _transformFromEntity(prefabEntity);
+				if(prefabEntity.type !== "collider") continue;
 
-					// Clone the transform because op_mul modifies the transform it is called on
-					transform = new physics.ammo.btTransform();
-					transform.setIdentity();
-					transform.setOrigin(worldEntityTransform.getOrigin());
-					transform.setRotation(worldEntityTransform.getRotation());
+				let worldEntityTransform = _transformFromEntity(worldEntity);
+				let prefabEntityTransform = _transformFromEntity(prefabEntity);
 
-					transform.op_mul(prefabEntityTransform); // Modifies "transform"
+				// Clone the transform because op_mul modifies the transform it is called on
+				let transform = new physics.ammo.btTransform();
+				transform.setIdentity();
+				transform.setOrigin(worldEntityTransform.getOrigin());
+				transform.setRotation(worldEntityTransform.getRotation());
 
-					switch (prefabEntity.functionality) {
-					case "static":
-					default:
-						physics.world.addPrimitiveCollider(prefabEntity, transform);
-						break;
-					case "startgate":
-						physics.world.addStartGate(prefabEntity, transform);
-						break;
-					case "startarea":
-						physics.world.startAreas.push({prefabEntity, transform});
-						break;
-					case "endarea":
-						physics.world.endAreas.push({prefabEntity, transform});
-						break;
-					}
+				transform.op_mul(prefabEntityTransform); // Modifies "transform"
 
-					break;
-				case "object":
-					continue;
-				}
+				physics.world.createCollider(prefabEntity, transform);
 			}
 		}
 	});
