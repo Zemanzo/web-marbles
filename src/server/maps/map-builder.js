@@ -1,5 +1,5 @@
-const physics = require("./manager");
-const maps = require("../maps/manager");
+const physics = require("../../physics/manager");
+const maps = require("./manager");
 
 module.exports = function() {
 	let _transformFromEntity = function(entity) {

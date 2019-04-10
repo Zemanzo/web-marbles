@@ -66,6 +66,3 @@ module.exports = function() {
 // Module initialization
 module.exports.shapes.defaultMarble = new module.exports.ammo.btSphereShape(0.2);
 module.exports.world = require("./world");
-
-// Not-module initialization that has no business happening here
-require("./map-builder");

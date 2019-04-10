@@ -17,7 +17,7 @@ db.setCurrentDatabase(
 const maps = require("./server/maps/manager");
 
 // Set up physics world
-const physics = require("./server/physics/manager");
+const physics = require("./physics/manager");
 physics.world.setTickRate(config.physics.steps);
 physics.world.setGravity(config.physics.gravity);
 

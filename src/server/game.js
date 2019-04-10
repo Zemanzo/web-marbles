@@ -1,6 +1,6 @@
 const log = require("../log");
 const config = require("./config");
-const physics = require("./physics/manager");
+const physics = require("../physics/manager");
 const maps = require("./maps/manager");
 const db = require("./database/manager");
 
