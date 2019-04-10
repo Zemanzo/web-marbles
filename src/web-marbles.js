@@ -18,6 +18,8 @@ const maps = require("./server/maps/manager");
 
 // Set up physics world
 const physics = require("./server/physics/manager");
+physics.world.setTickRate(config.physics.steps);
+physics.world.setGravity(config.physics.gravity);
 
 // Set up game logic
 const game = require("./server/game");

@@ -1,8 +1,6 @@
-const config = require("../config");
 const physics = require("./manager");
 
 // Constructor for starting area, starting gate, and finish line
-// WIP: Might be useful encapsulation, might be gutter trash
 function MapCollider(colliderData, functionality, transform, id) {
 	this.colliderData = colliderData;
 	this.type = functionality;
@@ -36,7 +34,12 @@ module.exports = function() {
 		_startAreas = [], // Start areas are kept separate since they're not part of the physics world
 		_mapColliders = [],
 		_marbles = [], // List of (active) Marble object references
-		_ids = 1; // Starts at 1 to prevent conflicts with marble entryId 0
+		_ids = 1, // Starts at 1 to prevent conflicts with marble entryId 0
+		_timeStep = 1 / 120, // Default, configurable
+		_stepRemainder = 0,
+		_maxTicksPerUpdate = 10,
+		_updateInterval = null,
+		_lastPhysicsUpdate = null;
 
 	// Physics configuration
 	_collisionConfiguration = new physics.ammo.btDefaultCollisionConfiguration();
@@ -44,12 +47,11 @@ module.exports = function() {
 	_broadphase = new physics.ammo.btDbvtBroadphase();
 	_solver = new physics.ammo.btSequentialImpulseConstraintSolver();
 	physicsWorld = new physics.ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
-	physicsWorld.setGravity( new physics.ammo.btVector3( 0, config.physics.gravity, 0 ) );
+	physicsWorld.setGravity( new physics.ammo.btVector3( 0, -10, 0 ) );
 
-	let _lastPhysicsUpdate = Date.now();
-
-	function _updatePhysics( deltaTime ) {
-		physicsWorld.stepSimulation( deltaTime, 10 );
+	function _updatePhysics() {
+		// Steps have to be constant WITHOUT bullet substepping
+		physicsWorld.stepSimulation( _timeStep, 0 );
 
 		// Check collision pairs and handle callbacks
 		let numManifolds = _dispatcher.getNumManifolds();
@@ -106,23 +108,11 @@ module.exports = function() {
 				if(marble === null || mapCollider === null) continue;
 
 				if(mapCollider.type === "endarea") {
-					marble.onMarbleFinish();
+					if(marble.onMarbleFinish) marble.onMarbleFinish();
 				}
 			}
 		}
 	}
-
-	let _updateInterval;
-	let _startUpdateInterval = function() {
-		_updateInterval = setInterval(function() {
-			let now = Date.now();
-			let deltaTime = (now - _lastPhysicsUpdate) / 1000;
-			_lastPhysicsUpdate = now;
-			_updatePhysics(deltaTime);
-		}, 1000 / config.physics.steps);
-	};
-
-	_startUpdateInterval();
 
 	let _randomPositionInStartAreas = function() {
 		let area = _startAreas[Math.floor(_startAreas.length * Math.random())];
@@ -310,79 +300,45 @@ module.exports = function() {
 
 		startUpdateInterval() {
 			this.stopUpdateInterval();
-			_startUpdateInterval();
+			_lastPhysicsUpdate = Date.now();
+
+			_updateInterval = setInterval(function() {
+				let now = Date.now();
+				let deltaTime = (now - _lastPhysicsUpdate) / 1000;
+				_lastPhysicsUpdate = now;
+
+				// Update physics with constant _timeStep substeps
+				_stepRemainder += deltaTime;
+				let ticks = 0;
+				while(ticks < _maxTicksPerUpdate && _stepRemainder > _timeStep) {
+					_updatePhysics();
+					_stepRemainder -= _timeStep;
+					ticks++;
+				}
+				_stepRemainder %= _timeStep; // Skip any remaining ticks if we're too far behind
+			}, _timeStep * 1000);
+		},
+
+		setTickRate(tickRate) {
+			_timeStep = 1 / tickRate;
+			if(_updateInterval) {
+				this.stopUpdateInterval();
+				this.startUpdateInterval();
+			}
 		},
 
 		stopUpdateInterval() {
-			clearInterval(_updateInterval);
+			if(_updateInterval !== null) {
+				clearInterval(_updateInterval);
+				_updateInterval = null;
+			}
 		},
 
-		addTerrainCollider(mapObj) {
-			function createTerrainShape() {
-				// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-				let upAxis = 1;
-
-				// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-				let hdt = "PHY_FLOAT";
-
-				// Set this to your needs (inverts the triangles)
-				let flipQuadEdges = false;
-
-				// Creates height data buffer in Ammo heap
-				let ammoHeightData = null;
-				ammoHeightData = physics.ammo._malloc(4 * mapObj.width * mapObj.depth);
-
-				// Copy the javascript height data array to the Ammo one.
-				let p = 0,
-					p2 = 0;
-
-				for (let j = 0; j < mapObj.depth; j++) {
-					for (let i = 0; i < mapObj.width; i++) {
-						// write 32-bit float data to memory
-						physics.ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[p];
-						p++;
-
-						// 4 bytes/float
-						p2 += 4;
-					}
-				}
-
-				// Creates the heightfield physics shape
-				let heightFieldShape = new physics.ammo.btHeightfieldTerrainShape(
-					mapObj.width,
-					mapObj.depth,
-					ammoHeightData,
-					1,
-					mapObj.minZ,
-					mapObj.maxZ,
-					upAxis,
-					hdt,
-					flipQuadEdges
-				);
-
-				// Set horizontal scale
-				let scaleX = mapObj.gridDistance;
-				let scaleZ = mapObj.gridDistance;
-				heightFieldShape.setLocalScaling(new physics.ammo.btVector3(scaleX, 1, scaleZ));
-
-				heightFieldShape.setMargin(0.05);
-
-				return heightFieldShape;
-			}
-
-			// Create the terrain body
-			let groundShape = createTerrainShape(mapObj);
-			let groundTransform = new physics.ammo.btTransform();
-			groundTransform.setIdentity();
-			let groundMass = 0;
-			let groundLocalInertia = new physics.ammo.btVector3(0, 0, 0);
-			let groundMotionState = new physics.ammo.btDefaultMotionState(groundTransform);
-			let groundBody = new physics.ammo.btRigidBody(new physics.ammo.btRigidBodyConstructionInfo(groundMass, groundMotionState, groundShape, groundLocalInertia));
-
-			// Set static
-			groundBody.setCollisionFlags(1);
-
-			_physicsWorld.addRigidBody(groundBody);
+		setGravity(force) {
+			physicsWorld.setGravity( new physics.ammo.btVector3( 0, force, 0 ) );
 		}
 	};
 }();
+
+// Physics will run by default
+module.exports.startUpdateInterval();
