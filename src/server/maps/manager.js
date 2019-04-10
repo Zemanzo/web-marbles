@@ -61,3 +61,6 @@ module.exports = {
 	currentMapName,
 	currentMapData
 };
+
+// Not-module initialization that has no business happening here
+require("./map-builder");

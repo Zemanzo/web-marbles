@@ -32,14 +32,7 @@ const setupGameplay = function(db, physics, config, game, maps) {
 				log.info("A user connected!".green + name);
 				ws.meta = { name };
 
-				let initialMarbleData = [];
-				for (let i = 0; i < physics.marbles.list.length; i++) {
-					initialMarbleData.push({
-						pos: physics.marbles.list[i].position,
-						id: physics.marbles.list[i].id,
-						meta: physics.marbles.list[i].meta
-					});
-				}
+				let initialMarbleData = game.getMarbles();
 
 				Promise.all([maps.currentMapName, maps.currentMapData]).then((values) => {
 					let intialData = {
@@ -54,7 +47,11 @@ const setupGameplay = function(db, physics, config, game, maps) {
 						initialMarbleData
 					};
 
-					ws.sendTyped(JSON.stringify(intialData), "initial_data");
+					function omitter(key, value) {
+						if(key === "ammoBody") return undefined;
+						return value;
+					}
+					ws.sendTyped(JSON.stringify(intialData, omitter), "initial_data");
 				});
 			},
 			close: function(ws) {
@@ -65,11 +62,8 @@ const setupGameplay = function(db, physics, config, game, maps) {
 
 	gameplaySocketManager.messageFunctions.push(function(ws, message, isBinary, type) {
 		if (type === "request_physics") {
-			if (physics.marbles.list.length !== 0) {
-				let marbleTransformations = physics.marbles.getMarbleTransformations();
-				// let gateOrigin = physics.gateBody.getWorldTransform().getOrigin();
-				// let startGatePosition = [gateOrigin.x(), gateOrigin.y(), gateOrigin.z()];
-
+			let marbleTransformations = game.getMarbleTransformations();
+			if (marbleTransformations !== null) {
 				ws.sendTyped(
 					JSON.stringify({
 						pos: marbleTransformations.position,
