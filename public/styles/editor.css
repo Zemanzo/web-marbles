@@ -224,7 +224,7 @@ body {
 			clip: rect(1px,63px,13px,1px);
 		}
 
-	.prefab .showPrefab .icofont-eye-blocked {
+	.prefab .showPrefab .eye-off {
 		color: #666;
 	}
 

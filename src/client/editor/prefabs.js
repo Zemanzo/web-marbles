@@ -93,10 +93,10 @@ Prefab.prototype.toggleVisibility = function() {
 	let icon = this.element.getElementsByClassName("showPrefab")[0].children[0];
 	if(this.group.visible) {
 		this.group.visible = false;
-		icon.className = "icofont-eye-blocked";
+		icon.className = "icon-eye-off";
 	} else {
 		this.group.visible = true;
-		icon.className = "icofont-eye";
+		icon.className = "icon-eye";
 	}
 };
 
@@ -120,10 +120,10 @@ Prefab.prototype.toggleCollapse = function() {
 	let caret = this.element.getElementsByClassName("collapse")[0].children[0];
 
 	if ( this.element.className.indexOf("collapsed") === -1 ) {
-		caret.className = "icofont-caret-right";
+		caret.className = "icon-right-dir";
 		this.element.className = "prefab collapsed";
 	} else {
-		caret.className = "icofont-caret-right rotated";
+		caret.className = "icon-right-dir rotated";
 		this.element.className = "prefab";
 	}
 };

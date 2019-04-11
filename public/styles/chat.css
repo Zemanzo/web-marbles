@@ -19,7 +19,7 @@ body {
 	flex: 1;
 	font-family: "Quicksand", sans-serif;
 	font-size: 13px;
-	background: #111;
+	background: #06060666;
 	color: #eee;
 	height: 100vh;
 	display: flex;
@@ -27,7 +27,7 @@ body {
 	overflow: hidden;
 	margin: 0;
 	padding: 0;
-	max-width: 600px;
+	max-width: 90ch;
 	max-height: 600px;
 }
 
@@ -35,7 +35,7 @@ header {
 	display: flex;
 	font-size: .9rem;
 	padding: 0 4px;
-	background: #060606;
+	background: #06060666;
 	align-items: center;
 	justify-content: space-between;
 }
@@ -96,7 +96,7 @@ header {
 	}
 
 	.message:nth-child(odd) {
-		background-color: #0C0C0C;
+		background-color: #0C0C0C66;
 	}
 		.message > .timestamp {
 			font-size: .8em;
@@ -189,9 +189,9 @@ header {
 		display: flex;
 		flex-direction: column;
 	}
-		#authenticated > div {
+		#chatUserAndInputContainer {
 			display: flex;
-			margin: 2px;
+			margin: 2px 10px;
 		}
 
 			#user {
@@ -199,8 +199,8 @@ header {
 				align-items: center;
 				margin-right: 4px;
 				font-weight: 600;
-				border-radius: 1em;
-				background-color: #060606;
+				border-radius: 100%;
+				background-color: #06060699;
 				overflow: hidden;
 			}
 
@@ -215,7 +215,7 @@ header {
 				}
 
 				#user:hover {
-					border-radius: 0px;
+					border-radius: 4px;
 				}
 
 				#user:hover > div {
@@ -234,7 +234,7 @@ header {
 			#buttonSend {
 				font-size: 22px;
 				position: absolute;
-				right: 8px;
+				right: 14px;
 				top: 8px;
 				cursor: pointer;
 				color: #444;
@@ -245,8 +245,9 @@ header {
 			}
 
 		#chatButtons {
+			display: flex;
 			justify-content: space-between;
-			padding: 0 8px;
+			margin: 2px 10px 4px 10px;
 		}
 
 			#chatButtons > button {
@@ -290,7 +291,7 @@ header {
 	input[type=number],
 	input[type=text],
 	select {
-		background: #060606;
+		background: #06060699;
 		color: #eee;
 		border: none;
 	}

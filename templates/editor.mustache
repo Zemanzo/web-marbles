@@ -11,8 +11,10 @@
 			<!-- Webfont -->
 			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon|BenchNine:300" rel="stylesheet">
 
+			<!-- Icons -->
+			<link href="fontello/css/fontello.css" rel="stylesheet">
+
 			<!-- Own styles -->
-			<link href="icofont/css/icofont.css" rel="stylesheet">
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
@@ -52,12 +54,12 @@
 					<div id="models">
 						<div class="model" id="modelTemplate">
 							<div class="name">template.gltf</div>
-							<button class="delete" title="Delete model"><i class="icofont-ui-delete"></i></button>
+							<button class="delete" title="Delete model"><i class="icon-trash"></i></button>
 						</div>
 					</div>
 					<div id="addModel" class="add">
 						<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
-						<i class="icofont-plus"></i>
+						<i class="icon-plus"></i>
 						<span>Add model(s)</span>
 					</div>
 				</div>
@@ -168,11 +170,11 @@
 					<div id="prefabsList">
 						<div class="prefab collapsed" id="prefabTemplate">
 							<div class="prefabHeader">
-								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye"></i></button>
-								<button class="collapse" title="Collapse"><i class="icofont-caret-right"></i></button>
+								<button class="showPrefab" title="Show this prefab"><i class="icon-eye"></i></button>
+								<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
 								<input type="text" class="prefabName" placeholder="Add a name..."/>
 								<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
-								<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
+								<button class="delete" title="Delete prefab"><i class="icon-trash"></i></button>
 							</div>
 							<div class="prefabDetails">
 								<div class="detailsColor">
@@ -193,16 +195,16 @@
 							</div>
 							<div class="objectList">
 								<div class="object" id="prefabObjectTemplate">
-									<i class="icofont-cube"></i>
+									<i class="icon-cube"></i>
 									<div class="name">objectName</div>
 									<div class="uuid">1337</div>
-									<i class="icofont-close delete"></i>
+									<i class="icon-cancel delete"></i>
 								</div>
 								<div class="collider" id="prefabColliderTemplate">
-									<i class="icofont-barricade"></i>
+									<i class="icon-resize-small"></i>
 									<div class="name">colliderName</div>
 									<div class="uuid">dank</div>
-									<i class="icofont-close delete"></i>
+									<i class="icon-cancel delete"></i>
 								</div>
 							</div>
 							<div class="prefabActions">
@@ -213,7 +215,7 @@
 						</div>
 
 						<div id="newPrefab" class="add">
-							<i class="icofont-plus"></i>
+							<i class="icon-plus"></i>
 							<span>New prefab</span>
 						</div>
 
@@ -229,7 +231,7 @@
 								<div class="prefabName"></div>
 								<div class="name"></div>
 								<div class="uuid"></div>
-								<button class="delete" title="Remove object"><i class="icofont-close delete"></i></button>
+								<button class="delete" title="Remove object"><i class="icon-cancel delete"></i></button>
 							</div>
 						</div>
 
@@ -238,7 +240,7 @@
 								<option value="null" selected >&lt; Select prefab &gt;</option>
 							</select>
 							<div id="worldAddPrefabButton" class="add">
-								<i class="icofont-plus"></i>
+								<i class="icon-plus"></i>
 								<span>Add prefab</span>
 							</div>
 						</div>

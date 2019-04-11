@@ -104,6 +104,10 @@ app.get("/", function(req, res) {
 	res.render("index");
 });
 
+const git = require("git-rev-sync");
+const gitHash = git.long();
+const gitBranch = git.branch();
+const version = require("../package.json").version;
 app.get("/client", function(req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
 		// Send over the gamestate when a new connection is made
@@ -130,7 +134,11 @@ app.get("/client", function(req, res) {
 			res.send("You probably can't do that. Nice try tho gg.");
 		}
 	} else {
-		res.render("client");
+		res.render("client", {
+			gitHash,
+			gitBranch,
+			version
+		});
 	}
 });
 
