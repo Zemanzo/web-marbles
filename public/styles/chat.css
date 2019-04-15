@@ -234,8 +234,8 @@ header {
 			#buttonSend {
 				font-size: 22px;
 				position: absolute;
-				right: 14px;
-				top: 8px;
+				right: 10px;
+				top: 4px;
 				cursor: pointer;
 				color: #444;
 			}
@@ -250,21 +250,32 @@ header {
 			margin: 2px 10px 4px 10px;
 		}
 
-			#chatButtons > button {
+			#chatButtons > * {
+				display:block;
 				font-family: "Quicksand", sans-serif;
 				padding: 2px 4px;
 				background: #060606;
 				color: #eee;
 				border-radius: 3px;
+				font-weight: 600;
+				text-decoration: none;
 			}
 
-			button#buttonLogOut {
+			#chatButtons > *:not(:first-child) {
+				margin-left: 4px;
+			}
+
+			#chatButtons > *:not(:last-child) {
+				margin-right: 4px;
+			}
+
+			#chatButtons > *.minimal {
 				margin-left: 0;
 				color: #999;
 				font-size:.9em;
 			}
 
-			#chatButtons > button:hover {
+			#chatButtons > *:hover {
 				background: var(--theme-color);
 				/* border: 1px solid var(--theme-color); */
 				color: #eee;
@@ -274,12 +285,12 @@ header {
 	input[type=number] {
 		max-width: 50px;
 		min-width: 30px;
-		width:  100%;
+		width: 100%;
 		max-height: 19px;
 		padding: 1px 2px 1px 3px;
-		-webkit-appearance:  textfield;
-		-moz-appearance:     textfield;
-		appearance:          textfield;
+		-webkit-appearance: textfield;
+		-moz-appearance: textfield;
+		appearance: textfield;
 		box-sizing: border-box;
 	}
 
@@ -300,6 +311,7 @@ header {
 		color: #999;
 		font-style: italic;
 	}
+
 	input:-moz-read-only { /* little disappointed in Firefox here */
 		color: #999;
 		font-style: italic;

@@ -257,14 +257,9 @@ app.post("/chat", function(req, res) {
 
 app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
-		res.render("editor", {});
+		res.render("editor", {version});
 	else
 		res.render("editor-disabled", {});
-});
-
-app.get("/shutdown", function(req, res) {
-	res.send("wow ok then");
-	shutdown();
 });
 
 // Express listener

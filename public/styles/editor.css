@@ -1,26 +1,48 @@
 body {
 	--theme-color: #EECC00;
 	--theme-color-dark: #997700;
+	grid-template-areas: "title viewport" "sidebar viewport";
 }
 
 #viewport > button {
 	margin: 4px;
 }
 
+#sidebar {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: 40px minmax(0, 1fr) 90px;
+	grid-template-areas: "mode" "menu" "log";
+}
+
 #mode {
+	grid-area: mode;
 	text-align: center;
 	font-size: 2em;
 	color: var(--theme-color-dark);
 }
 
-#sidebar {
-	padding: 9px;
+	#menu .icon-cubes {
+		margin-left: -3px;
+		margin-right: 3px;
+	}
+
+	#menuContent {
+		max-height: 100%;
+		overflow: hidden;
+		padding: 4px;
+	}
+
+#log {
+	grid-area: log;
+	overflow: hidden;
+	border-radius: var(--border-radius);
 }
 
 #properties {
 	display: flex;
 	overflow: hidden;
 	flex: 1;
+	max-height: 100%;
 }
 
 	#properties > div {
@@ -39,28 +61,6 @@ body {
 
 	#properties > div h3:first-child {
 		margin: .3em 0 0 0;
-	}
-
-#editorMode {
-	display: flex;
-	flex-wrap: wrap;
-	justify-content: space-around;
-	text-align: center;
-}
-
-	#editorMode > * {
-		min-width: 10ch;
-		flex: 1;
-		cursor: pointer;
-		background: #666;
-	}
-	#editorMode > *:hover {
-		background: var(--theme-color-dark);
-	}
-
-	#editorMode > *.selected {
-		background: var(--theme-color);
-		color: #111;
 	}
 
 .add {
@@ -107,12 +107,12 @@ body {
 		cursor: pointer;
 		margin: 2px 0px;
 		padding-left: 2px;
-		background: #262626;
+		background: #333;
 		display: flex;
 	}
 
 	.model:hover {
-		background: #333333;
+		background: #393939;
 	}
 
 	.model.selected {
@@ -141,7 +141,7 @@ body {
 
 .prefab {
 	/* border: 1px solid var(--theme-color-dark); */
-	background: #262626;
+	background: #222;
 	min-height: 160px;
 	max-height: 300px;
 	transition: min-height .3s, max-height .3s;
@@ -149,8 +149,9 @@ body {
 	flex-direction: column;
 	overflow: hidden;
 }
+
 .prefab:not(:nth-child(2)){ /* First child is hidden template */
-	margin-top: 12px;
+	margin-top: 4px;
 }
 
 .prefab.collapsed {
@@ -478,6 +479,7 @@ body {
 				flex: 1;
 				display: flex;
 				align-items: center;
+				overflow: hidden;
 			}
 
 			.worldObject .prefabName {

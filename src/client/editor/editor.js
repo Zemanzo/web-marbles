@@ -126,7 +126,7 @@ let editor = function() {
 
 			// Menu
 			let childValue = 0;
-			for (let child of document.getElementById("editorMode").children) {
+			for (let child of document.getElementById("menuOptions").children) {
 				child.dataset.nthChild = childValue++;
 
 				// Add click event for every tab

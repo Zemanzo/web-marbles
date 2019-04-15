@@ -209,7 +209,7 @@ body > *:not(#sidebar) {
 	display: grid;
 	grid-template-columns: 1fr 80px;
 	grid-template-rows: 50px 1fr;
-	grid-template-areas: "gamestate timer" "gameinfo gameinfo";
+	grid-template-areas: "gamestate timer" "menu menu";
 	grid-gap: 2px;
 	box-sizing: border-box;
 	color: #eee;
@@ -217,8 +217,6 @@ body > *:not(#sidebar) {
 }
 
 	#sidebar > * {
-		background-color: #2b2929;
-		border-radius: var(--border-radius);
 		box-sizing: border-box;
 	}
 
@@ -227,6 +225,8 @@ body > *:not(#sidebar) {
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		background-color: #2b2929;
+		border-radius: var(--border-radius);
 	}
 		#state {
 			margin: 0px 8px;
@@ -244,10 +244,49 @@ body > *:not(#sidebar) {
 		font-size: 2em;
 		letter-spacing: -3px;
 		padding-right:3px;
+		background-color: #2b2929;
+		border-radius: var(--border-radius);
 	}
 
+	#menu {
+		grid-area: menu;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+
+		#menuOptions {
+			display: flex;
+		}
+
+			#menuOptions > div {
+				font-size: 1.8em;
+				padding: .2em .1em 0 .1em;
+				background-color: #1c1a1a;
+				border-radius: var(--border-radius) var(--border-radius) 0 0;
+				margin-right:2px;
+			}
+
+			#menuOptions > div:not(.selected) {
+				cursor: pointer;
+				color: #999;
+			}
+
+			#menuOptions > div:not(.selected):hover {
+				color: #fff;
+			}
+
+			#menuOptions > div.selected {
+				background-color: #2b2929;
+			}
+
+		#menuContent {
+			background-color: #2b2929;
+			border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+			flex:1;
+		}
+
 	#gameInfo {
-		grid-area: gameinfo;
 		display: flex;
 		flex-direction: column;
 		min-height: 350px;
@@ -307,9 +346,9 @@ body > *:not(#sidebar) {
 	bottom: 0px;
 	width: 100%;
 	font-size: 13px;
-	max-width: 90ch;
-	min-width: 60ch;
-	height:300px;
+	max-width: 60ch;
+	min-width: 50ch;
+	height:500px;
 	flex: 1;
 	display: flex;
 	flex-direction: column;

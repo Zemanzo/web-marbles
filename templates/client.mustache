@@ -78,8 +78,8 @@
 				{{#gitHash}}<div id="releaseHash">{{gitHash}}</div>{{/gitHash}}
 			</div>
 			<nav id="externalLinks">
-				<a href="https://github.com/Zemanzo/web-marbles" id="github"><i class="icon-github-circled"></i></a>
-				<a href="" id="patreon"><img src="images/patreon.svg"></a>
+				<a href="https://github.com/Zemanzo/web-marbles" id="github" title="Contribute to the source!"><i class="icon-github-circled"></i></a>
+				<a href="https://www.patreon.com/webmarbles" id="patreon" title="Support us on patreon!"><img src="images/patreon.svg" alt="Patreon"></a>
 			</nav>
 		</header>
 		<section id="viewport">
@@ -102,18 +102,26 @@
 			<div id="timer" class="themeNumber">
 				...
 			</div>
-			<div id="gameInfo" class="hidden">
-				<div>
-					<h2>
-						Marbles - <span id="entries" class="themeNumber">0</span> entries
-					</h2>
+			<div id="menu">
+				<div id="menuOptions">
+					<div class="selected"><i class="icon-users"></i></div>
+					<!--<div><i class="icon-cog"></i></div>--> <!-- To be added... -->
 				</div>
-				<div id="marbleList">
-					<div class="marbleListEntry" id="marbleListTemplate">
-						<span class="rank">#</span>
-						<span class="color">&nbsp;</span>
-						<span class="name">Zemanzo</span>
-						<span class="time">...</span>
+				<div id="menuContent">
+					<div id="gameInfo" class="hidden">
+						<div>
+							<h2>
+								Marbles - <span id="entries" class="themeNumber">0</span> entries
+							</h2>
+						</div>
+						<div id="marbleList">
+							<div class="marbleListEntry" id="marbleListTemplate">
+								<span class="rank">#</span>
+								<span class="color">&nbsp;</span>
+								<span class="name">Zemanzo</span>
+								<span class="time">...</span>
+							</div>
+						</div>
 					</div>
 				</div>
 			</div>

@@ -39,7 +39,6 @@
 		{{^success}}
 		<header>
 			<div><img src="images/discord_powered.svg" alt="DISCORD POWERED"/></div>
-			{{#invitelink}}<a href="{{invitelink}}" target="_blank"><img src="images/join_the_server.svg" alt="JOIN THE SERVER!"/></a>{{/invitelink}}
 		</header>
 		<div id="chatMessages">
 			<div class="message" id="messageTemplate">
@@ -80,7 +79,9 @@
 					<i class="icon-right-big" id="buttonSend"></i>
 				</div>
 				<div id="chatButtons">
-					<button id="buttonLogOut"><i class="icon-logout"></i> log out</button>
+					<button id="buttonLogOut" class="minimal"><i class="icon-logout"></i> log out</button>
+					{{#invitelink}}<a href="{{invitelink}}" target="_blank" class="minimal"><i class="icon-link-ext"></i> join server</a>{{/invitelink}}
+					<div class="flexSpacer">&nbsp;</div>
 					<button id="buttonMarble">!marble</button>
 				</div>
 			</div>

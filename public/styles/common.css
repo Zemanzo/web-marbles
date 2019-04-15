@@ -21,3 +21,8 @@ button:hover {
 input[type=color] {
 	padding: 0px;
 }
+
+.flexSpacer {
+	flex: 1;
+	visibility: hidden;
+}
