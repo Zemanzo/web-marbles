@@ -1,6 +1,10 @@
-body {
+:root {
 	--theme-color: #BA0069;
 	--theme-color-dark: #4B002A;
+	--editor-theme-color: #EECC00;
+	--editor-theme-color-dark: #997700;
+	--patreon-orange: #f86754;
+	--patreon-navy: #052d49;
 	--twitch-purple: #6441A4;
 	--twitch-purple-hover: rgb(125, 91, 190);
 }

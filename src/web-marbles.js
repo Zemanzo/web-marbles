@@ -262,6 +262,23 @@ app.get("/editor", function(req, res) {
 		res.render("editor-disabled", {});
 });
 
+app.get("/terms", function(req, res) {
+	res.render("terms-and-conditions", {});
+});
+
+app.get("/privacy", function(req, res) {
+	res.render("privacy", {});
+});
+
+app.get("/contact", function(req, res) {
+	res.render("contact", {});
+});
+
+app.use(function(req, res) {
+	res.status(404)
+		.render("status/404", {});
+});
+
 // Express listener
 let server = http.listen(config.express.port, function() {
 	let port = server.address().port;
