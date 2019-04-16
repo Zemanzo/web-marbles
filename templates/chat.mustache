@@ -8,6 +8,7 @@
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 		<!-- Stylesheets -->
+		<link href="fontello/css/fontello.css" rel="stylesheet">
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
 
@@ -37,8 +38,7 @@
 		{{/success}}
 		{{^success}}
 		<header>
-			<div>Chat powered by <img src="images/discord_logo.svg" alt="Discord"/></div>
-			{{#invitelink}}<a href="{{invitelink}}" target="_blank">Join the server!</a>{{/invitelink}}
+			<div><img src="images/discord_powered.svg" alt="DISCORD POWERED"/></div>
 		</header>
 		<div id="chatMessages">
 			<div class="message" id="messageTemplate">
@@ -68,7 +68,7 @@
 				<a target="_blank" style="flex:2" class="disabled" title="This is not supported yet!">Play as guest</a>
 			</div>
 			<div id="authenticated">
-				<div>
+				<div id="chatUserAndInputContainer">
 					<div id="user">
 						<img src="images/logo.png" id="userAvatar">
 						<div id="userName">
@@ -76,11 +76,13 @@
 						</div>
 					</div>
 					<input type="text" placeholder="Message #game-chat" id="chatInput" maxlength="2000"/>
+					<i class="icon-right-big" id="buttonSend"></i>
 				</div>
 				<div id="chatButtons">
-					<!-- <button id="buttonSettings">&#8997; Settings</button> -->
+					<button id="buttonLogOut" class="minimal"><i class="icon-logout"></i> log out</button>
+					{{#invitelink}}<a href="{{invitelink}}" target="_blank" class="minimal"><i class="icon-link-ext"></i> join server</a>{{/invitelink}}
+					<div class="flexSpacer">&nbsp;</div>
 					<button id="buttonMarble">!marble</button>
-					<button id="buttonSend">Send &#10173;</button>
 				</div>
 			</div>
 		</div>

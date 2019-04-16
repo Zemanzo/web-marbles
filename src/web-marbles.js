@@ -104,6 +104,10 @@ app.get("/", function(req, res) {
 	res.render("index");
 });
 
+const git = require("git-rev-sync");
+const gitHash = git.long();
+const gitBranch = git.branch();
+const version = require("../package.json").version;
 app.get("/client", function(req, res) {
 	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
 		// Send over the gamestate when a new connection is made
@@ -130,7 +134,11 @@ app.get("/client", function(req, res) {
 			res.send("You probably can't do that. Nice try tho gg.");
 		}
 	} else {
-		res.render("client");
+		res.render("client", {
+			gitHash,
+			gitBranch,
+			version
+		});
 	}
 });
 
@@ -249,14 +257,9 @@ app.post("/chat", function(req, res) {
 
 app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
-		res.render("editor", {});
+		res.render("editor", {version});
 	else
 		res.render("editor-disabled", {});
-});
-
-app.get("/shutdown", function(req, res) {
-	res.send("wow ok then");
-	shutdown();
 });
 
 // Express listener

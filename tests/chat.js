@@ -23,8 +23,8 @@ describe("Chat", function() {
 	});
 
 	it("has the correct link to the Discord", async function() {
-		await driver.wait(until.elementLocated(By.css("header a")), 10000);
-		let discordLink = await driver.findElement(By.css("header a")).getAttribute("href");
+		await driver.wait(until.elementLocated(By.css("#chatButtons a")), 10000);
+		let discordLink = await driver.findElement(By.css("#chatButtons a")).getAttribute("href");
 		chai.expect(discordLink).to.equal(config.discord.inviteLink);
 	});
 });

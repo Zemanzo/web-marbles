@@ -8,7 +8,9 @@
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 		<!-- Stylesheets -->
-			<!-- <link href="fontello/css/fontello.css" rel="stylesheet"> -->
+			<!-- Icons -->
+			<link href="fontello/css/fontello.css" rel="stylesheet">
+
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 
@@ -69,8 +71,23 @@
 		</script>
 
 		<!-- Actual document stuff -->
+		<a href="/" id="title"><img src="images/logo.svg"><h1>Manzo's Marbles</h1></a>
+		<header id="header">
+			<div id="releaseMeta">
+				<div id="releaseState">PRE-ALPHA ({{version}})</div>
+				{{#gitHash}}<div id="releaseHash">{{gitHash}}</div>{{/gitHash}}
+			</div>
+			<nav id="externalLinks">
+				<a href="https://github.com/Zemanzo/web-marbles" id="github" title="Contribute to the source!"><i class="icon-github-circled"></i></a>
+				<a href="https://www.patreon.com/webmarbles" id="patreon" title="Support us on patreon!"><img src="images/patreon.svg" alt="Patreon"></a>
+			</nav>
+		</header>
 		<section id="viewport">
 			<div class="overlay">
+				<div id="chat">
+					<iframe src="/chat" frameborder="0"></iframe>
+				</div>
+
 				<div id="notifications">
 					<div id="notification-template" class="notification">
 						<div class="notification-content">The maximum amount of marbles has been reached! No more marbles can be entered.</div>
@@ -79,43 +96,34 @@
 			</div>
 		</section>
 		<section id="sidebar">
-
-			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
-
-			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
-
-			<hr/>
-
-			<div id="gameInfo" class="hidden">
-				<div id="gameState">
-					<h2 id="state">Enter marbles now!</h2>
-					<div id="timer" class="themeNumber">
-						...
-					</div>
+			<div id="gameState">
+				<h2 id="state">Enter marbles now!</h2>
+			</div>
+			<div id="timer" class="themeNumber">
+				...
+			</div>
+			<div id="menu">
+				<div id="menuOptions">
+					<div class="selected"><i class="icon-users"></i></div>
+					<!--<div><i class="icon-cog"></i></div>--> <!-- To be added... -->
 				</div>
-
-				<hr/>
-
-				<div>
-					<div class="separator">
-						<h2>
-							Marbles - <span id="entries" class="themeNumber">0</span> entries
-						</h2>
-					</div>
-
-					<div id="marbleList">
-						<div class="marbleListEntry" id="marbleListTemplate">
-							<span class="rank">#</span>
-							<span class="color">&nbsp;</span>
-							<span class="name">Zemanzo</span>
-							<span class="time">...</span>
+				<div id="menuContent">
+					<div id="gameInfo" class="hidden">
+						<div>
+							<h2>
+								Marbles - <span id="entries" class="themeNumber">0</span> entries
+							</h2>
+						</div>
+						<div id="marbleList">
+							<div class="marbleListEntry" id="marbleListTemplate">
+								<span class="rank">#</span>
+								<span class="color">&nbsp;</span>
+								<span class="name">Zemanzo</span>
+								<span class="time">...</span>
+							</div>
 						</div>
 					</div>
 				</div>
-			</div>
-
-			<div id="chat">
-				<iframe src="/chat" frameborder="0"></iframe>
 			</div>
 		</section>
 	</body>

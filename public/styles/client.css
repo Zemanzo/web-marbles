@@ -26,14 +26,7 @@
 html {
 	background: #111;
 	padding: 1px;
-}
-
-body {
-	font-family: "Do Hyeon", sans-serif;
-	background: var(--theme-color);
-	height: calc(100vh - 2px);
-	overflow: hidden;
-	display: flex;
+	--border-radius: 8px;
 }
 
 a {
@@ -44,14 +37,108 @@ a:hover {
 	color: #3df;
 }
 
-#viewport {
-	flex: 1;
-	margin: 6px;
-	position: relative;
+body {
+	font-family: "Do Hyeon", sans-serif;
+	background: #160909;
+	height: 100vh;
+	overflow: hidden;
+	display: grid;
+	grid-template-columns: 360px 1fr;
+	grid-template-rows: 50px 1fr;
+	grid-template-areas: "title header" "sidebar viewport";
+	grid-gap: 2px;
+	padding: 2px;
+	box-sizing: border-box;
+	color: #eee;
+	border-top: 2px solid var(--theme-color);
 }
 
-	#viewport canvas {
-		border-radius: 15px;
+body > *:not(#sidebar) {
+	background-color: #2b2929;
+	border-radius: var(--border-radius);
+}
+
+#title {
+	grid-area: title;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: var(--theme-color);
+	text-align: center;
+	font-size: 1.2em;
+	text-decoration: none;
+}
+
+	#title:hover {
+		filter: brightness(120%);
+	}
+
+	#title img {
+		height: 75%;
+		margin-right: .5em;
+	}
+
+#header {
+	grid-area: header;
+	width: 100%;
+	max-height: 50px;
+	display: flex;
+	justify-content: space-between;
+}
+
+	#releaseMeta {
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		margin: 2px 4px;
+		padding: 0 4px;
+		font-family: "Share Tech Mono";
+		color: #bbb;
+		font-weight: 300;
+	}
+
+		#releaseHash {
+		color: #666;
+		}
+
+	#externalLinks {
+		display: flex;
+	}
+
+		#externalLinks a {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			max-height: 42px;
+			max-width: 42px;
+			border-radius: 4px;
+			margin: 4px;
+			padding: 8px;
+			font-size: 2.4em;
+		}
+
+		#patreon {
+			background-color: #f86754;
+		}
+
+			#patreon img {
+				height:100%;
+			}
+
+		#externalLinks #github {
+			padding-top:10px;
+			background-color: #090909;
+			color:#eee;
+		}
+
+#viewport {
+	position: relative;
+	grid-area: viewport;
+	overflow: hidden;
+}
+
+	#viewport > canvas {
+		position: absolute;
 	}
 
 	#viewport .overlay {
@@ -63,6 +150,7 @@ a:hover {
 		display: flex;
 		justify-content: center;
 		pointer-events: none;
+		z-index: 10;
 	}
 
 	#viewport .overlay > * {
@@ -117,52 +205,98 @@ a:hover {
 		}
 
 #sidebar {
-	right: 0px;
-	width: 360px;
+	grid-area: sidebar;
+	display: grid;
+	grid-template-columns: 1fr 80px;
+	grid-template-rows: 50px 1fr;
+	grid-template-areas: "gamestate timer" "menu menu";
+	grid-gap: 2px;
 	box-sizing: border-box;
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-start;
-	align-items: center;
-	background: #161616;
 	color: #eee;
-	margin: 6px;
-	border-radius: 15px;
-	/* border-left: 1px solid var(--theme-color); */
+	overflow: hidden;
 }
 
-	#sidebar > *:not(a) {
-		width: 100%;
+	#sidebar > * {
 		box-sizing: border-box;
 	}
 
-	#sidebar > h4 {
+	#gameState {
+		grid-area: gamestate;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background-color: #2b2929;
+		border-radius: var(--border-radius);
+	}
+		#state {
+			margin: 0px 8px;
+			font-size: 1.7em;
+			font-weight: 300;
+			text-align: center;
+		}
+
+	#timer {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		grid-area: timer;
 		text-align: center;
-		color: #444;
-		margin-bottom: 1em;
+		font-size: 2em;
+		letter-spacing: -3px;
+		padding-right:3px;
+		background-color: #2b2929;
+		border-radius: var(--border-radius);
 	}
 
-	hr {
-		border-top: none;
-		border-left: none;
-		border-right: none;
-		border-bottom: 2px dashed var(--theme-color-dark);
-		margin-bottom: 12px;
+	#menu {
+		grid-area: menu;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 
-	#title {
-		width: 100%;
-		color: #aaa;
-		text-align: center;
-		font-size: 1.3em;
-		text-decoration: none;
-	}
+		#menuOptions {
+			display: flex;
+		}
+
+			#menuOptions > div {
+				font-size: 1.8em;
+				padding: .2em .1em 0 .1em;
+				background-color: #1c1a1a;
+				border-radius: var(--border-radius) var(--border-radius) 0 0;
+				margin-right:2px;
+			}
+
+			#menuOptions > div:not(.selected) {
+				cursor: pointer;
+				color: #999;
+			}
+
+			#menuOptions > div:not(.selected):hover {
+				color: #fff;
+			}
+
+			#menuOptions > div.selected {
+				background-color: #2b2929;
+			}
+
+		#menuContent {
+			background-color: #2b2929;
+			border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+			flex:1;
+		}
 
 	#gameInfo {
+		display: flex;
+		flex-direction: column;
 		min-height: 350px;
 		padding: 9px;
 		visibility: visible;
 	}
+
+		#gameInfo h2 {
+			font-weight: 300;
+		}
 
 		#gameInfo.hidden {
 			visibility: hidden;
@@ -187,35 +321,10 @@ a:hover {
 			flex: 2;
 		}
 
-		#gameState {
-			display: flex;
-			justify-content: space-around;
-			align-items: center;
-			margin-bottom: 12px;
-			height: 2em;
-		}
-			#state {
-				margin: 0px 8px;
-				font-size: 1.7em;
-				text-align: center;
-			}
-
-			#timer {
-				flex: 1;
-				text-align: center;
-				font-size: 2em;
-			}
-
-	#title:hover {
-		color: #eee;
-	}
-
-	#twitchConnect,
 	#welcomeMessage {
 		display: none;
 	}
 
-	#twitchConnect ~ hr,
 	#welcomeMessage ~ hr {
 		margin-top: 12px;
 	}
@@ -232,36 +341,29 @@ a:hover {
 }
 
 #chat {
+	position: absolute;
+	left: 0px;
+	bottom: 0px;
+	width: 100%;
+	font-size: 13px;
+	max-width: 60ch;
+	min-width: 50ch;
+	height:500px;
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	padding: 9px;
 }
 
 	#chat > iframe {
 		flex: 1;
 	}
 
-.separator {
-	display: flex;
-	align-items: center;
-	margin-top: 12px;
-}
-
-.separator hr {
-	border: none;
-	border-top: 2px solid #000;
-	margin: 0px 8px;
-	flex: 1;
-}
-
 p {
 	margin: 0px 8px 4px 8px;
 }
 
 #marbleList {
-	min-height: 240px;
-	max-height: 240px;
+	flex: 1;
 	overflow: auto;
 	display: flex;
 	flex-direction: column;
@@ -284,9 +386,12 @@ p {
 	}
 
 	.marbleListEntry .color {
-		min-width: 1em;
-		display: inline-block;
+		width: 1em;
+		height: 1em;
+		margin-top: 2px;
 		margin-right: 4px;
+		border-radius: 100%;
+		display: inline-block;
 	}
 
 	.marbleListEntry .id {

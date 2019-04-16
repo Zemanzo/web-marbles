@@ -166,7 +166,7 @@ function init() {
 		}
 	}, false);
 
-	// Make SEND button functional
+	// Make send button functional
 	let chatButtonSend = document.getElementById("buttonSend");
 	chatButtonSend.addEventListener("click", function() {
 		if (chatInput.checkValidity() && chatInput.value != "") {
@@ -177,10 +177,24 @@ function init() {
 		}
 	}, false);
 
-	// Make !MARBLE button functional
+	// Make !marble button functional
 	let chatButtonMarble = document.getElementById("buttonMarble");
 	chatButtonMarble.addEventListener("click", function() {
 		sendMessage("!marble");
+	}, false);
+
+	// Make log out button functional
+	let chatButtonLogOut = document.getElementById("buttonLogOut");
+	chatButtonLogOut.addEventListener("click", function() {
+		if (confirm("Do you really wish to log out?")) {
+			Cookies.remove("user_data",
+				{
+					path: "",
+					domain: window.location.hostname
+				}
+			);
+			window.location.reload(true);
+		}
 	}, false);
 }
 

@@ -1,3 +1,13 @@
+/* Quicksand - latin */
+@font-face {
+	font-family: "Quicksand";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Quicksand"),
+		local("Quicksand-Regular"),
+		url("../fonts/quicksand/quicksand-latin-regular.woff2") format("woff2");
+}
+
 html {
 	display: flex;
 	justify-content: center;
@@ -7,8 +17,9 @@ html {
 
 body {
 	flex: 1;
-	font-family: sans-serif;
-	background: #111;
+	font-family: "Quicksand", sans-serif;
+	font-size: 13px;
+	background: #06060666;
 	color: #eee;
 	height: 100vh;
 	display: flex;
@@ -16,7 +27,7 @@ body {
 	overflow: hidden;
 	margin: 0;
 	padding: 0;
-	max-width: 600px;
+	max-width: 90ch;
 	max-height: 600px;
 }
 
@@ -24,7 +35,7 @@ header {
 	display: flex;
 	font-size: .9rem;
 	padding: 0 4px;
-	background: #060606;
+	background: #06060666;
 	align-items: center;
 	justify-content: space-between;
 }
@@ -33,26 +44,33 @@ header {
 	header > * {
 		display: flex;
 		align-items: center;
+		font-family: "Uni Sans Heavy";
+		font-size: .75em;
 	}
 
 	header > a {
 		display: inline-block;
 		color: #09f;
+		margin-right: 4px;
 	}
 
+		header > a > img {
+			height: .6rem;
+			padding: .2rem 0;
+		}
+
 		header > a:hover {
-			color: #3df;
+			filter: brightness(130%);
 		}
 
 	header > div {
-		font-style: italic;
-		font-weight: 600;
-		color: #999;
+		color: #eee;
 	}
 
 	header > div > img {
 		height: 1.5rem;
 		margin-left: 4px;
+		transform: translate(0, 1.2px)
 	}
 
 #chatMessages {
@@ -74,13 +92,14 @@ header {
 		align-items: baseline;
 		max-width: 100%;
 		overflow: hidden;
+		padding: 0 8px;
 	}
 
 	.message:nth-child(odd) {
-		background-color: #0C0C0C;
+		background-color: #0C0C0C66;
 	}
 		.message > .timestamp {
-			font-size: .7em;
+			font-size: .8em;
 			font-family: "Droid Sans Mono", sans-serif;
 			color: #999;
 			margin-right: 4px;
@@ -110,6 +129,7 @@ header {
 #chatInputContainer {
 	display: flex;
 	min-height: 2em;
+	position: relative;
 }
 
 	#chatInputContainer > div {
@@ -169,9 +189,9 @@ header {
 		display: flex;
 		flex-direction: column;
 	}
-		#authenticated > div {
+		#chatUserAndInputContainer {
 			display: flex;
-			margin: 2px;
+			margin: 2px 10px;
 		}
 
 			#user {
@@ -179,14 +199,14 @@ header {
 				align-items: center;
 				margin-right: 4px;
 				font-weight: 600;
-				border-radius: 1em;
-				background-color: #060606;
+				border-radius: 100%;
+				background-color: #06060699;
 				overflow: hidden;
 			}
 
 				#user > img {
-					height:  2rem;
-					width:  2rem;
+					height: 2rem;
+					width: 2rem;
 				}
 
 				#user > div {
@@ -195,7 +215,7 @@ header {
 				}
 
 				#user:hover {
-					border-radius: 0px;
+					border-radius: 4px;
 				}
 
 				#user:hover > div {
@@ -204,50 +224,73 @@ header {
 
 			#chatInput {
 				flex: 1;
-				font-size: 1rem;
+				font-size: 13px;
 				padding-left: 4px;
+				font-family: "Quicksand", sans-serif;
+				padding-right: 2em;
+				border-radius: 4px;
+			}
+
+			#buttonSend {
+				font-size: 22px;
+				position: absolute;
+				right: 10px;
+				top: 4px;
+				cursor: pointer;
+				color: #444;
+			}
+
+			#buttonSend:hover {
+				color: #eee;
 			}
 
 		#chatButtons {
-			justify-content: flex-end;
+			display: flex;
+			justify-content: space-between;
+			margin: 2px 10px 4px 10px;
 		}
 
-			#chatButtons > button {
-				text-transform: uppercase;
-				margin: 0px 4px;
+			#chatButtons > * {
+				display:block;
+				font-family: "Quicksand", sans-serif;
 				padding: 2px 4px;
-				background: var(--theme-color-dark);
+				background: #060606;
 				color: #eee;
-				/* border: 1px solid  */
+				border-radius: 3px;
+				font-weight: 600;
+				text-decoration: none;
 			}
 
-			#chatButtons > button:first-child {
+			#chatButtons > *:not(:first-child) {
+				margin-left: 4px;
+			}
+
+			#chatButtons > *:not(:last-child) {
+				margin-right: 4px;
+			}
+
+			#chatButtons > *.minimal {
 				margin-left: 0;
-			}
-			#chatButtons > button:last-child {
-				margin-right: 0;
+				color: #999;
+				font-size:.9em;
 			}
 
-			#chatButtons > button:hover {
+			#chatButtons > *:hover {
 				background: var(--theme-color);
 				/* border: 1px solid var(--theme-color); */
 				color: #eee;
 				text-decoration: none;
 			}
 
-			#chatButtons > #buttonSettings {
-				margin-right: auto;
-			}
-
 	input[type=number] {
 		max-width: 50px;
 		min-width: 30px;
-		width:  100%;
+		width: 100%;
 		max-height: 19px;
 		padding: 1px 2px 1px 3px;
-		-webkit-appearance:  textfield;
-		-moz-appearance:     textfield;
-		appearance:          textfield;
+		-webkit-appearance: textfield;
+		-moz-appearance: textfield;
+		appearance: textfield;
 		box-sizing: border-box;
 	}
 
@@ -259,7 +302,7 @@ header {
 	input[type=number],
 	input[type=text],
 	select {
-		background: #060606;
+		background: #06060699;
 		color: #eee;
 		border: none;
 	}
@@ -268,6 +311,7 @@ header {
 		color: #999;
 		font-style: italic;
 	}
+
 	input:-moz-read-only { /* little disappointed in Firefox here */
 		color: #999;
 		font-style: italic;

@@ -11,8 +11,10 @@
 			<!-- Webfont -->
 			<link href="https://fonts.googleapis.com/css?family=Do+Hyeon|BenchNine:300" rel="stylesheet">
 
+			<!-- Icons -->
+			<link href="fontello/css/fontello.css" rel="stylesheet">
+
 			<!-- Own styles -->
-			<link href="icofont/css/icofont.css" rel="stylesheet">
 			<link href="styles/common.css" rel="stylesheet" type="text/css">
 			<link href="styles/client.css" rel="stylesheet" type="text/css">
 			<link href="styles/editor.css" rel="stylesheet" type="text/css">
@@ -22,6 +24,8 @@
 	</head>
 	<body>
 		<!-- Actual document stuff -->
+		<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
+
 		<section id="viewport">
 			<!-- Things are rendered here -->
 			<div class="overlay">
@@ -30,390 +34,384 @@
 			</div>
 		</section>
 		<section id="sidebar">
+			<div id="mode">EDITOR MODE</div>
 
-			<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
-			<h4>PRE-ALPHA - <a href="https://github.com/Zemanzo/web-marbles" target="_blank">View on GitHub</a></h4>
+			<div id="menu">
+				<div id="menuOptions">
+					<div title="Models" class="selected"><i class="icon-cube"></i></div>
+					<div title="Prefabs"><i class="icon-cubes"></i></div>
+					<div title="World"><i class="icon-globe"></i></div>
+					<div title="Project"><i class="icon-floppy"></i></div>
+					<div title="Settings"><i class="icon-cog"></i></div>
+				</div>
+				<div id="menuContent">
+					<div id="properties">
+						<div>
+							<h3>Models</h3>
+							<div id="models">
+								<div class="model" id="modelTemplate">
+									<div class="name">template.gltf</div>
+									<button class="delete" title="Delete model"><i class="icon-trash"></i></button>
+								</div>
+							</div>
+							<div id="addModel" class="add">
+								<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
+								<i class="icon-plus"></i>
+								<span>Add model(s)</span>
+							</div>
+						</div>
 
-			<hr/>
+						<div id="prefabs">
+							<div id="inspector" class="noSelection">
+								<h3>Inspector</h3>
+								<table>
+									<tbody>
+										<tr>
+											<td>
+												UUID
+											</td>
+											<td>
+												<input type="text" id="inspectorUUID" value="" readonly />
+											</td>
+										</tr>
+										<tr>
+											<td>
+												Name
+											</td>
+											<td>
+												<input type="text" id="inspectorName" value="" disabled />
+											</td>
+										</tr>
+									</tbody>
+									<tbody class="transform">
+										<tr class="translate">
+											<td>Position</td>
+											<td>
+												<div><input type="number" value="0" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
+												<div><input type="number" value="0" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
+												<div><input type="number" value="0" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
+											</td>
+										</tr>
+										<tr class="rotate">
+											<td>Rotation</td>
+											<td>
+												<div><input type="number" value="0" step=".1" required disabled data-axis="x" /><span class="x">X</span></div>
+												<div><input type="number" value="0" step=".1" required disabled data-axis="y" /><span class="y">Y</span></div>
+												<div><input type="number" value="0" step=".1" required disabled data-axis="z" /><span class="z">Z</span></div>
+											</td>
+										</tr>
+										<tr class="scale objectProperty">
+											<td>Scale</td>
+											<td>
+												<div><input type="number" value="1" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
+												<div><input type="number" value="1" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
+												<div><input type="number" value="1" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
+											</td>
+										</tr>
+									</tbody>
+									<tbody>
+										<tr class="objectProperty colliderProperty">
+											<td>
+												Function
+											</td>
+											<td>
+												<select id="inspectorFunction" disabled >
+													<option value="static" selected >Static</option>
+													<option value="startarea" class="colliderProperty">Starting area</option>
+													<option value="startgate">Starting gate</option>
+													<option value="endarea" class="colliderProperty">Finish area</option>
+												</select>
+											</td>
+										</tr>
+										<tr class="objectProperty">
+											<td>
+												Model
+											</td>
+											<td>
+												<select id="inspectorModelList" disabled >
+													<option value="null" selected >&lt; Select model &gt;</option>
+												</select>
+											</td>
+										</tr>
+										<tr class="colliderProperty">
+											<td>
+												Collider shape
+											</td>
+											<td>
+												<select id="inspectorShape" disabled >
+													<option value="box" selected >Box</option>
+													<option value="sphere">Sphere</option>
+													<option value="cylinder">Cylinder</option>
+													<option value="cone">Cone</option>
+													<option value="capsule" disabled>Capsule</option>
+													<option value="terrain" disabled>Terrain</option>
+												</select>
+											</td>
+										</tr>
+									</tbody>
+									<tbody class="transform">
+										<tr id="shapeProperties" class="shapeProperties colliderProperty box">
+											<td>Shape properties</td>
+											<td>
+												<div class="sphere cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">RADIUS</span></div>
+												<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">WIDTH</span></div>
+												<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">HEIGHT</span></div>
+												<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">DEPTH</span></div>
+												<div class="terrain"><input type="file" id="terPhysics"/></div>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<h3>List</h3>
+							<div id="prefabsList">
+								<div class="prefab collapsed" id="prefabTemplate">
+									<div class="prefabHeader">
+										<button class="showPrefab" title="Show this prefab"><i class="icon-eye"></i></button>
+										<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
+										<input type="text" class="prefabName" placeholder="Add a name..."/>
+										<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
+										<button class="delete" title="Delete prefab"><i class="icon-trash"></i></button>
+									</div>
+									<div class="prefabDetails">
+										<div class="detailsColor">
+											<input type="color" class="prefabColor"/>
+										</div>
+										<div class="detailsID">
+											LMAO
+										</div>
+									<!-- <div class="detailsObjects">
+											Objects: 0
+										</div>
+										<div class="detailsColliders">
+											Colliders: 0
+										</div>
+										<div class="detailsTotal">
+											Total: 0
+										</div> -->
+									</div>
+									<div class="objectList">
+										<div class="object" id="prefabObjectTemplate">
+											<i class="icon-cube"></i>
+											<div class="name">objectName</div>
+											<div class="uuid">1337</div>
+											<i class="icon-cancel delete"></i>
+										</div>
+										<div class="collider" id="prefabColliderTemplate">
+											<i class="icon-resize-small"></i>
+											<div class="name">colliderName</div>
+											<div class="uuid">dank</div>
+											<i class="icon-cancel delete"></i>
+										</div>
+									</div>
+									<div class="prefabActions">
+										<button class="addObject">+ Add object</button>
+										<button class="addCollider">+ Add collider</button>
+									</div>
 
-			<h2 id="mode">EDITOR MODE</h2>
-			<div id="editorMode">
-				<div class="selected">MODELS</div>
-				<div>PREFABS</div>
-				<div>WORLD</div>
-				<div>PROJECT</div>
-				<div>SETTINGS</div>
+								</div>
+
+								<div id="newPrefab" class="add">
+									<i class="icon-plus"></i>
+									<span>New prefab</span>
+								</div>
+
+							</div>
+						</div>
+
+						<div id="world">
+
+							<h3>Hierarchy</h3>
+							<div id="worldHierarchy">
+								<div id="worldObjectList">
+									<div class="worldObject" id="worldObjectTemplate">
+										<div class="prefabName"></div>
+										<div class="name"></div>
+										<div class="uuid"></div>
+										<button class="delete" title="Remove object"><i class="icon-cancel delete"></i></button>
+									</div>
+								</div>
+
+								<div id="worldAddPrefab">
+									<select id="worldPrefabList" disabled >
+										<option value="null" selected >&lt; Select prefab &gt;</option>
+									</select>
+									<div id="worldAddPrefabButton" class="add">
+										<i class="icon-plus"></i>
+										<span>Add prefab</span>
+									</div>
+								</div>
+
+							</div>
+
+							<div id="worldMeta">
+								<h3>Environment</h3>
+								<table>
+									<tbody>
+										<tr>
+											<td>
+												Water height
+											</td>
+											<td>
+												<input type="number" value="-9" id="envWaterHeight"/>
+											</td>
+										</tr>
+										<tr>
+											<td>
+												Sun inclination
+											</td>
+											<td>
+												<input type="number" value=".49" id="envSunInclination" step=".01"/>
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+
+						<div id="project">
+							<h3>EDITOR PROJECT</h3>
+							<p>With this you can save your project and continue with it later.</p>
+							<table class="buttons">
+								<tbody>
+									<tr>
+										<td>
+											<button id="exportProject" value="">Save Project</button>
+										</td>
+										<td>
+											<button id="importProject">
+												<input type="file" class="addFileInput" id="importProjectFile" accept=".mmb" />
+												<span>Load Project</span>
+											</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<h3>Gameplay parameters</h3>
+							<table>
+								<tbody>
+									<tr>
+										<td>
+											Map name
+										</td>
+										<td>
+											<input type="text" maxlength="40" placeholder="New map" id="paramMapName"/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Author name
+										</td>
+										<td>
+											<input type="text" maxlength="40" placeholder="Unknown" id="paramAuthorName"/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Default entering period
+										</td>
+										<td>
+											<input type="number" value="40" id="paramEnterPeriod" step="1" min="5" required/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Maximum round length
+										</td>
+										<td>
+											<input type="number" value="160" id="paramMaxRoundLength" step="1" min="5" required/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Time until DNF after first finish
+										</td>
+										<td>
+											<input type="number" value="40" id="paramWaitAfterFinish" step="1" min="5" required/>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<h3>PUBLISH</h3>
+							<p>This will generate a file that you can deploy on the web-marbles server.</p>
+							<table class="buttons">
+								<tbody>
+									<tr>
+										<td>
+											<button class="publish" disabled id="exportPublish" value="" />Publish Level</button>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+
+							<h4>Level publishing checklist</h4>
+							<table class="checklist">
+								<tbody>
+									<tr>
+										<td id="checkStartArea">
+											✘ The level needs a starting area - but the script failed to check.
+										</td>
+									</tr>
+									<tr>
+										<td id="checkStartGate">
+											✘ The level needs a starting gate - but the script failed to check.
+										</td>
+									</tr>
+									<tr>
+										<td id="checkFinishLine">
+											✘ The level needs a finish line - but the script failed to check.
+										</td>
+									</tr>
+									<tr>
+										<td id="checkGameplayParams">
+											✘ The level needs a valid gameplay parameters - but the script failed to check.
+										</td>
+									</tr>
+									<tr>
+										<td>
+											? The level has not been tested... (Coming soon!)
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+
+						<div id="settings">
+							<h3>Settings</h3>
+							<table>
+								<tbody>
+									<tr>
+										<td>
+											Confirm prefab deletion
+										</td>
+										<td>
+											<input type="checkbox" id="editorConfirmDeletion" checked disabled/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Prevent accidental navigation
+										</td>
+										<td>
+											<input type="checkbox" id="editorPreventUnsaved" checked disabled/>
+										</td>
+									</tr>
+									<tr>
+										<td>
+											Show log
+										</td>
+										<td>
+											<input type="checkbox" id="editorShowLog" checked disabled/>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
 			</div>
-
-			<div id="properties">
-
-				<div>
-					<h3>Models</h3>
-					<div id="models">
-						<div class="model" id="modelTemplate">
-							<div class="name">template.gltf</div>
-							<button class="delete" title="Delete model"><i class="icofont-ui-delete"></i></button>
-						</div>
-					</div>
-					<div id="addModel" class="add">
-						<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
-						<i class="icofont-plus"></i>
-						<span>Add model(s)</span>
-					</div>
-				</div>
-
-				<div id="prefabs">
-					<div id="inspector" class="noSelection">
-						<h3>Inspector</h3>
-						<table>
-							<tbody>
-								<tr>
-									<td>
-										UUID
-									</td>
-									<td>
-										<input type="text" id="inspectorUUID" value="" readonly />
-									</td>
-								</tr>
-								<tr>
-									<td>
-										Name
-									</td>
-									<td>
-										<input type="text" id="inspectorName" value="" disabled />
-									</td>
-								</tr>
-							</tbody>
-							<tbody class="transform">
-								<tr class="translate">
-									<td>Position</td>
-									<td>
-										<div><input type="number" value="0" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="0" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="0" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
-									</td>
-								</tr>
-								<tr class="rotate">
-									<td>Rotation</td>
-									<td>
-										<div><input type="number" value="0" step=".1" required disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="0" step=".1" required disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="0" step=".1" required disabled data-axis="z" /><span class="z">Z</span></div>
-									</td>
-								</tr>
-								<tr class="scale objectProperty">
-									<td>Scale</td>
-									<td>
-										<div><input type="number" value="1" step=".01" required disabled data-axis="x" /><span class="x">X</span></div>
-										<div><input type="number" value="1" step=".01" required disabled data-axis="y" /><span class="y">Y</span></div>
-										<div><input type="number" value="1" step=".01" required disabled data-axis="z" /><span class="z">Z</span></div>
-									</td>
-								</tr>
-							</tbody>
-							<tbody>
-								<tr class="objectProperty colliderProperty">
-									<td>
-										Function
-									</td>
-									<td>
-										<select id="inspectorFunction" disabled >
-											<option value="static" selected >Static</option>
-											<option value="startarea" class="colliderProperty">Starting area</option>
-											<option value="startgate">Starting gate</option>
-											<option value="endarea" class="colliderProperty">Finish area</option>
-										</select>
-									</td>
-								</tr>
-								<tr class="objectProperty">
-									<td>
-										Model
-									</td>
-									<td>
-										<select id="inspectorModelList" disabled >
-											<option value="null" selected >&lt; Select model &gt;</option>
-										</select>
-									</td>
-								</tr>
-								<tr class="colliderProperty">
-									<td>
-										Collider shape
-									</td>
-									<td>
-										<select id="inspectorShape" disabled >
-											<option value="box" selected >Box</option>
-											<option value="sphere">Sphere</option>
-											<option value="cylinder">Cylinder</option>
-											<option value="cone">Cone</option>
-											<option value="capsule" disabled>Capsule</option>
-											<option value="terrain" disabled>Terrain</option>
-										</select>
-									</td>
-								</tr>
-							</tbody>
-							<tbody class="transform">
-								<tr id="shapeProperties" class="shapeProperties colliderProperty box">
-									<td>Shape properties</td>
-									<td>
-										<div class="sphere cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">RADIUS</span></div>
-										<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">WIDTH</span></div>
-										<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">HEIGHT</span></div>
-										<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">DEPTH</span></div>
-										<div class="terrain"><input type="file" id="terPhysics"/></div>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<h3>List</h3>
-					<div id="prefabsList">
-						<div class="prefab collapsed" id="prefabTemplate">
-							<div class="prefabHeader">
-								<button class="showPrefab" title="Show this prefab"><i class="icofont-eye"></i></button>
-								<button class="collapse" title="Collapse"><i class="icofont-caret-right"></i></button>
-								<input type="text" class="prefabName" placeholder="Add a name..."/>
-								<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
-								<button class="delete" title="Delete prefab"><i class="icofont-ui-delete"></i></button>
-							</div>
-							<div class="prefabDetails">
-								<div class="detailsColor">
-									<input type="color" class="prefabColor"/>
-								</div>
-								<div class="detailsID">
-									LMAO
-								</div>
-							<!-- <div class="detailsObjects">
-									Objects: 0
-								</div>
-								<div class="detailsColliders">
-									Colliders: 0
-								</div>
-								<div class="detailsTotal">
-									Total: 0
-								</div> -->
-							</div>
-							<div class="objectList">
-								<div class="object" id="prefabObjectTemplate">
-									<i class="icofont-cube"></i>
-									<div class="name">objectName</div>
-									<div class="uuid">1337</div>
-									<i class="icofont-close delete"></i>
-								</div>
-								<div class="collider" id="prefabColliderTemplate">
-									<i class="icofont-barricade"></i>
-									<div class="name">colliderName</div>
-									<div class="uuid">dank</div>
-									<i class="icofont-close delete"></i>
-								</div>
-							</div>
-							<div class="prefabActions">
-								<button class="addObject">+ Add object</button>
-								<button class="addCollider">+ Add collider</button>
-							</div>
-
-						</div>
-
-						<div id="newPrefab" class="add">
-							<i class="icofont-plus"></i>
-							<span>New prefab</span>
-						</div>
-
-					</div>
-				</div>
-
-				<div id="world">
-
-					<h3>Hierarchy</h3>
-					<div id="worldHierarchy">
-						<div id="worldObjectList">
-							<div class="worldObject" id="worldObjectTemplate">
-								<div class="prefabName"></div>
-								<div class="name"></div>
-								<div class="uuid"></div>
-								<button class="delete" title="Remove object"><i class="icofont-close delete"></i></button>
-							</div>
-						</div>
-
-						<div id="worldAddPrefab">
-							<select id="worldPrefabList" disabled >
-								<option value="null" selected >&lt; Select prefab &gt;</option>
-							</select>
-							<div id="worldAddPrefabButton" class="add">
-								<i class="icofont-plus"></i>
-								<span>Add prefab</span>
-							</div>
-						</div>
-
-					</div>
-
-					<div id="worldMeta">
-						<h3>Environment</h3>
-						<table>
-							<tbody>
-								<tr>
-									<td>
-										Water height
-									</td>
-									<td>
-										<input type="number" value="-9" id="envWaterHeight"/>
-									</td>
-								</tr>
-								<tr>
-									<td>
-										Sun inclination
-									</td>
-									<td>
-										<input type="number" value=".49" id="envSunInclination" step=".01"/>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-
-				<div id="project">
-					<h3>EDITOR PROJECT</h3>
-					<p>With this you can save your project and continue with it later.</p>
-					<table class="buttons">
-						<tbody>
-							<tr>
-								<td>
-									<button id="exportProject" value="">Save Project</button>
-								</td>
-								<td>
-									<button id="importProject">
-										<input type="file" class="addFileInput" id="importProjectFile" accept=".mmb" />
-										<span>Load Project</span>
-									</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-
-					<h3>Gameplay parameters</h3>
-					<table>
-						<tbody>
-							<tr>
-								<td>
-									Map name
-								</td>
-								<td>
-									<input type="text" maxlength="40" placeholder="New map" id="paramMapName"/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Author name
-								</td>
-								<td>
-									<input type="text" maxlength="40" placeholder="Unknown" id="paramAuthorName"/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Default entering period
-								</td>
-								<td>
-									<input type="number" value="40" id="paramEnterPeriod" step="1" min="5" required/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Maximum round length
-								</td>
-								<td>
-									<input type="number" value="160" id="paramMaxRoundLength" step="1" min="5" required/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Time until DNF after first finish
-								</td>
-								<td>
-									<input type="number" value="40" id="paramWaitAfterFinish" step="1" min="5" required/>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-
-					<h3>PUBLISH</h3>
-					<p>This will generate a file that you can deploy on the web-marbles server.</p>
-					<table class="buttons">
-						<tbody>
-							<tr>
-								<td>
-									<button class="publish" disabled id="exportPublish" value="" />Publish Level</button>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-
-					<h4>Level publishing checklist</h4>
-					<table class="checklist">
-						<tbody>
-							<tr>
-								<td id="checkStartArea">
-									✘ The level needs a starting area - but the script failed to check.
-								</td>
-							</tr>
-							<tr>
-								<td id="checkStartGate">
-									✘ The level needs a starting gate - but the script failed to check.
-								</td>
-							</tr>
-							<tr>
-								<td id="checkFinishLine">
-									✘ The level needs a finish line - but the script failed to check.
-								</td>
-							</tr>
-							<tr>
-								<td id="checkGameplayParams">
-									✘ The level needs a valid gameplay parameters - but the script failed to check.
-								</td>
-							</tr>
-							<tr>
-								<td>
-									? The level has not been tested... (Coming soon!)
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-
-				<div id="settings">
-					<h3>Settings</h3>
-					<table>
-						<tbody>
-							<tr>
-								<td>
-									Confirm prefab deletion
-								</td>
-								<td>
-									<input type="checkbox" id="editorConfirmDeletion" checked disabled/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Prevent accidental navigation
-								</td>
-								<td>
-									<input type="checkbox" id="editorPreventUnsaved" checked disabled/>
-								</td>
-							</tr>
-							<tr>
-								<td>
-									Show log
-								</td>
-								<td>
-									<input type="checkbox" id="editorShowLog" checked disabled/>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
-
-			</div>
-
-			<hr/>
 
 			<div id="log">
 
