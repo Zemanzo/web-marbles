@@ -135,6 +135,13 @@ body > *:not(#sidebar) {
 	position: relative;
 	grid-area: viewport;
 	overflow: hidden;
+	background: repeating-linear-gradient(
+		45deg,
+		#161616,
+		#161616 10px,
+		transparent 10px,
+		transparent 20px
+	);
 }
 
 	#viewport > canvas {
@@ -148,7 +155,9 @@ body > *:not(#sidebar) {
 		height: 100%;
 		width: 100%;
 		display: flex;
-		justify-content: center;
+		flex-direction: row-reverse;
+		flex-wrap: wrap;
+		justify-content: flex-end;
 		pointer-events: none;
 		z-index: 10;
 	}
@@ -202,6 +211,134 @@ body > *:not(#sidebar) {
 			border-radius: 15px;
 			text-shadow: 1px 1px 0px #111;
 			box-shadow: 0px 3px 5px #111;
+		}
+
+#chatWrapper {
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-end;
+	align-self: stretch;
+}
+
+#chat {
+	/* position: absolute; */
+	left: 0px;
+	bottom: 0px;
+	width: 100%;
+	font-size: 13px;
+	max-width: 60ch;
+	min-width: 50ch;
+	min-height: 150px;
+	max-height: 500px;
+	height: 100%;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+	#chat > iframe {
+		flex: 1;
+	}
+
+#raceLeaderboardWrapper {
+	flex: 1;
+	max-height: calc(100% - 180px);
+	padding: 16px;
+	display: flex;
+	justify-content: center;
+}
+
+#raceLeaderboard {
+	/* position: absolute; */
+	height: 100%;
+	width: 100%;
+	max-width: 85ch;
+	min-width: 60ch;
+	background: #2b2929cc;
+	border-radius: var(--border-radius);
+	overflow: hidden;
+}
+
+	#raceLeaderboard > .header {
+		padding-left: 8px;
+		background-color: #BA0069cc;
+		font-size: 1.5em;
+		color: #eee;
+	}
+
+	#results {
+		font-family: "Share Tech Mono";
+	}
+		#results > div {
+			display: flex;
+			padding: 2px;
+		}
+		#results > div > div {
+			margin: 2px;
+		}
+
+		#results .rank {
+			width: 4ch;
+			padding-right: 4px;
+			text-align: right;
+		}
+		#results .name {
+			flex: 1;
+		}
+		#results .time {
+			width: 6ch;
+			text-align: right;
+			padding-right: 4px;
+		}
+		#results .record {
+			width: 2ch;
+			text-align: right;
+			padding-right: 4px;
+		}
+		#results .timediff {
+			width: 7ch;
+			text-align: right;
+			padding-right: 4px;
+		}
+		#results .points {
+			width: 7ch;
+			text-align: right;
+			padding-right: 4px;
+		}
+		#results .pointstotal {
+			width: 9ch;
+			text-align: right;
+			padding-right: 4px;
+		}
+
+		#results .header {
+			background-color: #4B002Acc;
+			color: #eee;
+			font-size: 1em;
+		}
+
+		.resultsEntry .name {
+			overflow: hidden;
+			overflow-wrap: anywhere;
+			max-height: 1.1em;
+		}
+		.resultsEntry .rank {
+			color: var(--theme-color);
+			font-weight: 600;
+		}
+		.resultsEntry .timediff {
+			color: #999;
+		}
+		.resultsEntry .record.wr {
+			color: #ffd900;
+			text-shadow: #ffd90033 0px 0px 3px;
+		}
+		.resultsEntry .record.pb {
+			color: #008000;
+			text-shadow: #00800033 0px 0px 3px;
+		}
+		.resultsEntry .pointstotal {
+			color: #999;
 		}
 
 #sidebar {
@@ -339,24 +476,6 @@ body > *:not(#sidebar) {
 	color: var(--theme-color);
 	text-shadow: 2px 2px var(--theme-color-dark);
 }
-
-#chat {
-	position: absolute;
-	left: 0px;
-	bottom: 0px;
-	width: 100%;
-	font-size: 13px;
-	max-width: 60ch;
-	min-width: 50ch;
-	height:500px;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-}
-
-	#chat > iframe {
-		flex: 1;
-	}
 
 p {
 	margin: 0px 8px 4px 8px;

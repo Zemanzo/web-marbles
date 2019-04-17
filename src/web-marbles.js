@@ -137,7 +137,26 @@ app.get("/client", function(req, res) {
 		res.render("client", {
 			gitHash,
 			gitBranch,
-			version
+			version,
+			list: [
+				{name: "Bob"},
+				{name: "Marie"},
+				{name: "Fred"},
+				{name: "John"},
+				{name: "Carl"},
+				{name: "Edward"},
+				{name: "Arin"},
+				{name: "Koji"},
+				{name: "Mitsuda"},
+				{name: "Darrel"},
+				{name: "Earl"},
+				{name: "Steve"},
+				{name: "Jeremiah"},
+				{name: "xXx69KillaSnipa420LEET69xXx"},
+				{name: "Bertha"},
+				{name: "Valentine"},
+				{name: "Laurie"}
+			]
 		});
 	}
 });

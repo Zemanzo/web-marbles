@@ -84,8 +84,76 @@
 		</header>
 		<section id="viewport">
 			<div class="overlay">
-				<div id="chat">
-					<iframe src="/chat" frameborder="0"></iframe>
+				<div id="raceLeaderboardWrapper">
+					<div id="raceLeaderboard">
+						<div class="header">
+							Race results - Combinatory
+						</div>
+						<div id="results">
+							<div class="header">
+								<div class="rank">#</div>
+								<div class="name">NAME</div>
+								<div class="record">&nbsp;</div>
+								<div class="time">TIME</div>
+								<div class="timediff">DIFF</div>
+								<div class="points">POINTS</div>
+								<div class="pointstotal">TOTAL</div>
+							</div>
+							<div class="resultsEntry">
+								<div class="rank">1</div>
+								<div class="name">Zemanzo</div>
+								<div class="record wr">WR</div>
+								<div class="time">13.37</div>
+								<div class="timediff">-</div>
+								<div class="points">+20</div>
+								<div class="pointstotal">1135798</div>
+							</div>
+							<div class="resultsEntry">
+								<div class="rank">2</div>
+								<div class="name">Qaomen</div>
+								<div class="record pb">PB</div>
+								<div class="time">69.69</div>
+								<div class="timediff">+56.32</div>
+								<div class="points">+17</div>
+								<div class="pointstotal">6</div>
+							</div>
+							<div class="resultsEntry">
+								<div class="rank">42</div>
+								<div class="name">Nighbot</div>
+								<div class="record">&nbsp;</div>
+								<div class="time">DNF</div>
+								<div class="timediff">-</div>
+								<div class="points">+1</div>
+								<div class="pointstotal">1</div>
+							</div>
+							<div class="resultsEntry">
+								<div class="rank">112</div>
+								<div class="name">Agent 007</div>
+								<div class="record pb">PB</div>
+								<div class="time">DNF</div>
+								<div class="timediff">-</div>
+								<div class="points">+1</div>
+								<div class="pointstotal">333</div>
+							</div>
+							{{#list}}
+								<div class="resultsEntry">
+									<div class="rank">???</div>
+									<div class="name">{{name}}</div>
+									<div class="record">&nbsp;</div>
+									<div class="time">DNF</div>
+									<div class="timediff">-</div>
+									<div class="points">-</div>
+									<div class="pointstotal">-</div>
+								</div>
+							{{/list}}
+						</div>
+					</div>
+				</div>
+
+				<div id="chatWrapper">
+					<div id="chat">
+						<iframe src="/chat" frameborder="0"></iframe>
+					</div>
 				</div>
 
 				<div id="notifications">
