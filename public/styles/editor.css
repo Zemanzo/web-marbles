@@ -1,6 +1,6 @@
 body {
-	--theme-color: #EECC00;
-	--theme-color-dark: #997700;
+	--theme-color: var(--editor-theme-color);
+	--theme-color-dark: var(--editor-theme-color-dark);
 	grid-template-areas: "title viewport" "sidebar viewport";
 }
 

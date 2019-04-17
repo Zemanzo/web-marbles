@@ -1,48 +1,68 @@
-* {
-	margin: 0;
+nav {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	grid-template-rows: 1fr 1fr 1fr;
+	grid-template-areas: "client client" "editor ." "source patreon";
+	grid-gap:2px;
+	margin: 2em auto 0 auto;
 }
 
-html {
-	--border-margin: 40px;
-	background: #111;
+nav a {
+	font-size: 1.7em;
+	font-weight: 600;
+	display: block;
+	text-align: center;
+	padding: 8px;
+	text-decoration: none;
+	text-shadow: none;
+	border-radius: 4px;
 }
 
-body {
-	font-family: sans-serif;
-	width: calc(100vw - var(--border-margin));
-	min-height: calc(100vh - var(--border-margin));
-	margin: calc(var(--border-margin) * 0.5);
-	/* overflow: hidden; */
-	border: 12px solid #BA0069;
-	box-sizing: border-box;
-	color: #fff;
-	display: flex;
-	align-items: center;
-	flex-direction: column;
-	font-size: 3em;
-	text-shadow: 1px 1px #000;
+nav a:hover {
+	color: #111;
 }
 
-a, a:visited {
-	color: #BA0069;
-	margin-left: .5em;
-}
-a:hover {
-	color: #23f9b0;
-}
-
-p {
-	font-size: .5em;
-	max-width: 70ch;
-	margin: 0px 16px 16px 16px;
+/* Client */
+#linkClient {grid-area: client;}
+#linkClient:not(:hover) {
+	background: var(--theme-color-dark);
+	color: var(--theme-color);
 }
 
-p:last-of-type {
-	margin-bottom: 64px;
+#linkClient:hover {
+	background: var(--theme-color);
 }
 
-#headerImage {
-	margin: .8em 0;
-	min-width: 500px;
-	max-width: 900px;
+/* Editor */
+#linkEditor {grid-area: editor;}
+#linkEditor:not(:hover) {
+	background: var(--editor-theme-color-dark);
+	color: var(--editor-theme-color);
+}
+
+#linkEditor:hover {
+	background: var(--editor-theme-color);
+}
+
+/* Source */
+#linkSource {grid-area: source;}
+#linkSource:not(:hover) {
+	background: #292929;
+	color: #eee;
+}
+
+#linkSource:hover {
+	background: #eee;
+}
+
+/* Patreon */
+#linkPatreon {grid-area: patreon;}
+#linkPatreon:not(:hover) {
+	background: var(--patreon-orange);
+	color: #eee;
+}
+
+#linkPatreon:hover {
+	background: var(--patreon-orange);
+	color: var(--patreon-navy);
 }
