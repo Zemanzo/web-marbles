@@ -148,9 +148,7 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	thisObject.element.parentNode.removeChild(thisObject.element);
 
 	// Remove from model references
-	if(thisObject.model && thisObject.model !== "null") {
-		delete modelsTab.models[thisObject.model].prefabEntities[uuid];
-	}
+	thisObject.setModel(null);
 
 	delete this.entities[uuid];
 	delete this.project.entities[uuid];
@@ -289,7 +287,7 @@ PrefabEntity.prototype.setScale = function(position) {
 // prefabObject object, inherits from prefabEntity
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "object", uuid, parent);
-	this.model = "null"; // Note: HAS to be a string for inspector purposes!
+	this.model = null;
 	this.sceneObject = defaultModel.clone();
 	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
@@ -314,30 +312,24 @@ Object.defineProperty(PrefabObject.prototype, "constructor", {
 PrefabObject.prototype.setModel = function(modelName) {
 	// Remove old model
 	this.parent.group.remove(this.sceneObject);
-	if(this.model !== "null") {
+	if(this.model) {
 		delete modelsTab.models[this.model].prefabEntities[this.uuid];
+		this.model = null;
+		this.project.model = null;
 	}
 
-	let model = null;
+	let model = defaultModel;
 
 	// For null or non-existing models, use default
 	if(modelName && modelName !== "null") {
 		if(!modelsTab.models[modelName]) {
 			editorLog(`Unable to set prefab model to ${modelName} because it doesn't exist!`, "error");
-			modelName = "null";
 		} else {
 			this.model = modelName;
 			this.project.model = modelName;
 			modelsTab.models[this.model].prefabEntities[this.uuid] = this;
 			model = modelsTab.models[modelName].sceneObject;
 		}
-	}
-
-	// Not as an else, in case the above "fails"
-	if(!modelName || modelName === "null") {
-		this.model = "null";
-		this.project.model = null;
-		model = defaultModel;
 	}
 
 	let position = this.sceneObject.position;
@@ -514,7 +506,7 @@ PrefabCollider.prototype.setRadius = function(radius) {
 };
 
 PrefabCollider.prototype.setModel = function(modelName) {
-	if(this.colliderData.shape != "mesh") return;
+	if(this.colliderData.shape !== "mesh") return;
 
 	// Remove from references
 	if(this.colliderData.model) {
@@ -531,6 +523,8 @@ PrefabCollider.prototype.setModel = function(modelName) {
 		// When a model is first set, it defaults to convex
 		this.sceneObject.geometry = model.getConvexHull(); // TODO: Check validity
 		this.colliderData.model = modelName;
+	} else if(modelName && modelName !== "null") {
+		editorLog(`Unable to set collider to ${modelName} because it doesn't exist!`, "error");
 	}
 	this.parent.changed = true;
 };

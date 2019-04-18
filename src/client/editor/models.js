@@ -154,6 +154,14 @@ let modelsTab = function() {
 						return;
 					}
 
+					// Getting this message is a success, because you really did try. And you would've succeeded in breaking things!
+					// Though chances are that you did not get this message in your log and found this code instead.
+					// But not to worry! This nugget of pointless commentary is its own rewards. Congratulations!
+					if(file.name === "null") {
+						editorLog("Nice try.", "success");
+						return;
+					}
+
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project

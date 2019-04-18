@@ -332,6 +332,7 @@ let inspector = function() {
 			// Reset any disabled inputs. Will be disabled again when necessary.
 			inspector.disabled.all(false);
 
+			inspector.elements.model.value = "null";
 			if (selected.type === "object" && selected.model) inspector.elements.model.value = selected.model;
 
 			// If a collider shape is selected, fill the inputs with the appropriate values
