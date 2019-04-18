@@ -307,7 +307,7 @@ body {
 
 /* INSPECTOR */
 #inspector {
-	max-height: 192px;
+	max-height: 210px;
 	overflow-y: auto;
 	transition: transform .4s, min-height .4s;
 }
@@ -390,7 +390,7 @@ body {
 	.shapeProperties.cylinder div.cylinder,
 	.shapeProperties.cone div.cone,
 	.shapeProperties.capsule div.capsule,
-	.shapeProperties.terrain div.terrain {
+	.shapeProperties.mesh div.mesh {
 		display: flex;
 	}
 
@@ -641,8 +641,7 @@ td:last-child {
 	text-align: right;
 }
 
-span.x, span.y, span.z, span.q {
-	cursor: e-resize;
+span.x, span.y, span.z, span.q, span.w {
 	-webkit-user-select: none;
 	-moz-user-select: none;
 	-ms-user-select: none;
@@ -650,10 +649,15 @@ span.x, span.y, span.z, span.q {
 	text-shadow: 1px 1px 1px #333;
 }
 
+span.x, span.y, span.z, span.q {
+	cursor: e-resize;
+}
+
 input:disabled ~ span.x,
 input:disabled ~ span.y,
 input:disabled ~ span.z,
-input:disabled ~ span.q {
+input:disabled ~ span.q,
+input:disabled ~ span.w {
 	filter: grayscale(100%);
 	opacity: .5;
 	cursor: not-allowed;
@@ -669,4 +673,4 @@ span.q:active {
 span.x {background: #c00;}
 span.y {background: #2a2;}
 span.z {background: #33f;}
-span.q {background: #666;}
+span.q, span.w {background: #666;}

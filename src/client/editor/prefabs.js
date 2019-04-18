@@ -424,6 +424,11 @@ Object.defineProperty(PrefabCollider.prototype, "constructor", {
 });
 
 PrefabCollider.prototype.setShape = function(shapeType) {
+	// Remove old mesh if it exists
+	if(this.colliderData.shape === "mesh") {
+		this.setModel(null);
+	}
+
 	switch(shapeType) {
 	case "box":
 		this.colliderData = {
@@ -432,18 +437,14 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			height: 1,
 			depth: 1
 		};
-		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-		this.sceneObject.scale.set(1, 1, 1);
 		break;
 	case "sphere":
 		this.colliderData = {
 			shape: shapeType,
 			radius: 1
 		};
-		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
-		this.sceneObject.scale.set(1, 1, 1);
 		break;
 	case "cylinder":
 		this.colliderData = {
@@ -451,9 +452,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
-		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.CylinderBufferGeometry( 1, 1, 1, 12 );
-		this.sceneObject.scale.set(1, 1, 1);
 		break;
 	case "cone":
 		this.colliderData = {
@@ -461,14 +460,22 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
-		this.project.colliderData = this.colliderData;
 		this.sceneObject.geometry = new THREE.ConeBufferGeometry( 1, 1, 12 );
-		this.sceneObject.scale.set(1, 1, 1);
+		break;
+	case "mesh":
+		this.colliderData = {
+			shape: shapeType,
+			model: null,
+			convex: true
+		};
+		this.sceneObject.geometry = new THREE.Geometry(); // TODO: Placeholder?
 		break;
 	default:
 		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
 		return;
 	}
+	this.project.colliderData = this.colliderData;
+	this.sceneObject.scale.set(1, 1, 1);
 	this.parent.changed = true;
 };
 
@@ -506,17 +513,56 @@ PrefabCollider.prototype.setRadius = function(radius) {
 	}
 };
 
+PrefabCollider.prototype.setModel = function(modelName) {
+	if(this.colliderData.shape != "mesh") return;
+
+	// Remove from references
+	if(this.colliderData.model) {
+		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
+		this.sceneObject.geometry = new THREE.Geometry(); // TODO: Placeholder?
+		this.colliderData.model = null;
+		this.colliderData.convex = true;
+	}
+
+	let model = modelsTab.models[modelName];
+	if(model) {
+		model.prefabEntities[this.uuid] = this;
+
+		// When a model is first set, it defaults to convex
+		this.sceneObject.geometry = model.getConvexHull(); // TODO: Check validity
+		this.colliderData.model = modelName;
+	}
+	this.parent.changed = true;
+};
+
+PrefabCollider.prototype.setConvex = function(isConvex) {
+	if(this.colliderData.shape != "mesh") return;
+	if(this.colliderData.convex === isConvex) return;
+	if(this.colliderData.model === null) return;
+
+	if(isConvex) {
+		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConvexHull(); // TODO: Check validity
+	} else {
+		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConcaveGeometry(); // TODO: Check validity
+	}
+
+	this.colliderData.convex = isConvex;
+	this.parent.changed = true;
+};
+
 
 let prefabsTab = function() {
 	return {
 		elements: {
-			modelList: null
+			modelList: null,
+			colliderList: null
 		},
 		prefabs: {},
 		group: null,
 
 		initialize: function() {
 			this.elements.modelList = document.getElementById("inspectorModelList");
+			this.elements.colliderList = document.getElementById("inspectorColliderList");
 			this.group = new THREE.Group();
 			scene.add(this.group);
 			this.group.visible = false;
@@ -566,13 +612,17 @@ let prefabsTab = function() {
 			while(prefabsTab.elements.modelList.children.length > 1) {
 				prefabsTab.elements.modelList.removeChild(prefabsTab.elements.modelList.children[1]);
 			}
+			while(prefabsTab.elements.colliderList.children.length > 1) {
+				prefabsTab.elements.colliderList.removeChild(prefabsTab.elements.colliderList.children[1]);
+			}
 
 			// Add an option for every existing model
 			for(let key in modelsTab.models) {
 				let option = document.createElement("option");
 				option.value = key;
 				option.text = key;
-				prefabsTab.elements.modelList.appendChild(option);
+				prefabsTab.elements.modelList.appendChild(option.cloneNode(true));
+				prefabsTab.elements.colliderList.appendChild(option); // TODO: Currently assuming all models are usable as collider
 			}
 		},
 

@@ -152,7 +152,7 @@ let editor = function() {
 						document.getElementById("prefabs").style.overflow = "visible";
 					} else {
 						editor.elements.inspector.style.transform = "translateX(0%)";
-						editor.elements.inspector.style.minHeight = "192px";
+						editor.elements.inspector.style.minHeight = "210px";
 						editor.menu.overflowTimeout = setTimeout(function() {
 							document.getElementById("prefabs").style.overflow = "auto";
 						}, 400);

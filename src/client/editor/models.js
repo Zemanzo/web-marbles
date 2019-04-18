@@ -3,12 +3,16 @@ import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { scene } from "./render";
+import "three/examples/js/QuickHull";
+import "three/examples/js/geometries/ConvexGeometry";
 
 // model object
 function Model(name, sceneObject) {
 	this.name = name;
 	this.sceneObject = sceneObject;
 	this.sceneObject.rotation.order = "YXZ";
+	this.convexHull = null; // For colliders. null - not generated, false - invalid
+	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
 	this.element = null;
 	this.prefabEntities = {};
 
@@ -48,6 +52,82 @@ function Model(name, sceneObject) {
 	// Add to DOM
 	this.element = document.getElementById("models").appendChild(this.element);
 }
+
+// Recursive function: Returns an array of all vertices of this 3D object and any child objects.
+// Vertices are in world space.
+function _getVertices(obj) {
+	let vertexArray = [];
+
+	// Add own vertices if they exist
+	if(obj.type === "Mesh") {
+		let vertexData = obj.geometry.attributes.position;
+		for(let i = 0; i < vertexData.count; i++) {
+			let point = new THREE.Vector3(
+				vertexData.array[i * 3],
+				vertexData.array[i * 3 + 1],
+				vertexData.array[i * 3 + 2]);
+			point.applyMatrix4(obj.matrix);
+			vertexArray.push(point);
+		}
+	}
+
+	// Add any vertices of child objects
+	for(let c = 0; c < obj.children.length; c++) {
+		let childVertices = _getVertices(obj.children[c]);
+
+		// Multiply by this object's local matrix to get it in parent's space
+		for(let i = 0; i < childVertices.length; i++) {
+			vertexArray.push( childVertices[i].applyMatrix4(obj.matrix) );
+		}
+	}
+	return vertexArray;
+}
+
+// Returns a convex hull of the model as Geometry. Generates one if it does not yet exist.
+// Returns false on failure.
+Model.prototype.getConvexHull = function() {
+	if(this.convexHull === null) {
+		try {
+			let vertexArray = _getVertices(this.sceneObject);
+			this.convexHull = new THREE.ConvexGeometry(vertexArray); // Could throw an error if input is not valid
+		} catch(error) {
+			editorLog(`Failed to generate convex hull for ${this.name}: ${error}`);
+			this.convexHull = false;
+		}
+	}
+	return this.convexHull;
+};
+
+// Recursive function: Returns one Geometry object of all combined geometries within the passed object
+function _combineGeometry(obj) {
+	let geo = new THREE.Geometry();
+
+	if(obj.type === "Mesh") {
+		let objGeo = obj.geometry;
+		// BufferGeometry needs to be converted before merging
+		if(objGeo.type === "BufferGeometry") {
+			objGeo = new THREE.Geometry().fromBufferGeometry(objGeo);
+		}
+		objGeo.mergeVertices(); // Never hurts, right?
+		geo.merge(objGeo, obj.matrix);
+	}
+
+	for(let c = 0; c < obj.children.length; c++) {
+		let childGeo = _combineGeometry(obj.children[c]);
+		geo.merge(childGeo, obj.matrix);
+	}
+
+	return geo;
+}
+
+// Returns the model as one piece of geometry, to be used for colliders. Generates one if it does not yet exist.
+// Returns false on failure. (Or does it? Dun dun duuuuun)
+Model.prototype.getConcaveGeometry = function() {
+	if(this.concaveGeo === null) {
+		this.concaveGeo = _combineGeometry(this.sceneObject);
+	}
+	return this.concaveGeo;
+};
 
 
 let modelsTab = function() {

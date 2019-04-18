@@ -144,7 +144,7 @@
 													<option value="cylinder">Cylinder</option>
 													<option value="cone">Cone</option>
 													<option value="capsule" disabled>Capsule</option>
-													<option value="terrain" disabled>Terrain</option>
+													<option value="mesh">Mesh</option>
 												</select>
 											</td>
 										</tr>
@@ -157,7 +157,19 @@
 												<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">WIDTH</span></div>
 												<div class="box cylinder cone capsule"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">HEIGHT</span></div>
 												<div class="box"><input type="number" value="1" step=".01" min=".01" required disabled /><span class="q">DEPTH</span></div>
-												<div class="terrain"><input type="file" id="terPhysics"/></div>
+												<div class="mesh">
+													<select id="inspectorColliderList" disabled >
+														<option value="null" selected >&lt; Select model &gt;</option>
+													</select>
+													<span class="w">MODEL</span>
+												</div>
+												<div class="mesh">
+													<select id="inspectorColliderType" disabled >
+														<option value="convex" selected >Convex</option>
+														<option value="concave">Concave</option>
+													</select>
+													<span class="w">TYPE</span>
+												</div>
 											</td>
 										</tr>
 									</tbody>
