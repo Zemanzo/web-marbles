@@ -73,7 +73,7 @@ net.socketReady = new Promise((resolve) => {
 			game.finishMarble(JSON.parse(message));
 			break;
 		case "state":
-			game.setCurrentGameState(message);
+			game.setCurrentGameState(JSON.parse(message));
 			break;
 		case "notification":
 			message = JSON.parse(message);

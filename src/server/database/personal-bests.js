@@ -46,17 +46,24 @@ module.exports = function(db, common) {
 
 		// batch update user statistics
 		batchInsertOrUpdatePersonalBest(batch, map) {
+			let personalBestIds = [];
+
 			common.beginTransaction.run();
 
 			for (let user of batch) {
-				if (this.getPersonalBest(map, user.id)) {
+				let pb = this.getPersonalBest(map, user.id);
+				if (user.time && pb && pb.time_best && pb.time_best > user.time) {
 					this.updatePersonalBest(user.time, map, user.id);
-				} else {
+					personalBestIds.push(user.id);
+				} else if (user.time && !pb) {
 					this.insertPersonalBest(user.time, map, user.id);
+					personalBestIds.push(user.id);
 				}
 			}
 
 			common.endTransaction.run();
+
+			return personalBestIds;
 		}
 	};
 };

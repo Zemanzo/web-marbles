@@ -296,6 +296,27 @@ module.exports = function(db, common) {
 			}
 
 			common.endTransaction.run();
+		},
+
+		_getPointsById: db.prepare(
+			`SELECT
+				stat_points_earned
+			FROM
+				users
+			WHERE
+				id = ?`
+		),
+
+		getPointsById(id) {
+			return this._getPointsById.get(id);
+		},
+
+		// Reasons for this approach can be found here https://github.com/JoshuaWise/better-sqlite3/issues/81
+		batchGetPoints(batch) {
+			const idList = batch.map(user => user.id);
+			const params = "?,".repeat(idList.length).slice(0, -1);
+			const statement = db.prepare(`SELECT stat_points_earned, id FROM users WHERE id IN (${params})`);
+			return statement.all(idList);
 		}
 	};
 };

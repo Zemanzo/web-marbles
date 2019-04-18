@@ -95,8 +95,8 @@ let game = function() {
 		enterTimeout: null,
 
 		// Sets currentGameState and informs all connected clients about the state change
-		setCurrentGameState(newState) {
-			_socketManager.emit(newState, "state");
+		setCurrentGameState(newState, data) {
+			_socketManager.emit(JSON.stringify({ state: newState, data }), "state");
 			this.currentGameState = newState;
 			log.info("Current state: ".magenta, this.currentGameState);
 		},
@@ -176,8 +176,7 @@ let game = function() {
 
 		end() {
 			if (this.currentGameState === "started") {
-				// Set state to finished
-				this.setCurrentGameState("finished");
+				let additionalData = {};
 
 				// Set the last few round parameters and store it in the database
 				if (_round) {
@@ -192,8 +191,23 @@ let game = function() {
 
 					db.user.batchUpdateStatistics(_playersEnteredList);
 
-					db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
+					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
+					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
+
+					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
+					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
+
+					for (let user of pointTotals) {
+						additionalData[user.id] = { points: user.stat_points_earned };
+
+						if (personalBestIds.includes(user.id)) {
+							additionalData[user.id].record = "pb";
+						}
+					}
 				}
+
+				// Set state to finished, and send additional data to the client.
+				this.setCurrentGameState("finished", additionalData);
 
 				// Clear any remaining timeouts
 				clearTimeout(this.gameplayMaxTimeout);

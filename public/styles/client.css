@@ -292,14 +292,15 @@ body > *:not(#sidebar) {
 		}
 
 		#results .header,
-		#results .resultsEntry {
+		.resultsEntry {
 			display: flex;
 			padding: 2px;
+			border-bottom: 1px solid #1113;
 		}
 
-			#resultsListTemplate.resultsEntry { /* Extra specificity due to the previous rule overwriting it */
-				display: none;
-			}
+		#resultsListTemplate {
+			display: none;
+		}
 
 		#results .rank {
 			width: 4ch;
@@ -342,8 +343,9 @@ body > *:not(#sidebar) {
 			font-size: 1em;
 		}
 
-		.resultsEntry {
-			margin: 2px 0;
+		.resultsEntry.currentPlayer {
+			background: #4B002A66;
+			border-bottom: 1px solid #BA006969;
 		}
 		.resultsEntry .rank {
 			color: var(--theme-color);
@@ -463,6 +465,7 @@ body > *:not(#sidebar) {
 
 	#gameInfo {
 		display: flex;
+		flex: 1;
 		flex-direction: column;
 		min-height: 350px;
 		padding: 9px;

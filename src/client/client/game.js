@@ -1,4 +1,5 @@
 import domReady from "../dom-ready";
+import * as Cookies from "js-cookie";
 import * as renderer from "./render";
 
 let game = (function() {
@@ -82,7 +83,9 @@ let game = (function() {
 	});
 
 	return {
-		setCurrentGameState: function(newState, isInitialState = false) {
+		setCurrentGameState: function(newStateData, isInitialState = false) {
+			let newState = newStateData.state;
+
 			_serverData.currentGameState = newState;
 			_DOMElements.gameInfo.className = newState;
 
@@ -163,14 +166,30 @@ let game = (function() {
 
 					_DOMElements.resultsList.innerHTML = "";
 
+					// Get current user_data to see if any row needs to be highlighted
+					let user_data = Cookies.getJSON("user_data");
+
 					// Build leaderboard DOM
 					let resultsListFragment = new DocumentFragment();
 					for (let i = 0; i < _enteredMarbleList.length; i++) {
 						let marble = _enteredMarbleList[i];
 						let resultsEntry = _DOMElements.resultsListTemplate.cloneNode(true);
+
 						resultsEntry.removeAttribute("id");
+
+						// Highlight for current player
+						if (user_data && user_data.id === marble.userId) {
+							resultsEntry.className += " currentPlayer";
+						}
+
 						resultsEntry.getElementsByClassName("rank")[0].innerText = (i + 1);
 						resultsEntry.getElementsByClassName("name")[0].innerText = marble.name;
+
+						if (marble.userId && newStateData.data[marble.userId].record === "pb") {
+							resultsEntry.getElementsByClassName("record")[0].innerText = "PB";
+							resultsEntry.getElementsByClassName("record")[0].className += " pb";
+						}
+
 						if (marble.finished) {
 							resultsEntry.getElementsByClassName("time")[0].innerText = (marble.time * .001).toFixed(2);
 							resultsEntry.getElementsByClassName("timediff")[0].innerText = i !== 0
@@ -179,29 +198,38 @@ let game = (function() {
 						} else {
 							resultsEntry.getElementsByClassName("time")[0].className += " dnf";
 						}
+
 						if (marble.points) {
 							resultsEntry.getElementsByClassName("points")[0].innerText = `+${marble.points}`;
 						} else {
 							resultsEntry.getElementsByClassName("points")[0].className += " none";
 						}
+
+						if (marble.userId) resultsEntry.getElementsByClassName("pointstotal")[0].innerText = newStateData.data[marble.userId].points;
+
 						resultsListFragment.appendChild(resultsEntry);
 					}
 					_DOMElements.resultsList.appendChild(resultsListFragment);
 
+					// Automatic scroll
 					if (_DOMElements.resultsList.scrollHeight !== 0) {
 						_DOMElements.resultsList.scrollTop = _DOMElements.resultsList.scrollHeight;
+
 						// Start scrolling up
 						setTimeout(function() {
 							let scrollStart = new Date();
 							let scrollTimeLength = (_serverData.finishPeriodLength * 1000 - 3000);
+
 							let animateResultsScroll = function() {
 								let scrollCurrent = new Date();
 								if (_DOMElements.resultsList.scrollTop !== 0) {
 									requestAnimationFrame(animateResultsScroll);
 
-									_DOMElements.resultsList.scrollTop = Math.floor(_DOMElements.resultsList.scrollHeight * (1 - (scrollCurrent - scrollStart) / scrollTimeLength));
+									_DOMElements.resultsList.scrollTop =
+										Math.floor(_DOMElements.resultsList.scrollHeight * (1 - (scrollCurrent - scrollStart) / scrollTimeLength));
 								}
 							};
+
 							animateResultsScroll();
 						}, 3000);
 					}
