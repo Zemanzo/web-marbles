@@ -40,13 +40,11 @@ config.marbles.bots.names = [
 	}
 ];
 
-// Game rules -- Move this to the mapRotation and have it set per map.
+// Global game rules
 config.marbles.rules = {};
 config.marbles.rules.maxPlayerCount = 250; // Maximum amount of players that can enter in a single round
 config.marbles.rules.maxMarbleCount = 500; // Maximum amount of marbles that can be entered in a single round
-config.marbles.rules.enterPeriod = 40; // Time in seconds
-config.marbles.rules.maxRoundLength = 160; // Time in seconds
-config.marbles.rules.waitAfterFinish = 40; // Time in seconds
+config.marbles.rules.finishPeriod = 15; // Time in seconds
 
 // Earning points
 config.marbles.scoring = {};

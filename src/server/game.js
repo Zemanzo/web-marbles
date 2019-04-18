@@ -176,6 +176,9 @@ let game = function() {
 
 		end() {
 			if (this.currentGameState === "started") {
+				// Set state to finished
+				this.setCurrentGameState("finished");
+
 				// Set the last few round parameters and store it in the database
 				if (_round) {
 					_round.end = Date.now();
@@ -217,14 +220,20 @@ let game = function() {
 				// If we had hit the marble limit on the previous round, that's no longer true
 				this.limitReached = false;
 
-				// Create new round data
-				_round = _generateNewRoundData();
+				// Wait a bit until starting the next round, so the client can view leaderboards n stuff
+				this.finishedTimeout = _setTrackableTimeout(
+					() => {
+						// Create new round data
+						_round = _generateNewRoundData();
 
-				// Wait for a human to start the next round
-				_isWaitingForEntry = true;
+						// Wait for a human to start the next round
+						_isWaitingForEntry = true;
 
-				// Set state and inform the client
-				this.setCurrentGameState("waiting");
+						// Set state and inform the client
+						this.setCurrentGameState("waiting");
+					},
+					config.marbles.rules.finishPeriod * 1000
+				);
 
 				return true;
 			} else {
@@ -236,7 +245,7 @@ let game = function() {
 			if (this.currentGameState === "enter" || this.currentGameState === "waiting") {
 				this.setCurrentGameState("starting");
 
-				// Have the audio clip play on the cleint before actually starting the race
+				// Have the audio clip play on the client before actually starting the race
 				setTimeout(() => {
 					this.setCurrentGameState("started");
 
@@ -295,7 +304,8 @@ let game = function() {
 			_socketManager.emit(JSON.stringify({
 				id: marble.entryId,
 				rank,
-				time
+				time,
+				points: playerEntry ? playerEntry.pointsEarned : undefined
 			}), "finished_marble");
 
 			// If this is the first marble that finished, set a timeout to end the game soon

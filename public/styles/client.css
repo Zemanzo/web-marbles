@@ -156,10 +156,16 @@ body > *:not(#sidebar) {
 		width: 100%;
 		display: flex;
 		flex-direction: row-reverse;
-		flex-wrap: wrap;
 		justify-content: flex-end;
 		pointer-events: none;
 		z-index: 10;
+	}
+
+	@media screen and (max-width: 1330px) {
+		#viewport .overlay {
+			flex-direction: column;
+			justify-content: space-between;
+		}
 	}
 
 	#viewport .overlay > * {
@@ -175,6 +181,7 @@ body > *:not(#sidebar) {
 		margin-bottom: 20px;
 		text-align: center;
 		max-width: 80ch;
+		position: absolute;
 	}
 
 		@keyframes notification-appear {
@@ -213,15 +220,8 @@ body > *:not(#sidebar) {
 			box-shadow: 0px 3px 5px #111;
 		}
 
-#chatWrapper {
-	display: flex;
-	flex-direction: column;
-	justify-content: flex-end;
-	align-self: stretch;
-}
 
 #chat {
-	/* position: absolute; */
 	left: 0px;
 	bottom: 0px;
 	width: 100%;
@@ -234,30 +234,43 @@ body > *:not(#sidebar) {
 	flex: 1;
 	display: flex;
 	flex-direction: column;
+	align-self: flex-end;
 }
 
 	#chat > iframe {
 		flex: 1;
 	}
 
-#raceLeaderboardWrapper {
-	flex: 1;
-	max-height: calc(100% - 180px);
-	padding: 16px;
-	display: flex;
-	justify-content: center;
+@media screen and (max-width: 1330px) {
+	#chat {
+		align-self: flex-start;
+	}
 }
 
 #raceLeaderboard {
-	/* position: absolute; */
-	height: 100%;
 	width: 100%;
 	max-width: 85ch;
 	min-width: 60ch;
 	background: #2b2929cc;
 	border-radius: var(--border-radius);
 	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	margin: 16px auto;
+	max-height: 0%;
+	opacity: 0;
+	transform: translate(0, -100px);
+	transition:
+		max-height 2s ease 0s,
+		opacity 1s linear .5s,
+		transform 1.5s ease 0s;
 }
+
+	#raceLeaderboard.visible {
+		max-height: 100%;
+		opacity: 1;
+		transform: translate(0, 0px);
+	}
 
 	#raceLeaderboard > .header {
 		padding-left: 8px;
@@ -267,15 +280,26 @@ body > *:not(#sidebar) {
 	}
 
 	#results {
+		flex:1;
 		font-family: "Share Tech Mono";
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+		letter-spacing: -1px;
 	}
-		#results > div {
+		#resultsList {
+			overflow-y:hidden;
+		}
+
+		#results .header,
+		#results .resultsEntry {
 			display: flex;
 			padding: 2px;
 		}
-		#results > div > div {
-			margin: 2px;
-		}
+
+			#resultsListTemplate.resultsEntry { /* Extra specificity due to the previous rule overwriting it */
+				display: none;
+			}
 
 		#results .rank {
 			width: 4ch;
@@ -284,6 +308,7 @@ body > *:not(#sidebar) {
 		}
 		#results .name {
 			flex: 1;
+			padding-left: 4px;
 		}
 		#results .time {
 			width: 6ch;
@@ -317,17 +342,17 @@ body > *:not(#sidebar) {
 			font-size: 1em;
 		}
 
-		.resultsEntry .name {
-			overflow: hidden;
-			overflow-wrap: anywhere;
-			max-height: 1.1em;
+		.resultsEntry {
+			margin: 2px 0;
 		}
 		.resultsEntry .rank {
 			color: var(--theme-color);
 			font-weight: 600;
 		}
-		.resultsEntry .timediff {
-			color: #999;
+		.resultsEntry .name {
+			overflow: hidden;
+			overflow-wrap: anywhere;
+			max-height: 1.1em;
 		}
 		.resultsEntry .record.wr {
 			color: #ffd900;
@@ -336,6 +361,15 @@ body > *:not(#sidebar) {
 		.resultsEntry .record.pb {
 			color: #008000;
 			text-shadow: #00800033 0px 0px 3px;
+		}
+		.resultsEntry .time.dnf {
+			color: #999;
+		}
+		.resultsEntry .timediff {
+			color: #999;
+		}
+		.resultsEntry .points.none {
+			color: #999;
 		}
 		.resultsEntry .pointstotal {
 			color: #999;
@@ -390,6 +424,7 @@ body > *:not(#sidebar) {
 		display: flex;
 		flex-direction: column;
 		flex: 1;
+		overflow: hidden;
 	}
 
 		#menuOptions {
@@ -421,6 +456,9 @@ body > *:not(#sidebar) {
 			background-color: #2b2929;
 			border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
 			flex:1;
+			overflow: hidden;
+			display: flex;
+			flex-direction: column;
 		}
 
 	#gameInfo {
@@ -429,6 +467,7 @@ body > *:not(#sidebar) {
 		min-height: 350px;
 		padding: 9px;
 		visibility: visible;
+		overflow: hidden;
 	}
 
 		#gameInfo h2 {

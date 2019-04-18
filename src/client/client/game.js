@@ -76,6 +76,9 @@ let game = (function() {
 		_DOMElements.gameInfo = document.getElementById("gameInfo");
 		_DOMElements.marbleList = document.getElementById("marbleList");
 		_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
+		_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
+		_DOMElements.resultsList = document.getElementById("resultsList");
+		_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
 	});
 
 	return {
@@ -84,16 +87,12 @@ let game = (function() {
 			_DOMElements.gameInfo.className = newState;
 
 			switch(newState) {
-			// Round end
+			// Start of a new round
 			case "waiting":
-				if (!isInitialState) {
-					_audio.end.play();
-				}
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
 				renderer.clearMarbleMeshes();
-				_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -126,7 +125,7 @@ let game = (function() {
 				_DOMElements.state.innerHTML = "The race is starting...";
 				break;
 
-			// The game has started
+			// The race has started
 			case "started":
 				if (isInitialState) {
 					// The round has already started, so give the timer a head-start
@@ -138,6 +137,86 @@ let game = (function() {
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
 				_DOMElements.state.innerHTML = "Race started!";
+				break;
+
+			// The race has finished
+			case "finished":
+				if (!isInitialState) {
+					_audio.end.play();
+
+					_DOMElements.raceLeaderboard.className = "visible";
+
+					_enteredMarbleList.sort((a, b) => {
+						if (a.finished && b.finished) {
+							return b.time - a.time;
+						} else if (a.finished) {
+							return 1;
+						} else if (b.finished) {
+							return -1;
+						} else {
+							return 0;
+						}
+					});
+
+					// Reverse it cause im stupid
+					_enteredMarbleList.reverse();
+
+					_DOMElements.resultsList.innerHTML = "";
+
+					// Build leaderboard DOM
+					let resultsListFragment = new DocumentFragment();
+					for (let i = 0; i < _enteredMarbleList.length; i++) {
+						let marble = _enteredMarbleList[i];
+						let resultsEntry = _DOMElements.resultsListTemplate.cloneNode(true);
+						resultsEntry.removeAttribute("id");
+						resultsEntry.getElementsByClassName("rank")[0].innerText = (i + 1);
+						resultsEntry.getElementsByClassName("name")[0].innerText = marble.name;
+						if (marble.finished) {
+							resultsEntry.getElementsByClassName("time")[0].innerText = (marble.time * .001).toFixed(2);
+							resultsEntry.getElementsByClassName("timediff")[0].innerText = i !== 0
+								? `+${((marble.time - _enteredMarbleList[0].time) * .001).toFixed(2)}`
+								: "-";
+						} else {
+							resultsEntry.getElementsByClassName("time")[0].className += " dnf";
+						}
+						if (marble.points) {
+							resultsEntry.getElementsByClassName("points")[0].innerText = `+${marble.points}`;
+						} else {
+							resultsEntry.getElementsByClassName("points")[0].className += " none";
+						}
+						resultsListFragment.appendChild(resultsEntry);
+					}
+					_DOMElements.resultsList.appendChild(resultsListFragment);
+
+					if (_DOMElements.resultsList.scrollHeight !== 0) {
+						_DOMElements.resultsList.scrollTop = _DOMElements.resultsList.scrollHeight;
+						// Start scrolling up
+						setTimeout(function() {
+							let scrollStart = new Date();
+							let scrollTimeLength = (_serverData.finishPeriodLength * 1000 - 3000);
+							let animateResultsScroll = function() {
+								let scrollCurrent = new Date();
+								if (_DOMElements.resultsList.scrollTop !== 0) {
+									requestAnimationFrame(animateResultsScroll);
+
+									_DOMElements.resultsList.scrollTop = Math.floor(_DOMElements.resultsList.scrollHeight * (1 - (scrollCurrent - scrollStart) / scrollTimeLength));
+								}
+							};
+							animateResultsScroll();
+						}, 3000);
+					}
+
+					// Hide leaderboard
+					setTimeout(function() {
+						_DOMElements.raceLeaderboard.className = "";
+					}, _serverData.finishPeriodLength * 1000 + 5000);
+				}
+
+				_roundTimerIsVisible = false;
+
+				_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
+				_DOMElements.entries.innerText = "0";
+				_DOMElements.state.innerText = "Race finished!";
 				break;
 			}
 		},
@@ -164,8 +243,10 @@ let game = (function() {
 		},
 
 		finishMarble: function(marble) {
+			_enteredMarbleList[marble.id].finished = true;
 			_enteredMarbleList[marble.id].rank = marble.rank;
 			_enteredMarbleList[marble.id].time = marble.time;
+			_enteredMarbleList[marble.id].points = marble.points;
 
 			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${marble.rank + 1}`;
 			_enteredMarbleList[marble.id].listEntryElement.style.order = marble.rank;
