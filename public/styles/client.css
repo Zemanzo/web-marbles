@@ -177,10 +177,10 @@ body > *:not(#sidebar) {
 	}
 
 	#notifications {
-		align-self: flex-end;
+		align-self: flex-start;
 		margin-bottom: 20px;
 		text-align: center;
-		max-width: 80ch;
+		width: 100%;
 		position: absolute;
 	}
 
@@ -206,7 +206,8 @@ body > *:not(#sidebar) {
 			animation-duration: .7s;
 			animation-fill-mode: forwards;
 			animation-iteration-count: 1;
-			margin-top: 8px;
+			margin: 8px auto 0 auto;
+			transition: opacity 1s;
 		}
 
 		#notifications .notification-content {
@@ -277,6 +278,11 @@ body > *:not(#sidebar) {
 		background-color: #BA0069cc;
 		font-size: 1.5em;
 		color: #eee;
+	}
+
+	#raceLeaderboard > .header .author {
+		font-size: .8em;
+		color: #cc91b3;
 	}
 
 	#results {

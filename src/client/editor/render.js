@@ -45,12 +45,6 @@ function initializeRenderer() {
 		}
 	});
 
-	// Fix camera
-	document.getElementById("fixCam").addEventListener("click", function() {
-		controls.stop();
-		controls.toDefaults();
-	}, false);
-
 	editorLog("Renderer loaded");
 
 	animate();

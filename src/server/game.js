@@ -45,6 +45,8 @@ let game = function() {
 		_firstMarbleHasFinished = false,
 
 		_gameplayParameters = null,
+		_mapName = null,
+		_mapAuthorName = null,
 
 		_mapFileName = null,
 
@@ -52,6 +54,8 @@ let game = function() {
 
 	maps.currentMapData.then((map) => {
 		_gameplayParameters = map.gameplay;
+		_mapName = map.mapName;
+		_mapAuthorName = map.authorName;
 	});
 
 	maps.currentMapName.then((mapFileName) => {
@@ -198,12 +202,22 @@ let game = function() {
 					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
 
 					for (let user of pointTotals) {
-						additionalData[user.id] = { points: user.stat_points_earned };
+						additionalData[user.id] = { pointsTotal: user.stat_points_earned };
 
 						if (personalBestIds.includes(user.id)) {
 							additionalData[user.id].record = "pb";
 						}
 					}
+
+					// Points earned in this round
+					for (let player of _playersEnteredList) {
+						additionalData[player.id].pointsEarned = player.pointsEarned;
+					}
+
+					additionalData.map = {
+						name: _mapName,
+						author: _mapAuthorName
+					};
 				}
 
 				// Set state to finished, and send additional data to the client.
