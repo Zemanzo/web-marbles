@@ -89,10 +89,20 @@ let exportProject = function(data, exportType, useCompression) {
 				let prefab = data.prefabs[key];
 				for(let ent in prefab.entities) {
 					let entity = prefab.entities[ent];
-					if("model" in entity) {
-						let index = unusedModels.indexOf(entity.model);
-						if(index !== -1) {
-							unusedModels.splice(index, 1);
+
+					if(entity.type === "object") {
+						if("model" in entity) {
+							let index = unusedModels.indexOf(entity.model);
+							if(index !== -1) {
+								unusedModels.splice(index, 1);
+							}
+						}
+					} else if(entity.colliderData.shape === "mesh") {
+						if("model" in entity.colliderData) {
+							let index = unusedModels.indexOf(entity.colliderData.model);
+							if(index !== -1) {
+								unusedModels.splice(index, 1);
+							}
 						}
 					}
 				}
