@@ -1,6 +1,7 @@
-[![Discord](https://img.shields.io/discord/478527288854708226.svg?color=%237289DA&label=discord)](https://discord.gg/XB3k9T5)
+[![Discord](https://img.shields.io/discord/478527288854708226.svg?color=%237289DA&label=discord&logo=discord)](https://discord.gg/XB3k9T5)
 [![Dependencies](https://img.shields.io/david/Zemanzo/web-marbles.svg)](https://david-dm.org/Zemanzo/web-marbles)
-[![TravisCI](https://img.shields.io/travis/com/Zemanzo/web-marbles.svg)](https://travis-ci.com/Zemanzo/web-marbles)
+[![TravisCI](https://img.shields.io/travis/com/Zemanzo/web-marbles.svg?logo=travis)](https://travis-ci.com/Zemanzo/web-marbles)
+[![Patreon](https://img.shields.io/badge/support%20us-patreon-%23e85b46.svg?logo=patreon)](https://www.patreon.com/webmarbles)
 
 # web-marbles
 
