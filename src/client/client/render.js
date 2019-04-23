@@ -286,7 +286,7 @@ let clearMarbleMeshes = function() {
 };
 
 let addMap = function(mapName) {
-	fetch(`/resources/maps/${mapName}`)
+	fetch(`/resources/maps/${mapName}.mmc`)
 		.then((response) => {
 			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
 			return response.arrayBuffer();

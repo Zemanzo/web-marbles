@@ -7,9 +7,10 @@ import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
 
 // model object
-function Model(name, sceneObject) {
+function Model(name, sceneObject, project) {
 	this.name = name;
 	this.sceneObject = sceneObject;
+	this.project = project;
 	this.sceneObject.rotation.order = "YXZ";
 	this.convexHull = null; // For colliders. null - not generated, false - invalid
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
@@ -58,6 +59,10 @@ function Model(name, sceneObject) {
 function _getVertices(obj) {
 	let vertexArray = [];
 
+	// obj.matrix isn't guaranteed to be up-to-date
+	let matrix = new THREE.Matrix4();
+	matrix = matrix.compose(obj.position, obj.quaternion, obj.scale);
+
 	// Add own vertices if they exist
 	if(obj.type === "Mesh") {
 		let vertexData = obj.geometry.attributes.position;
@@ -66,7 +71,7 @@ function _getVertices(obj) {
 				vertexData.array[i * 3],
 				vertexData.array[i * 3 + 1],
 				vertexData.array[i * 3 + 2]);
-			point.applyMatrix4(obj.matrix);
+			point.applyMatrix4(matrix);
 			vertexArray.push(point);
 		}
 	}
@@ -77,7 +82,7 @@ function _getVertices(obj) {
 
 		// Multiply by this object's local matrix to get it in parent's space
 		for(let i = 0; i < childVertices.length; i++) {
-			vertexArray.push( childVertices[i].applyMatrix4(obj.matrix) );
+			vertexArray.push( childVertices[i].applyMatrix4(matrix) );
 		}
 	}
 	return vertexArray;
@@ -90,6 +95,14 @@ Model.prototype.getConvexHull = function() {
 		try {
 			let vertexArray = _getVertices(this.sceneObject);
 			this.convexHull = new THREE.ConvexGeometry(vertexArray); // Could throw an error if input is not valid
+			if(this.convexHull) {
+				this.project.convexData = [];
+				for(let i = 0; i < this.convexHull.vertices.length; i++) {
+					this.project.convexData.push(this.convexHull.vertices[i].x);
+					this.project.convexData.push(this.convexHull.vertices[i].y);
+					this.project.convexData.push(this.convexHull.vertices[i].z);
+				}
+			}
 		} catch(error) {
 			editorLog(`Failed to generate convex hull for ${this.name}: ${error}`);
 			this.convexHull = false;
@@ -102,6 +115,10 @@ Model.prototype.getConvexHull = function() {
 function _combineGeometry(obj) {
 	let geo = new THREE.Geometry();
 
+	// obj.matrix isn't guaranteed to be up-to-date
+	let matrix = new THREE.Matrix4().identity();
+	matrix = matrix.compose(obj.position, obj.quaternion, obj.scale);
+
 	if(obj.type === "Mesh") {
 		let objGeo = obj.geometry;
 		// BufferGeometry needs to be converted before merging
@@ -109,12 +126,12 @@ function _combineGeometry(obj) {
 			objGeo = new THREE.Geometry().fromBufferGeometry(objGeo);
 		}
 		objGeo.mergeVertices(); // Never hurts, right?
-		geo.merge(objGeo, obj.matrix);
+		geo.merge(objGeo, matrix);
 	}
 
 	for(let c = 0; c < obj.children.length; c++) {
 		let childGeo = _combineGeometry(obj.children[c]);
-		geo.merge(childGeo, obj.matrix);
+		geo.merge(childGeo, matrix);
 	}
 
 	return geo;
@@ -125,6 +142,22 @@ function _combineGeometry(obj) {
 Model.prototype.getConcaveGeometry = function() {
 	if(this.concaveGeo === null) {
 		this.concaveGeo = _combineGeometry(this.sceneObject);
+		if(this.concaveGeo) {
+			this.project.concaveData = {
+				vertices: [],
+				indices: []
+			};
+			for(let i = 0; i < this.concaveGeo.vertices.length; i++) {
+				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].x);
+				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].y);
+				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].z);
+			}
+			for(let i = 0; i < this.concaveGeo.faces.length; i++) {
+				this.project.concaveData.indices.push(this.concaveGeo.faces[i].a);
+				this.project.concaveData.indices.push(this.concaveGeo.faces[i].b);
+				this.project.concaveData.indices.push(this.concaveGeo.faces[i].c);
+			}
+		}
 	}
 	return this.concaveGeo;
 };
@@ -165,7 +198,8 @@ let modelsTab = function() {
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
-						modelsTab.loadModel(file.name, file.reader.result, true);
+						let project = projectTab.project.addModel(file.name, file.reader.result);
+						modelsTab.loadModel(file.name, file.reader.result, project);
 					};
 
 					file.reader.onerror = function() {
@@ -197,22 +231,18 @@ let modelsTab = function() {
 		},
 
 		// Loads the model into the editor, adds it to the project if isNewModel is true
-		loadModel: function(modelName, fileContents, isNewModel) {
+		loadModel: function(modelName, fileContents, project) {
 			let promise = new Promise( (resolve, reject) => {
 				try {
 					_GLTFLoader.parse(fileContents, null,
 						function(model) {
-							modelsTab.models[modelName] = new Model(modelName, model.scene);
-
+							modelsTab.models[modelName] = new Model(modelName, model.scene, project);
 							editorLog(`Loaded model: ${modelName}`, "info");
-
-							if(isNewModel) {
-								projectTab.project.addModel(modelName, fileContents);
-							}
 							resolve("success");
 						}, function(error) {
 							editorLog(`Unable to load model (${modelName}): ${error}`, "error");
 							console.log(error);
+							delete projectTab.project.models[modelName]; // Delete from project if not loadable
 							reject("error");
 						}
 					);
@@ -221,6 +251,7 @@ let modelsTab = function() {
 					// Invalid JSON/GLTF files may end up here
 					editorLog(`Unable to load model (${name}): ${error}`, "error");
 					console.log(error);
+					delete projectTab.project.models[modelName]; // Delete from project if not loadable
 					reject("error");
 				}
 			} );

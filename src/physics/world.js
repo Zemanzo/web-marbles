@@ -196,7 +196,6 @@ module.exports = function() {
 
 			switch (collider.colliderData.shape) {
 			case "box":
-			default:
 				shape = new physics.ammo.btBoxShape(
 					new physics.ammo.btVector3(
 						collider.colliderData.width * .5,
@@ -223,6 +222,9 @@ module.exports = function() {
 					)
 				);
 				break;
+			default:
+				console.error(`Unable to generate collider of unknown type ${collider.colliderData.shape}.`);
+				return null;
 			}
 
 			let mass = 0;

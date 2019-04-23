@@ -399,7 +399,16 @@ function PrefabCollider(uuid, parent) {
 			this.setHeight(height);
 			break;
 		}
+		case "mesh": {
+			let convex = projectData.convex;
+			let model = projectData.model;
+			this.setShape("mesh");
+			this.setModel(model);
+			this.setConvex(convex);
+			break;
+		}
 		default:
+			editorLog(`Unable to load unknown collider type ${projectData.shape}`, "warn");
 			break;
 		}
 	} else {

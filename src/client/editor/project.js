@@ -7,7 +7,7 @@ import { modelsTab } from "./models";
 
 function Project() {
 	this.mapName = "New map";
-	this.authorName = "Nameless marblemapmaker";
+	this.authorName = "Unknown";
 
 	this.gameplay = {
 		defaultEnterPeriod: 40,
@@ -73,7 +73,7 @@ Project.prototype.validateProject = function() {
 
 let projectTab = function() {
 	let _worker = new SerializeWorker();
-	let _exportActive = false;
+	let _exportActive = 0;
 	let _elements = {
 		exportPublish: null,
 		startArea: null,
@@ -93,7 +93,7 @@ let projectTab = function() {
 
 		case "error":
 			editorLog(`Serialization failed: ${message.data.payload}`, "error");
-			_exportActive = false;
+			_exportActive--;
 			break;
 
 		case "publishSuccess": {
@@ -105,7 +105,7 @@ let projectTab = function() {
 			setTimeout(function() {
 				document.body.removeChild(a); window.URL.revokeObjectURL(message.data.payload.url);
 			}, 0 );
-			_exportActive = false;
+			_exportActive--;
 		}
 			break;
 
@@ -117,9 +117,9 @@ let projectTab = function() {
 
 	_worker.onerror = function(error) {
 		editorLog(`Serialization failed: ${error.message}`, "error");
-		console.log(`Worker error: ${error.message}`);
-		console.log(error);
-		_exportActive = false;
+		console.error(`Worker error: ${error.message}`);
+		console.error(error);
+		_exportActive--;
 	};
 
 	return {
@@ -187,7 +187,7 @@ let projectTab = function() {
 		},
 
 		setAuthorName: function(name) {
-			if(!name.length) name = "Nameless marblemapmaker";
+			if(!name.length) name = "Unknown";
 			this.project.authorName = name;
 		},
 
@@ -275,7 +275,7 @@ let projectTab = function() {
 		},
 
 		exportProject: function(exportAsLevel, useCompression) {
-			if(_exportActive) return;
+			if(_exportActive > 0) return;
 
 			let serializationStart = new Date();
 			editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
@@ -284,17 +284,25 @@ let projectTab = function() {
 			// We may want to lock the editor controls and do this async in the future
 			let payload = projectTab.project;
 
-			_exportActive = true;
+			_exportActive = 1;
 			_worker.postMessage({
-				exportAsLevel: exportAsLevel,
+				exportType: exportAsLevel ? "publishClient" : "exportProject",
 				useCompression: useCompression,
 				payload: payload,
 				serializationStart: serializationStart
 			});
+			if(exportAsLevel) {
+				_exportActive++;
+				_worker.postMessage({
+					exportType: "publishServer",
+					useCompression: useCompression,
+					payload: payload,
+					serializationStart: serializationStart
+				});
+			}
 		},
 
 		importProject: function(loadedFile) {
-			editorLog("Loading project...");
 			let loadedProject;
 			try {
 				let data = pako.inflate(loadedFile);
@@ -328,13 +336,14 @@ let projectTab = function() {
 			}
 
 			//Initialize loaded project
+			editorLog("Loading project...");
 			this.project = loadedProject;
 			Object.setPrototypeOf(this.project, Project.prototype);
 			this.project.validateProject();
 
 			let modelLoaders = [];
 			for(let key in this.project.models) {
-				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, false).catch( error => {return error;}) );
+				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, this.project.models[key]).catch( error => {return error;}) );
 			}
 
 			// Wait for all models to load before continuing
@@ -345,7 +354,6 @@ let projectTab = function() {
 				for(let i = 0; i < results.length; i++) {
 					if(results[i] === "error") {
 						allSuccesses = false;
-						delete this.project.models[i];
 					}
 				}
 
