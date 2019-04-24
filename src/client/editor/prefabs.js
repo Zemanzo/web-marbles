@@ -469,7 +469,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			model: null,
 			convex: true
 		};
-		this.sceneObject.geometry = new THREE.Geometry(); // TODO: Placeholder?
+		this.sceneObject.geometry = new THREE.Geometry();
 		break;
 	default:
 		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
@@ -520,18 +520,22 @@ PrefabCollider.prototype.setModel = function(modelName) {
 	// Remove from references
 	if(this.colliderData.model) {
 		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
-		this.sceneObject.geometry = new THREE.Geometry(); // TODO: Placeholder?
+		this.sceneObject.geometry = new THREE.Geometry();
 		this.colliderData.model = null;
 		this.colliderData.convex = true;
 	}
 
 	let model = modelsTab.models[modelName];
 	if(model) {
-		model.prefabEntities[this.uuid] = this;
-
 		// When a model is first set, it defaults to convex
-		this.sceneObject.geometry = model.getConvexHull(); // TODO: Check validity
-		this.colliderData.model = modelName;
+		let convexHull = model.getConvexHull();
+		if(convexHull) {
+			model.prefabEntities[this.uuid] = this;
+			this.sceneObject.geometry = convexHull;
+			this.colliderData.model = modelName;
+		} else {
+			editorLog(`Failed to set collider to ${modelName}.`, "error");
+		}
 	} else if(modelName && modelName !== "null") {
 		editorLog(`Unable to set collider to ${modelName} because it doesn't exist!`, "error");
 	}
@@ -542,14 +546,22 @@ PrefabCollider.prototype.setConvex = function(isConvex) {
 	if(this.colliderData.shape != "mesh") return;
 	if(this.colliderData.convex === isConvex) return;
 	if(this.colliderData.model === null) return;
+	this.colliderData.convex = isConvex;
 
 	if(isConvex) {
-		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConvexHull(); // TODO: Check validity
+		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConvexHull();
 	} else {
-		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConcaveGeometry(); // TODO: Check validity
+		this.sceneObject.geometry = modelsTab.models[this.colliderData.model].getConcaveGeometry();
+	}
+	if(!this.sceneObject.geometry) {
+		editorLog(`Failed to switch collider to ${isConvex ? "convex" : "concave"}.`, "error");
+		// Reset collider data so it stays valid
+		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
+		this.sceneObject.geometry = new THREE.Geometry();
+		this.colliderData.model = null;
+		this.colliderData.convex = true;
 	}
 
-	this.colliderData.convex = isConvex;
 	this.parent.changed = true;
 };
 

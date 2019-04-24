@@ -27,6 +27,25 @@ let exportProject = function(data, exportType, useCompression) {
 			for(let key in data.models) {
 				let model = data.models[key];
 				delete model.data;
+
+				// Remove unused collider data
+				let usesConvex = false;
+				let usesConcave = false;
+				for(let prefabUuid in data.prefabs) {
+					for(let ent in data.prefabs[prefabUuid].entities) {
+						let entity = data.prefabs[prefabUuid].entities[ent];
+						if(entity.type !== "collider") continue;
+						if(entity.colliderData.shape !== "mesh") continue;
+						if(entity.colliderData.model !== key) continue;
+						if(entity.colliderData.convex) {
+							usesConvex = true;
+						} else {
+							usesConcave = true;
+						}
+					}
+				}
+				if(!usesConvex) delete model.convexData;
+				if(!usesConcave) delete model.concaveData;
 			}
 		} else {
 			// Remove collider data, can be regenerated on load for projects
