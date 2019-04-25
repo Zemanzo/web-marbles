@@ -7,15 +7,15 @@ import { inspector } from "./inspector";
 import { projectTab } from "./project";
 
 
-function WorldObject(uuid, prefab, project) {
-	EditorObject.call(this, "WorldObject", uuid, project);
+function WorldObject(uuid, prefab, projectData) {
+	EditorObject.call(this, "WorldObject", uuid, projectData);
 	this.prefab = prefab;
 
 	this.element = document.getElementById("worldObjectTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
 
-	if(this.project.name) {
-		this.setName(this.project.name);
+	if(this.projectData.name) {
+		this.setName(this.projectData.name);
 	} else {
 		this.setName(prefab.name); // Use the prefab name as worldObject name, if it wasn't set in the project object
 	}
@@ -45,7 +45,7 @@ function WorldObject(uuid, prefab, project) {
 	worldTab.group.add( this.sceneObject );
 	this.sceneObject.visible = true;
 	this.updateTransformFromProject();
-	if(this.project.scale) delete this.project.scale;
+	if(this.projectData.scale) delete this.projectData.scale;
 }
 
 WorldObject.prototype = Object.create(EditorObject.prototype);
@@ -77,7 +77,7 @@ let worldTab = function() {
 			scene.add(this.group);
 			this.group.visible = false;
 
-			this.onProjectLoad(projectTab.project);
+			this.onProjectLoad(projectTab.activeProject);
 
 			// Change water level
 			document.getElementById("envWaterHeight").addEventListener("change", function() { worldTab.setWaterLevel( this.valueAsNumber ); }, false);
@@ -97,7 +97,7 @@ let worldTab = function() {
 				) return;
 
 				let uuid = generateTinyUUID();
-				let projectWorldObject = projectTab.project.addWorldObject(uuid, prefabUuid);
+				let projectWorldObject = projectTab.activeProject.addWorldObject(uuid, prefabUuid);
 				worldTab.addWorldObject(uuid, prefabsTab.prefabs[prefabUuid], projectWorldObject);
 			};
 			document.getElementById("worldAddPrefabButton").addEventListener("click", addWorldObject, false);
@@ -130,7 +130,7 @@ let worldTab = function() {
 
 			delete thisObject.prefab.worldInstances[uuid];
 			delete worldTab.worldObjects[uuid];
-			delete projectTab.project.worldObjects[uuid];
+			delete projectTab.activeProject.worldObjects[uuid];
 		},
 
 		onProjectLoad: function(project) {

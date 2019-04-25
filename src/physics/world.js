@@ -196,7 +196,6 @@ module.exports = function() {
 
 			switch (collider.colliderData.shape) {
 			case "box":
-			default:
 				shape = new physics.ammo.btBoxShape(
 					new physics.ammo.btVector3(
 						collider.colliderData.width * .5,
@@ -223,6 +222,24 @@ module.exports = function() {
 					)
 				);
 				break;
+			case "mesh": {
+				let modelShape = physics.shapes[collider.colliderData.model];
+				if(modelShape) {
+					if(collider.colliderData.convex) {
+						shape = physics.shapes[collider.colliderData.model].convex;
+					} else {
+						shape = physics.shapes[collider.colliderData.model].concave;
+					}
+				}
+				if(!shape) {
+					console.error(`Attempted to use (${collider.colliderData.convex ? "convex" : "concave"}) collider shape from ${collider.colliderData.model}, but it doesn't exist.`);
+					return null;
+				}
+				break;
+			}
+			default:
+				console.error(`Unable to generate collider of unknown type ${collider.colliderData.shape}.`);
+				return null;
 			}
 
 			let mass = 0;

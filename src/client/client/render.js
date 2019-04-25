@@ -285,7 +285,7 @@ let clearMarbleMeshes = function() {
 };
 
 let addMap = function(mapName) {
-	fetch(`/resources/maps/${mapName}`)
+	fetch(`/resources/maps/${mapName}.mmc`)
 		.then((response) => {
 			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
 			return response.arrayBuffer();
@@ -308,7 +308,7 @@ let addMap = function(mapName) {
 				for (let modelName in mapData.models) {
 					modelPromises[modelName] = new Promise((resolve, reject) => {
 						try {
-							_GLTFLoader.parse(mapData.models[modelName].data, null,
+							_GLTFLoader.parse(mapData.models[modelName].file, null,
 								function(model) {
 									resolve(model.scene);
 								}, function(error) {

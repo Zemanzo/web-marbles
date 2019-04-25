@@ -7,7 +7,7 @@ import { modelsTab } from "./models";
 
 function Project() {
 	this.mapName = "New map";
-	this.authorName = "Nameless marblemapmaker";
+	this.authorName = "Unknown";
 
 	this.gameplay = {
 		defaultEnterPeriod: 40,
@@ -27,7 +27,9 @@ function Project() {
 
 Project.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
-		data: fileContents
+		file: fileContents,
+		convexData: null,
+		concaveData: {}
 	};
 	return this.models[name];
 };
@@ -73,7 +75,7 @@ Project.prototype.validateProject = function() {
 
 let projectTab = function() {
 	let _worker = new SerializeWorker();
-	let _exportActive = false;
+	let _exportActive = 0;
 	let _elements = {
 		exportPublish: null,
 		startArea: null,
@@ -93,7 +95,7 @@ let projectTab = function() {
 
 		case "error":
 			editorLog(`Serialization failed: ${message.data.payload}`, "error");
-			_exportActive = false;
+			_exportActive--;
 			break;
 
 		case "publishSuccess": {
@@ -105,7 +107,7 @@ let projectTab = function() {
 			setTimeout(function() {
 				document.body.removeChild(a); window.URL.revokeObjectURL(message.data.payload.url);
 			}, 0 );
-			_exportActive = false;
+			_exportActive--;
 		}
 			break;
 
@@ -117,16 +119,16 @@ let projectTab = function() {
 
 	_worker.onerror = function(error) {
 		editorLog(`Serialization failed: ${error.message}`, "error");
-		console.log(`Worker error: ${error.message}`);
-		console.log(error);
-		_exportActive = false;
+		console.error(`Worker error: ${error.message}`);
+		console.error(error);
+		_exportActive--;
 	};
 
 	return {
-		project: null,
+		activeProject: null,
 
 		initialize: function() {
-			this.project = new Project();
+			this.activeProject = new Project();
 
 			// Setting elements
 			_elements.exportPublish = document.getElementById("exportPublish");
@@ -183,26 +185,26 @@ let projectTab = function() {
 
 		setMapName: function(name) {
 			if(!name.length) name = "New map";
-			this.project.mapName = name;
+			this.activeProject.mapName = name;
 		},
 
 		setAuthorName: function(name) {
-			if(!name.length) name = "Nameless marblemapmaker";
-			this.project.authorName = name;
+			if(!name.length) name = "Unknown";
+			this.activeProject.authorName = name;
 		},
 
 		setEnterPeriod: function(seconds) {
-			this.project.gameplay.defaultEnterPeriod = seconds;
+			this.activeProject.gameplay.defaultEnterPeriod = seconds;
 			this.checkLevelPublish();
 		},
 
 		setMaxRoundLength: function(seconds) {
-			this.project.gameplay.roundLength = seconds;
+			this.activeProject.gameplay.roundLength = seconds;
 			this.checkLevelPublish();
 		},
 
 		setWaitAfterFinish: function(seconds) {
-			this.project.gameplay.timeUntilDnf = seconds;
+			this.activeProject.gameplay.timeUntilDnf = seconds;
 			this.checkLevelPublish();
 		},
 
@@ -211,10 +213,10 @@ let projectTab = function() {
 			let startAreas = 0;
 			let startGates = 0;
 			let finishLines = 0;
-			for(let key in this.project.worldObjects) {
-				let worldObject = this.project.worldObjects[key];
-				for(let ent in this.project.prefabs[worldObject.prefab].entities) {
-					let entity = this.project.prefabs[worldObject.prefab].entities[ent];
+			for(let key in this.activeProject.worldObjects) {
+				let worldObject = this.activeProject.worldObjects[key];
+				for(let ent in this.activeProject.prefabs[worldObject.prefab].entities) {
+					let entity = this.activeProject.prefabs[worldObject.prefab].entities[ent];
 					if(entity.type !== "collider") continue; // Check colliders only
 					switch(entity.functionality) {
 					case "startarea":
@@ -275,26 +277,34 @@ let projectTab = function() {
 		},
 
 		exportProject: function(exportAsLevel, useCompression) {
-			if(_exportActive) return;
+			if(_exportActive > 0) return;
 
 			let serializationStart = new Date();
 			editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
 
 			// postMessage will copy the data, so we don't have to worry about it being shared
 			// We may want to lock the editor controls and do this async in the future
-			let payload = projectTab.project;
+			let payload = projectTab.activeProject;
 
-			_exportActive = true;
+			_exportActive = 1;
 			_worker.postMessage({
-				exportAsLevel: exportAsLevel,
+				exportType: exportAsLevel ? "publishClient" : "exportProject",
 				useCompression: useCompression,
 				payload: payload,
 				serializationStart: serializationStart
 			});
+			if(exportAsLevel) {
+				_exportActive++;
+				_worker.postMessage({
+					exportType: "publishServer",
+					useCompression: useCompression,
+					payload: payload,
+					serializationStart: serializationStart
+				});
+			}
 		},
 
 		importProject: function(loadedFile) {
-			editorLog("Loading project...");
 			let loadedProject;
 			try {
 				let data = pako.inflate(loadedFile);
@@ -328,13 +338,14 @@ let projectTab = function() {
 			}
 
 			//Initialize loaded project
-			this.project = loadedProject;
-			Object.setPrototypeOf(this.project, Project.prototype);
-			this.project.validateProject();
+			editorLog("Loading project...");
+			this.activeProject = loadedProject;
+			Object.setPrototypeOf(this.activeProject, Project.prototype);
+			this.activeProject.validateProject();
 
 			let modelLoaders = [];
-			for(let key in this.project.models) {
-				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, false).catch( error => {return error;}) );
+			for(let key in this.activeProject.models) {
+				modelLoaders.push(modelsTab.loadModel(key, this.activeProject.models[key].file, this.activeProject.models[key]).catch( error => {return error;}) );
 			}
 
 			// Wait for all models to load before continuing
@@ -345,28 +356,27 @@ let projectTab = function() {
 				for(let i = 0; i < results.length; i++) {
 					if(results[i] === "error") {
 						allSuccesses = false;
-						delete this.project.models[i];
 					}
 				}
 
-				for(let uuid in this.project.prefabs) {
-					prefabsTab.addPrefab(uuid, this.project.prefabs[uuid]);
+				for(let uuid in this.activeProject.prefabs) {
+					prefabsTab.addPrefab(uuid, this.activeProject.prefabs[uuid]);
 				}
-				for(let uuid in this.project.worldObjects) {
-					if(this.project.worldObjects[uuid].prefab in this.project.prefabs)
-						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.project.worldObjects[uuid].prefab], this.project.worldObjects[uuid]);
+				for(let uuid in this.activeProject.worldObjects) {
+					if(this.activeProject.worldObjects[uuid].prefab in this.activeProject.prefabs)
+						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.activeProject.worldObjects[uuid].prefab], this.activeProject.worldObjects[uuid]);
 					else {
-						editorLog(`Unable to load worldObject ${this.project.worldObjects[uuid].name} because prefab with UUID ${this.project.worldObjects[uuid].prefab} doesn't exist.`, "error");
+						editorLog(`Unable to load worldObject ${this.activeProject.worldObjects[uuid].name} because prefab with UUID ${this.activeProject.worldObjects[uuid].prefab} doesn't exist.`, "error");
 					}
 				}
 
 				// Non-model/prefab/object loading
-				worldTab.onProjectLoad(this.project);
-				document.getElementById("paramMapName").value = this.project.mapName;
-				document.getElementById("paramAuthorName").value = this.project.authorName;
-				document.getElementById("paramEnterPeriod").value = this.project.gameplay.defaultEnterPeriod;
-				document.getElementById("paramMaxRoundLength").value = this.project.gameplay.roundLength;
-				document.getElementById("paramWaitAfterFinish").value = this.project.gameplay.timeUntilDnf;
+				worldTab.onProjectLoad(this.activeProject);
+				document.getElementById("paramMapName").value = this.activeProject.mapName;
+				document.getElementById("paramAuthorName").value = this.activeProject.authorName;
+				document.getElementById("paramEnterPeriod").value = this.activeProject.gameplay.defaultEnterPeriod;
+				document.getElementById("paramMaxRoundLength").value = this.activeProject.gameplay.roundLength;
+				document.getElementById("paramWaitAfterFinish").value = this.activeProject.gameplay.timeUntilDnf;
 
 				if(!allSuccesses) {
 					editorLog("Not all models loaded correctly. Some prefabs may be affected.", "warn");

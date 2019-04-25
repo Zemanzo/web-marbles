@@ -25,6 +25,16 @@ module.exports = function() {
 	};
 
 	maps.currentMapData.then((map) => {
+		for(let key in map.models) {
+			let model = map.models[key];
+			if(model.convexData) {
+				physics.createConvexShape(key, model.convexData);
+			}
+			if(model.concaveData) {
+				physics.createConcaveShape(key, model.concaveData.vertices, model.concaveData.indices);
+			}
+		}
+
 		for (let worldObjectUuid in map.worldObjects) {
 			let worldEntity = map.worldObjects[worldObjectUuid];
 			let prefab = map.prefabs[map.worldObjects[worldObjectUuid].prefab];

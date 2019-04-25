@@ -11,7 +11,13 @@ function retrieveMaps() {
 			function(error, files) {
 				if (files && Array.isArray(files)) {
 					// Only read files that have the correct extension
-					let mapFiles = files.filter(file => file.endsWith(".mmb"));
+					let mapFiles = files.filter(file => file.endsWith(".mms"));
+
+					// Remove file extensions
+					// Server and client add their extensions on load
+					for(let i = 0; i < mapFiles.length; i++) {
+						mapFiles[i] = mapFiles[i].slice(0, mapFiles[i].length - 4);
+					}
 					if (mapFiles.length > 0) {
 						return resolve(mapFiles);
 					}
@@ -26,7 +32,7 @@ function retrieveMaps() {
 
 function loadMap(mapName) {
 	return new Promise((resolve, reject) => {
-		fs.readFile(`${config.maps.folderPath}/${mapName}`, function(error, fileBuffer) {
+		fs.readFile(`${config.maps.folderPath}/${mapName}.mms`, function(error, fileBuffer) {
 			try {
 				let map = JSON.parse(
 					pako.inflate(fileBuffer, { to: "string" })
