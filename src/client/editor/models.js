@@ -102,6 +102,9 @@ Model.prototype.getConvexHull = function() {
 					this.projectData.convexData.push(this.convexHull.vertices[i].y);
 					this.projectData.convexData.push(this.convexHull.vertices[i].z);
 				}
+				this.convexHull = new THREE.BufferGeometry().fromGeometry(this.convexHull);
+			} else {
+				this.convexHull = false;
 			}
 		} catch(error) {
 			editorLog(`Failed to generate convex hull for ${this.name}: ${error}`);
@@ -157,6 +160,9 @@ Model.prototype.getConcaveGeometry = function() {
 				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].b);
 				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].c);
 			}
+			this.concaveGeo = new THREE.BufferGeometry().fromGeometry(this.concaveGeo);
+		} else {
+			this.concaveGeo = false;
 		}
 	}
 	return this.concaveGeo;
