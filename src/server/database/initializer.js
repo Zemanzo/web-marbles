@@ -1,12 +1,12 @@
 const log = require("../../log");
 
 module.exports = function(db) {
-	let _schemaVersion = 1;
+	let _schemaVersion = 2;
 
 	return {
 		_users: db.prepare(
 			`CREATE TABLE IF NOT EXISTS users (
-				id INTEGER UNIQUE,
+				id TEXT UNIQUE,
 				username TEXT,
 				discriminator TEXT,
 				avatar TEXT,
@@ -65,7 +65,7 @@ module.exports = function(db) {
 
 		_personalBests: db.prepare(
 			`CREATE TABLE IF NOT EXISTS personal_bests (
-				user_id INTEGER,
+				user_id TEXT,
 				map_id TEXT,
 				time_best INTEGER
 			)`

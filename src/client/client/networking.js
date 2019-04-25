@@ -53,7 +53,7 @@ net.socketReady = new Promise((resolve) => {
 
 			console.log(message);
 
-			game.setInitialGameState(Promise.resolve(message));
+			game.setInitialGameState(message);
 
 			resolve(message);
 			break;
@@ -73,12 +73,12 @@ net.socketReady = new Promise((resolve) => {
 			game.finishMarble(JSON.parse(message));
 			break;
 		case "state":
-			game.setCurrentGameState(message);
+			game.setCurrentGameState(JSON.parse(message));
 			break;
 		case "notification":
 			message = JSON.parse(message);
 			console.log(message);
-			new HUDNotification(message.content, message.style);
+			new HUDNotification(message.content, message.duration, message.style);
 			break;
 		}
 	});

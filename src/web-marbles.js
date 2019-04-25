@@ -109,37 +109,11 @@ const gitHash = git.long();
 const gitBranch = git.branch();
 const version = require("../package.json").version;
 app.get("/client", function(req, res) {
-	if (Object.keys(req.query).length !== 0 && req.query.constructor === Object) {
-		// Send over the gamestate when a new connection is made
-		if (req.query.gamestate) {
-			res.send(
-				{
-					gameState: game.state,
-					roundTimerStart: game.startTime,
-					enterPeriod: config.marbles.rules.enterPeriod,
-					maxRoundLength: config.marbles.rules.maxRoundLength,
-					timeToEnter: game.getTimeRemaining(),
-					mapId: config.marbles.mapRotation[0].name
-				}
-			);
-		}
-
-		// Send map id -- DEPRECATED
-		else if (req.query.dlmap) {
-			res.send(config.marbles.mapRotation[0].name);
-		}
-
-		// Got nothing for ya.
-		else {
-			res.send("You probably can't do that. Nice try tho gg.");
-		}
-	} else {
-		res.render("client", {
-			gitHash,
-			gitBranch,
-			version
-		});
-	}
+	res.render("client", {
+		gitHash,
+		gitBranch,
+		version
+	});
 });
 
 let request = require("request");

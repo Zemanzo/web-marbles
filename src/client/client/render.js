@@ -34,7 +34,6 @@ function init() {
 	updateSun();
 
 	controls = new CameraFlyControls(scene, renderer, {
-		pointerLockElement: viewport,
 		camera,
 		defaultPosition: {
 			x: -25.3,

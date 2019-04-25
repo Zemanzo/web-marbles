@@ -41,6 +41,7 @@ const setupGameplay = function(db, physics, config, game, maps) {
 						maxRoundLength: values[1].gameplay.roundLength,
 						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
 						enterPeriodLength: values[1].gameplay.defaultEnterPeriod,
+						finishPeriodLength: config.marbles.rules.finishPeriod,
 
 						mapId: values[0],
 

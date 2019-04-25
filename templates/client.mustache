@@ -84,10 +84,36 @@
 		</header>
 		<section id="viewport">
 			<div class="overlay">
+				<div id="raceLeaderboard">
+					<div class="header">
+						Race results - <span class="mapName">Awesome Marble Track</span> <span class="author">by <span class="authorName">The One and Only</span></span>
+					</div>
+					<div id="results">
+						<div class="header">
+							<div class="rank">#</div>
+							<div class="name">NAME</div>
+							<div class="record">&nbsp;</div>
+							<div class="time">TIME</div>
+							<div class="timediff">DIFF</div>
+							<div class="points">POINTS</div>
+							<div class="pointstotal">TOTAL</div>
+						</div>
+						<div class="resultsEntry" id="resultsListTemplate">
+							<div class="rank">0</div>
+							<div class="name">Zemanzo</div>
+							<div class="record">&nbsp;</div>
+							<div class="time">DNF</div>
+							<div class="timediff">-</div>
+							<div class="points">-</div>
+							<div class="pointstotal">-</div>
+						</div>
+						<div id="resultsList">
+						</div>
+					</div>
+				</div>
 				<div id="chat">
 					<iframe src="/chat" frameborder="0"></iframe>
 				</div>
-
 				<div id="notifications">
 					<div id="notification-template" class="notification">
 						<div class="notification-content">The maximum amount of marbles has been reached! No more marbles can be entered.</div>
@@ -97,7 +123,7 @@
 		</section>
 		<section id="sidebar">
 			<div id="gameState">
-				<h2 id="state">Enter marbles now!</h2>
+				<h2 id="state">...</h2>
 			</div>
 			<div id="timer" class="themeNumber">
 				...

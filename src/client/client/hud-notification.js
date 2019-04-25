@@ -33,7 +33,13 @@ function HUDNotification(content, duration = 5, styles) {
 
 HUDNotification.prototype.remove = function() {
 	domNodes.then((elements) => {
-		elements.notifications.removeChild(this.node);
+		// Fade out
+		this.node.style.opacity = 0;
+
+		// Remove node
+		setTimeout(function() {
+			elements.notifications.removeChild(this.node);
+		}, 1000);
 	});
 };
 

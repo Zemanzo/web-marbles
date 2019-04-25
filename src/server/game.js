@@ -44,18 +44,23 @@ let game = function() {
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
 
-		_gameplayParameters = null,
-
-		_mapFileName = null,
+		_currentMap = {
+			gameplayParameters: null,
+			mapName: null,
+			mapAuthorName: null,
+			mapFileName: null
+		},
 
 		_round = null;
 
 	maps.currentMapData.then((map) => {
-		_gameplayParameters = map.gameplay;
+		_currentMap.gameplayParameters = map.gameplay;
+		_currentMap.mapName = map.mapName;
+		_currentMap.mapAuthorName = map.authorName;
 	});
 
 	maps.currentMapName.then((mapFileName) => {
-		_mapFileName = mapFileName;
+		_currentMap.mapFileName = mapFileName;
 	});
 
 	let _generateNewRoundData = function() {
@@ -63,7 +68,7 @@ let game = function() {
 			start: null,
 			end: null,
 			timeBest: null,
-			mapId: _mapFileName,
+			mapId: _currentMap.mapFileName,
 			pointsAwarded: 0,
 			playersEntered: 0,
 			playersFinished: 0,
@@ -95,8 +100,8 @@ let game = function() {
 		enterTimeout: null,
 
 		// Sets currentGameState and informs all connected clients about the state change
-		setCurrentGameState(newState) {
-			_socketManager.emit(newState, "state");
+		setCurrentGameState(newState, data) {
+			_socketManager.emit(JSON.stringify({ state: newState, data }), "state");
 			this.currentGameState = newState;
 			log.info("Current state: ".magenta, this.currentGameState);
 		},
@@ -136,7 +141,7 @@ let game = function() {
 					clearTimeout(this.enterTimeout);
 					this.enterTimeout = _setTrackableTimeout(
 						this.start.bind(this),
-						_gameplayParameters.defaultEnterPeriod * 1000
+						_currentMap.gameplayParameters.defaultEnterPeriod * 1000
 					);
 				}
 			}
@@ -176,6 +181,8 @@ let game = function() {
 
 		end() {
 			if (this.currentGameState === "started") {
+				let additionalData = {};
+
 				// Set the last few round parameters and store it in the database
 				if (_round) {
 					_round.end = Date.now();
@@ -189,8 +196,33 @@ let game = function() {
 
 					db.user.batchUpdateStatistics(_playersEnteredList);
 
-					db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
+					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
+					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentMap.mapFileName);
+
+					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
+					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
+
+					for (let user of pointTotals) {
+						additionalData[user.id] = { pointsTotal: user.stat_points_earned };
+
+						if (personalBestIds.includes(user.id)) {
+							additionalData[user.id].record = "pb";
+						}
+					}
+
+					// Points earned in this round
+					for (let player of _playersEnteredList) {
+						additionalData[player.id].pointsEarned = player.pointsEarned;
+					}
+
+					additionalData.map = {
+						name: _currentMap.mapName,
+						author: _currentMap.mapAuthorName
+					};
 				}
+
+				// Set state to finished, and send additional data to the client.
+				this.setCurrentGameState("finished", additionalData);
 
 				// Clear any remaining timeouts
 				clearTimeout(this.gameplayMaxTimeout);
@@ -217,14 +249,20 @@ let game = function() {
 				// If we had hit the marble limit on the previous round, that's no longer true
 				this.limitReached = false;
 
-				// Create new round data
-				_round = _generateNewRoundData();
+				// Wait a bit until starting the next round, so the client can view leaderboards n stuff
+				this.finishedTimeout = _setTrackableTimeout(
+					() => {
+						// Create new round data
+						_round = _generateNewRoundData();
 
-				// Wait for a human to start the next round
-				_isWaitingForEntry = true;
+						// Wait for a human to start the next round
+						_isWaitingForEntry = true;
 
-				// Set state and inform the client
-				this.setCurrentGameState("waiting");
+						// Set state and inform the client
+						this.setCurrentGameState("waiting");
+					},
+					config.marbles.rules.finishPeriod * 1000
+				);
 
 				return true;
 			} else {
@@ -236,7 +274,7 @@ let game = function() {
 			if (this.currentGameState === "enter" || this.currentGameState === "waiting") {
 				this.setCurrentGameState("starting");
 
-				// Have the audio clip play on the cleint before actually starting the race
+				// Have the audio clip play on the client before actually starting the race
 				setTimeout(() => {
 					this.setCurrentGameState("started");
 
@@ -252,7 +290,7 @@ let game = function() {
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_gameplayParameters.roundLength * 1000
+					_currentMap.gameplayParameters.roundLength * 1000
 				);
 
 				return true;
@@ -295,7 +333,8 @@ let game = function() {
 			_socketManager.emit(JSON.stringify({
 				id: marble.entryId,
 				rank,
-				time
+				time,
+				points: playerEntry ? playerEntry.pointsEarned : undefined
 			}), "finished_marble");
 
 			// If this is the first marble that finished, set a timeout to end the game soon
@@ -307,7 +346,7 @@ let game = function() {
 
 				this.gameplayFinishTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_gameplayParameters.timeUntilDnf * 1000
+					_currentMap.gameplayParameters.timeUntilDnf * 1000
 				);
 			}
 
@@ -318,7 +357,7 @@ let game = function() {
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || _gameplayParameters.defaultEnterPeriod;
+			return _getTimeout(this.enterTimeout) || _currentMap.gameplayParameters.defaultEnterPeriod;
 		},
 
 		setSocketManager(socketManager) {
