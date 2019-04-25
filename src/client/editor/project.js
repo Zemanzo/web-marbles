@@ -27,7 +27,9 @@ function Project() {
 
 Project.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
-		data: fileContents
+		file: fileContents,
+		convexData: null,
+		concaveData: {}
 	};
 	return this.models[name];
 };
@@ -123,10 +125,10 @@ let projectTab = function() {
 	};
 
 	return {
-		project: null,
+		activeProject: null,
 
 		initialize: function() {
-			this.project = new Project();
+			this.activeProject = new Project();
 
 			// Setting elements
 			_elements.exportPublish = document.getElementById("exportPublish");
@@ -183,26 +185,26 @@ let projectTab = function() {
 
 		setMapName: function(name) {
 			if(!name.length) name = "New map";
-			this.project.mapName = name;
+			this.activeProject.mapName = name;
 		},
 
 		setAuthorName: function(name) {
 			if(!name.length) name = "Unknown";
-			this.project.authorName = name;
+			this.activeProject.authorName = name;
 		},
 
 		setEnterPeriod: function(seconds) {
-			this.project.gameplay.defaultEnterPeriod = seconds;
+			this.activeProject.gameplay.defaultEnterPeriod = seconds;
 			this.checkLevelPublish();
 		},
 
 		setMaxRoundLength: function(seconds) {
-			this.project.gameplay.roundLength = seconds;
+			this.activeProject.gameplay.roundLength = seconds;
 			this.checkLevelPublish();
 		},
 
 		setWaitAfterFinish: function(seconds) {
-			this.project.gameplay.timeUntilDnf = seconds;
+			this.activeProject.gameplay.timeUntilDnf = seconds;
 			this.checkLevelPublish();
 		},
 
@@ -211,10 +213,10 @@ let projectTab = function() {
 			let startAreas = 0;
 			let startGates = 0;
 			let finishLines = 0;
-			for(let key in this.project.worldObjects) {
-				let worldObject = this.project.worldObjects[key];
-				for(let ent in this.project.prefabs[worldObject.prefab].entities) {
-					let entity = this.project.prefabs[worldObject.prefab].entities[ent];
+			for(let key in this.activeProject.worldObjects) {
+				let worldObject = this.activeProject.worldObjects[key];
+				for(let ent in this.activeProject.prefabs[worldObject.prefab].entities) {
+					let entity = this.activeProject.prefabs[worldObject.prefab].entities[ent];
 					if(entity.type !== "collider") continue; // Check colliders only
 					switch(entity.functionality) {
 					case "startarea":
@@ -282,7 +284,7 @@ let projectTab = function() {
 
 			// postMessage will copy the data, so we don't have to worry about it being shared
 			// We may want to lock the editor controls and do this async in the future
-			let payload = projectTab.project;
+			let payload = projectTab.activeProject;
 
 			_exportActive = 1;
 			_worker.postMessage({
@@ -337,13 +339,13 @@ let projectTab = function() {
 
 			//Initialize loaded project
 			editorLog("Loading project...");
-			this.project = loadedProject;
-			Object.setPrototypeOf(this.project, Project.prototype);
-			this.project.validateProject();
+			this.activeProject = loadedProject;
+			Object.setPrototypeOf(this.activeProject, Project.prototype);
+			this.activeProject.validateProject();
 
 			let modelLoaders = [];
-			for(let key in this.project.models) {
-				modelLoaders.push(modelsTab.loadModel(key, this.project.models[key].data, this.project.models[key]).catch( error => {return error;}) );
+			for(let key in this.activeProject.models) {
+				modelLoaders.push(modelsTab.loadModel(key, this.activeProject.models[key].file, this.activeProject.models[key]).catch( error => {return error;}) );
 			}
 
 			// Wait for all models to load before continuing
@@ -357,24 +359,24 @@ let projectTab = function() {
 					}
 				}
 
-				for(let uuid in this.project.prefabs) {
-					prefabsTab.addPrefab(uuid, this.project.prefabs[uuid]);
+				for(let uuid in this.activeProject.prefabs) {
+					prefabsTab.addPrefab(uuid, this.activeProject.prefabs[uuid]);
 				}
-				for(let uuid in this.project.worldObjects) {
-					if(this.project.worldObjects[uuid].prefab in this.project.prefabs)
-						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.project.worldObjects[uuid].prefab], this.project.worldObjects[uuid]);
+				for(let uuid in this.activeProject.worldObjects) {
+					if(this.activeProject.worldObjects[uuid].prefab in this.activeProject.prefabs)
+						worldTab.addWorldObject(uuid, prefabsTab.prefabs[this.activeProject.worldObjects[uuid].prefab], this.activeProject.worldObjects[uuid]);
 					else {
-						editorLog(`Unable to load worldObject ${this.project.worldObjects[uuid].name} because prefab with UUID ${this.project.worldObjects[uuid].prefab} doesn't exist.`, "error");
+						editorLog(`Unable to load worldObject ${this.activeProject.worldObjects[uuid].name} because prefab with UUID ${this.activeProject.worldObjects[uuid].prefab} doesn't exist.`, "error");
 					}
 				}
 
 				// Non-model/prefab/object loading
-				worldTab.onProjectLoad(this.project);
-				document.getElementById("paramMapName").value = this.project.mapName;
-				document.getElementById("paramAuthorName").value = this.project.authorName;
-				document.getElementById("paramEnterPeriod").value = this.project.gameplay.defaultEnterPeriod;
-				document.getElementById("paramMaxRoundLength").value = this.project.gameplay.roundLength;
-				document.getElementById("paramWaitAfterFinish").value = this.project.gameplay.timeUntilDnf;
+				worldTab.onProjectLoad(this.activeProject);
+				document.getElementById("paramMapName").value = this.activeProject.mapName;
+				document.getElementById("paramAuthorName").value = this.activeProject.authorName;
+				document.getElementById("paramEnterPeriod").value = this.activeProject.gameplay.defaultEnterPeriod;
+				document.getElementById("paramMaxRoundLength").value = this.activeProject.gameplay.roundLength;
+				document.getElementById("paramWaitAfterFinish").value = this.activeProject.gameplay.timeUntilDnf;
 
 				if(!allSuccesses) {
 					editorLog("Not all models loaded correctly. Some prefabs may be affected.", "warn");

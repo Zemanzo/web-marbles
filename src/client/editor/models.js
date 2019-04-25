@@ -7,10 +7,10 @@ import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
 
 // model object
-function Model(name, sceneObject, project) {
+function Model(name, sceneObject, projectData) {
 	this.name = name;
 	this.sceneObject = sceneObject;
-	this.project = project;
+	this.projectData = projectData; // Project reference for this model
 	this.sceneObject.rotation.order = "YXZ";
 	this.convexHull = null; // For colliders. null - not generated, false - invalid
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
@@ -96,11 +96,11 @@ Model.prototype.getConvexHull = function() {
 			let vertexArray = _getVertices(this.sceneObject);
 			this.convexHull = new THREE.ConvexGeometry(vertexArray); // Could throw an error if input is not valid
 			if(this.convexHull) {
-				this.project.convexData = [];
+				this.projectData.convexData = [];
 				for(let i = 0; i < this.convexHull.vertices.length; i++) {
-					this.project.convexData.push(this.convexHull.vertices[i].x);
-					this.project.convexData.push(this.convexHull.vertices[i].y);
-					this.project.convexData.push(this.convexHull.vertices[i].z);
+					this.projectData.convexData.push(this.convexHull.vertices[i].x);
+					this.projectData.convexData.push(this.convexHull.vertices[i].y);
+					this.projectData.convexData.push(this.convexHull.vertices[i].z);
 				}
 			}
 		} catch(error) {
@@ -143,19 +143,19 @@ Model.prototype.getConcaveGeometry = function() {
 	if(this.concaveGeo === null) {
 		this.concaveGeo = _combineGeometry(this.sceneObject);
 		if(this.concaveGeo) {
-			this.project.concaveData = {
+			this.projectData.concaveData = {
 				vertices: [],
 				indices: []
 			};
 			for(let i = 0; i < this.concaveGeo.vertices.length; i++) {
-				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].x);
-				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].y);
-				this.project.concaveData.vertices.push(this.concaveGeo.vertices[i].z);
+				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].x);
+				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].y);
+				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].z);
 			}
 			for(let i = 0; i < this.concaveGeo.faces.length; i++) {
-				this.project.concaveData.indices.push(this.concaveGeo.faces[i].a);
-				this.project.concaveData.indices.push(this.concaveGeo.faces[i].b);
-				this.project.concaveData.indices.push(this.concaveGeo.faces[i].c);
+				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].a);
+				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].b);
+				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].c);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ let modelsTab = function() {
 			document.getElementById("addModelFile").addEventListener("change", function() {
 				Array.from(this.files).forEach(function(file) {
 					// If a model with this file name already exists, don't load it
-					if(file.name in projectTab.project.models) {
+					if(file.name in projectTab.activeProject.models) {
 						editorLog(`Model ${file.name} already loaded.`, "warn");
 						return;
 					}
@@ -198,7 +198,7 @@ let modelsTab = function() {
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
-						let project = projectTab.project.addModel(file.name, file.reader.result);
+						let project = projectTab.activeProject.addModel(file.name, file.reader.result);
 						modelsTab.loadModel(file.name, file.reader.result, project);
 					};
 
@@ -242,7 +242,7 @@ let modelsTab = function() {
 						}, function(error) {
 							editorLog(`Unable to load model (${modelName}): ${error}`, "error");
 							console.log(error);
-							delete projectTab.project.models[modelName]; // Delete from project if not loadable
+							delete projectTab.activeProject.models[modelName]; // Delete from project if not loadable
 							reject("error");
 						}
 					);
@@ -251,7 +251,7 @@ let modelsTab = function() {
 					// Invalid JSON/GLTF files may end up here
 					editorLog(`Unable to load model (${name}): ${error}`, "error");
 					console.log(error);
-					delete projectTab.project.models[modelName]; // Delete from project if not loadable
+					delete projectTab.activeProject.models[modelName]; // Delete from project if not loadable
 					reject("error");
 				}
 			} );
@@ -282,7 +282,7 @@ let modelsTab = function() {
 			delete this.models[name];
 
 			// Remove from project
-			delete projectTab.project.models[name];
+			delete projectTab.activeProject.models[name];
 
 			editorLog(`Removed model: ${name}`, "info");
 		},

@@ -9,42 +9,42 @@ import { initializeRenderer } from "./render";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
-function EditorObject(type, uuid, project) {
+function EditorObject(type, uuid, projectData) {
 	this.type = type;
 	this.uuid = uuid;
 	this.name = null;
 	this.sceneObject = null;
 	this.element = null;
-	this.project = project; // Refers to the project-side object
+	this.projectData = projectData; // Refers to the project-side object
 }
 
 // Updates the sceneObject's transform based on the loaded project, if it exists
 // This should be called after a sceneObject has been created
 EditorObject.prototype.updateTransformFromProject = function() {
-	if(this.project.position) {
+	if(this.projectData.position) {
 		this.setPosition( new THREE.Vector3(
-			typeof this.project.position.x === "number" ? this.project.position.x : 0,
-			typeof this.project.position.y === "number" ? this.project.position.y : 0,
-			typeof this.project.position.z === "number" ? this.project.position.z : 0) );
+			typeof this.projectData.position.x === "number" ? this.projectData.position.x : 0,
+			typeof this.projectData.position.y === "number" ? this.projectData.position.y : 0,
+			typeof this.projectData.position.z === "number" ? this.projectData.position.z : 0) );
 	} else {
-		this.project.position = {x: 0, y: 0, z: 0};
+		this.projectData.position = {x: 0, y: 0, z: 0};
 	}
-	if(this.project.rotation
-		&& typeof this.project.rotation.x === "number"
-		&& typeof this.project.rotation.y === "number"
-		&& typeof this.project.rotation.z === "number"
-		&& typeof this.project.rotation.w === "number") {
-		this.sceneObject.quaternion.copy(new THREE.Quaternion(this.project.rotation.x, this.project.rotation.y, this.project.rotation.z, this.project.rotation.w));
+	if(this.projectData.rotation
+		&& typeof this.projectData.rotation.x === "number"
+		&& typeof this.projectData.rotation.y === "number"
+		&& typeof this.projectData.rotation.z === "number"
+		&& typeof this.projectData.rotation.w === "number") {
+		this.sceneObject.quaternion.copy(new THREE.Quaternion(this.projectData.rotation.x, this.projectData.rotation.y, this.projectData.rotation.z, this.projectData.rotation.w));
 	} else {
-		this.project.rotation = {x: 0, y: 0, z: 0, w: 1};
+		this.projectData.rotation = {x: 0, y: 0, z: 0, w: 1};
 	}
-	if(this.project.scale) {
+	if(this.projectData.scale) {
 		this.setScale( new THREE.Vector3(
-			typeof this.project.scale.x === "number" ? this.project.scale.x : 1,
-			typeof this.project.scale.y === "number" ? this.project.scale.y : 1,
-			typeof this.project.scale.z === "number" ? this.project.scale.z : 1) );
+			typeof this.projectData.scale.x === "number" ? this.projectData.scale.x : 1,
+			typeof this.projectData.scale.y === "number" ? this.projectData.scale.y : 1,
+			typeof this.projectData.scale.z === "number" ? this.projectData.scale.z : 1) );
 	} else {
-		this.project.scale = {x: 1, y: 1, z: 1};
+		this.projectData.scale = {x: 1, y: 1, z: 1};
 	}
 };
 
@@ -54,7 +54,7 @@ EditorObject.prototype.getPosition = function() {
 
 EditorObject.prototype.setPosition = function(position) {
 	this.sceneObject.position.copy(position);
-	this.project.position = {
+	this.projectData.position = {
 		x: position.x,
 		y: position.y,
 		z: position.z
@@ -69,7 +69,7 @@ EditorObject.prototype.getRotation = function() {
 // Sets rotation in euler angles (rad)
 EditorObject.prototype.setRotation = function(rotation) {
 	this.sceneObject.rotation.copy(rotation);
-	this.project.rotation = {
+	this.projectData.rotation = {
 		x: this.sceneObject.quaternion.x,
 		y: this.sceneObject.quaternion.y,
 		z: this.sceneObject.quaternion.z,
@@ -83,7 +83,7 @@ EditorObject.prototype.getScale = function() {
 
 EditorObject.prototype.setScale = function(scale) {
 	this.sceneObject.scale.copy(scale);
-	this.project.scale = {
+	this.projectData.scale = {
 		x: scale.x,
 		y: scale.y,
 		z: scale.z
@@ -92,7 +92,7 @@ EditorObject.prototype.setScale = function(scale) {
 
 EditorObject.prototype.setName = function(name) {
 	this.name = name;
-	this.project.name = name;
+	this.projectData.name = name;
 	this.element.getElementsByClassName("name")[0].innerText = name;
 };
 

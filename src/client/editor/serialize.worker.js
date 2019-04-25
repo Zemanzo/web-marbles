@@ -26,7 +26,7 @@ let exportProject = function(data, exportType, useCompression) {
 			// Remove raw model data
 			for(let key in data.models) {
 				let model = data.models[key];
-				delete model.data;
+				delete model.file;
 
 				// Remove unused collider data
 				let usesConvex = false;

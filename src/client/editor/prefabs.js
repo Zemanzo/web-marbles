@@ -11,24 +11,24 @@ import { projectTab } from "./project";
 import { editorLog } from "./log";
 
 // Prefab object
-function Prefab(uuid, project) {
+function Prefab(uuid, projectData) {
 	this.uuid = uuid;
-	this.project = project;
+	this.projectData = projectData; // Project reference for this prefab
 	this.group = new THREE.Group();
 	this.entities = {};
 	this.worldInstances = {};
 	this.changed = false;
 
 	// Load prefab-related data if it exists in the project
-	if(this.project.name) {
-		this.name = this.project.name;
+	if(this.projectData.name) {
+		this.name = this.projectData.name;
 	} else {
-		this.name = this.project.name = "";
+		this.name = this.projectData.name = "";
 	}
-	if(this.project.color) {
-		this.color = this.project.color;
+	if(this.projectData.color) {
+		this.color = this.projectData.color;
 	} else {
-		this.color = this.project.color = hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20);
+		this.color = this.projectData.color = hslToHex( Math.random() * 360, 100, Math.random() * 20 + 20);
 	}
 
 	prefabsTab.group.add(this.group);
@@ -76,15 +76,15 @@ function Prefab(uuid, project) {
 
 	// Add any existing entities from the project
 	// The rest is handled in their constructors
-	for( let key in this.project.entities) {
-		let entity = this.project.entities[key];
+	for( let key in this.projectData.entities) {
+		let entity = this.projectData.entities[key];
 		if(entity.type === "object") {
 			this.addObject(key);
 		} else if (entity.type === "collider") {
 			this.addCollider(key);
 		} else {
 			editorLog(`Attempted to load unknown prefab entity of type ${entity.type}`, "error");
-			delete this.project.entities[key];
+			delete this.projectData.entities[key];
 		}
 	}
 }
@@ -102,7 +102,7 @@ Prefab.prototype.toggleVisibility = function() {
 
 Prefab.prototype.onNameChange = function(name) {
 	this.name = name;
-	this.project.name = name;
+	this.projectData.name = name;
 	for (let key in this.worldInstances) {
 		this.worldInstances[key].updatePrefabInfo();
 	}
@@ -110,7 +110,7 @@ Prefab.prototype.onNameChange = function(name) {
 
 Prefab.prototype.onColorChange = function(color) {
 	this.color = color;
-	this.project.color = color;
+	this.projectData.color = color;
 	for (let key in this.worldInstances) {
 		this.worldInstances[key].updatePrefabInfo();
 	}
@@ -151,7 +151,7 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	thisObject.setModel(null);
 
 	delete this.entities[uuid];
-	delete this.project.entities[uuid];
+	delete this.projectData.entities[uuid];
 
 	this.changed = true;
 };
@@ -193,13 +193,13 @@ Prefab.prototype.updateInstances = function() {
 
 // prefabEntity object, base for prefabObject and prefabCollider
 function PrefabEntity(type, uuid, parent) {
-	if(uuid in parent.project.entities === false) {
-		parent.project.entities[uuid] = {
+	if(uuid in parent.projectData.entities === false) {
+		parent.projectData.entities[uuid] = {
 			type: type,
 			functionality: "static"
 		};
 	}
-	EditorObject.call(this, type, uuid, parent.project.entities[uuid]);
+	EditorObject.call(this, type, uuid, parent.projectData.entities[uuid]);
 	this.parent = parent;
 	this.functionality = "static";
 
@@ -211,7 +211,7 @@ function PrefabEntity(type, uuid, parent) {
 	this.element.removeAttribute("id");
 	this.element.getElementsByClassName("uuid")[0].innerHTML = this.uuid;
 
-	if(this.project.name) this.setName(this.project.name);
+	if(this.projectData.name) this.setName(this.projectData.name);
 
 	// Sets default name to Object# or Collider#, where # is lowest non-duplicate
 	for(let i = 0; !this.name; i++) {
@@ -264,7 +264,7 @@ PrefabEntity.prototype.setFunctionality = function(functionality) {
 		return;
 	}
 	this.functionality = functionality;
-	this.project.functionality = functionality;
+	this.projectData.functionality = functionality;
 	this.parent.changed = true;
 };
 
@@ -294,12 +294,12 @@ function PrefabObject(uuid, parent) {
 	this.parent.group.add(this.sceneObject);
 
 	// Load any object data from project
-	if("model" in this.project) {
-		this.setModel(this.project.model);
+	if("model" in this.projectData) {
+		this.setModel(this.projectData.model);
 	} else {
-		this.project.model = null;
+		this.projectData.model = null;
 	}
-	this.setFunctionality(this.project.functionality);
+	this.setFunctionality(this.projectData.functionality);
 }
 
 PrefabObject.prototype = Object.create(PrefabEntity.prototype);
@@ -315,7 +315,7 @@ PrefabObject.prototype.setModel = function(modelName) {
 	if(this.model) {
 		delete modelsTab.models[this.model].prefabEntities[this.uuid];
 		this.model = null;
-		this.project.model = null;
+		this.projectData.model = null;
 	}
 
 	let model = defaultModel;
@@ -326,7 +326,7 @@ PrefabObject.prototype.setModel = function(modelName) {
 			editorLog(`Unable to set prefab model to ${modelName} because it doesn't exist!`, "error");
 		} else {
 			this.model = modelName;
-			this.project.model = modelName;
+			this.projectData.model = modelName;
 			modelsTab.models[this.model].prefabEntities[this.uuid] = this;
 			model = modelsTab.models[modelName].sceneObject;
 		}
@@ -360,12 +360,12 @@ function PrefabCollider(uuid, parent) {
 	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
 	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
-	if(this.project.scale) delete this.project.scale;
+	if(this.projectData.scale) delete this.projectData.scale;
 	this.parent.group.add(this.sceneObject);
 
 	// Load any collider data from project
-	if("colliderData" in this.project) {
-		let projectData = this.project.colliderData;
+	if("colliderData" in this.projectData) {
+		let projectData = this.projectData.colliderData;
 		switch(projectData.shape) {
 		case "box": {
 			let width = projectData.width;
@@ -412,9 +412,9 @@ function PrefabCollider(uuid, parent) {
 			break;
 		}
 	} else {
-		this.project.colliderData = this.colliderData;
+		this.projectData.colliderData = this.colliderData;
 	}
-	this.setFunctionality(this.project.functionality);
+	this.setFunctionality(this.projectData.functionality);
 }
 
 PrefabCollider.prototype = Object.create(PrefabEntity.prototype);
@@ -475,7 +475,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
 		return;
 	}
-	this.project.colliderData = this.colliderData;
+	this.projectData.colliderData = this.colliderData;
 	this.sceneObject.scale.set(1, 1, 1);
 	this.parent.changed = true;
 };
@@ -585,7 +585,7 @@ let prefabsTab = function() {
 			// Register new prefab event
 			document.getElementById("newPrefab").addEventListener("click", function() {
 				let uuid = generateTinyUUID();
-				let projectPrefab = projectTab.project.addPrefab(uuid);
+				let projectPrefab = projectTab.activeProject.addPrefab(uuid);
 				prefabsTab.addPrefab(uuid, projectPrefab);
 				// Focus to name input so user can start typing right away
 				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
@@ -617,7 +617,7 @@ let prefabsTab = function() {
 			thisPrefab.element.parentNode.removeChild(thisPrefab.element);
 
 			delete prefabsTab.prefabs[uuid];
-			delete projectTab.project.prefabs[uuid];
+			delete projectTab.activeProject.prefabs[uuid];
 		},
 
 		onTabActive: function() {
