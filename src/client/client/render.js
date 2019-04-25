@@ -309,7 +309,7 @@ let addMap = function(mapName) {
 				for (let modelName in mapData.models) {
 					modelPromises[modelName] = new Promise((resolve, reject) => {
 						try {
-							_GLTFLoader.parse(mapData.models[modelName].data, null,
+							_GLTFLoader.parse(mapData.models[modelName].file, null,
 								function(model) {
 									resolve(model.scene);
 								}, function(error) {
