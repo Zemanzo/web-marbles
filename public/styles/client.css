@@ -249,6 +249,7 @@ body > *:not(#sidebar) {
 }
 
 #raceLeaderboard {
+	min-height: 0px;
 	width: 100%;
 	max-width: 85ch;
 	min-width: 60ch;
@@ -262,6 +263,7 @@ body > *:not(#sidebar) {
 	opacity: 0;
 	transform: translate(0, -100px);
 	transition:
+		min-height 2s ease 0s,
 		max-height 2s ease 0s,
 		opacity 1s linear .5s,
 		transform 1.5s ease 0s;
@@ -269,6 +271,7 @@ body > *:not(#sidebar) {
 
 	#raceLeaderboard.visible {
 		max-height: 100%;
+		min-height: 200px;
 		opacity: 1;
 		transform: translate(0, 0px);
 	}
@@ -292,9 +295,10 @@ body > *:not(#sidebar) {
 		flex-direction: column;
 		overflow: hidden;
 		letter-spacing: -1px;
+		pointer-events: all;
 	}
 		#resultsList {
-			overflow-y:hidden;
+			overflow-y: auto;
 		}
 
 		#results .header,

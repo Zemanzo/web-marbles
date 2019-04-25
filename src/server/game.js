@@ -44,22 +44,23 @@ let game = function() {
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
 
-		_gameplayParameters = null,
-		_mapName = null,
-		_mapAuthorName = null,
-
-		_mapFileName = null,
+		_currentMap = {
+			gameplayParameters: null,
+			mapName: null,
+			mapAuthorName: null,
+			mapFileName: null
+		},
 
 		_round = null;
 
 	maps.currentMapData.then((map) => {
-		_gameplayParameters = map.gameplay;
-		_mapName = map.mapName;
-		_mapAuthorName = map.authorName;
+		_currentMap.gameplayParameters = map.gameplay;
+		_currentMap.mapName = map.mapName;
+		_currentMap.mapAuthorName = map.authorName;
 	});
 
 	maps.currentMapName.then((mapFileName) => {
-		_mapFileName = mapFileName;
+		_currentMap.mapFileName = mapFileName;
 	});
 
 	let _generateNewRoundData = function() {
@@ -67,7 +68,7 @@ let game = function() {
 			start: null,
 			end: null,
 			timeBest: null,
-			mapId: _mapFileName,
+			mapId: _currentMap.mapFileName,
 			pointsAwarded: 0,
 			playersEntered: 0,
 			playersFinished: 0,
@@ -140,7 +141,7 @@ let game = function() {
 					clearTimeout(this.enterTimeout);
 					this.enterTimeout = _setTrackableTimeout(
 						this.start.bind(this),
-						_gameplayParameters.defaultEnterPeriod * 1000
+						_currentMap.gameplayParameters.defaultEnterPeriod * 1000
 					);
 				}
 			}
@@ -196,7 +197,7 @@ let game = function() {
 					db.user.batchUpdateStatistics(_playersEnteredList);
 
 					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
-					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _mapFileName);
+					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentMap.mapFileName);
 
 					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
 					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
@@ -215,8 +216,8 @@ let game = function() {
 					}
 
 					additionalData.map = {
-						name: _mapName,
-						author: _mapAuthorName
+						name: _currentMap.mapName,
+						author: _currentMap.mapAuthorName
 					};
 				}
 
@@ -289,7 +290,7 @@ let game = function() {
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_gameplayParameters.roundLength * 1000
+					_currentMap.gameplayParameters.roundLength * 1000
 				);
 
 				return true;
@@ -345,7 +346,7 @@ let game = function() {
 
 				this.gameplayFinishTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_gameplayParameters.timeUntilDnf * 1000
+					_currentMap.gameplayParameters.timeUntilDnf * 1000
 				);
 			}
 
@@ -356,7 +357,7 @@ let game = function() {
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || _gameplayParameters.defaultEnterPeriod;
+			return _getTimeout(this.enterTimeout) || _currentMap.gameplayParameters.defaultEnterPeriod;
 		},
 
 		setSocketManager(socketManager) {

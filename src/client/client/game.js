@@ -160,18 +160,15 @@ let game = (function() {
 
 					_enteredMarbleList.sort((a, b) => {
 						if (a.finished && b.finished) {
-							return b.time - a.time;
+							return a.time - b.time;
 						} else if (a.finished) {
-							return 1;
-						} else if (b.finished) {
 							return -1;
+						} else if (b.finished) {
+							return 1;
 						} else {
 							return 0;
 						}
 					});
-
-					// Reverse it cause im stupid
-					_enteredMarbleList.reverse();
 
 					_DOMElements.resultsList.innerHTML = "";
 
@@ -230,28 +227,8 @@ let game = (function() {
 					_DOMElements.raceLeaderboardMapName.innerText = newStateData.data.map.name;
 					_DOMElements.raceLeaderboardAuthorName.innerText = newStateData.data.map.author;
 
-					// Automatic scroll
-					if (_DOMElements.resultsList.scrollHeight > 0) {
-						_DOMElements.resultsList.scrollTop = _DOMElements.resultsList.scrollHeight;
-
-						// Start scrolling up
-						setTimeout(function() {
-							let scrollStart = new Date();
-							let scrollTimeLength = (_serverData.finishPeriodLength * 1000 - 3000);
-
-							let animateResultsScroll = function() {
-								let scrollCurrent = new Date();
-								if (_DOMElements.resultsList.scrollTop > 0) {
-									requestAnimationFrame(animateResultsScroll);
-
-									_DOMElements.resultsList.scrollTop =
-										Math.max(_DOMElements.resultsList.scrollHeight * (1 - (scrollCurrent - scrollStart) / scrollTimeLength), 0);
-								}
-							};
-
-							animateResultsScroll();
-						}, 3000);
-					}
+					// Make we're scrolled all the way to the top
+					_DOMElements.resultsList.scrollTop = 0;
 
 					// Hide leaderboard
 					setTimeout(function() {
