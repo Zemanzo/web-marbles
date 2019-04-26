@@ -104,9 +104,16 @@ app.get("/", function(req, res) {
 	res.render("index");
 });
 
-const git = require("git-rev-sync");
-const gitHash = git.long();
-const gitBranch = git.branch();
+// Git commit hash, optional dependency
+let git, gitHash, gitBranch;
+try {
+	git = require("git-rev-sync");
+	gitHash = git.long();
+	gitBranch = git.branch();
+} catch (error) {
+	log.warn("git-rev-sync is not installed, no git information will be displayed");
+}
+
 const version = require("../package.json").version;
 app.get("/client", function(req, res) {
 	res.render("client", {
