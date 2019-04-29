@@ -100,7 +100,7 @@ let game = (function() {
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
-				renderer.clearMarbleMeshes();
+				renderer.removeAllMarbleMeshes();
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -250,7 +250,7 @@ let game = (function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			renderer.spawnMarbleMesh(marble);
+			new renderer.MarbleMesh(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
@@ -263,7 +263,7 @@ let game = (function() {
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
 			_DOMElements.marbleList.appendChild(listEntry);
-			_DOMElements.entries.innerHTML = renderer.marbleMeshes.length;
+			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
 		},
 
 		finishMarble: function(marble) {
