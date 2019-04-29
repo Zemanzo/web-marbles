@@ -2,8 +2,8 @@
 // To see which properties you can override, check config.js
 
 const userConfig = {
-	"config.contact.email": "c2VuZEBudWRlcy5tZQ==",
-	"config.contact.decode": function(str) {
+	"contact.email": "c2VuZEBudWRlcy5tZQ==",
+	"contact.decode": function(str) {
 		return atob(str);
 	},
 
