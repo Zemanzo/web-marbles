@@ -72,7 +72,7 @@ if (!_isWebGLAvailable()) {
 
 		_onCanvasResize();
 
-		_viewport.addEventListener("resize", _onCanvasResize, false);
+		window.addEventListener("resize", _onCanvasResize, false);
 
 		_viewport.appendChild(_renderer.domElement);
 		_viewport.appendChild(_stats.dom);
@@ -82,9 +82,10 @@ if (!_isWebGLAvailable()) {
 }
 
 function _onCanvasResize() {
+	_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
+
 	_controls.active.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
 	_controls.active.camera.updateProjectionMatrix();
-	_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 }
 
 function MarbleMap(data) { // "Map" is taken
