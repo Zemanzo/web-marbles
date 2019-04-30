@@ -143,6 +143,27 @@ body > *:not(#sidebar) {
 		transparent 20px
 	);
 }
+	#viewport.warning {
+		background: repeating-linear-gradient(
+			45deg,
+			#161616,
+			#161616 10px,
+			#815f0e 10px,
+			#815f0e 20px
+		);
+		display: flex;
+	}
+
+	#warning {
+		font-family: monospace;
+		background:#ffd900;
+		border:10px solid #161616;
+		padding: 20px;
+		font-size: 1.5em;
+		max-width: 70ch;
+		margin: 30px auto auto auto;
+		color: #000;
+	}
 
 	#viewport > canvas {
 		position: absolute;

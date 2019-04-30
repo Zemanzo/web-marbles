@@ -8,54 +8,83 @@ import * as config from "../config";
 import { CameraFlyControls } from "./cameras";
 import domReady from "../dom-ready";
 
-const _mainScene = new THREE.Scene(),
-	_renderer = new THREE.WebGLRenderer(),
+// From https://github.com/mrdoob/three.js/blob/master/examples/js/WebGL.js
+const _isWebGLAvailable = function() {
+	try {
+		const canvas = document.createElement("canvas");
+		return !!(window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
+	} catch (error) {
+		return false;
+	}
+};
+
+let _mainScene = null,
+	_renderer = null,
 	_marbles = {
 		meshes: []
 	},
-	animationUpdateFunctions = [];
+	animationUpdateFunctions = [],
+	_viewport = null, // DOM viewport element
+	_axesHelper = null,
+	_stats = null,
+	_controls = {
+		fallback: null,
+		active: null
+	};
 
-let viewport;
+if (!_isWebGLAvailable()) {
+	domReady.then(() => {
+		_viewport = document.getElementById("viewport");
+		let warning = document.createElement("div");
+		warning.id = "warning";
+		warning.innerHTML = `
+			Hmmm... Unfortunately, your ${window.WebGLRenderingContext ? "graphics card" : "browser"} does not seem to support
+			<a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000">WebGL</a>. Please come back
+			when you found something more compatible!
+		`;
+		_viewport.className += "warning";
+		_viewport.appendChild(warning);
+	});
+} else {
+	_mainScene = new THREE.Scene();
+	_renderer = new THREE.WebGLRenderer();
 
-let axesHelper = new THREE.AxesHelper(3);
-_mainScene.add(axesHelper);
+	_axesHelper = new THREE.AxesHelper(3);
+	_mainScene.add(_axesHelper);
 
-// Renderer defaults
-_renderer.shadowMap.enabled = true;
-_renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+	// Renderer defaults
+	_renderer.shadowMap.enabled = true;
+	_renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
 
-// Stats
-let _stats = new Stats();
-_stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
-_stats.dom.style.position = "absolute";
-_stats.dom.style.left = "unset";
-_stats.dom.style.right = "0px";
+	// Stats
+	_stats = new Stats();
+	_stats.showPanel(0); // 0: fps, 1: ms, 2: mb, 3+: custom
+	_stats.dom.style.position = "absolute";
+	_stats.dom.style.left = "unset";
+	_stats.dom.style.right = "0px";
 
-// Controls
-let _controls = {
-	fallback: new CameraFlyControls(_mainScene, _renderer),
-	active: null
-};
-_controls.active = _controls.fallback;
+	// Controls
+	_controls.active = _controls.fallback = new CameraFlyControls(_mainScene, _renderer);
 
-// Once the DOM is ready, append the renderer DOM element & stats and start animating.
-domReady.then(() => {
-	viewport = document.getElementById("viewport");
+	// Once the DOM is ready, append the renderer DOM element & stats and start animating.
+	domReady.then(() => {
+		_viewport = document.getElementById("viewport");
 
-	_onCanvasResize();
+		_onCanvasResize();
 
-	viewport.addEventListener("resize", _onCanvasResize, false);
+		_viewport.addEventListener("resize", _onCanvasResize, false);
 
-	viewport.appendChild(_renderer.domElement);
-	viewport.appendChild(_stats.dom);
+		_viewport.appendChild(_renderer.domElement);
+		_viewport.appendChild(_stats.dom);
 
-	animate();
-});
+		animate();
+	});
+}
 
 function _onCanvasResize() {
-	_controls.active.camera.aspect = viewport.clientWidth / viewport.clientHeight;
+	_controls.active.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
 	_controls.active.camera.updateProjectionMatrix();
-	_renderer.setSize(viewport.clientWidth, viewport.clientHeight);
+	_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 }
 
 function MarbleMap(data) { // "Map" is taken
@@ -156,9 +185,6 @@ function Sky(scene, parameters = {}) {
 	this.parameters.distance 	= !isNaN(parameters.distance)	 ? parameters.distance	  : 4000;
 	this.parameters.inclination = !isNaN(parameters.inclination) ? parameters.inclination : .25;
 	this.parameters.azimuth 	= !isNaN(parameters.azimuth)	 ? parameters.azimuth	  : .205;
-
-	this.cubeCamera = new THREE.CubeCamera(1, 20000, 256);
-	this.cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
 }
 
 Sky.prototype.update = function() {
@@ -182,8 +208,6 @@ Sky.prototype.update = function() {
 	if (this.water) {
 		this.water.waterObject.material.uniforms.sunDirection.value.copy(this.sunLight.position).normalize();
 	}
-
-	this.cubeCamera.update(_renderer, this.scene);
 };
 
 Sky.prototype.toggleDebugHelper = function(state) {
