@@ -2,14 +2,14 @@ import * as THREE from "three";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
 import * as pako from "pako";
-import { Map, animationUpdateFunctions, updateMarbleMeshes } from "../render/render-core";
+import * as renderCore from "../render/render-core";
 import { net as networking } from "./networking";
 import * as config from "../config";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
-animationUpdateFunctions.push(function() {
-	updateMarbleMeshes(
+renderCore.animationUpdateFunctions.push(function() {
+	renderCore.updateMarbleMeshes(
 		networking.marblePositions,
 		networking.marbleRotations,
 		networking.lastUpdate
@@ -24,7 +24,7 @@ animationUpdateFunctions.push(function() {
 /**
  * Parses the map data and returns a Promise that resolves once it is fully done loading
  */
-Map.prototype.parseData = function() {
+renderCore.MarbleMap.prototype.parseData = function() {
 	if (typeof this.data === "undefined") {
 		console.warn("Set `Map.data` before trying to parse it.");
 	}
@@ -88,29 +88,32 @@ Map.prototype.parseData = function() {
 	});
 };
 
-let addMap = function(mapName) {
+networking.socketReady.then((initialData) => {
+	let mapName = initialData.mapId;
+
 	fetch(`/resources/maps/${mapName}.mmc`)
 		.then((response) => {
 			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
 			return response.arrayBuffer();
 		})
 		.then((buffer) => {
+			let mapData;
 			try {
-				let mapData = pako.inflate(buffer);
+				mapData = pako.inflate(buffer);
 				mapData = new TextDecoder("utf-8").decode(mapData);
 				mapData = JSON.parse(mapData);
-
-				let map = new Map(mapData);
-				map.addToWorld();
-				map.parseData();
 			}
 			catch (error) {
 				console.error(error);
 				return;
 			}
+
+			let map = new renderCore.MarbleMap(mapData);
+			map.addToWorld();
+			map.parseData();
 		});
-};
+});
 
 export {
-	addMap
+	renderCore
 };

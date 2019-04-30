@@ -1,6 +1,6 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
-import * as renderer from "./render";
+import { renderCore as renderer } from "./render";
 
 let game = (function() {
 	let _audio = {

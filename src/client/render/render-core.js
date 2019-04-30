@@ -5,7 +5,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
 import * as Stats from "stats-js";
 import * as config from "../config";
-import { CameraFlyControls } from "../cameras";
+import { CameraFlyControls } from "./cameras";
 import domReady from "../dom-ready";
 
 const _mainScene = new THREE.Scene(),
@@ -17,10 +17,12 @@ const _mainScene = new THREE.Scene(),
 
 let viewport;
 
+let axesHelper = new THREE.AxesHelper(3);
+_mainScene.add(axesHelper);
+
 // Renderer defaults
 _renderer.shadowMap.enabled = true;
 _renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
-_renderer.setSize(viewport.clientWidth, viewport.clientHeight);
 
 // Stats
 let _stats = new Stats();
@@ -39,6 +41,9 @@ _controls.active = _controls.fallback;
 // Once the DOM is ready, append the renderer DOM element & stats and start animating.
 domReady.then(() => {
 	viewport = document.getElementById("viewport");
+
+	_onCanvasResize();
+
 	viewport.addEventListener("resize", _onCanvasResize, false);
 
 	viewport.appendChild(_renderer.domElement);
@@ -53,13 +58,10 @@ function _onCanvasResize() {
 	_renderer.setSize(viewport.clientWidth, viewport.clientHeight);
 }
 
-let axesHelper = new THREE.AxesHelper(3);
-_mainScene.add(axesHelper);
-
-function Map(data) {
+function MarbleMap(data) { // "Map" is taken
 	this.data = data;
 
-	this.scene = new THREE.scene();
+	this.scene = new THREE.Scene();
 
 	// Ambient light
 	let ambientLight = new THREE.AmbientLight(0x746070);
@@ -71,7 +73,8 @@ function Map(data) {
 		skyParameters.inclination = data.world.sunInclination;
 	}
 
-	this.sky = new Sky(skyParameters);
+	this.sky = new Sky(this.scene, skyParameters);
+	this.scene.add(this.sky.skyObject);
 
 	// Water
 	let waterLevel = 0;
@@ -80,13 +83,16 @@ function Map(data) {
 	}
 
 	this.water = new Water(this.sky.sunLight, waterLevel);
+	this.scene.add(this.water.waterObject);
+	this.sky.water = this.water;
 }
 
-Map.prototype.addToWorld = function() {
+MarbleMap.prototype.addToWorld = function() {
 	_mainScene.add(this.scene);
+	console.log(_mainScene);
 };
 
-Map.prototype.removeFromWorld = function() {
+MarbleMap.prototype.removeFromWorld = function() {
 	_mainScene.remove(this.scene);
 };
 
@@ -114,14 +120,19 @@ function Water(sunLight, waterLevel, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
+
+	animationUpdateFunctions.push(() => {
+		this.update.call(this);
+	});
 }
 
 Water.prototype.update = function() {
-	this.water.material.uniforms.time.value += 1.0 / 60.0;
+	this.waterObject.material.uniforms.time.value += 1.0 / 60.0;
 };
 
 // Skybox
-function Sky(parameters) {
+function Sky(scene, parameters = {}) {
+	this.scene = scene;
 	this.skyObject = new THREE.Sky();
 	this.skyObject.scale.setScalar(10000);
 
@@ -138,15 +149,20 @@ function Sky(parameters) {
 	uniforms.mieCoefficient.value = 0.005;
 	uniforms.mieDirectionalG.value = 0.8;
 
-	parameters.distance = parameters.distance || 4000;
-	parameters.inclination = parameters.inclination || .25;
-	parameters.azimuth = parameters.azimuth || 0.205;
+	this.parameters = parameters;
+	this.parameters.distance 	= !isNaN(parameters.distance)	 ? parameters.distance	  : 4000;
+	this.parameters.inclination = !isNaN(parameters.inclination) ? parameters.inclination : .25;
+	this.parameters.azimuth 	= !isNaN(parameters.azimuth)	 ? parameters.azimuth	  : .205;
 
 	this.cubeCamera = new THREE.CubeCamera(1, 20000, 256);
 	this.cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
+
+	animationUpdateFunctions.push(() => {
+		this.update.call(this);
+	});
 }
 
-Sky.prototype.update = function(water) {
+Sky.prototype.update = function() {
 	let theta = Math.PI * (this.parameters.inclination - 0.5);
 	let phi = 2 * Math.PI * (this.parameters.azimuth - 0.5);
 
@@ -154,7 +170,7 @@ Sky.prototype.update = function(water) {
 	this.sunLight.position.y = this.parameters.distance * Math.sin(phi) * Math.sin(theta);
 	this.sunLight.position.z = this.parameters.distance * Math.sin(phi) * Math.cos(theta);
 
-	this.sky.material.uniforms.sunPosition.value = this.sunLight.position.copy(this.sunLight.position);
+	this.skyObject.material.uniforms.sunPosition.value = this.sunLight.position.copy(this.sunLight.position);
 	this.sunLight.shadow.mapSize.width = 2048; // default
 	this.sunLight.shadow.mapSize.height = 2048; // default
 	this.sunLight.shadow.camera.near = 3500;
@@ -164,8 +180,8 @@ Sky.prototype.update = function(water) {
 	this.sunLight.shadow.camera.top = 50;
 	this.sunLight.shadow.camera.bottom = -30;
 
-	if (water) {
-		water.material.uniforms.sunDirection.value.copy(this.sunLight.position).normalize();
+	if (this.water) {
+		this.water.waterObject.material.uniforms.sunDirection.value.copy(this.sunLight.position).normalize();
 	}
 
 	this.cubeCamera.update(_renderer, this.scene);
@@ -220,14 +236,14 @@ const removeAllMarbleMeshes = _marbles.removeAll = function() {
 };
 
 const updateMarbleMeshes = _marbles.update = function(newPositions, newRotations, delta) {
-	for (let i = 0; i < this.meshes.length; i++) {
+	for (let i = 0; i < _marbles.meshes.length; i++) {
 		// Positions
-		this.meshes[i].position.x = THREE.Math.lerp(this.meshes[i].position.x || 0, newPositions[i * 3 + 0], delta);
-		this.meshes[i].position.y = THREE.Math.lerp(this.meshes[i].position.y || 0, newPositions[i * 3 + 2], delta);
-		this.meshes[i].position.z = THREE.Math.lerp(this.meshes[i].position.z || 0, newPositions[i * 3 + 1], delta);
+		_marbles.meshes[i].position.x = THREE.Math.lerp(_marbles.meshes[i].position.x || 0, newPositions[i * 3 + 0], delta);
+		_marbles.meshes[i].position.y = THREE.Math.lerp(_marbles.meshes[i].position.y || 0, newPositions[i * 3 + 2], delta);
+		_marbles.meshes[i].position.z = THREE.Math.lerp(_marbles.meshes[i].position.z || 0, newPositions[i * 3 + 1], delta);
 
 		// Rotations
-		this.meshes[i].quaternion.set(
+		_marbles.meshes[i].quaternion.set(
 			newRotations[i * 4 + 0],
 			newRotations[i * 4 + 1],
 			newRotations[i * 4 + 2],
@@ -271,7 +287,7 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	// Run all functions that need an update
-	for (let func in animationUpdateFunctions) {
+	for (let func of animationUpdateFunctions) {
 		func();
 	}
 
@@ -280,7 +296,7 @@ function animate() {
 }
 
 export {
-	Map,
+	MarbleMap,
 	MarbleMesh,
 	updateMarbleMeshes,
 	removeAllMarbleMeshes,

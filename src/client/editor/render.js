@@ -5,7 +5,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/loaders/GLTFLoader";
 import * as Stats from "stats-js";
-import { CameraFlyControls } from "../cameras";
+import { CameraFlyControls } from "../render/cameras";
 import { editorLog } from "./log";
 
 let viewport, camera, renderer, stats, controls,
