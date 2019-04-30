@@ -3,7 +3,7 @@ import { generateTinyUUID } from "../generate-tiny-uuid";
 import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
 import * as materials from "./materials";
-import { scene, defaultModel } from "./render";
+import { map, defaultModel } from "./render";
 import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
@@ -579,7 +579,7 @@ let prefabsTab = function() {
 			this.elements.modelList = document.getElementById("inspectorModelList");
 			this.elements.colliderList = document.getElementById("inspectorColliderList");
 			this.group = new THREE.Group();
-			scene.add(this.group);
+			map.scene.add(this.group);
 			this.group.visible = false;
 
 			// Register new prefab event

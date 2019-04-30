@@ -85,6 +85,9 @@ function MarbleMap(data) { // "Map" is taken
 	this.water = new Water(this.sky.sunLight, waterLevel);
 	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
+
+	// Update sky
+	this.sky.update();
 }
 
 MarbleMap.prototype.addToWorld = function() {
@@ -156,10 +159,6 @@ function Sky(scene, parameters = {}) {
 
 	this.cubeCamera = new THREE.CubeCamera(1, 20000, 256);
 	this.cubeCamera.renderTarget.texture.minFilter = THREE.LinearMipMapLinearFilter;
-
-	animationUpdateFunctions.push(() => {
-		this.update.call(this);
-	});
 }
 
 Sky.prototype.update = function() {
