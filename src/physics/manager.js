@@ -1,6 +1,6 @@
 module.exports = function() {
 	return {
-		ammo: require("ammo")(),
+		ammo: require("ammo.js")(),
 		world: null,
 		shapes: { // Container for collision shape re-usage
 			defaultMarble: null
