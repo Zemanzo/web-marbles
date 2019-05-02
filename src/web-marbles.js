@@ -26,56 +26,18 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, physics, config, game, maps);
+const socketGameplay = sockets.setupGameplay(db, config, game, maps);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
 
-// Chat testing
-const chat = require("./server/chat")(game);
-
-// Need discord.js for WebHookClient and for regular client
-const discord = require("discord.js");
-
-// Set up chat socket
-const chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
-const socketChat = sockets.setupChat(db, chat, chatWebhook);
-
-// Set up discord client
-const discordClient = new discord.Client();
-
-discordClient.on("ready", function() {
-	log.info(`DISCORD: ${"Discord bot is ready!".green}`);
-	discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
-});
-
-discordClient.on("message", function(message) {
-	if (message.channel.id == config.discord.gameplayChannelId) {
-		if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
-			if (!db.user.idExists(message.author.id)) {
-				// This is a new user!
-				db.user.insertNewUserDiscord(message.author);
-			}
-
-			// Send it to the client chat
-			socketChat.emit(
-				JSON.stringify({
-					username: message.author.username,
-					discriminator: message.author.discriminator,
-					content: message.content
-				})
-			);
-
-			chat.testMessage(message.content, message.author.id, message.author.username, message.member);
-
-			if (message.content === "!doot") {
-				message.reply("🎺");
-			}
-		}
-	}
-});
-
-discordClient.login(config.discord.botToken);
+// Set up chat
+let discord = null,
+	socketChat;
+if (config.discord.enabled) {
+	discord = require("./server/chat/discord");
+	socketChat = discord.initialize(db);
+}
 
 // Express connections
 const express = require("express");
@@ -123,118 +85,124 @@ app.get("/client", function(req, res) {
 	});
 });
 
-let request = require("request");
-app.get("/chat", function(req, res) {
-	if (req.query) {
-		if (req.query.code) {
-			let options = {
-				url: "https://discordapp.com/api/oauth2/token",
-				form: {
-					client_id: config.discord.clientId,
-					client_secret: config.discord.clientSecret,
-					grant_type: "authorization_code",
-					code: req.query.code,
-					redirect_uri: `${config.discord.redirectUriRoot}chat`,
-					scope: config.discord.scope
-				}
-			};
+if (config.discord.enabled) {
+	const request = require("request");
+	app.get("/chat", function(req, res) {
+		if (req.query) {
+			if (req.query.code) {
+				let options = {
+					url: "https://discordapp.com/api/oauth2/token",
+					form: {
+						client_id: config.discord.clientId,
+						client_secret: config.discord.clientSecret,
+						grant_type: "authorization_code",
+						code: req.query.code,
+						redirect_uri: `${config.discord.redirectUriRoot}chat`,
+						scope: config.discord.scope
+					}
+				};
 
-			let callback = function(error, response, token_body) {
-				if (!error && response.statusCode === 200) {
-					token_body = JSON.parse(token_body);
+				let callback = function(error, response, token_body) {
+					if (!error && response.statusCode === 200) {
+						token_body = JSON.parse(token_body);
 
-					request.get({
-						url: "https://discordapp.com/api/users/@me",
-						headers: {
-							"Authorization": `Bearer ${token_body.access_token}`
-						}
-					}, function(error, response, user_body) {
-						if (!error && response.statusCode === 200) {
-							user_body = JSON.parse(user_body);
+						request.get({
+							url: "https://discordapp.com/api/users/@me",
+							headers: {
+								"Authorization": `Bearer ${token_body.access_token}`
+							}
+						}, function(error, response, user_body) {
+							if (!error && response.statusCode === 200) {
+								user_body = JSON.parse(user_body);
 
-							let exists = db.user.idExists(user_body.id);
+								let exists = db.user.idExists(user_body.id);
 
-							token_body.access_granted = Date.now();
+								token_body.access_granted = Date.now();
 
-							if (exists)
-								db.user.updateTokenById(token_body, user_body.id);
-							else
-								db.user.insertNewUserEmbed(token_body, user_body, config.discord.scope);
+								if (exists)
+									db.user.updateTokenById(token_body, user_body.id);
+								else
+									db.user.insertNewUserEmbed(token_body, user_body, config.discord.scope);
 
-							res.render("chat", {
-								invitelink: config.discord.inviteLink,
-								user_data: JSON.stringify({
-									id: user_body.id,
-									username: user_body.username,
-									access_token: token_body.access_token,
-									access_granted: token_body.access_granted,
-									expires_in: token_body.expires_in,
-									discriminator: user_body.discriminator,
-									avatar: user_body.avatar
-								}),
-								success: true
-							});
-						} else {
-							log.error(error, response.statusCode);
-						}
-					});
-				} else {
-					res.render("chat", {
-						invitelink: config.discord.inviteLink,
-						success: false
-					});
-				}
-			};
+								res.render("chat", {
+									invitelink: config.discord.inviteLink,
+									user_data: JSON.stringify({
+										id: user_body.id,
+										username: user_body.username,
+										access_token: token_body.access_token,
+										access_granted: token_body.access_granted,
+										expires_in: token_body.expires_in,
+										discriminator: user_body.discriminator,
+										avatar: user_body.avatar
+									}),
+									success: true
+								});
+							} else {
+								log.error(error, response.statusCode);
+							}
+						});
+					} else {
+						res.render("chat", {
+							invitelink: config.discord.inviteLink,
+							success: false
+						});
+					}
+				};
 
-			request.post(options, callback);
-			return;
+				request.post(options, callback);
+				return;
+			}
 		}
-	}
 
-	res.render("chat", {
-		invitelink: config.discord.inviteLink,
-		client_id: config.discord.clientId,
-		redirect_uri: encodeURIComponent(`${config.discord.redirectUriRoot}chat`),
-		scope: encodeURIComponent(config.discord.scope) // separated with spaces
+		let discordData = {};
+		if (config.discord.enabled) {
+			discordData = {
+				invitelink: config.discord.inviteLink,
+				client_id: config.discord.clientId,
+				redirect_uri: encodeURIComponent(`${config.discord.redirectUriRoot}chat`),
+				scope: encodeURIComponent(config.discord.scope) // separated with spaces
+			};
+		}
+		res.render("chat", discordData);
 	});
-});
 
-app.post("/chat", function(req, res) {
-	if (req.body) {
-		// Request new access_token
-		if (
-			req.body.type == "refresh_token"
-			&& req.body.id
-			&& req.body.access_token
-			&& db.user.idIsAuthenticated(req.body.id, req.body.access_token)
-		) {
-			let row = db.user.getTokenById(req.body.id);
-			let options = {
-				url: "https://discordapp.com/api/oauth2/token",
-				form: {
-					client_id: config.discord.clientId,
-					client_secret: config.discord.clientSecret,
-					grant_type: "refresh_token",
-					refresh_token: row.refresh_token,
-					redirect_uri: `${config.discord.redirectUriRoot}chat`,
-					scope: row.scope
-				}
-			};
-			let callback = function(error, response, token_body) {
-				if (!error && response.statusCode === 200) {
-					token_body = JSON.parse(token_body);
-					token_body.access_granted = Date.now();
+	app.post("/chat", function(req, res) {
+		if (config.discord.enabled && req.body) {
+			// Request new access_token
+			if (
+				req.body.type == "refresh_token"
+				&& req.body.id
+				&& req.body.access_token
+				&& db.user.idIsAuthenticated(req.body.id, req.body.access_token)
+			) {
+				let row = db.user.getTokenById(req.body.id);
+				let options = {
+					url: "https://discordapp.com/api/oauth2/token",
+					form: {
+						client_id: config.discord.clientId,
+						client_secret: config.discord.clientSecret,
+						grant_type: "refresh_token",
+						refresh_token: row.refresh_token,
+						redirect_uri: `${config.discord.redirectUriRoot}chat`,
+						scope: row.scope
+					}
+				};
+				let callback = function(error, response, token_body) {
+					if (!error && response.statusCode === 200) {
+						token_body = JSON.parse(token_body);
+						token_body.access_granted = Date.now();
 
-					db.user.updateTokenById(token_body, req.body.id);
+						db.user.updateTokenById(token_body, req.body.id);
 
-					res.send(token_body);
-				}
-			};
+						res.send(token_body);
+					}
+				};
 
-			request.post(options, callback);
+				request.post(options, callback);
+			}
 		}
-	}
-});
+	});
+}
 
 app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
@@ -305,14 +273,13 @@ function shutdown() {
 		);
 
 		// Discord
-		promises.push(
-			discordClient.destroy().then(() => {
-				log.warn("DISCORD main client stopped");
-			})
-		);
-
-		chatWebhook.destroy();
-		log.warn("DISCORD chat webhook stopped");
+		if (config.discord.enabled) {
+			promises.push(
+				discord.stop().then(() => {
+					log.warn("DISCORD client & webhook(s) stopped");
+				})
+			);
+		}
 
 		// Database
 		db.close();
@@ -323,7 +290,7 @@ function shutdown() {
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets
-		socketChat.close();
+		if (socketChat) socketChat.close();
 		socketGameplay.close();
 		sockets.close();
 		log.warn("µWS server closed");

@@ -78,6 +78,7 @@ config.editor.enabled = true;
 
 /* Discord integration */
 config.discord = {};
+config.discord.enabled = true;
 
 config.discord.clientId = "<USE CONFIG.USER.JS OVERRIDE>";
 config.discord.clientSecret = "<USE CONFIG.USER.JS OVERRIDE>";

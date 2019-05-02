@@ -1,7 +1,8 @@
 const socketManager = require("./websocket-manager");
+const messages = require("../chat/messages");
 const log = require("../../log");
 
-const setupGameplay = function(db, physics, config, game, maps) {
+const setupGameplay = function(db, config, game, maps) {
 	// Gameplay socket
 	let gameplaySocketManager = new socketManager.Socket(
 		"/gameplay",
@@ -81,8 +82,8 @@ const setupGameplay = function(db, physics, config, game, maps) {
 	return gameplaySocketManager;
 };
 
-const setupChat = function(db, chat, chatWebhook) {
-	// Chat socket (Discord chat embed)
+const setupChat = function(db, chatWebhook) {
+	// Chat socket
 	let chatSocketManager = new socketManager.Socket(
 		"/chat",
 		{
@@ -103,7 +104,7 @@ const setupChat = function(db, chat, chatWebhook) {
 
 		let row = db.user.getUserDetailsById(message.id);
 		if (row && row.access_token == message.access_token) {
-			chat.testMessage(message.content, message.id, row.username);
+			messages.parse(message.content, message.id, row.username);
 
 			chatWebhook.send(message.content, {
 				username: row.username,
