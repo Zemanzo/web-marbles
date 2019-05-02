@@ -301,6 +301,7 @@ function makeTextSprite(message) {
 	return sprite;
 }
 
+// Core render loop
 function animate() {
 	// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
 	if (_controls.active.enabled === true) {
@@ -310,6 +311,8 @@ function animate() {
 	// Request new frame
 	requestAnimationFrame(animate);
 
+	_stats.begin();
+
 	// Run all functions that need an update
 	for (let func of animationUpdateFunctions) {
 		func();
@@ -317,6 +320,8 @@ function animate() {
 
 	// Render the darn thing
 	_renderer.render(_mainScene, _controls.active.camera);
+
+	_stats.end();
 }
 
 export {
