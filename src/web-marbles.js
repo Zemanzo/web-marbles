@@ -202,6 +202,33 @@ if (config.discord.enabled) {
 			}
 		}
 	});
+} else {
+	// Render chat, just for styling purposes
+	app.get("/chat", function(req, res) {
+		res.render("chat");
+	});
+
+	// New alternative route for adding in marbles
+	app.get("/debug", function(req, res) {
+		if (req.query) {
+			if (req.query.marble) {
+				let name = req.query.name || "Nightbot";
+				let color = req.query.color;
+				let amount = Math.max(parseInt(req.query.amount) || 1, 1);
+				for (let i = 0; i < amount; i++) {
+					game.spawnMarble(undefined, name, color);
+				}
+			}
+			if (req.query.start) {
+				game.start();
+			}
+			if (req.query.end) {
+				game.end();
+			}
+		}
+
+		res.send("ok");
+	});
 }
 
 app.get("/editor", function(req, res) {

@@ -117,6 +117,16 @@
 					<iframe src="/chat" frameborder="0"></iframe>
 				</div>
 				{{/client_id}}
+				{{^client_id}}
+				<script src="dist/debug.js"></script>
+				<div id="chat">
+					Amount: <input type="number" id="debugAmount"/>
+					<br/><button id="debugAdd">Add marble</button>
+					<br/><button id="debugStart">Start race</button>
+					<br/><button id="debugEnd">End race</button>
+				</div>
+				{{/client_id}}
+
 				<div id="notifications">
 					<div id="notification-template" class="notification">
 						<div class="notification-content">The maximum amount of marbles has been reached! No more marbles can be entered.</div>
