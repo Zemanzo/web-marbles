@@ -56,6 +56,11 @@ body {
 		transition: margin-left .4s;
 	}
 
+	#properties > div:not([id]) {
+		display: flex;
+		flex-direction: column;
+	}
+
 	#properties > div h3 {
 		font-family: "Do Hyeon",monospace;
 		font-size: 1.3em;
@@ -77,6 +82,9 @@ body {
 	margin: 12px;
 	text-transform: uppercase;
 	cursor: pointer;
+	-webkit-appearance: none;
+	-moz-appearance: none;
+	appearance: none;
 }
 	.add i {
 		font-size: 1.3em;
@@ -92,27 +100,185 @@ body {
 	display: none;
 }
 
-#addModel {
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
+/* Generic collapsible item style */
+.item.itemTemplate {
+	display: none;
 }
 
-	#models {
-		font-size: 1.3em;
-		font-family: monospace;
+.itemList {
+	overflow: auto;
+}
+
+.item {
+	background: #222;
+	min-height: 130px;
+	max-height: 300px;
+	transition: min-height .3s, max-height .3s;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.item:not(:nth-child(2)){ /* First child is hidden template */
+	margin-top: 4px;
+}
+
+.item.collapsed {
+	min-height: calc(1.4em + 12px);
+	max-height: calc(1.4em + 12px);
+}
+	.itemHeader {
+		display: flex;
+		min-height: calc(1.4em + 12px);
+	}
+		.itemHeader i {
+			display: inline-block;
+			transition: transform .3s;
+		}
+		.itemHeader i.rotated {
+			transform: rotate(90deg);
+		}
+		.itemHeader > button {
+			font-size: 1.4em;
+			background: transparent;
+			color: #eee;
+			padding: 4px 10px;
+		}
+		.itemHeader > button:hover {
+			text-decoration: none;
+			background: #eee;
+			color: #111;
+		}
+
+		.itemName {
+			margin: 4px;
+			padding-left: 2px;
+			flex: 1;
+			background: #111;
+			color: #eee;
+			border: none;
+			font-size: 1.1em;
+			font-weight: 600;
+			min-width: 100px;
+		}
+
+	.itemDetails {
+		display: flex;
+		justify-content: space-around;
+		color: #999;
+		text-align: center;
+		padding: 2px;
+		position: relative;
 	}
 
-	#modelTemplate {
+		.itemDetails > * {
+			flex: 1;
+			font-size: .8em;
+		}
+
+		.itemDetailsId {
+			font-family: monospace;
+			font-size: 1.1em;
+			color: #666;
+		}
+
+
+	.item .showItem .icon-eye-off {
+		color: #666;
+	}
+
+	.item .delete,
+	.delete {
+		background: transparent;
+		color: #f00;
+		border: none;
+	}
+	.item .delete:hover,
+	.delete:hover {
+		background: #f00;
+		color: #fff;
+		text-decoration: none;
+	}
+
+/* Textures tab */
+#textures {
+	font-size: 1.2em;
+	overflow-y: auto;
+}
+
+	#textureTemplate {
 		display: none;
 	}
 
-	.model {
-		cursor: pointer;
+	.texture {
 		margin: 2px 0px;
-		padding-left: 2px;
 		background: #333;
 		display: flex;
+	}
+
+	.texture .image {
+		width: 32px;
+		height: 32px;
+		object-fit: contain;
+		background-color: #000;
+		margin-right: 8px;
+	}
+
+	.texture .name {
+		flex: 1;
+		display: flex;
+		align-items: center;
+	}
+
+	.texture .delete {
+		font-size: 1.15em;
+	}
+
+/* Materials tab */
+#materialsInformation pre {
+	display: inline-block;
+	font-size: 1.1em;
+	padding: 1px 2px;
+	background: #111;
+}
+
+.material textarea {
+	background: #111;
+	color: #eee;
+	border: none;
+	resize: vertical;
+	overflow: hidden;
+	border: 1px solid #464646;
+	padding: 2px;
+	font-size: 11px;
+	min-height: 60px;
+}
+	.material::placeholder {
+		color: #464646;
+	}
+	.material textarea:focus {
+		border: 1px solid #787878;
+	}
+
+.material .parse {
+	border: none;
+	color: var(--theme-color);
+	background: transparent;
+	text-align: right;
+}
+	.material .parse:hover {
+		text-decoration: underline;
+	}
+
+/* Models */
+#models {
+	overflow-y: auto;
+}
+
+	.model {
+		margin: 2px 0px;
+		padding-left: 2px;
+		min-height: 1em;
 	}
 
 	.model:hover {
@@ -123,12 +289,33 @@ body {
 		background: #444;
 	}
 
-	.model .name {
-		flex: 1;
-		display: flex;
-		align-items: center;
+	.model .itemName {
+		background: transparent;
+		padding-top: 3px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
+	.model .itemDetails {
+		flex-direction: column;
+	}
+
+	.model .childMesh {
+		display: flex;
+		margin-bottom: 1px;
+	}
+
+		.model .childMesh > * {
+			text-align: left;
+			flex: 1;
+		}
+
+	.model select {
+
+	}
+
+/* Prefabs tab */
 #prefabs {
 	display: flex;
 	flex-direction: column;
@@ -143,80 +330,6 @@ body {
 		overflow: auto;
 	}
 
-.prefab {
-	/* border: 1px solid var(--theme-color-dark); */
-	background: #222;
-	min-height: 160px;
-	max-height: 300px;
-	transition: min-height .3s, max-height .3s;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
-
-.prefab:not(:nth-child(2)){ /* First child is hidden template */
-	margin-top: 4px;
-}
-
-.prefab.collapsed {
-	min-height: calc(1.4em + 12px);
-	max-height: calc(1.4em + 12px);
-}
-	.prefabHeader {
-		display: flex;
-		min-height: calc(1.4em + 12px);
-	}
-		.prefabHeader i {
-			display: inline-block;
-			transition: transform .3s;
-		}
-		.prefabHeader i.rotated {
-			transform: rotate(90deg);
-		}
-		.prefabHeader > button {
-			font-size: 1.4em;
-			background: transparent;
-			color: #eee;
-			padding: 4px 10px;
-		}
-		.prefabHeader > button:hover {
-			text-decoration: none;
-			background: #eee;
-			color: #111;
-		}
-
-		.prefab .prefabName {
-			margin: 4px;
-			padding-left: 2px;
-			flex: 1;
-			background: #111;
-			color: #eee;
-			border: none;
-			font-size: 1.1em;
-			font-weight: 600;
-			min-width: 100px;
-		}
-
-	.prefabDetails {
-		display: flex;
-		justify-content: space-around;
-		color: #999;
-		text-align: center;
-		padding: 2px;
-		position: relative;
-	}
-
-		.prefabDetails > * {
-			flex: 1;
-			font-size: .8em;
-		}
-
-		.detailsID {
-			font-family: monospace;
-			font-size: 1.1em;
-			color: #666;
-		}
-
 		.prefabColor {
 			border: none;
 			padding: 0px;
@@ -228,23 +341,6 @@ body {
 			overflow: hidden;
 			clip: rect(1px,63px,13px,1px);
 		}
-
-	.prefab .showPrefab .eye-off {
-		color: #666;
-	}
-
-	.prefab .delete,
-	.delete {
-		background: transparent;
-		color: #f00;
-		border: none;
-	}
-	.prefab .delete:hover,
-	.delete:hover {
-		background: #f00;
-		color: #fff;
-		text-decoration: none;
-	}
 
 	.prefab .objectList {
 		background: #111;

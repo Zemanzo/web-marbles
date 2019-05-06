@@ -1,6 +1,8 @@
 import * as THREE from "three";
 import "./render";
 import { inspector } from "./inspector";
+import { texturesTab } from "./textures";
+import { materialsTab } from "./materials";
 import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
 import { worldTab } from "./world";
@@ -99,7 +101,7 @@ EditorObject.prototype.setName = function(name) {
 
 
 let editor = function() {
-	let _activeTab = 0;
+	let _activeTab = 2;
 
 	return {
 		elements: {
@@ -116,16 +118,14 @@ let editor = function() {
 
 			projectTab.initialize();
 			inspector.initialize();
+			texturesTab.initialize();
+			materialsTab.initialize();
 			modelsTab.initialize();
 			prefabsTab.initialize();
 			worldTab.initialize();
 
 			// Update version number
 			document.getElementById("editorVersion").innerHTML = `v${levelManager.getCurrentVersion()}`;
-
-			// Models tab is the active tab on load
-			modelsTab.onTabActive();
-
 
 			// Menu
 			let childValue = 0;
@@ -148,7 +148,7 @@ let editor = function() {
 					let firstElement = document.getElementById("properties").firstElementChild;
 					firstElement.style.marginLeft = `-${parseInt(this.dataset.nthChild) * 100 }%`;
 
-					if (parseInt(this.dataset.nthChild) >= 2) {
+					if (parseInt(this.dataset.nthChild) >= 4) {
 						editor.elements.inspector.style.transform = "translateX(100%)";
 						editor.elements.inspector.style.minHeight = "120px";
 						if (editor.menu.overflowTimeout) clearTimeout(editor.menu.overflowTimeout);
@@ -163,40 +163,52 @@ let editor = function() {
 
 					inspector.deselect();
 
-					switch(_activeTab) {
+					switch (_activeTab) {
 					case 0:
-						modelsTab.onTabInactive();
+						texturesTab.onTabInactive();
 						break;
 					case 1:
-						prefabsTab.onTabInactive();
+						materialsTab.onTabInactive();
 						break;
 					case 2:
-						worldTab.onTabInactive();
+						modelsTab.onTabInactive();
 						break;
 					case 3:
-						projectTab.onTabInactive();
+						prefabsTab.onTabInactive();
 						break;
 					case 4:
+						worldTab.onTabInactive();
+						break;
+					case 5:
+						projectTab.onTabInactive();
+						break;
+					case 6:
 						// Editor settings tab
 						break;
 					default:
 						console.error(`Attempted to deactive unknown tab with id ${_activeTab}`);
 					}
 
-					switch(parseInt(this.dataset.nthChild)) {
+					switch (parseInt(this.dataset.nthChild)) {
 					case 0:
-						modelsTab.onTabActive();
+						texturesTab.onTabActive();
 						break;
 					case 1:
-						prefabsTab.onTabActive();
+						materialsTab.onTabActive();
 						break;
 					case 2:
-						worldTab.onTabActive();
+						modelsTab.onTabActive();
 						break;
 					case 3:
-						projectTab.onTabActive();
+						prefabsTab.onTabActive();
 						break;
 					case 4:
+						worldTab.onTabActive();
+						break;
+					case 5:
+						projectTab.onTabActive();
+						break;
+					case 6:
 						// Editor settings tab
 						break;
 					default:
@@ -206,6 +218,10 @@ let editor = function() {
 					_activeTab = parseInt(this.dataset.nthChild);
 				}, false);
 			}
+
+			// Models tab is the active tab on load
+			document.getElementById("properties").firstElementChild.style.marginLeft = "-200%";
+			modelsTab.onTabActive();
 		}
 	};
 }();

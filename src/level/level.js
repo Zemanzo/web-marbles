@@ -20,6 +20,19 @@ function Level() {
 	};
 }
 
+Level.prototype.addTexture = function(name, fileContents) {
+	this.textures[name] = {
+		file: fileContents
+	};
+	return this.textures[name];
+};
+
+Level.prototype.addMaterial = function(uuid) {
+	this.materials[uuid] = {
+		entities: {}
+	};
+	retu
+
 Level.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
 		file: fileContents,

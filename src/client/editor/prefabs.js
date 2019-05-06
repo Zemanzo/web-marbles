@@ -35,14 +35,15 @@ function Prefab(uuid, projectData) {
 
 	this.element = document.getElementById("prefabTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
-	this.element.getElementsByClassName("prefabName")[0].value = this.name;
+	this.element.classList.remove("itemTemplate");
+	this.element.getElementsByClassName("itemName")[0].value = this.name;
 	this.element.getElementsByClassName("prefabColor")[0].value = this.color;
 
 	// Add events
 	let self = this;
-	this.element.getElementsByClassName("showPrefab")[0].addEventListener("click", function() { self.toggleVisibility(); }, false);
-	this.element.getElementsByClassName("prefabName")[0].addEventListener("input", function() { self.onNameChange(this.value); }, false);
-	this.element.getElementsByClassName("prefabName")[0].addEventListener("change", function() { self.onNameChange(this.value); }, false);
+	this.element.getElementsByClassName("showItem")[0].addEventListener("click", function() { self.toggleVisibility(); }, false);
+	this.element.getElementsByClassName("itemName")[0].addEventListener("input", function() { self.onNameChange(this.value); }, false);
+	this.element.getElementsByClassName("itemName")[0].addEventListener("change", function() { self.onNameChange(this.value); }, false);
 	this.element.getElementsByClassName("prefabColor")[0].addEventListener("change", function() { self.onColorChange(this.value); }, false);
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 	this.element.getElementsByClassName("addObject")[0].addEventListener("click", function() {
@@ -56,11 +57,11 @@ function Prefab(uuid, projectData) {
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
 		let worldText = "";
 		let worldObjectCount = Object.keys(self.worldInstances).length;
-		if( worldObjectCount > 0) {
+		if(worldObjectCount > 0) {
 			worldText = `\nThis will remove ${worldObjectCount} object${worldObjectCount === 1 ? "" : "s"} from the world!`;
 		}
 
-		if( !confirm(`Are you sure you want to delete prefab ${self.name} (${self.uuid})?${worldText}`)) return;
+		if(!confirm(`Are you sure you want to delete prefab ${self.name} (${self.uuid})?${worldText}`)) return;
 		prefabsTab.deletePrefab(self.uuid);
 	}, false);
 
@@ -68,7 +69,7 @@ function Prefab(uuid, projectData) {
 	this.element.getElementsByClassName("objectList")[0].innerHTML = "";
 
 	// Display UUID
-	this.element.getElementsByClassName("detailsID")[0].innerHTML = uuid;
+	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
 
 	// Add to DOM
 	let prefabList = document.getElementById("prefabsList");
@@ -76,7 +77,7 @@ function Prefab(uuid, projectData) {
 
 	// Add any existing entities from the project
 	// The rest is handled in their constructors
-	for( let key in this.projectData.entities) {
+	for(let key in this.projectData.entities) {
 		let entity = this.projectData.entities[key];
 		if(entity.type === "object") {
 			this.addObject(key);
@@ -90,7 +91,7 @@ function Prefab(uuid, projectData) {
 }
 
 Prefab.prototype.toggleVisibility = function() {
-	let icon = this.element.getElementsByClassName("showPrefab")[0].children[0];
+	let icon = this.element.getElementsByClassName("showItem")[0].children[0];
 	if(this.group.visible) {
 		this.group.visible = false;
 		icon.className = "icon-eye-off";
@@ -117,15 +118,8 @@ Prefab.prototype.onColorChange = function(color) {
 };
 
 Prefab.prototype.toggleCollapse = function() {
-	let caret = this.element.getElementsByClassName("collapse")[0].children[0];
-
-	if ( this.element.className.indexOf("collapsed") === -1 ) {
-		caret.className = "icon-right-dir";
-		this.element.className = "prefab collapsed";
-	} else {
-		caret.className = "icon-right-dir rotated";
-		this.element.className = "prefab";
-	}
+	this.element.getElementsByClassName("collapse")[0].children[0].classList.toggle("rotated");
+	this.element.classList.toggle("collapsed");
 };
 
 Prefab.prototype.addObject = function(uuid) {
@@ -588,7 +582,7 @@ let prefabsTab = function() {
 				let projectPrefab = projectTab.activeProject.addPrefab(uuid);
 				prefabsTab.addPrefab(uuid, projectPrefab);
 				// Focus to name input so user can start typing right away
-				prefabsTab.prefabs[uuid].element.getElementsByClassName("prefabName")[0].focus();
+				prefabsTab.prefabs[uuid].element.getElementsByClassName("itemName")[0].focus();
 			}, false);
 		},
 
