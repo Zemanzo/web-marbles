@@ -21,7 +21,10 @@ const _isWebGLAvailable = function() {
 let _mainScene = null,
 	_renderer = null,
 	_marbles = {
-		meshes: []
+		meshes: [],
+		meshInstance: {
+			geometry: null
+		}
 	},
 	animationUpdateFunctions = [],
 	_viewport = null, // DOM viewport element
@@ -33,6 +36,7 @@ let _mainScene = null,
 	};
 
 if (!_isWebGLAvailable()) {
+	// WebGL is not available, show warning.
 	domReady.then(() => {
 		_viewport = document.getElementById("viewport");
 		let warning = document.createElement("div");
@@ -46,6 +50,7 @@ if (!_isWebGLAvailable()) {
 		_viewport.appendChild(warning);
 	});
 } else {
+	// Initialize
 	_mainScene = new THREE.Scene();
 	_renderer = new THREE.WebGLRenderer();
 
@@ -79,6 +84,83 @@ if (!_isWebGLAvailable()) {
 
 		animate();
 	});
+
+	// Default marble, using custom model so UVs are easier to control
+	const _GLTFLoader = new THREE.GLTFLoader();
+	fetch("/resources/models/marble-icosphere.gltf")
+		.then((response) => {
+			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
+			return response.arrayBuffer();
+		})
+		.then((buffer) => {
+			return new Promise((resolve) => {
+				try {
+					_GLTFLoader.parse(buffer, null,
+						function(model) {
+							resolve(model.scene.children[0].geometry);
+						}, function(error) {
+							console.log("Failed to load default marble model, using fallback", error);
+							resolve(new THREE.IcosahedronBufferGeometry(1, 3));
+						}
+					);
+				} catch (error) {
+					console.log("Failed to load default marble model, using fallback", error);
+					resolve(new THREE.IcosahedronBufferGeometry(1, 3));
+				}
+			});
+		})
+		.then((geometry) => {
+			_marbles.meshInstance.geometry = new THREE.InstancedBufferGeometry();
+			_marbles.meshInstance.geometry.index = geometry.index;
+			_marbles.meshInstance.geometry.position = geometry.position;
+			_marbles.meshInstance.geometry.uv = geometry.uv;
+
+			// New Float32Arrays here should be (max amount of marbles in a single race) * (itemSize).
+			_marbles.meshInstance.offsetAttribute	   = new THREE.InstancedBufferAttribute(new Float32Array(100 * 3), 3).setDynamic(true);
+			_marbles.meshInstance.orientationAttribute = new THREE.InstancedBufferAttribute(new Float32Array(100 * 4), 4).setDynamic(true);
+
+			geometry.addAttribute("offset", _marbles.meshInstance.offsetAttribute);
+			geometry.addAttribute("orientation", _marbles.meshInstance.orientationAttribute);
+
+			let vertexShader = `
+				precision highp float;
+				uniform mat4 modelViewMatrix;
+				uniform mat4 projectionMatrix;
+				attribute vec3 position;
+				attribute vec3 offset;
+				attribute vec2 uv;
+				attribute vec4 orientation;
+				varying vec2 vUv;
+				// http://www.geeks3d.com/20141201/how-to-rotate-a-vertex-by-a-quaternion-in-glsl/
+				vec3 applyQuaternionToVector( vec4 q, vec3 v ){
+					return v + 2.0 * cross( q.xyz, cross( q.xyz, v ) + q.w * v );
+				}
+				void main() {
+					vec3 vPosition = applyQuaternionToVector( orientation, position );
+					vUv = uv;
+					gl_Position = projectionMatrix * modelViewMatrix * vec4( offset + vPosition, 1.0 );
+				}
+			`;
+			let fragmentShader = `
+				precision highp float;
+				uniform sampler2D map;
+				varying vec2 vUv;
+				void main() {
+					gl_FragColor = texture2D( map, vUv );
+				}
+			`;
+			let material = new THREE.RawShaderMaterial({
+				uniforms: {
+					map: { value: new THREE.TextureLoader().load("resources/textures/grass.jpg") }
+				},
+				vertexShader,
+				fragmentShader
+			});
+
+			let mesh = new THREE.Mesh(geometry, material);
+
+			_mainScene.add(mesh);
+		});
 }
 
 function _onCanvasResize() {
@@ -262,18 +344,25 @@ const removeAllMarbleMeshes = _marbles.removeAll = function() {
 const updateMarbleMeshes = _marbles.update = function(newPositions, newRotations, delta) {
 	for (let i = 0; i < _marbles.meshes.length; i++) {
 		// Positions
-		_marbles.meshes[i].position.x = THREE.Math.lerp(_marbles.meshes[i].position.x || 0, newPositions[i * 3 + 0], delta);
-		_marbles.meshes[i].position.y = THREE.Math.lerp(_marbles.meshes[i].position.y || 0, newPositions[i * 3 + 2], delta);
-		_marbles.meshes[i].position.z = THREE.Math.lerp(_marbles.meshes[i].position.z || 0, newPositions[i * 3 + 1], delta);
+		_marbles.meshInstance.offsetAttribute.setXYZ(
+			i,
+			newPositions[i * 3 + 0], // X
+			newPositions[i * 3 + 2], // Y
+			newPositions[i * 3 + 1]  // Z
+		);
 
 		// Rotations
-		_marbles.meshes[i].quaternion.set(
+		_marbles.meshInstance.orientationAttribute.setXYZW(
+			i,
 			newRotations[i * 4 + 0],
 			newRotations[i * 4 + 1],
 			newRotations[i * 4 + 2],
 			newRotations[i * 4 + 3]
 		);
 	}
+
+	_marbles.meshInstance.offsetAttribute.needsUpdate = true;
+	_marbles.meshInstance.orientationAttribute.needsUpdate = true;
 };
 
 function makeTextSprite(message) {
