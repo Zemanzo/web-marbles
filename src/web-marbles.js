@@ -81,7 +81,8 @@ app.get("/client", function(req, res) {
 	res.render("client", {
 		gitHash,
 		gitBranch,
-		version
+		version,
+		discordEnabled: config.discord.enabled
 	});
 });
 

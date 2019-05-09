@@ -112,12 +112,12 @@
 					</div>
 				</div>
 
-				{{#client_id}}
+				{{#discordEnabled}}
 				<div id="chat">
 					<iframe src="/chat" frameborder="0"></iframe>
 				</div>
-				{{/client_id}}
-				{{^client_id}}
+				{{/discordEnabled}}
+				{{^discordEnabled}}
 				<script src="dist/debug.js"></script>
 				<div id="chat">
 					Amount: <input type="number" id="debugAmount"/>
@@ -125,7 +125,7 @@
 					<br/><button id="debugStart">Start race</button>
 					<br/><button id="debugEnd">End race</button>
 				</div>
-				{{/client_id}}
+				{{/discordEnabled}}
 
 				<div id="notifications">
 					<div id="notification-template" class="notification">
