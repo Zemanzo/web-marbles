@@ -78,6 +78,7 @@ config.editor.enabled = true;
 
 /* Discord integration */
 config.discord = {};
+config.discord.enabled = true; // Disabling Discord should only be done when debugging! This is not for production.
 
 config.discord.clientId = "<USE CONFIG.USER.JS OVERRIDE>";
 config.discord.clientSecret = "<USE CONFIG.USER.JS OVERRIDE>";
