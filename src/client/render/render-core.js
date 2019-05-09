@@ -3,6 +3,7 @@ import "three/examples/js/objects/Water";
 import "three/examples/js/objects/Sky";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
+import * as Cookies from "js-cookie";
 import * as Stats from "stats-js";
 import * as config from "../config";
 import { CameraFlyControls } from "./cameras";
@@ -30,7 +31,8 @@ let _mainScene = null,
 	_controls = {
 		fallback: null,
 		active: null
-	};
+	},
+	user_data = Cookies.getJSON("user_data");
 
 if (!_isWebGLAvailable()) {
 	domReady.then(() => {
@@ -229,31 +231,39 @@ const MarbleMesh = function(tags) {
 	this.geometry = new THREE.SphereBufferGeometry(this.size, 9, 9);
 	this.materialColor = new THREE.Color(this.color);
 	this.material = new THREE.MeshStandardMaterial({ color: this.materialColor });
-	this.mesh = new THREE.Mesh(this.sphereGeometry, this.sphereMaterial);
+	this.mesh = new THREE.Mesh(this.geometry, this.material);
+
+	// Useful for debugging
+	this.mesh.name = `Marble (${tags.name})`;
 
 	// Shadows
 	this.mesh.castShadow = config.graphics.castShadow.marbles;
 	this.mesh.receiveShadow = config.graphics.receiveShadow.marbles;
 
-	// Add name sprite
-	const nameSprite = makeTextSprite(name);
-	this.mesh.add(nameSprite);
-
 	// Add to collection
-	_marbles.meshes.push(this.mesh);
+	_marbles.meshes.push(this);
 
-	// Add objects to the scene
+	// Add marble mesh to the scene
 	_mainScene.add(this.mesh);
-	//_mainScene.add(nameSprite);
-	//marbleMeshes[marbleMeshes.length - 1].add(nameSprite);
+
+	// Highlight own name
+	let nameSpriteOptions = {};
+	if (user_data && user_data.username === this.name) {
+		nameSpriteOptions.color = "#BA0069";
+	}
+
+	// Add name sprite (we avoid parenting, because this will also cause it to inherit the rotation which we do not want)
+	this.nameSprite = makeTextSprite(this.name, nameSpriteOptions);
+	_mainScene.add(this.nameSprite);
 };
 
 const removeAllMarbleMeshes = _marbles.removeAll = function() {
-	for (let mesh of _marbles.meshes) {
-		for (let i = mesh.children.length; i >= 0; i--) {
-			_mainScene.remove(mesh.children[i]);
+	for (let marble of _marbles.meshes) {
+		for (let i = marble.mesh.children.length; i >= 0; i--) {
+			_mainScene.remove(marble.mesh.children[i]);
 		}
-		_mainScene.remove(mesh);
+		_mainScene.remove(marble.nameSprite);
+		_mainScene.remove(marble.mesh);
 	}
 
 	_marbles.meshes = [];
@@ -262,33 +272,40 @@ const removeAllMarbleMeshes = _marbles.removeAll = function() {
 const updateMarbleMeshes = _marbles.update = function(newPositions, newRotations, delta) {
 	for (let i = 0; i < _marbles.meshes.length; i++) {
 		// Positions
-		_marbles.meshes[i].position.x = THREE.Math.lerp(_marbles.meshes[i].position.x || 0, newPositions[i * 3 + 0], delta);
-		_marbles.meshes[i].position.y = THREE.Math.lerp(_marbles.meshes[i].position.y || 0, newPositions[i * 3 + 2], delta);
-		_marbles.meshes[i].position.z = THREE.Math.lerp(_marbles.meshes[i].position.z || 0, newPositions[i * 3 + 1], delta);
+		_marbles.meshes[i].mesh.position.x = THREE.Math.lerp(_marbles.meshes[i].mesh.position.x || 0, newPositions[i * 3 + 0], delta);
+		_marbles.meshes[i].mesh.position.y = THREE.Math.lerp(_marbles.meshes[i].mesh.position.y || 0, newPositions[i * 3 + 2], delta);
+		_marbles.meshes[i].mesh.position.z = THREE.Math.lerp(_marbles.meshes[i].mesh.position.z || 0, newPositions[i * 3 + 1], delta);
 
 		// Rotations
-		_marbles.meshes[i].quaternion.set(
+		_marbles.meshes[i].mesh.quaternion.set(
 			newRotations[i * 4 + 0],
 			newRotations[i * 4 + 1],
 			newRotations[i * 4 + 2],
 			newRotations[i * 4 + 3]
 		);
+
+		// Also update the nameSprite position
+		if (_marbles.meshes[i].nameSprite) {
+			_marbles.meshes[i].nameSprite.position.x = (_marbles.meshes[i].mesh.position.x || 0);
+			_marbles.meshes[i].nameSprite.position.y = (_marbles.meshes[i].mesh.position.y || 0) + _marbles.meshes[i].size - .1;
+			_marbles.meshes[i].nameSprite.position.z = (_marbles.meshes[i].mesh.position.z || 0);
+		}
 	}
 };
 
-function makeTextSprite(message) {
-	let fontFamily = "Courier New";
-	let fontSize = 24;
+function makeTextSprite(message, options = {}) {
+	let fontFamily = options.fontFamily || "Courier New";
+	let fontSize = 48;
 
 	let canvas = document.createElement("canvas");
-	canvas.width = 256;
-	canvas.height = 64;
+	canvas.width = 512;
+	canvas.height = 128;
 
 	let context = canvas.getContext("2d");
 	context.font = `Bold ${fontSize}px ${fontFamily}`;
 	context.textAlign = "center";
-	context.fillStyle = "#ffffff";
-	context.fillText(message, 128, fontSize);
+	context.fillStyle = options.color || "#ffffff";
+	context.fillText(message, 256, fontSize);
 
 	// Canvas contents will be used for a texture
 	let texture = new THREE.Texture(canvas);
