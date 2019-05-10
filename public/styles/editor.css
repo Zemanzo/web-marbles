@@ -2,6 +2,7 @@ body {
 	--theme-color: var(--editor-theme-color);
 	--theme-color-dark: var(--editor-theme-color-dark);
 	grid-template-areas: "title viewport" "sidebar viewport";
+	background: #2a2306;
 }
 
 #viewport > button {
@@ -247,17 +248,43 @@ body {
 	color: #eee;
 	border: none;
 	resize: vertical;
-	overflow: hidden;
+	overflow-x: auto;
+	overflow-y: hidden;
 	border: 1px solid #464646;
 	padding: 2px;
 	font-size: 11px;
 	min-height: 60px;
+	animation-duration: .7s;
+	animation-delay: 0s;
+	animation-timing-function: ease-out;
+	animation-fill-mode: forwards;
 }
 	.material::placeholder {
 		color: #464646;
 	}
 	.material textarea:focus {
 		border: 1px solid #787878;
+	}
+
+	@keyframes parseSuccess {
+		0% {
+			border: 1px solid #33dd33;
+			background: #131;
+}
+		100% {
+			border: 1px solid #787878;
+			background: #111;
+		}
+	}
+	@keyframes parseFailure {
+		0% {
+			border: 1px solid #dd3333;
+			background: #311;
+		}
+		100% {
+			border: 1px solid #787878;
+			background: #111;
+		}
 	}
 
 .material .parse {
@@ -310,10 +337,6 @@ body {
 			text-align: left;
 			flex: 1;
 		}
-
-	.model select {
-
-	}
 
 /* Prefabs tab */
 #prefabs {
