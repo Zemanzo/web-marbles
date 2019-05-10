@@ -34,6 +34,12 @@ function Material(uuid, projectData) {
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
+	this.element.getElementsByTagName("textarea")[0].addEventListener("keydown", function(event) {
+		if (event.key === "s" && event.ctrlKey) {
+			event.preventDefault();
+			self.parse();
+		}
+	}, false);
 
 	// Display UUID
 	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
@@ -44,20 +50,27 @@ function Material(uuid, projectData) {
 }
 
 Material.prototype.parse = function() {
+	let textarea = this.element.getElementsByTagName("textarea")[0];
+
+	// To restart the CSS animation
+	textarea.style.animationName = "";
+	void textarea.offsetWidth;
+
 	try {
-		this.script = this.element.getElementsByTagName("textarea")[0].value;
-		console.log(texturesTab.textures);
+		this.script = textarea.value;
 		let compiledMaterial = Function("textures", "THREE", this.script)(texturesTab.textures, THREE);
 		if (compiledMaterial instanceof THREE.Material) {
 			this.compiledMaterial.copy(compiledMaterial);
 			this.compiledMaterial.needsUpdate = true;
 			editorLog(`Succesfully parsed material script! (${this.name})`, "success");
+			textarea.style.animationName = "parseSuccess";
 		} else {
 			throw "return value is not a valid THREE Material";
 		}
 	} catch (error) {
+		this.compiledMaterial = _defaultMaterial.clone();
 		editorLog(`Failed to parse script. ${error}`, "error");
-		this.compiledMaterial = _defaultMaterial;
+		textarea.style.animationName = "parseFailure";
 	}
 };
 

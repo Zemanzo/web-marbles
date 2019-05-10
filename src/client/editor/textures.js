@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { materialsTab } from "./materials";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
 import { editorLog } from "./log";
@@ -6,6 +7,7 @@ import { editorLog } from "./log";
 // texture object
 function Texture(name, texture, projectData) {
 	this.name = name;
+	this.map = new THREE.TextureLoader().load(texture);
 	this.projectData = projectData; // Project reference for this texture
 	this.element = null;
 	this.prefabEntities = {};
@@ -15,12 +17,8 @@ function Texture(name, texture, projectData) {
 
 	// Add to texture list
 	this.element.id = name;
-	let imageElement = this.element.getElementsByClassName("image")[0];
-	imageElement.src = texture;
+	this.element.getElementsByClassName("image")[0].src = texture;
 	this.element.getElementsByClassName("name")[0].innerText = name;
-
-	// Since THREE.Texture requires a texture as a HTML element, we re-use the one from the list
-	this.map = new THREE.Texture(imageElement);
 
 	// Delete texture button
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", () => {
@@ -91,6 +89,11 @@ let texturesTab = function() {
 
 			// Remove from project
 			delete projectTab.activeProject.textures[name];
+
+			// Re-parse all custom materials
+			for (let uuid in materialsTab.materials) {
+				materialsTab.materials[uuid].parse();
+			}
 
 			editorLog(`Removed texture: ${name}`, "info");
 		}
