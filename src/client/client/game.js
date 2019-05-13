@@ -17,7 +17,7 @@ let game = (function() {
 			enterPeriodTimeRemaining: undefined,
 			enterPeriodLength: undefined,
 
-			mapId: undefined
+			levelId: undefined
 		},
 
 		_roundTimerStartDate,
@@ -78,7 +78,7 @@ let game = (function() {
 		_DOMElements.marbleList = document.getElementById("marbleList");
 		_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
 		_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
-		_DOMElements.raceLeaderboardMapName = _DOMElements.raceLeaderboard.getElementsByClassName("mapName")[0];
+		_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
 		_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
 		_DOMElements.resultsList = document.getElementById("resultsList");
 		_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
@@ -221,8 +221,8 @@ let game = (function() {
 					}
 					_DOMElements.resultsList.appendChild(resultsListFragment);
 
-					_DOMElements.raceLeaderboardMapName.innerText = newStateData.data.map.name;
-					_DOMElements.raceLeaderboardAuthorName.innerText = newStateData.data.map.author;
+					_DOMElements.raceLeaderboardLevelName.innerText = newStateData.data.level.name;
+					_DOMElements.raceLeaderboardAuthorName.innerText = newStateData.data.level.author;
 
 					// Make we're scrolled all the way to the top
 					_DOMElements.resultsList.scrollTop = 0;

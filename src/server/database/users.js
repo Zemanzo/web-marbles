@@ -99,7 +99,7 @@ module.exports = function(db, common) {
 				stat_marbles_entered,
 				stat_marbles_finished,
 				stat_marbles_not_finished,
-				stat_unique_maps_played,
+				stat_unique_levels_played,
 				timestamp_first_login
 			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
@@ -141,7 +141,7 @@ module.exports = function(db, common) {
 				stat_marbles_entered,
 				stat_marbles_finished,
 				stat_marbles_not_finished,
-				stat_unique_maps_played,
+				stat_unique_levels_played,
 				timestamp_first_login
 			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
