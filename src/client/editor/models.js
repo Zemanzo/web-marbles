@@ -17,6 +17,8 @@ function Model(name, sceneObject, projectData) {
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
 	this.element = null;
 	this.prefabEntities = {};
+	this.childMeshes = [];
+	this.changed = false;
 
 	// Add to scene
 	modelsTab.group.add(this.sceneObject);
@@ -34,49 +36,11 @@ function Model(name, sceneObject, projectData) {
 	}, false);
 
 	// List model children
-	let childMeshes = _getChildMeshes(this.sceneObject);
-	for (let mesh of childMeshes) {
-		// Element that has information about the child mesh
-		let childElement = document.createElement("div");
-		childElement.className = "childMesh";
-
-		// Element for the child mesh name
-		let childElementName = document.createElement("div");
-		childElementName.innerText = mesh.name;
-
-		// Element that allows selecting a custom material;
-		let childElementMaterialSelect = document.createElement("select");
-
-		// Store the original material in case we'd want to switch back
-		mesh.userData.originalMaterial = mesh.material.clone();
-
-		// Add options, starting with default
-		let optionElement = document.createElement("option");
-		optionElement.innerText = "Original";
-		optionElement.style.fontStyle = "italic";
-		optionElement.selected = true;
-		optionElement.addEventListener("click", function() {
-			mesh.material = mesh.userData.originalMaterial;
-		}, false);
-		childElementMaterialSelect.add(optionElement);
-
-		for (let uuid in materialsTab.materials) {
-			let material = materialsTab.materials[uuid];
-			optionElement = document.createElement("option");
-			optionElement.className = `option-${uuid}`;
-			optionElement.innerText = material.name;
-			optionElement.addEventListener("click", function() {
-				mesh.material = materialsTab.materials[uuid].compiledMaterial;
-			}, false);
-			childElementMaterialSelect.add(optionElement);
-		}
-
-		// Slap it all together
-		childElement.appendChild(childElementName);
-		childElement.appendChild(childElementMaterialSelect);
-		this.element.getElementsByClassName("itemDetails")[0].appendChild(childElement);
+	for (let mesh of _getChildMeshes(this.sceneObject)) {
+		this.childMeshes.push(new ChildMesh(mesh, this));
 	}
 
+	// Add collapse functionality
 	let self = this;
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 
@@ -141,22 +105,6 @@ Model.prototype.delete = function() {
 
 	editorLog(`Removed model: ${this.name}`, "info");
 };
-
-// Recursive function: Returns an array of all (child) meshes this 3D object has.
-function _getChildMeshes(obj) {
-	let children = [];
-
-	// Add own vertices if they exist
-	if (obj.type === "Mesh") {
-		children.push(obj);
-	}
-
-	// Add any vertices of child objects
-	for (let c = 0; c < obj.children.length; c++) {
-		children = children.concat( _getChildMeshes(obj.children[c]) );
-	}
-	return children;
-}
 
 // Recursive function: Returns an array of all vertices of this 3D object and any child objects.
 // Vertices are in world space.
@@ -271,6 +219,76 @@ Model.prototype.getConcaveGeometry = function() {
 	}
 	return this.concaveGeo;
 };
+
+function ChildMesh(mesh, parent) {
+	this.parent = parent;
+	this.mesh = mesh;
+	this.element = document.createElement("div");
+	let self = this;
+
+	// Element that has information about the child mesh
+	this.element.className = "childMesh";
+
+	// Element for the child mesh name
+	let childElementName = document.createElement("div");
+	childElementName.innerText = mesh.name;
+
+	// Element that allows selecting a custom material;
+	let childElementMaterialSelect = document.createElement("select");
+
+	// Store the original material in case we'd want to switch back
+	this.originalMaterial = mesh.material.clone();
+
+	// Add options, starting with default
+	let optionElement = document.createElement("option");
+	optionElement.innerText = "Original";
+	optionElement.style.fontStyle = "italic";
+	optionElement.selected = true;
+	optionElement.addEventListener("click", function() { self.setMaterial(self.originalMaterial); }, false);
+	childElementMaterialSelect.add(optionElement);
+
+	for (let uuid in materialsTab.materials) {
+		let material = materialsTab.materials[uuid];
+		optionElement = material.createOptionElement();
+		optionElement.addEventListener("click", function() { self.setMaterial(material.compiledMaterial); }, false);
+		childElementMaterialSelect.add(optionElement);
+	}
+
+	// Slap it all together
+	this.element.appendChild(childElementName);
+	this.element.appendChild(childElementMaterialSelect);
+	this.parent.element.getElementsByClassName("itemDetails")[0].appendChild(this.element);
+}
+
+ChildMesh.prototype.setMaterial = function(material) {
+	// If no material is provided, fall back to the original material.
+	if (!material) {
+		this.mesh.material = this.originalMaterial;
+	} else {
+		this.mesh.material = material;
+	}
+
+	// Update prefabs
+	for (let prefabEntity in this.parent.prefabEntities) {
+		this.parent.prefabEntities[prefabEntity].setModel(this.parent.name);
+	}
+};
+
+// Recursive function: Returns an array of all (child) meshes this 3D object has.
+function _getChildMeshes(obj) {
+	let children = [];
+
+	// Add own vertices if they exist
+	if (obj.type === "Mesh") {
+		children.push(obj);
+	}
+
+	// Add any vertices of child objects
+	for (let c = 0; c < obj.children.length; c++) {
+		children = children.concat(_getChildMeshes(obj.children[c]));
+	}
+	return children;
+}
 
 
 let modelsTab = function() {

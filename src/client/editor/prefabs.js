@@ -626,10 +626,10 @@ let prefabsTab = function() {
 			}
 
 			// Add an option for every existing model
-			for(let key in modelsTab.models) {
+			for(let modelName in modelsTab.models) {
 				let option = document.createElement("option");
-				option.value = key;
-				option.text = key;
+				option.value = modelName;
+				option.text = modelName;
 				prefabsTab.elements.modelList.appendChild(option.cloneNode(true));
 				prefabsTab.elements.colliderList.appendChild(option); // TODO: Currently assuming all models are usable as collider
 			}
