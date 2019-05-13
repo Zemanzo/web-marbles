@@ -293,6 +293,10 @@ let addLevel = function(levelName) {
 		.then((buffer) => {
 			try {
 				let levelData = levelManager.load(buffer);
+				if(typeof levelData === "string") {
+					console.error(`Level loading failed: ${levelData}`);
+					return;
+				}
 
 				// Set water height
 				water.position.y = levelData.world.waterLevel;
