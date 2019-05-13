@@ -92,7 +92,7 @@ let texturesTab = function() {
 
 			// Re-parse all custom materials
 			for (let uuid in materialsTab.materials) {
-				materialsTab.materials[uuid].parse();
+				materialsTab.materials[uuid].parse(false); // false means without logging
 			}
 
 			editorLog(`Removed texture: ${name}`, "info");

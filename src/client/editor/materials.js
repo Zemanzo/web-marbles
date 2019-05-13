@@ -19,6 +19,9 @@ function Material(uuid, projectData) {
 		this.name = this.projectData.name = "";
 	}
 
+	// Array of option elements that are part of the model material selection
+	this.optionElements = [];
+
 	// Set a default material
 	this.compiledMaterial = _defaultMaterial.clone();
 
@@ -47,9 +50,23 @@ function Material(uuid, projectData) {
 	// Add to DOM
 	let materialList = document.getElementById("materialList");
 	this.element = materialList.insertBefore(this.element, document.getElementById("addMaterial"));
+
+	for (let name in modelsTab.models) {
+		let model = modelsTab.models[name];
+		for (let i = 0; i < model.childMeshes.length; i++) {
+			let optionElement = this.createOptionElement();
+			let self = this;
+
+			optionElement.addEventListener("click", function() {
+				model.childMeshes[i].setMaterial(self.compiledMaterial);
+			}, false);
+
+			model.element.getElementsByTagName("select")[i].add(optionElement);
+		}
+	}
 }
 
-Material.prototype.parse = function() {
+Material.prototype.parse = function(shouldLog = true) {
 	let textarea = this.element.getElementsByTagName("textarea")[0];
 
 	// To restart the CSS animation
@@ -62,19 +79,27 @@ Material.prototype.parse = function() {
 		if (compiledMaterial instanceof THREE.Material) {
 			this.compiledMaterial.copy(compiledMaterial);
 			this.compiledMaterial.needsUpdate = true;
-			editorLog(`Succesfully parsed material script! (${this.name})`, "success");
+			if (shouldLog) {
+				editorLog(`Succesfully parsed material script! (${this.name})`, "success");
+			}
 			textarea.style.animationName = "parseSuccess";
 		} else {
 			throw "return value is not a valid THREE Material";
 		}
 	} catch (error) {
-		this.compiledMaterial = _defaultMaterial.clone();
-		editorLog(`Failed to parse script. ${error}`, "error");
+		this.compiledMaterial.copy(_defaultMaterial.clone());
+		this.compiledMaterial.needsUpdate = true;
+		if (shouldLog) {
+			editorLog(`Failed to parse script. ${error}`, "error");
+		}
 		textarea.style.animationName = "parseFailure";
 	}
 };
 
 Material.prototype.onNameChange = function(name) {
+	for (let element of this.optionElements) {
+		element.innerText = name;
+	}
 	this.name = name;
 	this.projectData.name = name;
 };
@@ -84,7 +109,32 @@ Material.prototype.toggleCollapse = function() {
 	this.element.classList.toggle("collapsed");
 };
 
+Material.prototype.createOptionElement = function() {
+	let optionElement = document.createElement("option");
+	optionElement.className = `option-${this.uuid}`;
+	optionElement.innerText = this.name;
+
+	this.optionElements.push(optionElement);
+
+	return optionElement;
+};
+
 Material.prototype.delete = function() {
+	// Remove from model selects
+	for (let element of this.optionElements) {
+		element.parentNode.removeChild(element);
+	}
+
+	// Model child meshes that use this material should revert to using their original material
+	for (let name in modelsTab.models) {
+		let model = modelsTab.models[name];
+		for (let childMesh of model.childMeshes) {
+			if (childMesh.mesh.material === this.compiledMaterial) {
+				childMesh.setMaterial(childMesh.originalMaterial);
+			}
+		}
+	}
+
 	// Remove from editor
 	this.element.parentNode.removeChild(this.element);
 	delete materialsTab.materials[this.uuid];
