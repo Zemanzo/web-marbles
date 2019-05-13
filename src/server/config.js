@@ -9,15 +9,6 @@ const config = {};
 /* Marbles */
 config.marbles = {};
 config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
-config.marbles.mapRotation = [
-	{
-		name: "map4v2.obj",
-		startGate: {
-			position: {x: -23, y: 8, z: 50},
-			size: [7.5, 6, .5]
-		}
-	}
-];
 
 // Bots
 config.marbles.bots = {};
@@ -64,9 +55,9 @@ config.marbles.scoring.pointsAwardedForFinishing = 0;
 // G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
 config.marbles.scoring.pointScale = 1.5;
 
-/* Maps */
-config.maps = {};
-config.maps.folderPath = `${__dirname}/../../public/resources/maps`;
+/* Levels */
+config.levels = {};
+config.levels.folderPath = `${__dirname}/../../public/resources/maps`;
 
 /* Database */
 config.database = {};

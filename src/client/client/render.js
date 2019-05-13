@@ -6,7 +6,7 @@ import "three/examples/js/loaders/OBJLoader";
 import "three/examples/js/loaders/GLTFLoader";
 import "three/examples/js/nodes/THREE.Nodes";
 import * as Stats from "stats-js";
-import * as pako from "pako";
+import * as levelManager from "../../level/manager";
 import * as config from "../config";
 import { net as networking } from "./networking";
 import { CameraFlyControls } from "../cameras";
@@ -284,31 +284,29 @@ let clearMarbleMeshes = function() {
 	marbleMeshes = [];
 };
 
-let addMap = function(mapName) {
-	fetch(`/resources/maps/${mapName}.mmc`)
+let addLevel = function(levelName) {
+	fetch(`/resources/maps/${levelName}.mmc`)
 		.then((response) => {
 			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
 			return response.arrayBuffer();
 		})
 		.then((buffer) => {
 			try {
-				let mapData = pako.inflate(buffer);
-				mapData = new TextDecoder("utf-8").decode(mapData);
-				mapData = JSON.parse(mapData);
+				let levelData = levelManager.load(buffer);
 
 				// Set water height
-				water.position.y = mapData.world.waterLevel;
+				water.position.y = levelData.world.waterLevel;
 
 				// Set sun inclination
-				parameters.inclination = mapData.world.sunInclination;
+				parameters.inclination = levelData.world.sunInclination;
 				updateSun();
 
 				// Load models
 				let modelPromises = {};
-				for (let modelName in mapData.models) {
+				for (let modelName in levelData.models) {
 					modelPromises[modelName] = new Promise((resolve, reject) => {
 						try {
-							_GLTFLoader.parse(mapData.models[modelName].file, null,
+							_GLTFLoader.parse(levelData.models[modelName].file, null,
 								function(model) {
 									resolve(model.scene);
 								}, function(error) {
@@ -327,11 +325,11 @@ let addMap = function(mapName) {
 
 				let prefabPromises = {};
 				Promise.all(Object.values(modelPromises)).then(() => {
-					for (let prefabUuid in mapData.prefabs) {
+					for (let prefabUuid in levelData.prefabs) {
 						prefabPromises[prefabUuid] = new Promise((resolve) => {
 							let group = new THREE.Group();
 
-							for (let entity of Object.values(mapData.prefabs[prefabUuid].entities)) {
+							for (let entity of Object.values(levelData.prefabs[prefabUuid].entities)) {
 								if (entity.type === "object" && entity.model) {
 									modelPromises[entity.model].then((scene) => {
 										let clone = scene.clone();
@@ -349,7 +347,7 @@ let addMap = function(mapName) {
 					}
 				}).then(() => {
 					Promise.all(Object.values(prefabPromises)).then(() => {
-						for (let object of Object.values(mapData.worldObjects)) {
+						for (let object of Object.values(levelData.worldObjects)) {
 							prefabPromises[object.prefab].then((prefabGroup) => {
 								let clone = prefabGroup.clone();
 								clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
@@ -373,5 +371,5 @@ export {
 	spawnMarbleMesh,
 	clearMarbleMeshes,
 	init,
-	addMap
+	addLevel
 };

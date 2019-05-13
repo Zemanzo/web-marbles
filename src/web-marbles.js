@@ -13,8 +13,8 @@ db.setCurrentDatabase(
 	require("better-sqlite3")(config.database.path)
 );
 
-// Fetch maps & build primary map
-const maps = require("./server/maps/manager");
+// Fetch levels & build primary level
+const levels = require("./server/levels/manager");
 
 // Set up physics world
 const physics = require("./physics/manager");
@@ -26,7 +26,7 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, config, game, maps);
+const socketGameplay = sockets.setupGameplay(db, config, game, levels);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
@@ -263,7 +263,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-maps.currentMapData.then(() => {
+levels.currentLevelData.then(() => {
 	game.end();
 });
 

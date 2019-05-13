@@ -1,5 +1,5 @@
 const physics = require("../../physics/manager");
-const maps = require("./manager");
+const levels = require("./manager");
 
 module.exports = function() {
 	let _transformFromEntity = function(entity) {
@@ -24,9 +24,9 @@ module.exports = function() {
 		return transform;
 	};
 
-	maps.currentMapData.then((map) => {
-		for(let key in map.models) {
-			let model = map.models[key];
+	levels.currentLevelData.then((level) => {
+		for(let key in level.models) {
+			let model = level.models[key];
 			if(model.convexData) {
 				physics.createConvexShape(key, model.convexData);
 			}
@@ -35,9 +35,9 @@ module.exports = function() {
 			}
 		}
 
-		for (let worldObjectUuid in map.worldObjects) {
-			let worldEntity = map.worldObjects[worldObjectUuid];
-			let prefab = map.prefabs[map.worldObjects[worldObjectUuid].prefab];
+		for (let worldObjectUuid in level.worldObjects) {
+			let worldEntity = level.worldObjects[worldObjectUuid];
+			let prefab = level.prefabs[level.worldObjects[worldObjectUuid].prefab];
 
 			for (let prefabEntityUuid in prefab.entities) {
 				let prefabEntity = prefab.entities[prefabEntityUuid];

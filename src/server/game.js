@@ -1,7 +1,7 @@
 const log = require("../log");
 const config = require("./config");
 const physics = require("../physics/manager");
-const maps = require("./maps/manager");
+const levels = require("./levels/manager");
 const db = require("./database/manager");
 
 function Marble(id, entryId, name, color) {
@@ -44,23 +44,23 @@ let game = function() {
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
 
-		_currentMap = {
+		_currentLevel = {
 			gameplayParameters: null,
-			mapName: null,
-			mapAuthorName: null,
-			mapFileName: null
+			levelName: null,
+			levelAuthorName: null,
+			levelFileName: null
 		},
 
 		_round = null;
 
-	maps.currentMapData.then((map) => {
-		_currentMap.gameplayParameters = map.gameplay;
-		_currentMap.mapName = map.mapName;
-		_currentMap.mapAuthorName = map.authorName;
+		levels.currentLevelData.then((level) => {
+		_currentLevel.gameplayParameters = level.gameplay;
+		_currentLevel.levelName = level.levelName;
+		_currentLevel.levelAuthorName = level.authorName;
 	});
 
-	maps.currentMapName.then((mapFileName) => {
-		_currentMap.mapFileName = mapFileName;
+	levels.currentLevelName.then((levelFileName) => {
+		_currentLevel.levelFileName = levelFileName;
 	});
 
 	let _generateNewRoundData = function() {
@@ -68,7 +68,7 @@ let game = function() {
 			start: null,
 			end: null,
 			timeBest: null,
-			mapId: _currentMap.mapFileName,
+			levelId: _currentLevel.levelFileName,
 			pointsAwarded: 0,
 			playersEntered: 0,
 			playersFinished: 0,
@@ -141,7 +141,7 @@ let game = function() {
 					clearTimeout(this.enterTimeout);
 					this.enterTimeout = _setTrackableTimeout(
 						this.start.bind(this),
-						_currentMap.gameplayParameters.defaultEnterPeriod * 1000
+						_currentLevel.gameplayParameters.defaultEnterPeriod * 1000
 					);
 				}
 			}
@@ -197,7 +197,7 @@ let game = function() {
 					db.user.batchUpdateStatistics(_playersEnteredList);
 
 					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
-					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentMap.mapFileName);
+					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentLevel.levelFileName);
 
 					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
 					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
@@ -215,9 +215,9 @@ let game = function() {
 						additionalData[player.id].pointsEarned = player.pointsEarned;
 					}
 
-					additionalData.map = {
-						name: _currentMap.mapName,
-						author: _currentMap.mapAuthorName
+					additionalData.level = {
+						name: _currentLevel.levelName,
+						author: _currentLevel.levelAuthorName
 					};
 				}
 
@@ -290,7 +290,7 @@ let game = function() {
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_currentMap.gameplayParameters.roundLength * 1000
+					_currentLevel.gameplayParameters.roundLength * 1000
 				);
 
 				return true;
@@ -346,7 +346,7 @@ let game = function() {
 
 				this.gameplayFinishTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_currentMap.gameplayParameters.timeUntilDnf * 1000
+					_currentLevel.gameplayParameters.timeUntilDnf * 1000
 				);
 			}
 
@@ -357,7 +357,7 @@ let game = function() {
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || _currentMap.gameplayParameters.defaultEnterPeriod;
+			return _getTimeout(this.enterTimeout) || _currentLevel.gameplayParameters.defaultEnterPeriod;
 		},
 
 		setSocketManager(socketManager) {

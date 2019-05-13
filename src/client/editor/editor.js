@@ -4,6 +4,7 @@ import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
+import * as levelManager from "../../level/manager";
 import { setEditorLogElement } from "./log";
 import { initializeRenderer } from "./render";
 
@@ -119,6 +120,9 @@ let editor = function() {
 			modelsTab.initialize();
 			prefabsTab.initialize();
 			worldTab.initialize();
+
+			// Update version number
+			document.getElementById("editorVersion").innerHTML = `v${levelManager.getCurrentVersion()}`;
 
 			// Models tab is the active tab on load
 			modelsTab.onTabActive();

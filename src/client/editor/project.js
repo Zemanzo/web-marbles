@@ -1,76 +1,10 @@
 import { editorLog } from "./log";
+import * as Level from "../../level/level";
+import * as levelManager from "../../level/manager";
 import SerializeWorker from "./serialize.worker";
-import * as pako from "pako";
 import { worldTab } from "./world";
 import { prefabsTab } from "./prefabs";
 import { modelsTab } from "./models";
-
-function Project() {
-	this.mapName = "New map";
-	this.authorName = "Unknown";
-
-	this.gameplay = {
-		defaultEnterPeriod: 40,
-		roundLength: 160,
-		timeUntilDnf: 40
-	};
-
-	this.models = {};
-	this.prefabs = {};
-	this.worldObjects = {};
-
-	this.world = {
-		waterLevel: -9,
-		sunInclination: 0.25
-	};
-}
-
-Project.prototype.addModel = function(name, fileContents) {
-	this.models[name] = {
-		file: fileContents,
-		convexData: null,
-		concaveData: {}
-	};
-	return this.models[name];
-};
-
-Project.prototype.addPrefab = function(uuid) {
-	this.prefabs[uuid] = {
-		entities: {}
-	};
-	return this.prefabs[uuid];
-};
-
-Project.prototype.addWorldObject = function(uuid, prefabUuid) {
-	this.worldObjects[uuid] = {
-		prefab: prefabUuid
-	};
-	return this.worldObjects[uuid];
-};
-
-Project.prototype.validateProject = function() {
-	// Fix/add any project properties that can easily be fixed
-	// This may also help with backward compatibility later
-
-	let validateObject = function(source, template) {
-		for(let key in template) {
-			if(typeof source[key] !== typeof template[key]) {
-				source[key] = template[key];
-				console.log(`Reset value for ${key}`);
-			}
-		}
-		for(let key in source) {
-			if(typeof source[key] !== typeof template[key]) {
-				delete source[key];
-				console.log(`Removed unused property ${key}`);
-			}
-		}
-	};
-	let template = new Project();
-	validateObject(this, template);
-	validateObject(this.world, template.world);
-	validateObject(this.gameplay, template.gameplay);
-};
 
 
 let projectTab = function() {
@@ -128,7 +62,7 @@ let projectTab = function() {
 		activeProject: null,
 
 		initialize: function() {
-			this.activeProject = new Project();
+			this.activeProject = new Level();
 
 			// Setting elements
 			_elements.exportPublish = document.getElementById("exportPublish");
@@ -162,9 +96,9 @@ let projectTab = function() {
 			// Publish button event
 			_elements.exportPublish.addEventListener("click", function() {projectTab.exportProject(true, true);}, false);
 
-			// Change map name
-			document.getElementById("paramMapName").addEventListener("change", function() { projectTab.setMapName( this.value ); }, false);
-			document.getElementById("paramMapName").addEventListener("input", function() { projectTab.setMapName( this.value ); }, false);
+			// Change level name
+			document.getElementById("paramLevelName").addEventListener("change", function() { projectTab.setLevelName( this.value ); }, false);
+			document.getElementById("paramLevelName").addEventListener("input", function() { projectTab.setLevelName( this.value ); }, false);
 
 			// Change author name
 			document.getElementById("paramAuthorName").addEventListener("change", function() { projectTab.setAuthorName( this.value ); }, false);
@@ -183,9 +117,9 @@ let projectTab = function() {
 			_elements.paramWaitAfterFinish.addEventListener("input", function() { projectTab.setWaitAfterFinish( this.valueAsNumber ); }, false);
 		},
 
-		setMapName: function(name) {
-			if(!name.length) name = "New map";
-			this.activeProject.mapName = name;
+		setLevelName: function(name) {
+			if(!name.length) name = "New level";
+			this.activeProject.levelName = name;
 		},
 
 		setAuthorName: function(name) {
@@ -305,24 +239,10 @@ let projectTab = function() {
 		},
 
 		importProject: function(loadedFile) {
-			let loadedProject;
-			try {
-				let data = pako.inflate(loadedFile);
-				let string = new TextDecoder("utf-8").decode(data);
-				loadedProject = JSON.parse(string);
-			}
-			catch(error) {
-				editorLog("Unable to load project: Invalid project file.", "error");
-				return;
-			}
+			let loadedProject = levelManager.load(loadedFile);
 
-			// Project without these aren't considered valid
-			if(typeof loadedProject.models !== "object"
-				|| typeof loadedProject.prefabs !== "object"
-				|| typeof loadedProject.worldObjects !== "object"
-				|| typeof loadedProject.gameplay !== "object"
-				|| typeof loadedProject.world !== "object") {
-				editorLog("Unable to load project: Missing project properties.", "error");
+			if(typeof loadedProject === "string") {
+				editorLog(`Unable to load project: ${loadedProject}`, "error");
 				return;
 			}
 
@@ -340,8 +260,6 @@ let projectTab = function() {
 			//Initialize loaded project
 			editorLog("Loading project...");
 			this.activeProject = loadedProject;
-			Object.setPrototypeOf(this.activeProject, Project.prototype);
-			this.activeProject.validateProject();
 
 			let modelLoaders = [];
 			for(let key in this.activeProject.models) {
@@ -372,7 +290,7 @@ let projectTab = function() {
 
 				// Non-model/prefab/object loading
 				worldTab.onProjectLoad(this.activeProject);
-				document.getElementById("paramMapName").value = this.activeProject.mapName;
+				document.getElementById("paramLevelName").value = this.activeProject.levelName;
 				document.getElementById("paramAuthorName").value = this.activeProject.authorName;
 				document.getElementById("paramEnterPeriod").value = this.activeProject.gameplay.defaultEnterPeriod;
 				document.getElementById("paramMaxRoundLength").value = this.activeProject.gameplay.roundLength;
@@ -402,4 +320,4 @@ let projectTab = function() {
 	};
 }();
 
-export { Project, projectTab };
+export { projectTab };

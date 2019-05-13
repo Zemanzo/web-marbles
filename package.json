@@ -45,6 +45,7 @@
     "pako": "^1.0.10",
     "reconnecting-websocket": "4.1.9",
     "request": "^2.88.0",
+    "semver": "^6.0.0",
     "stats-js": "^1.0.0",
     "three": "~0.102.1",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v15.8.0"

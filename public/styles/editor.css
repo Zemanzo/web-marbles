@@ -21,6 +21,10 @@ body {
 	color: var(--theme-color-dark);
 }
 
+#editorVersion {
+	font-size: 1rem;
+}
+
 	#menu .icon-cubes {
 		margin-left: -3px;
 		margin-right: 3px;
