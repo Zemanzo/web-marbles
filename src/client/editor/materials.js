@@ -12,11 +12,26 @@ function Material(uuid, projectData) {
 	this.uuid = uuid;
 	this.projectData = projectData; // Project reference for this material
 
+	// Related DOM elements
+	this.element = document.getElementById("materialTemplate").cloneNode(true); // deep clone
+	this.element.removeAttribute("id");
+	this.element.classList.remove("itemTemplate");
+
+	this.elements = {};
+	this.elements.textarea = this.element.getElementsByTagName("textarea")[0];
+	this.elements.itemName = this.element.getElementsByClassName("itemName")[0];
+
 	// Load material-related data if it exists in the project
 	if (this.projectData.name) {
-		this.name = this.projectData.name;
+		this.elements.itemName.value = this.name = this.projectData.name;
 	} else {
-		this.name = this.projectData.name = "";
+		this.elements.itemName.value = this.name = this.projectData.name = "";
+	}
+
+	if (this.projectData.script) {
+		this.elements.textarea.value = this.script = this.projectData.script;
+	} else {
+		this.elements.textarea.value = this.script = this.projectData.script = null;
 	}
 
 	// Array of option elements that are part of the model material selection
@@ -25,19 +40,14 @@ function Material(uuid, projectData) {
 	// Set a default material
 	this.compiledMaterial = _defaultMaterial.clone();
 
-	this.element = document.getElementById("materialTemplate").cloneNode(true); // deep clone
-	this.element.removeAttribute("id");
-	this.element.classList.remove("itemTemplate");
-	this.element.getElementsByClassName("itemName")[0].value = this.name;
-
 	// Add events
 	let self = this;
-	this.element.getElementsByClassName("itemName")[0].addEventListener("input", function() { self.onNameChange(this.value); }, false);
-	this.element.getElementsByClassName("itemName")[0].addEventListener("change", function() { self.onNameChange(this.value); }, false);
+	this.elements.itemName.addEventListener("input", function() { self.onNameChange(this.value); }, false);
+	this.elements.itemName.addEventListener("change", function() { self.onNameChange(this.value); }, false);
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
-	this.element.getElementsByTagName("textarea")[0].addEventListener("keydown", function(event) {
+	this.elements.textarea.addEventListener("keydown", function(event) {
 		if (event.key === "s" && event.ctrlKey) {
 			event.preventDefault();
 			self.parse();
@@ -47,34 +57,32 @@ function Material(uuid, projectData) {
 	// Display UUID
 	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
 
-	// Add to DOM
-	let materialList = document.getElementById("materialList");
-	this.element = materialList.insertBefore(this.element, document.getElementById("addMaterial"));
+	// Add custom material options to each model childMesh
+	this.element = materialsTab.elements.materialList.insertBefore(this.element, document.getElementById("addMaterial"));
 
 	for (let name in modelsTab.models) {
 		let model = modelsTab.models[name];
-		for (let i = 0; i < model.childMeshes.length; i++) {
+		for (let uuid in model.childMeshes) {
+			let childMesh = model.childMeshes[uuid];
 			let optionElement = this.createOptionElement();
 			let self = this;
 
 			optionElement.addEventListener("click", function() {
-				model.childMeshes[i].setMaterial(self.compiledMaterial);
+				childMesh.setMaterial(self.uuid);
 			}, false);
 
-			model.element.getElementsByTagName("select")[i].add(optionElement);
+			childMesh.selectElement.add(optionElement);
 		}
 	}
 }
 
 Material.prototype.parse = function(shouldLog = true) {
-	let textarea = this.element.getElementsByTagName("textarea")[0];
-
 	// To restart the CSS animation
-	textarea.style.animationName = "";
-	void textarea.offsetWidth;
+	this.elements.textarea.style.animationName = "";
+	void this.elements.textarea.offsetWidth;
 
 	try {
-		this.script = textarea.value;
+		this.projectData.script = this.script = this.elements.textarea.value;
 		let compiledMaterial = Function("textures", "THREE", this.script)(texturesTab.textures, THREE);
 		if (compiledMaterial instanceof THREE.Material) {
 			this.compiledMaterial.copy(compiledMaterial);
@@ -82,7 +90,7 @@ Material.prototype.parse = function(shouldLog = true) {
 			if (shouldLog) {
 				editorLog(`Succesfully parsed material script! (${this.name})`, "success");
 			}
-			textarea.style.animationName = "parseSuccess";
+			this.elements.textarea.style.animationName = "parseSuccess";
 		} else {
 			throw "return value is not a valid THREE Material";
 		}
@@ -92,7 +100,7 @@ Material.prototype.parse = function(shouldLog = true) {
 		if (shouldLog) {
 			editorLog(`Failed to parse script. ${error}`, "error");
 		}
-		textarea.style.animationName = "parseFailure";
+		this.elements.textarea.style.animationName = "parseFailure";
 	}
 };
 
@@ -128,7 +136,8 @@ Material.prototype.delete = function() {
 	// Model child meshes that use this material should revert to using their original material
 	for (let name in modelsTab.models) {
 		let model = modelsTab.models[name];
-		for (let childMesh of model.childMeshes) {
+		for (let childMeshUuid in model.childMeshes) {
+			let childMesh = model.childMeshes[childMeshUuid];
 			if (childMesh.mesh.material === this.compiledMaterial) {
 				childMesh.setMaterial(childMesh.originalMaterial);
 			}
@@ -152,10 +161,13 @@ let materialsTab = function() {
 		materials: {},
 
 		initialize: function() {
+			// Add to DOM
+			materialsTab.elements.materialList = document.getElementById("materialList");
+
 			document.getElementById("newMaterial").addEventListener("click", function() {
 				let uuid = generateTinyUUID();
-				let projectMaterial = projectTab.activeProject.addMaterial(uuid);
-				materialsTab.addMaterial(uuid, projectMaterial);
+				let project = projectTab.activeProject.addMaterial(uuid);
+				materialsTab.addMaterial(uuid, project);
 
 				// Focus to name input so user can start typing right away
 				materialsTab.materials[uuid].element.getElementsByClassName("itemName")[0].focus();

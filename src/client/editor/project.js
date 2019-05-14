@@ -5,6 +5,8 @@ import SerializeWorker from "./serialize.worker";
 import { worldTab } from "./world";
 import { prefabsTab } from "./prefabs";
 import { modelsTab } from "./models";
+import { materialsTab } from "./materials";
+import { texturesTab } from "./textures";
 
 
 let projectTab = function() {
@@ -241,13 +243,30 @@ let projectTab = function() {
 			while(Object.keys(prefabsTab.prefabs).length > 0) {
 				prefabsTab.deletePrefab(Object.keys(prefabsTab.prefabs)[0]);
 			}
-			while(Object.keys(modelsTab.models).length > 0) {
-				modelsTab.removeModel(Object.keys(modelsTab.models)[0]);
+			let modelsKeys = Object.keys(modelsTab.models);
+			for (let i = modelsKeys.length - 1; i >= 0; i--) {
+				modelsTab.models[modelsKeys[i]].delete();
+			}
+			let materialsKeys = Object.keys(materialsTab.materials);
+			for (let i = materialsKeys.length - 1; i >= 0; i--) {
+				materialsTab.materials[materialsKeys[i]].delete();
+			}
+			while (Object.keys(texturesTab.textures).length > 0) {
+				texturesTab.removeTexture(Object.keys(texturesTab.textures)[0]);
 			}
 
 			//Initialize loaded project
 			editorLog("Loading project...");
 			this.activeProject = loadedProject;
+
+			for (let key in this.activeProject.textures) {
+				texturesTab.addTexture(key, this.activeProject.textures[key].file, this.activeProject.textures[key]);
+			}
+
+			for (let key in this.activeProject.materials) {
+				materialsTab.addMaterial(key, this.activeProject.materials[key]);
+				materialsTab.materials[key].parse();
+			}
 
 			let modelLoaders = [];
 			for(let key in this.activeProject.models) {
@@ -265,6 +284,13 @@ let projectTab = function() {
 				for(let i = 0; i < results.length; i++) {
 					if(results[i] === "error") {
 						allSuccesses = false;
+					}
+				}
+
+				// Add custom materials to childMeshes where applicable
+				for (let modelName in modelsTab.models) {
+					for (let uuid in modelsTab.models[modelName].childMeshes) {
+						modelsTab.models[modelName].childMeshes[uuid].setMaterial(this.activeProject.models[modelName].childMeshes[uuid].material);
 					}
 				}
 
