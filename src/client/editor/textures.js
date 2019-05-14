@@ -54,7 +54,7 @@ let texturesTab = function() {
 					file.reader.onload = function() {
 						// Attempt to load texture and add it to the project
 						let project = projectTab.activeProject.addTexture(file.name, file.reader.result);
-						texturesTab.textures[file.name] = new Texture(file.name, file.reader.result, project);
+						texturesTab.addTexture(file.name, file.reader.result, project);
 					};
 
 					file.reader.onerror = function() {
@@ -73,6 +73,10 @@ let texturesTab = function() {
 
 		onTabInactive: function() {
 			modelsTab.group.visible = false;
+		},
+
+		addTexture: function(name, texture, project) {
+			texturesTab.textures[name] = new Texture(name, texture, project);
 		},
 
 		removeTexture: function(name) {

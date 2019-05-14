@@ -6,6 +6,7 @@ import { renderCore } from "../render/render-core";
 import { materialsTab } from "./materials";
 import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
+import { generateTinyUUID } from "../generate-tiny-uuid";
 
 // model object
 function Model(name, sceneObject, projectData) {
@@ -17,7 +18,7 @@ function Model(name, sceneObject, projectData) {
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
 	this.element = null;
 	this.prefabEntities = {};
-	this.childMeshes = [];
+	this.childMeshes = {};
 	this.changed = false;
 
 	// Add to scene
@@ -36,8 +37,10 @@ function Model(name, sceneObject, projectData) {
 	}, false);
 
 	// List model children
-	for (let mesh of _getChildMeshes(this.sceneObject)) {
-		this.childMeshes.push(new ChildMesh(mesh, this));
+	let childMeshes = _getChildMeshes(this.sceneObject);
+	for (let i = 0; i < childMeshes.length; i++) {
+		let childMeshUuid = Object.keys(projectData.childMeshes)[i] || generateTinyUUID(); // Child meshes are always parsed in the same order
+		this.childMeshes[childMeshUuid] = new ChildMesh(childMeshUuid, childMeshes[i], this);
 	}
 
 	// Add collapse functionality
@@ -220,9 +223,19 @@ Model.prototype.getConcaveGeometry = function() {
 	return this.concaveGeo;
 };
 
-function ChildMesh(mesh, parent) {
-	this.parent = parent;
+function ChildMesh(uuid, mesh, parent) {
+	console.log(uuid);
+	this.uuid = uuid;
 	this.mesh = mesh;
+	this.parent = parent;
+
+	if (!this.parent.projectData.childMeshes[uuid]) {
+		this.parent.projectData.childMeshes[uuid] = { material: null };
+	}
+
+	// this.parent.projectData.childMeshes[uuid] = {
+	// 	material: this.parent.projectData.childMeshes[uuid] ? this.parent.projectData.childMeshes[uuid].material : null || null
+	// };
 	this.element = document.createElement("div");
 	let self = this;
 
@@ -234,7 +247,7 @@ function ChildMesh(mesh, parent) {
 	childElementName.innerText = mesh.name;
 
 	// Element that allows selecting a custom material;
-	let childElementMaterialSelect = document.createElement("select");
+	this.selectElement = document.createElement("select");
 
 	// Store the original material in case we'd want to switch back
 	this.originalMaterial = mesh.material.clone();
@@ -244,28 +257,34 @@ function ChildMesh(mesh, parent) {
 	optionElement.innerText = "Original";
 	optionElement.style.fontStyle = "italic";
 	optionElement.selected = true;
-	optionElement.addEventListener("click", function() { self.setMaterial(self.originalMaterial); }, false);
-	childElementMaterialSelect.add(optionElement);
+	optionElement.addEventListener("click", function() { self.setMaterial(); }, false);
+	this.selectElement.add(optionElement);
 
-	for (let uuid in materialsTab.materials) {
-		let material = materialsTab.materials[uuid];
+	for (let materialUuid in materialsTab.materials) {
+		let material = materialsTab.materials[materialUuid];
 		optionElement = material.createOptionElement();
-		optionElement.addEventListener("click", function() { self.setMaterial(material.compiledMaterial); }, false);
-		childElementMaterialSelect.add(optionElement);
+		if (this.parent.projectData.childMeshes[uuid].material === materialUuid) {
+			optionElement.selected = true;
+		}
+		optionElement.addEventListener("click", function() { self.setMaterial(materialUuid); }, false);
+		this.selectElement.add(optionElement);
 	}
 
 	// Slap it all together
 	this.element.appendChild(childElementName);
-	this.element.appendChild(childElementMaterialSelect);
+	this.element.appendChild(this.selectElement);
 	this.parent.element.getElementsByClassName("itemDetails")[0].appendChild(this.element);
 }
 
-ChildMesh.prototype.setMaterial = function(material) {
+ChildMesh.prototype.setMaterial = function(materialUuid) {
 	// If no material is provided, fall back to the original material.
-	if (!material) {
+	if (!materialUuid) {
 		this.mesh.material = this.originalMaterial;
+		this.parent.projectData.childMeshes[this.uuid].material = null;
 	} else {
-		this.mesh.material = material;
+		this.mesh.material = materialsTab.materials[materialUuid].compiledMaterial;
+		this.parent.projectData.childMeshes[this.uuid].material = materialUuid;
+		console.log(materialUuid, this.parent.projectData.childMeshes);
 	}
 
 	// Update prefabs
