@@ -2,7 +2,7 @@ import * as THREE from "three";
 import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
-import { map } from "./render";
+import { renderCore } from "../render/render-core";
 import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
 
@@ -180,7 +180,7 @@ let modelsTab = function() {
 		initialize: function() {
 			_GLTFLoader = new THREE.GLTFLoader();
 			this.group = new THREE.Group();
-			map.scene.add(this.group);
+			renderCore.activeMap.scene.add(this.group);
 			this.group.visible = false;
 
 			// Add models button

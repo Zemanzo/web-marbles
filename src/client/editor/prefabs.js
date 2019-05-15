@@ -3,7 +3,7 @@ import { generateTinyUUID } from "../generate-tiny-uuid";
 import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
 import * as materials from "./materials";
-import { map, defaultModel } from "./render";
+import { renderCore } from "../render/render-core";
 import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
 import { worldTab } from "./world";
@@ -288,7 +288,7 @@ PrefabEntity.prototype.setScale = function(position) {
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "object", uuid, parent);
 	this.model = null;
-	this.sceneObject = defaultModel.clone();
+	this.sceneObject = renderCore.defaultModel.clone();
 	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
@@ -318,7 +318,7 @@ PrefabObject.prototype.setModel = function(modelName) {
 		this.projectData.model = null;
 	}
 
-	let model = defaultModel;
+	let model = renderCore.defaultModel;
 
 	// For null or non-existing models, use default
 	if(modelName && modelName !== "null") {
@@ -579,7 +579,7 @@ let prefabsTab = function() {
 			this.elements.modelList = document.getElementById("inspectorModelList");
 			this.elements.colliderList = document.getElementById("inspectorColliderList");
 			this.group = new THREE.Group();
-			map.scene.add(this.group);
+			renderCore.activeMap.scene.add(this.group);
 			this.group.visible = false;
 
 			// Register new prefab event
