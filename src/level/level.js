@@ -1,13 +1,12 @@
 function Level() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.1.1";
+	this.version = "0.2.0";
 	this.type = "project";
 
 	this.gameplay = {
-		defaultEnterPeriod: 40,
-		roundLength: 160,
-		timeUntilDnf: 40
+		gravity: 10,
+		roundLength: 160
 	};
 
 	this.models = {};

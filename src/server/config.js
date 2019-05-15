@@ -35,7 +35,9 @@ config.marbles.bots.names = [
 config.marbles.rules = {};
 config.marbles.rules.maxPlayerCount = 250; // Maximum amount of players that can enter in a single round
 config.marbles.rules.maxMarbleCount = 500; // Maximum amount of marbles that can be entered in a single round
+config.marbles.rules.enterPeriod = 20; // Time in seconds
 config.marbles.rules.finishPeriod = 15; // Time in seconds
+config.marbles.rules.timeUntilDnf = 30; // Time in seconds
 
 // Earning points
 config.marbles.scoring = {};

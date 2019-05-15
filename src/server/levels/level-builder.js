@@ -35,6 +35,8 @@ module.exports = function() {
 			}
 		}
 
+		physics.world.setGravity(level.gameplay.gravity);
+
 		for (let worldObjectUuid in level.worldObjects) {
 			let worldEntity = level.worldObjects[worldObjectUuid];
 			let prefab = level.prefabs[level.worldObjects[worldObjectUuid].prefab];

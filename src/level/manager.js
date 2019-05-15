@@ -32,10 +32,16 @@ module.exports = function() {
 			if(!semver.valid(loadedLevel.version)) {
 				console.warn("Loaded level has no valid version attached. Lowest level version is assumed.");
 				loadedLevel.version = "0.1.0";
+				loadedLevel.type = "project";
 			}
 			if(semver.lt(loadedLevel.version, "0.1.1")) {
 				loadedLevel.levelName = loadedLevel.mapName;
 				delete loadedLevel.mapName;
+			}
+			if(semver.lt(loadedLevel.version, "0.2.0")) {
+				delete loadedLevel.gameplay.defaultEnterPeriod;
+				delete loadedLevel.gameplay.timeUntilDnf;
+				loadedLevel.gameplay.gravity = 10;
 			}
 
 			if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
