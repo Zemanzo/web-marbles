@@ -21,8 +21,16 @@ let renderCore = function() {
 		_controls = null,
 		_defaultModel = null,
 
-		setActiveMap = null,
 		activeMap = null;
+
+	// Set a new active map
+	const setActiveMap = function(marbleMap) {
+		if (activeMap) {
+			_mainScene.remove(activeMap.scene);
+		}
+		activeMap = marbleMap;
+		_mainScene.add(activeMap.scene);
+	};
 
 	// Core render loop
 	const _animate = function() {
@@ -116,15 +124,6 @@ let renderCore = function() {
 
 		// Controls
 		_controls = new CameraFlyControls(_mainScene, _renderer);
-
-		// Set a new active map
-		setActiveMap = function(marbleMap) {
-			if (activeMap) {
-				_mainScene.remove(activeMap.scene);
-			}
-			activeMap = marbleMap;
-			_mainScene.add(activeMap.scene);
-		};
 
 		setActiveMap(new MarbleMap());
 
