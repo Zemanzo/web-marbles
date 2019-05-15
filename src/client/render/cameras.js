@@ -181,9 +181,9 @@ export function CameraFlyControls(
 		controls.getObject().position.y = options.defaultPosition.y;
 		controls.getObject().position.z = options.defaultPosition.z;
 
-		options.camera.parent.rotation.x = options.defaultRotation.x;
-		options.camera.parent.rotation.y = options.defaultRotation.y;
-		controls.getObject().rotation.z  = options.defaultRotation.z;
+		controls.getObject().rotation.x = options.defaultRotation.x;
+		controls.getObject().rotation.y = options.defaultRotation.y;
+		controls.getObject().rotation.z = options.defaultRotation.z;
 	};
 	this.toDefaults();
 

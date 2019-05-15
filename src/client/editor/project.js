@@ -345,7 +345,10 @@ let projectTab = function() {
 
 			let modelLoaders = [];
 			for(let key in this.activeProject.models) {
-				modelLoaders.push(modelsTab.loadModel(key, this.activeProject.models[key].file, this.activeProject.models[key]).catch( error => {return error;}) );
+				modelLoaders.push(
+					modelsTab.loadModel(key, this.activeProject.models[key].file, this.activeProject.models[key])
+						.catch( error => {return error;})
+				);
 			}
 
 			// Wait for all models to load before continuing

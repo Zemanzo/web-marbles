@@ -1,11 +1,11 @@
 import * as THREE from "three";
+import "./render";
 import { inspector } from "./inspector";
 import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
 import { setEditorLogElement } from "./log";
-import { initializeRenderer } from "./render";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
@@ -115,7 +115,6 @@ let editor = function() {
 
 			projectTab.initialize();
 			inspector.initialize();
-			initializeRenderer();
 			modelsTab.initialize();
 			prefabsTab.initialize();
 			worldTab.initialize();

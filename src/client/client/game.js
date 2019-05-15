@@ -1,6 +1,6 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
-import * as renderer from "./render";
+import { renderCore } from "../render/render-core";
 
 let game = (function() {
 	let _audio = {
@@ -32,8 +32,6 @@ let game = (function() {
 		_requestStart = Date.now();
 
 	let _startTimerInterval = function(s) {
-		console.log(_startTimerIsRunning);
-
 		// Make sure it only runs once
 		if (!_startTimerIsRunning) {
 			_startTimerIsRunning = true;
@@ -89,7 +87,6 @@ let game = (function() {
 	return {
 		setCurrentGameState: function(newStateData, isInitialState = false) {
 			let newState = newStateData.state;
-			console.log(newState, isInitialState);
 
 			_serverData.currentGameState = newState;
 			_DOMElements.gameInfo.className = newState;
@@ -100,7 +97,7 @@ let game = (function() {
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
-				renderer.clearMarbleMeshes();
+				renderCore.removeAllMarbleMeshes();
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -250,7 +247,7 @@ let game = (function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			renderer.spawnMarbleMesh(marble);
+			renderCore.addMarbleMesh(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
@@ -263,7 +260,7 @@ let game = (function() {
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
 			_DOMElements.marbleList.appendChild(listEntry);
-			_DOMElements.entries.innerHTML = renderer.marbleMeshes.length;
+			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
 		},
 
 		finishMarble: function(marble) {
