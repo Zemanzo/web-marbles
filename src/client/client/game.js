@@ -32,8 +32,6 @@ let game = (function() {
 		_requestStart = Date.now();
 
 	let _startTimerInterval = function(s) {
-		console.log(_startTimerIsRunning);
-
 		// Make sure it only runs once
 		if (!_startTimerIsRunning) {
 			_startTimerIsRunning = true;
@@ -89,7 +87,6 @@ let game = (function() {
 	return {
 		setCurrentGameState: function(newStateData, isInitialState = false) {
 			let newState = newStateData.state;
-			console.log(newState, isInitialState);
 
 			_serverData.currentGameState = newState;
 			_DOMElements.gameInfo.className = newState;

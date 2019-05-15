@@ -48,8 +48,6 @@ net.socketReady = new Promise((resolve) => {
 			// Unused anywhere else, cleaner to get rid of it now.
 			delete message.initialMarbleData;
 
-			console.log(message);
-
 			game.setInitialGameState(message);
 
 			resolve(message);
@@ -74,7 +72,6 @@ net.socketReady = new Promise((resolve) => {
 			break;
 		case "notification":
 			message = JSON.parse(message);
-			console.log(message);
 			new HUDNotification(message.content, message.duration, message.style);
 			break;
 		}

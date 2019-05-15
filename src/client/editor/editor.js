@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import "./render";
 import { inspector } from "./inspector";
 import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";

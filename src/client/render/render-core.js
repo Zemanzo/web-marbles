@@ -23,7 +23,6 @@ let renderCore = function() {
 			active: null
 		},
 
-		updateMarbles = function() {},
 		setActiveMap = null,
 		activeMap = null,
 		defaultModel = null;
@@ -41,8 +40,7 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-
-		updateMarbles();
+		renderCore.updateMarbles();
 		activeMap.update();
 
 		// Render the darn thing
@@ -153,10 +151,13 @@ let renderCore = function() {
 		activeMap,
 
 		setActiveMap,
-		updateMarbles,
+		updateMarbles: function() {},
 
 		addMarbleMesh: function(data) {
-			new MarbleMesh(data);
+			let marbleMesh = new MarbleMesh(data);
+			_marbleMeshes.push(marbleMesh);
+			_mainScene.add(marbleMesh.mesh);
+			_mainScene.add(marbleMesh.nameSprite);
 		},
 
 		removeAllMarbleMeshes: function() {
@@ -221,16 +222,18 @@ MarbleMap.prototype.update = function() {
 // Parses the map data and returns a Promise that resolves once it is fully done loading
 MarbleMap.prototype.loadMap = function(data) {
 	// Load models
-	let modelPromises = {};
+	let modelPromises = [];
+	let models = {};
 	for (let modelName in data.models) {
-		modelPromises[modelName] = new Promise((resolve, reject) => {
+		modelPromises.push(new Promise((resolve, reject) => {
 			try {
 				_GLTFLoader.parse(data.models[modelName].file, null,
 					function(model) {
-						resolve(model.scene);
+						models[modelName] = model.scene;
+						resolve();
 					}, function(error) {
 						console.warn(`Unable to load model (${modelName})`, error);
-						reject("error");
+						reject();
 					}
 				);
 			}
@@ -239,25 +242,23 @@ MarbleMap.prototype.loadMap = function(data) {
 				console.warn(`Unable to load model (${modelName})`, error);
 				reject("error");
 			}
-		});
+		}));
 	}
 
 	// Load prefabs
 	let prefabs = {};
-	return Promise.all(Object.values(modelPromises)).then(() => {
+	return Promise.all(modelPromises).then(() => {
 		for (let prefabUuid in data.prefabs) {
 			let group = new THREE.Group();
 
 			for (let entity of Object.values(data.prefabs[prefabUuid].entities)) {
 				if (entity.type === "object" && entity.model) {
-					modelPromises[entity.model].then((scene) => {
-						let clone = scene.clone();
+					let clone = models[entity.model].clone();
 
-						clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
-						clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
-						clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
-						group.add(clone);
-					});
+					clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
+					clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
+					clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
+					group.add(clone);
 				}
 			}
 

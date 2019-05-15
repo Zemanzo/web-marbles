@@ -38,9 +38,9 @@ networking.socketReady.then((initialData) => {
 			}
 
 			renderCore.activeMap.loadMap(mapData);
-			renderCore.activeMap.water.setHeight(mapData.world.waterHeight);
+			renderCore.activeMap.water.setHeight(mapData.world.waterLevel);
 			renderCore.activeMap.sky.recalculate({
-				inclination: mapData.world.inclination
+				inclination: mapData.world.sunInclination
 			});
 		});
 });
