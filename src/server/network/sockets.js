@@ -41,7 +41,7 @@ const setupGameplay = function(db, config, game, levels) {
 						roundStartTime: game.startTime,
 						maxRoundLength: values[1].gameplay.roundLength,
 						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
-						enterPeriodLength: values[1].gameplay.defaultEnterPeriod,
+						enterPeriodLength: config.marbles.rules.enterPeriod,
 						finishPeriodLength: config.marbles.rules.finishPeriod,
 
 						levelId: values[0],

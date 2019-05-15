@@ -53,7 +53,7 @@ let game = function() {
 
 		_round = null;
 
-		levels.currentLevelData.then((level) => {
+	levels.currentLevelData.then((level) => {
 		_currentLevel.gameplayParameters = level.gameplay;
 		_currentLevel.levelName = level.levelName;
 		_currentLevel.levelAuthorName = level.authorName;
@@ -141,7 +141,7 @@ let game = function() {
 					clearTimeout(this.enterTimeout);
 					this.enterTimeout = _setTrackableTimeout(
 						this.start.bind(this),
-						_currentLevel.gameplayParameters.defaultEnterPeriod * 1000
+						config.marbles.rules.enterPeriod * 1000
 					);
 				}
 			}
@@ -346,7 +346,7 @@ let game = function() {
 
 				this.gameplayFinishTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_currentLevel.gameplayParameters.timeUntilDnf * 1000
+					config.marbles.rules.timeUntilDnf * 1000
 				);
 			}
 
@@ -357,7 +357,7 @@ let game = function() {
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || _currentLevel.gameplayParameters.defaultEnterPeriod;
+			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
 		},
 
 		setSocketManager(socketManager) {

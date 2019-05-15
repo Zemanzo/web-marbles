@@ -373,7 +373,7 @@ module.exports = function() {
 		},
 
 		setGravity(force) {
-			physicsWorld.setGravity( new physics.ammo.btVector3( 0, force, 0 ) );
+			physicsWorld.setGravity( new physics.ammo.btVector3( 0, -force, 0 ) ); // Downwards force by default
 		}
 	};
 }();
