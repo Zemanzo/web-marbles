@@ -18,20 +18,17 @@ let renderCore = function() {
 		_marbleMeshes = [],
 		_viewport = null, // DOM viewport element
 		_stats = null,
-		_controls = {
-			fallback: null,
-			active: null
-		},
+		_controls = null,
+		_defaultModel = null,
 
 		setActiveMap = null,
-		activeMap = null,
-		defaultModel = null;
+		activeMap = null;
 
 	// Core render loop
 	const _animate = function() {
 		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
-		if (_controls.active.enabled === true) {
-			_controls.active.update();
+		if (_controls.enabled === true) {
+			_controls.update();
 		}
 
 		// Request new frame
@@ -44,7 +41,7 @@ let renderCore = function() {
 		activeMap.update();
 
 		// Render the darn thing
-		_renderer.render(_mainScene, _controls.active.camera);
+		_renderer.render(_mainScene, _controls.camera);
 
 		_stats.end();
 	};
@@ -52,8 +49,8 @@ let renderCore = function() {
 	const _onCanvasResize = function() {
 		_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 
-		_controls.active.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
-		_controls.active.camera.updateProjectionMatrix();
+		_controls.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
+		_controls.camera.updateProjectionMatrix();
 	};
 
 	// From https://github.com/mrdoob/three.js/blob/master/examples/js/WebGL.js
@@ -92,7 +89,7 @@ let renderCore = function() {
 
 				// called when the resource is loaded
 				function(gltf) {
-					defaultModel = gltf.scene;
+					_defaultModel = gltf.scene;
 				},
 
 				null,
@@ -118,7 +115,7 @@ let renderCore = function() {
 		_stats.dom.style.right = "0px";
 
 		// Controls
-		_controls.active = _controls.fallback = new CameraFlyControls(_mainScene, _renderer);
+		_controls = new CameraFlyControls(_mainScene, _renderer);
 
 		// Set a new active map
 		setActiveMap = function(marbleMap) {
@@ -147,10 +144,13 @@ let renderCore = function() {
 	}
 
 	return {
-		defaultModel,
 		activeMap,
-
 		setActiveMap,
+
+		getDefaultModel: function() {
+			return _defaultModel;
+		},
+
 		updateMarbles: function() {},
 
 		addMarbleMesh: function(data) {
@@ -225,24 +225,27 @@ MarbleMap.prototype.loadMap = function(data) {
 	let modelPromises = [];
 	let models = {};
 	for (let modelName in data.models) {
-		modelPromises.push(new Promise((resolve, reject) => {
-			try {
-				_GLTFLoader.parse(data.models[modelName].file, null,
-					function(model) {
-						models[modelName] = model.scene;
-						resolve();
-					}, function(error) {
-						console.warn(`Unable to load model (${modelName})`, error);
-						reject();
-					}
-				);
-			}
-			catch (error) {
-				// Invalid JSON/GLTF files may end up here
-				console.warn(`Unable to load model (${modelName})`, error);
-				reject("error");
-			}
-		}));
+		modelPromises.push(
+			new Promise((resolve, reject) => {
+				try {
+					_GLTFLoader.parse(data.models[modelName].file, null,
+						function(model) {
+							models[modelName] = model.scene;
+							resolve();
+						}, function(error) {
+							reject(error);
+						}
+					);
+				}
+				catch (error) {
+					// Invalid JSON/GLTF files may end up here
+					reject(error);
+				}
+			}).catch((error) => {
+				console.warn(`Unable to load model (${modelName}), using fallback model instead`, error);
+				models[modelName] = renderCore.getDefaultModel();
+			})
+		);
 	}
 
 	// Load prefabs

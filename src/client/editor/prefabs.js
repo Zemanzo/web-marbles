@@ -288,7 +288,7 @@ PrefabEntity.prototype.setScale = function(position) {
 function PrefabObject(uuid, parent) {
 	PrefabEntity.call(this, "object", uuid, parent);
 	this.model = null;
-	this.sceneObject = renderCore.defaultModel.clone();
+	this.sceneObject = renderCore.getDefaultModel().clone();
 	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	this.parent.group.add(this.sceneObject);
@@ -318,7 +318,7 @@ PrefabObject.prototype.setModel = function(modelName) {
 		this.projectData.model = null;
 	}
 
-	let model = renderCore.defaultModel;
+	let model = renderCore.getDefaultModel();
 
 	// For null or non-existing models, use default
 	if(modelName && modelName !== "null") {
