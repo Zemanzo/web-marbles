@@ -44,23 +44,12 @@ let game = function() {
 		_isWaitingForEntry = true,
 		_firstMarbleHasFinished = false,
 
-		_currentLevel = {
-			gameplayParameters: null,
-			levelName: null,
-			levelAuthorName: null,
-			levelFileName: null
-		},
+		_currentLevel = null,
 
 		_round = null;
 
 	levels.currentLevelData.then((level) => {
-		_currentLevel.gameplayParameters = level.gameplay;
-		_currentLevel.levelName = level.levelName;
-		_currentLevel.levelAuthorName = level.authorName;
-	});
-
-	levels.currentLevelName.then((levelFileName) => {
-		_currentLevel.levelFileName = levelFileName;
+		_currentLevel = level;
 	});
 
 	let _generateNewRoundData = function() {
@@ -68,7 +57,7 @@ let game = function() {
 			start: null,
 			end: null,
 			timeBest: null,
-			levelId: _currentLevel.levelFileName,
+			levelId: _currentLevel.getLevelId(),
 			pointsAwarded: 0,
 			playersEntered: 0,
 			playersFinished: 0,
@@ -197,7 +186,7 @@ let game = function() {
 					db.user.batchUpdateStatistics(_playersEnteredList);
 
 					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
-					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentLevel.levelFileName);
+					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentLevel.getLevelId());
 
 					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
 					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
@@ -217,7 +206,7 @@ let game = function() {
 
 					additionalData.level = {
 						name: _currentLevel.levelName,
-						author: _currentLevel.levelAuthorName
+						author: _currentLevel.authorName
 					};
 				}
 
@@ -290,7 +279,7 @@ let game = function() {
 				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 				this.gameplayMaxTimeout = _setTrackableTimeout(
 					this.end.bind(this),
-					_currentLevel.gameplayParameters.roundLength * 1000
+					_currentLevel.gameplay.roundLength * 1000
 				);
 
 				return true;

@@ -201,8 +201,8 @@ let projectTab = function() {
 		exportProject: function(exportAsLevel, useCompression) {
 			if(_exportActive > 0) return;
 
-			let serializationStart = new Date();
-			editorLog(`Starting export! (${(new Date()) - serializationStart}ms)`);
+			let exportStart = Date.now();
+			editorLog("Starting export!");
 
 			// postMessage will copy the data, so we don't have to worry about it being shared
 			// We may want to lock the editor controls and do this async in the future
@@ -213,7 +213,7 @@ let projectTab = function() {
 				exportType: exportAsLevel ? "publishClient" : "exportProject",
 				useCompression: useCompression,
 				payload: payload,
-				serializationStart: serializationStart
+				exportStart: exportStart
 			});
 			if(exportAsLevel) {
 				_exportActive++;
@@ -221,7 +221,7 @@ let projectTab = function() {
 					exportType: "publishServer",
 					useCompression: useCompression,
 					payload: payload,
-					serializationStart: serializationStart
+					exportStart: exportStart
 				});
 			}
 		},

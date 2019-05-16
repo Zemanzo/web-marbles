@@ -1,8 +1,9 @@
 function Level() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.2.0";
+	this.version = "0.2.1";
 	this.type = "project";
+	this.exportDate = 0;
 
 	this.gameplay = {
 		gravity: 10,
@@ -40,6 +41,10 @@ Level.prototype.addWorldObject = function(uuid, prefabUuid) {
 		prefab: prefabUuid
 	};
 	return this.worldObjects[uuid];
+};
+
+Level.prototype.getLevelId = function() {
+	return `${this.levelName}_${this.exportDate}`;
 };
 
 Level.prototype.validateLevel = function() {
