@@ -1,4 +1,5 @@
 import * as pako from "pako";
+import * as msgPack from "msgpack-lite";
 import * as levelManager from "../../level/manager";
 
 
@@ -29,7 +30,7 @@ let exportProject = function(data, exportType, exportStart, useCompression) {
 		}
 
 		// Converting to file-ready format
-		data = JSON.stringify(data);
+		data = msgPack.encode(data);
 		sendLog(`File data prepared. (${Date.now() - exportStart}ms)`);
 
 		if(useCompression) {
