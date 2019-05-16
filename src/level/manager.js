@@ -43,6 +43,9 @@ module.exports = function() {
 				delete loadedLevel.gameplay.timeUntilDnf;
 				loadedLevel.gameplay.gravity = 10;
 			}
+			if(semver.lt(loadedLevel.version, "0.2.1")) {
+				loadedLevel.exportDate = 0;
+			}
 
 			if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
 				console.log(`Converted level from v${loadedLevel.version} to v${this.getCurrentVersion()}`);
@@ -56,7 +59,7 @@ module.exports = function() {
 			return loadedLevel;
 		},
 
-		prepareExport(project, exportType) {
+		prepareExport(project, exportType, exportDate) {
 			if(exportType === "publishServer") {
 				// Remove raw model data
 				for(let key in project.models) {
@@ -165,7 +168,7 @@ module.exports = function() {
 					delete project.models[unusedModels[i]];
 				}
 			}
-			// TODO: Set level type (project/levelClient/levelServer)
+
 			switch(exportType) {
 			case "exportProject":
 				project.type = "project";
@@ -177,6 +180,7 @@ module.exports = function() {
 				project.type = "levelServer";
 				break;
 			}
+			project.exportDate = exportDate;
 			return project;
 		}
 	};

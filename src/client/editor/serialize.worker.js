@@ -1,17 +1,13 @@
 import * as pako from "pako";
 import * as levelManager from "../../level/manager";
 
-let serialize = {
-	start: null
-};
 
 onmessage = function(message) {
-	serialize.start = message.data.serializationStart || new Date();
-	exportProject(message.data.payload, message.data.exportType, message.data.useCompression);
+	exportProject(message.data.payload, message.data.exportType, message.data.exportStart, message.data.useCompression);
 };
 
-let exportProject = function(data, exportType, useCompression) {
-	sendLog(`Payload received. (${(new Date()) - serialize.start}ms)`);
+let exportProject = function(data, exportType, exportStart, useCompression) {
+	sendLog(`Payload received. (${Date.now() - exportStart}ms)`);
 
 	try {
 		let fileName = data.levelName;
@@ -23,18 +19,18 @@ let exportProject = function(data, exportType, useCompression) {
 			extension = ".mmc";
 		}
 
-		data = levelManager.prepareExport(data, exportType);
+		data = levelManager.prepareExport(data, exportType, exportStart);
 
 		// Converting to file-ready format
 		data = JSON.stringify(data);
-		sendLog(`File data prepared. (${(new Date()) - serialize.start}ms)`);
+		sendLog(`File data prepared. (${Date.now() - exportStart}ms)`);
 
 		if(useCompression) {
 			let startLength = data.length;
-			sendLog("Starting compression. (This might take a while...)");
+			sendLog("Starting compression...");
 			data = pako.deflate(data);
 			let compressionRatio = Math.round((data.length / startLength) * 10000) * .01;
-			sendLog(`Data compressed! (${compressionRatio}% of original) (${(new Date()) - serialize.start}ms)`);
+			sendLog(`Data compressed! (${compressionRatio}% of original) (${Date.now() - exportStart}ms)`);
 		}
 
 		let filetype = useCompression ? "application/octet-stream" : "application/json";
@@ -42,7 +38,7 @@ let exportProject = function(data, exportType, useCompression) {
 		let file = new File([data], filename, {type: filetype});
 		let objectUrl = URL.createObjectURL(file);
 
-		sendLog(`Serialization successful! (${(new Date()) - serialize.start}ms)`, "success");
+		sendLog(`Serialization successful! (${Date.now() - exportStart}ms)`, "success");
 		postMessage({
 			type: "publishSuccess",
 			payload: {
