@@ -224,7 +224,6 @@ Model.prototype.getConcaveGeometry = function() {
 };
 
 function ChildMesh(uuid, mesh, parent) {
-	console.log(uuid);
 	this.uuid = uuid;
 	this.mesh = mesh;
 	this.parent = parent;
@@ -233,9 +232,6 @@ function ChildMesh(uuid, mesh, parent) {
 		this.parent.projectData.childMeshes[uuid] = { material: null };
 	}
 
-	// this.parent.projectData.childMeshes[uuid] = {
-	// 	material: this.parent.projectData.childMeshes[uuid] ? this.parent.projectData.childMeshes[uuid].material : null || null
-	// };
 	this.element = document.createElement("div");
 	let self = this;
 
@@ -284,12 +280,13 @@ ChildMesh.prototype.setMaterial = function(materialUuid) {
 	} else {
 		this.mesh.material = materialsTab.materials[materialUuid].compiledMaterial;
 		this.parent.projectData.childMeshes[this.uuid].material = materialUuid;
-		console.log(materialUuid, this.parent.projectData.childMeshes);
 	}
 
 	// Update prefabs
 	for (let prefabEntity in this.parent.prefabEntities) {
-		this.parent.prefabEntities[prefabEntity].setModel(this.parent.name);
+		if (this.parent.prefabEntities[prefabEntity].type === "object") {
+			this.parent.prefabEntities[prefabEntity].setModel(this.parent.name);
+		}
 	}
 };
 
