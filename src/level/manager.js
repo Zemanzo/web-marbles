@@ -1,5 +1,6 @@
 const Level = require("./level");
 const pako = require("pako");
+const msgPack = require("msgpack-lite");
 const semver = require("semver");
 
 module.exports = function() {
@@ -13,11 +14,11 @@ module.exports = function() {
 		load(fileData) {
 			let loadedLevel;
 			try {
-				let data = pako.inflate(fileData, { to: "string" });
-				loadedLevel = JSON.parse(data);
+				let data = pako.inflate(fileData);
+				loadedLevel = msgPack.decode(data);
 			}
 			catch(error) {
-				console.error("Level loading failed:");
+				console.error("Level loading failed: Invalid level file.");
 				console.error(error);
 				return null;
 			}
