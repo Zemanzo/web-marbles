@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
-import * as materials from "./materials";
+import * as materials from "./editor-materials";
 import { renderCore } from "../render/render-core";
 import { EditorObject } from "./editor";
 import { modelsTab } from "./models";
@@ -136,13 +136,13 @@ Prefab.prototype.deleteEntity = function(uuid) {
 	let thisObject = this.entities[uuid];
 
 	// Deselect inspector if this is currently selected
-	if(inspector.selected === thisObject) inspector.deselect();
-
-	this.group.remove(thisObject.sceneObject);
-	thisObject.element.parentNode.removeChild(thisObject.element);
+	if (inspector.selected === thisObject) inspector.deselect();
 
 	// Remove from model references
 	thisObject.setModel(null);
+
+	this.group.remove(thisObject.sceneObject);
+	thisObject.element.parentNode.removeChild(thisObject.element);
 
 	delete this.entities[uuid];
 	delete this.projectData.entities[uuid];
