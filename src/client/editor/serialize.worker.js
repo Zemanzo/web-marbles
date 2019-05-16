@@ -20,6 +20,13 @@ let exportProject = function(data, exportType, exportStart, useCompression) {
 		}
 
 		data = levelManager.prepareExport(data, exportType, exportStart);
+		if(data === null) {
+			postMessage({
+				type: "error",
+				payload: "Level export failed, check console for details."
+			});
+			return;
+		}
 
 		// Converting to file-ready format
 		data = JSON.stringify(data);

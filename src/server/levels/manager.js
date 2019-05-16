@@ -35,8 +35,8 @@ function loadLevel(levelName) {
 		fs.readFile(`${config.levels.folderPath}/${levelName}.mms`, function(error, fileBuffer) {
 			try {
 				let level = levelLoader.load(fileBuffer);
-				if(typeof level === "string") {
-					console.log(`Unable to load ${levelName}.mms: ${level}`);
+				if(!level) {
+					console.log(`Unable to load ${levelName}.mms`);
 					reject(level);
 				}
 				resolve(level);

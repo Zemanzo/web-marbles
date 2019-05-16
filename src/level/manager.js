@@ -9,7 +9,7 @@ module.exports = function() {
 		},
 
 		// Loads a level based on the given file data.
-		// Return a Level object on success, or an error string on failure.
+		// Return a Level object on success, or null on failure.
 		load(fileData) {
 			let loadedLevel;
 			try {
@@ -17,45 +17,54 @@ module.exports = function() {
 				loadedLevel = JSON.parse(data);
 			}
 			catch(error) {
-				return "Invalid level file.";
+				console.error("Level loading failed:");
+				console.error(error);
+				return null;
 			}
 
-			// Project without these aren't considered valid
+			// A level without these aren't considered valid
 			if(typeof loadedLevel.models !== "object"
 				|| typeof loadedLevel.prefabs !== "object"
 				|| typeof loadedLevel.worldObjects !== "object"
 				|| typeof loadedLevel.gameplay !== "object"
 				|| typeof loadedLevel.world !== "object") {
-				return "Missing level properties.";
+				console.error("Level loading failed: Missing vital level properties");
+				return null;
 			}
 
-			if(!semver.valid(loadedLevel.version)) {
-				console.warn("Loaded level has no valid version attached. Lowest level version is assumed.");
-				loadedLevel.version = "0.1.0";
-				loadedLevel.type = "project";
-			}
-			if(semver.lt(loadedLevel.version, "0.1.1")) {
-				loadedLevel.levelName = loadedLevel.mapName;
-				delete loadedLevel.mapName;
-			}
-			if(semver.lt(loadedLevel.version, "0.2.0")) {
-				delete loadedLevel.gameplay.defaultEnterPeriod;
-				delete loadedLevel.gameplay.timeUntilDnf;
-				loadedLevel.gameplay.gravity = 10;
-			}
-			if(semver.lt(loadedLevel.version, "0.2.1")) {
-				loadedLevel.exportDate = 0;
-			}
+			try {
+				if(!semver.valid(loadedLevel.version)) {
+					console.warn("Loaded level has no valid version attached. Lowest level version is assumed.");
+					loadedLevel.version = "0.1.0";
+					loadedLevel.type = "project";
+				}
+				if(semver.lt(loadedLevel.version, "0.1.1")) {
+					loadedLevel.levelName = loadedLevel.mapName;
+					delete loadedLevel.mapName;
+				}
+				if(semver.lt(loadedLevel.version, "0.2.0")) {
+					delete loadedLevel.gameplay.defaultEnterPeriod;
+					delete loadedLevel.gameplay.timeUntilDnf;
+					loadedLevel.gameplay.gravity = 10;
+				}
+				if(semver.lt(loadedLevel.version, "0.2.1")) {
+					loadedLevel.exportDate = 0;
+				}
 
-			if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
-				console.log(`Converted level from v${loadedLevel.version} to v${this.getCurrentVersion()}`);
-				loadedLevel.version = this.getCurrentVersion();
-			} else if(semver.gt(loadedLevel.version, this.getCurrentVersion())) {
-				console.warn(`Loaded level version (${loadedLevel.version}) is higher than the supported version (${this.getCurrentVersion()})!`);
+				if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
+					console.log(`Converted level from v${loadedLevel.version} to v${this.getCurrentVersion()}`);
+					loadedLevel.version = this.getCurrentVersion();
+				} else if(semver.gt(loadedLevel.version, this.getCurrentVersion())) {
+					console.warn(`Loaded level version (${loadedLevel.version}) is higher than the supported version (${this.getCurrentVersion()})!`);
+				}
+			} catch(error) {
+				console.error("Level loading failed: Unable to convert to latest version.");
+				console.error(error);
+				return null;
 			}
 
 			Object.setPrototypeOf(loadedLevel, Level.prototype);
-			loadedLevel.validateLevel();
+			if(!loadedLevel.validateLevel()) return null;
 			return loadedLevel;
 		},
 
@@ -181,6 +190,10 @@ module.exports = function() {
 				break;
 			}
 			project.exportDate = exportDate;
+
+			// In case of export using a web worker, the level doesn't keep any of its functions
+			// Hence this function is called from the prototype
+			if(!Level.prototype.validateLevel.call(project)) return null;
 			return project;
 		}
 	};
