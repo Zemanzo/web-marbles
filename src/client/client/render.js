@@ -293,8 +293,8 @@ let addLevel = function(levelName) {
 		.then((buffer) => {
 			try {
 				let levelData = levelManager.load(buffer);
-				if(typeof levelData === "string") {
-					console.error(`Level loading failed: ${levelData}`);
+				if(!levelData) {
+					console.error("Level loading failed.");
 					return;
 				}
 

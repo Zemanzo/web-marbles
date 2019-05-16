@@ -229,8 +229,8 @@ let projectTab = function() {
 		importProject: function(loadedFile) {
 			let loadedProject = levelManager.load(loadedFile);
 
-			if(typeof loadedProject === "string") {
-				editorLog(`Unable to load project: ${loadedProject}`, "error");
+			if(!loadedProject) {
+				editorLog("Unable to load project. Check console for details.", "error");
 				return;
 			}
 
