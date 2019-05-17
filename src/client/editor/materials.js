@@ -139,7 +139,7 @@ Material.prototype.delete = function() {
 		for (let childMeshUuid in model.childMeshes) {
 			let childMesh = model.childMeshes[childMeshUuid];
 			if (childMesh.mesh.material === this.compiledMaterial) {
-				childMesh.setMaterial(childMesh.originalMaterial);
+				childMesh.setMaterial();
 			}
 		}
 	}
