@@ -3,7 +3,6 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
-import { addLevel } from "./render";
 
 let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
@@ -45,11 +44,9 @@ net.socketReady = new Promise((resolve) => {
 
 			// Initial marble sizes, colors and names
 			net.marbleData = message.initialMarbleData;
-			addLevel(message.levelId);
 
 			// Unused anywhere else, cleaner to get rid of it now.
 			delete message.initialMarbleData;
-			delete message.levelId;
 
 			game.setInitialGameState(message);
 
