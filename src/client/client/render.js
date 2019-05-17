@@ -27,11 +27,6 @@ networking.socketReady.then((initialData) => {
 		})
 		.then((buffer) => {
 			let levelData = levelManager.load(buffer);
-
-			renderCore.activeMap.loadMap(levelData);
-			renderCore.activeMap.water.setHeight(levelData.world.waterLevel);
-			renderCore.activeMap.sky.recalculate({
-				inclination: levelData.world.sunInclination
-			});
+			renderCore.activeLevel.loadLevel(levelData);
 		});
 });

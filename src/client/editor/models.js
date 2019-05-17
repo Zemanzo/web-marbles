@@ -180,7 +180,7 @@ let modelsTab = function() {
 		initialize: function() {
 			_GLTFLoader = new THREE.GLTFLoader();
 			this.group = new THREE.Group();
-			renderCore.activeMap.scene.add(this.group);
+			renderCore.activeLevel.scene.add(this.group);
 			this.group.visible = false;
 
 			// Add models button

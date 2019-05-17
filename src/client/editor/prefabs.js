@@ -579,7 +579,7 @@ let prefabsTab = function() {
 			this.elements.modelList = document.getElementById("inspectorModelList");
 			this.elements.colliderList = document.getElementById("inspectorColliderList");
 			this.group = new THREE.Group();
-			renderCore.activeMap.scene.add(this.group);
+			renderCore.activeLevel.scene.add(this.group);
 			this.group.visible = false;
 
 			// Register new prefab event

@@ -74,7 +74,7 @@ let worldTab = function() {
 		initialize: function() {
 			this.elements.prefabList = document.getElementById("worldPrefabList");
 			this.group = new THREE.Group();
-			renderCore.activeMap.scene.add(this.group);
+			renderCore.activeLevel.scene.add(this.group);
 			this.group.visible = false;
 
 			this.onProjectLoad(projectTab.activeProject);
@@ -105,13 +105,13 @@ let worldTab = function() {
 
 		setWaterLevel: function(height) {
 			this.worldParameters.waterLevel = height;
-			renderCore.activeMap.water.waterObject.position.y = height;
+			renderCore.activeLevel.water.waterObject.position.y = height;
 		},
 
 		setSunInclination: function(inclination) {
 			this.worldParameters.sunInclination = inclination;
-			renderCore.activeMap.sky.parameters.inclination = inclination;
-			renderCore.activeMap.sky.recalculate();
+			renderCore.activeLevel.sky.parameters.inclination = inclination;
+			renderCore.activeLevel.sky.recalculate();
 		},
 
 		addWorldObject: function(uuid, prefab, project) {
