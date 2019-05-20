@@ -69,10 +69,6 @@
 							<h3>Custom materials</h3>
 							<div id="materialsInformation">
 								Since the GLTF specification does not support all types of materials, you can create your own material here.
-								The code you enter here will be evaluated, parsed, and applied when loading the map. You have access to the
-								<pre>THREE</pre> global and a <pre>textures</pre> variable containing the textures added to the map (you can address
-								them as shown in this example: <pre>textures["filename.jpg"].map</pre>). The function should return the material you
-								wish to apply to your model.
 							</div>
 							<div id="materialList" class="itemList">
 								<div class="itemTemplate item material collapsed" id="materialTemplate">
@@ -86,8 +82,51 @@
 											REKT
 										</div>
 									</div>
-									<textarea wrap="off" placeholder="// Your code goes here..."></textarea>
-									<button class="parse" title="Parse material (ctrl+s when the text input has focus)">PARSE</button>
+									<div class="materialProperties">
+										<div title="required">Diffuse map A*</div>
+										<select class="textureSelect" data-texture-map-type="diffuse-a">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+
+										<div title="required">Diffuse map B*</div>
+										<select class="textureSelect" data-texture-map-type="diffuse-b">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+
+										<div title="required">Mask*</div>
+										<select class="textureSelect" data-texture-map-type="mask">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+
+										<div>Normal map A</div>
+										<select class="textureSelect" data-texture-map-type="normal-a">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+
+										<div>Normal map B</div>
+										<select class="textureSelect" data-texture-map-type="normal-b">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+
+										<div>Side</div>
+										<select class="span-2">
+											<option value="FrontSide" selected>Front side</option>
+											<option value="BackSide">Back side</option>
+											<option value="DoubleSide">Both sides</option>
+										</select>
+
+										<div class="span-2">Roughness</div>
+										<input class="roughness" type="number" value=".5" step=".01" min="0" max="1" required/>
+
+										<div class="span-2">Metalness</div>
+										<input class="metalness" type="number" value=".5" step=".01" min="0" max="1" required/>
+									</div>
+									<button class="parse" title="Parse material (ctrl+s when the text input has focus)">SAVE & PARSE</button>
 								</div>
 
 								<div id="newMaterial" class="add">
@@ -310,7 +349,6 @@
 										<span>Add prefab</span>
 									</div>
 								</div>
-
 							</div>
 
 							<div id="worldMeta">

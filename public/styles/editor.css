@@ -243,49 +243,16 @@ body {
 	background: #111;
 }
 
-.material textarea {
-	background: #111;
-	color: #eee;
-	border: none;
-	resize: vertical;
-	overflow-x: auto;
-	overflow-y: hidden;
-	border: 1px solid #464646;
-	padding: 2px;
-	font-size: 11px;
-	min-height: 60px;
-	animation-duration: .7s;
-	animation-delay: 0s;
-	animation-timing-function: ease-out;
-	animation-fill-mode: forwards;
+.materialProperties {
+	margin:0px 2px;
+	display: grid;
+	grid-template-columns: 1fr 2fr 50px;
+	grid-gap: 1px;
 }
-	.material::placeholder {
-		color: #464646;
-	}
-	.material textarea:focus {
-		border: 1px solid #787878;
-	}
 
-	@keyframes parseSuccess {
-		0% {
-			border: 1px solid #33dd33;
-			background: #131;
+.material .span-2 {
+	grid-column-end: span 2;
 }
-		100% {
-			border: 1px solid #787878;
-			background: #111;
-		}
-	}
-	@keyframes parseFailure {
-		0% {
-			border: 1px solid #dd3333;
-			background: #311;
-		}
-		100% {
-			border: 1px solid #787878;
-			background: #111;
-		}
-	}
 
 .material .parse {
 	border: none;
