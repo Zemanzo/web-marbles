@@ -12,7 +12,7 @@ module.exports = function() {
 		// Loads a level based on the given file data.
 		// Return a Level object on success, or null on failure.
 		load(fileData) {
-			let loadedLevel;
+			let loadedLevel = null;
 			try {
 				let data = pako.inflate(fileData);
 				loadedLevel = msgPack.decode(data);
