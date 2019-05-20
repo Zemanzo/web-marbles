@@ -32,7 +32,10 @@
 			</div>
 		</section>
 		<section id="sidebar">
-			<div id="mode">EDITOR MODE</div>
+			<div id="mode">
+				<span>EDITOR MODE</span>
+				<span id="editorVersion">v0.0.0</span>
+			</div>
 
 			<div id="menu">
 				<div id="menuOptions">
@@ -303,10 +306,10 @@
 								<tbody>
 									<tr>
 										<td>
-											Map name
+											Level name
 										</td>
 										<td>
-											<input type="text" maxlength="40" placeholder="New map" id="paramMapName"/>
+											<input type="text" maxlength="40" placeholder="New level" id="paramLevelName"/>
 										</td>
 									</tr>
 									<tr>
@@ -319,10 +322,10 @@
 									</tr>
 									<tr>
 										<td>
-											Default entering period
+											Gravity
 										</td>
 										<td>
-											<input type="number" value="40" id="paramEnterPeriod" step="1" min="5" required/>
+											<input type="number" value="10" id="paramGravity" step="1" min="1" max="50" required/>
 										</td>
 									</tr>
 									<tr>
@@ -331,14 +334,6 @@
 										</td>
 										<td>
 											<input type="number" value="160" id="paramMaxRoundLength" step="1" min="5" required/>
-										</td>
-									</tr>
-									<tr>
-										<td>
-											Time until DNF after first finish
-										</td>
-										<td>
-											<input type="number" value="40" id="paramWaitAfterFinish" step="1" min="5" required/>
 										</td>
 									</tr>
 								</tbody>

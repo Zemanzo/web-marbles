@@ -2,7 +2,7 @@ const socketManager = require("./websocket-manager");
 const messages = require("../chat/messages");
 const log = require("../../log");
 
-const setupGameplay = function(db, config, game, maps) {
+const setupGameplay = function(db, config, game, levels) {
 	// Gameplay socket
 	let gameplaySocketManager = new socketManager.Socket(
 		"/gameplay",
@@ -35,16 +35,16 @@ const setupGameplay = function(db, config, game, maps) {
 
 				let initialMarbleData = game.getMarbles();
 
-				Promise.all([maps.currentMapName, maps.currentMapData]).then((values) => {
+				Promise.all([levels.currentLevelName, levels.currentLevelData]).then((values) => {
 					let intialData = {
 						currentGameState: game.currentGameState,
 						roundStartTime: game.startTime,
 						maxRoundLength: values[1].gameplay.roundLength,
 						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
-						enterPeriodLength: values[1].gameplay.defaultEnterPeriod,
+						enterPeriodLength: config.marbles.rules.enterPeriod,
 						finishPeriodLength: config.marbles.rules.finishPeriod,
 
-						mapId: values[0],
+						levelId: values[0],
 
 						initialMarbleData
 					};

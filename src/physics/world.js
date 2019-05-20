@@ -1,7 +1,7 @@
 const physics = require("./manager");
 
 // Constructor for starting area, starting gate, and finish line
-function MapCollider(colliderData, functionality, transform, id) {
+function LevelCollider(colliderData, functionality, transform, id) {
 	this.colliderData = colliderData;
 	this.type = functionality;
 	this.id = id; // Used for identifying colliders in callbacks
@@ -10,14 +10,14 @@ function MapCollider(colliderData, functionality, transform, id) {
 	this.isInWorld = false; // Flag to track whether it's added to the world
 }
 
-MapCollider.prototype.addToWorld = function() {
+LevelCollider.prototype.addToWorld = function() {
 	if(!this.isInWorld && this.ammoBody) {
 		this.isInWorld = true;
 		physics.world.physicsWorld.addRigidBody(this.ammoBody);
 	}
 };
 
-MapCollider.prototype.removeFromWorld = function() {
+LevelCollider.prototype.removeFromWorld = function() {
 	if(this.isInWorld) {
 		this.isInWorld = false;
 		physics.world.physicsWorld.removeRigidBody(this.ammoBody);
@@ -31,7 +31,7 @@ module.exports = function() {
 		_broadphase,
 		_solver,
 		physicsWorld,
-		_mapColliders = [], // Collection of all map colliders
+		_levelColliders = [], // Collection of all level colliders
 		_startAreas = [], // Quicklist of start areas
 		_startGates = [], // Quicklist of starting gates
 		_specialColliders = [], // Quicklist of colliders that cause collision callbacks
@@ -70,16 +70,16 @@ module.exports = function() {
 
 			if(contact) {
 				let marble = null;
-				let mapCollider = null;
+				let levelCollider = null;
 
 				let body0 = manifold.getBody0().getUserIndex();
 				let body1 = manifold.getBody1().getUserIndex();
 
-				// Find the marble and mapCollider for this collision
+				// Find the marble and levelCollider for this collision
 				if(body0 > 0) {
 					for(let m = 0; m < _specialColliders.length; m++) {
 						if(_specialColliders[m].id === body0) {
-							mapCollider = _specialColliders[m];
+							levelCollider = _specialColliders[m];
 							break;
 						}
 					}
@@ -94,7 +94,7 @@ module.exports = function() {
 				if(body1 > 0) {
 					for(let m = 0; m < _specialColliders.length; m++) {
 						if(_specialColliders[m].id === body1) {
-							mapCollider = _specialColliders[m];
+							levelCollider = _specialColliders[m];
 							break;
 						}
 					}
@@ -107,9 +107,9 @@ module.exports = function() {
 					}
 				}
 				// Skip if either is not found
-				if(marble === null || mapCollider === null) continue;
+				if(marble === null || levelCollider === null) continue;
 
-				if(mapCollider.type === "endarea") {
+				if(levelCollider.type === "endarea") {
 					if(marble.onMarbleFinish) marble.onMarbleFinish();
 				}
 			}
@@ -183,11 +183,11 @@ module.exports = function() {
 
 		// Takes a prefabCollider from project data, and its world transform
 		createCollider(collider, transform) {
-			let newCollider = new MapCollider(collider.colliderData, collider.functionality, transform, _ids++);
+			let newCollider = new LevelCollider(collider.colliderData, collider.functionality, transform, _ids++);
 
 			// For starting areas, we can skip collider creation
 			if(collider.functionality === "startarea") {
-				_mapColliders.push(newCollider);
+				_levelColliders.push(newCollider);
 				_startAreas.push(newCollider);
 				return newCollider;
 			}
@@ -265,62 +265,62 @@ module.exports = function() {
 			case "static":
 				break;
 			default:
-				console.warn(`Created map collider with unknown functionality "${collider.functionality}". Collider is treated as static.`);
+				console.warn(`Created level collider with unknown functionality "${collider.functionality}". Collider is treated as static.`);
 				break;
 			}
 
 			newCollider.addToWorld();
-			_mapColliders.push(newCollider);
+			_levelColliders.push(newCollider);
 			return newCollider;
 		},
 
-		destroyCollider(mapCollider) {
+		destroyCollider(levelCollider) {
 			// Erase from _startAreas
-			if(mapCollider.type === "startarea") {
+			if(levelCollider.type === "startarea") {
 				for(let i = 0; i < _startAreas.length; i++) {
-					if(_startAreas[i] === mapCollider) {
+					if(_startAreas[i] === levelCollider) {
 						_startAreas.splice(i, 1);
 						return;
 					}
 				}
 			}
 			// Erase from _startGates
-			if(mapCollider.type === "startgate") {
+			if(levelCollider.type === "startgate") {
 				for(let i = 0; i < _startGates.length; i++) {
-					if(_startGates[i] === mapCollider) {
+					if(_startGates[i] === levelCollider) {
 						_startGates.splice(i, 1);
 						return;
 					}
 				}
 			}
 			// Erase from _specialColliders, currently "endarea" only
-			if(mapCollider.type === "endarea") {
+			if(levelCollider.type === "endarea") {
 				for(let i = 0; i < _specialColliders.length; i++) {
-					if(_specialColliders[i] === mapCollider) {
+					if(_specialColliders[i] === levelCollider) {
 						_specialColliders.splice(i, 1);
 						return;
 					}
 				}
 			}
-			// Erase from _mapColliders, remove from world if needed
-			for(let i = 0; i < _mapColliders.length; i++) {
-				if(_mapColliders[i] === mapCollider) {
-					mapCollider.removeFromWorld();
-					_mapColliders.splice(i, 1);
+			// Erase from _levelColliders, remove from world if needed
+			for(let i = 0; i < _levelColliders.length; i++) {
+				if(_levelColliders[i] === levelCollider) {
+					levelCollider.removeFromWorld();
+					_levelColliders.splice(i, 1);
 					return;
 				}
 			}
 		},
 
-		// Clears the world of all map colliders
+		// Clears the world of all level colliders
 		clearColliders() {
 			_startAreas = [];
 			_startGates = [];
 			_specialColliders = [];
-			for(let i = 0; i < _mapColliders.length; i++) {
-				_mapColliders[i].removeFromWorld();
+			for(let i = 0; i < _levelColliders.length; i++) {
+				_levelColliders[i].removeFromWorld();
 			}
-			_mapColliders = [];
+			_levelColliders = [];
 			_ids = 1;
 		},
 
@@ -373,7 +373,7 @@ module.exports = function() {
 		},
 
 		setGravity(force) {
-			physicsWorld.setGravity( new physics.ammo.btVector3( 0, force, 0 ) );
+			physicsWorld.setGravity( new physics.ammo.btVector3( 0, -force, 0 ) ); // Downwards force by default
 		}
 	};
 }();

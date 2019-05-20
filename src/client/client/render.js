@@ -1,6 +1,6 @@
-import * as pako from "pako";
 import { renderCore } from "../render/render-core";
 import { net as networking } from "./networking";
+import * as levelManager from "../../level/manager";
 import * as config from "../config";
 
 // This will change another time
@@ -18,29 +18,15 @@ renderCore.updateMarbles = function() {
 };
 
 networking.socketReady.then((initialData) => {
-	let mapName = initialData.mapId;
+	let levelName = initialData.levelId;
 
-	fetch(`/resources/maps/${mapName}.mmc`)
+	fetch(`/resources/maps/${levelName}.mmc`)
 		.then((response) => {
 			// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
 			return response.arrayBuffer();
 		})
 		.then((buffer) => {
-			let mapData;
-			try {
-				mapData = pako.inflate(buffer);
-				mapData = new TextDecoder("utf-8").decode(mapData);
-				mapData = JSON.parse(mapData);
-			}
-			catch (error) {
-				console.error(error);
-				return;
-			}
-
-			renderCore.activeMap.loadMap(mapData);
-			renderCore.activeMap.water.setHeight(mapData.world.waterLevel);
-			renderCore.activeMap.sky.recalculate({
-				inclination: mapData.world.sunInclination
-			});
+			let levelData = levelManager.load(buffer);
+			renderCore.activeLevel.loadLevel(levelData);
 		});
 });

@@ -21,15 +21,15 @@ let renderCore = function() {
 		_controls = null,
 		_defaultModel = null,
 
-		activeMap = null;
+		activeLevel = null;
 
-	// Set a new active map
-	const setActiveMap = function(marbleMap) {
-		if (activeMap) {
-			_mainScene.remove(activeMap.scene);
+	// Set a new active level
+	const setActiveLevel = function(marbleLevel) {
+		if (activeLevel) {
+			_mainScene.remove(activeLevel.scene);
 		}
-		activeMap = marbleMap;
-		_mainScene.add(activeMap.scene);
+		activeLevel = marbleLevel;
+		_mainScene.add(activeLevel.scene);
 	};
 
 	// Core render loop
@@ -46,7 +46,7 @@ let renderCore = function() {
 
 		// Make updates
 		renderCore.updateMarbles();
-		activeMap.update();
+		activeLevel.update();
 
 		// Render the darn thing
 		_renderer.render(_mainScene, _controls.camera);
@@ -125,7 +125,7 @@ let renderCore = function() {
 		// Controls
 		_controls = new CameraFlyControls(_mainScene, _renderer);
 
-		setActiveMap(new MarbleMap());
+		setActiveLevel(new MarbleLevel());
 
 		// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 		domReady.then(() => {
@@ -143,8 +143,8 @@ let renderCore = function() {
 	}
 
 	return {
-		activeMap,
-		setActiveMap,
+		activeLevel,
+		setActiveLevel,
 
 		getDefaultModel: function() {
 			return _defaultModel;
@@ -197,7 +197,7 @@ let renderCore = function() {
 	};
 }();
 
-function MarbleMap() { // "Map" is taken
+function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
 	this.scene = new THREE.Scene();
 
 	// Ambient light
@@ -214,12 +214,16 @@ function MarbleMap() { // "Map" is taken
 	this.sky.water = this.water;
 }
 
-MarbleMap.prototype.update = function() {
+MarbleLevel.prototype.update = function() {
 	this.water.update();
 };
 
-// Parses the map data and returns a Promise that resolves once it is fully done loading
-MarbleMap.prototype.loadMap = function(data) {
+// Parses the level data and returns a Promise that resolves once it is fully done loading
+MarbleLevel.prototype.loadLevel = function(data) {
+	// Load environmental variables
+	this.water.setHeight(data.world.waterLevel);
+	this.sky.recalculate({ inclination: data.world.sunInclination });
+
 	// Load models
 	let modelPromises = [];
 	let models = {};

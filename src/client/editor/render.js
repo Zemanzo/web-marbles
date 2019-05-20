@@ -1,14 +1,12 @@
 import * as THREE from "three";
 import { renderCore } from "../render/render-core";
+import * as Level from "../../level/level";
 
-renderCore.activeMap.water.setHeight(-9);
-renderCore.activeMap.sky.recalculate({
-	inclination: .25
-});
+renderCore.activeLevel.loadLevel(new Level()); // Load default level properties
 
 let gridHelper = new THREE.GridHelper(20, 20);
-renderCore.activeMap.scene.add(gridHelper);
+renderCore.activeLevel.scene.add(gridHelper);
 gridHelper.position.y = -.01;
 
 let axesHelper = new THREE.AxesHelper(3);
-renderCore.activeMap.scene.add(axesHelper);
+renderCore.activeLevel.scene.add(axesHelper);
