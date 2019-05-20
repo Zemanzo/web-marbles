@@ -3,14 +3,17 @@ import { materialsTab } from "./materials";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
 import { editorLog } from "./log";
+import { generateTinyUUID } from "../generate-tiny-uuid";
 
 // texture object
-function Texture(name, texture, projectData) {
+function Texture(uuid, name, texture, projectData) {
+	this.uuid = uuid;
 	this.name = name;
 	this.map = new THREE.TextureLoader().load(texture);
+	this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
 	this.projectData = projectData; // Project reference for this texture
 	this.element = null;
-	this.prefabEntities = {};
+	this.optionElements = [];
 
 	// Deep clone for editor
 	this.element = document.getElementById("textureTemplate").cloneNode(true);
@@ -23,16 +26,59 @@ function Texture(name, texture, projectData) {
 	// Delete texture button
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", () => {
 		if (confirm(`Are you sure you want to delete texture ${name}?`)) {
-			texturesTab.removeTexture(name);
+			texturesTab.removeTexture(uuid);
 		}
 	}, false);
 
 	// Add to DOM
 	this.element = document.getElementById("textures").appendChild(this.element);
+
+	// Add texture option to each material selection
+	for (let uuid in materialsTab.materials) {
+		let material = materialsTab.materials[uuid];
+		for (let textureSelect of material.element.getElementsByClassName("textureSelect")) {
+			let optionElement = this.createOptionElement();
+			textureSelect.add(optionElement);
+		}
+	}
 }
+
+Texture.prototype.createOptionElement = function() {
+	let optionElement = document.createElement("option");
+	optionElement.className = `option-${this.uuid}`;
+	optionElement.innerText = this.name;
+	optionElement.value = this.uuid;
+
+	this.optionElements.push(optionElement);
+
+	return optionElement;
+};
+
+Texture.prototype.delete = function() {
+	// Remove from texture selects
+	for (let element of this.optionElements) {
+		element.parentNode.removeChild(element);
+	}
+
+	// Re-parse all materials
+	for (let uuid in materialsTab.materials) {
+		let material = materialsTab.materials[uuid];
+		material.parse();
+	}
+
+	// Remove from editor
+	this.element.parentNode.removeChild(this.element);
+	delete texturesTab.textures[this.uuid];
+
+	// Remove from project
+	delete projectTab.activeProject.textures[this.uuid];
+};
 
 let texturesTab = function() {
 	return {
+		elements: {
+			materialList: null
+		},
 		textures: {},
 
 		initialize: function() {
@@ -54,7 +100,7 @@ let texturesTab = function() {
 					file.reader.onload = function() {
 						// Attempt to load texture and add it to the project
 						let project = projectTab.activeProject.addTexture(file.name, file.reader.result);
-						texturesTab.addTexture(file.name, file.reader.result, project);
+						texturesTab.addTexture(generateTinyUUID(), file.name, file.reader.result, project);
 					};
 
 					file.reader.onerror = function() {
@@ -75,29 +121,18 @@ let texturesTab = function() {
 			modelsTab.group.visible = false;
 		},
 
-		addTexture: function(name, texture, project) {
-			texturesTab.textures[name] = new Texture(name, texture, project);
+		addTexture: function(uuid, name, texture, project) {
+			texturesTab.textures[uuid] = new Texture(uuid, name, texture, project);
 		},
 
-		removeTexture: function(name) {
-			if (name in this.textures === false) {
-				console.log(`Attempted to remove texture ${name}, but no such texture exists!`);
+		removeTexture: function(uuid) {
+			if (uuid in this.textures === false) {
+				console.log(`Attempted to remove texture ${uuid}, but no such texture exists!`);
 				return;
 			}
 
-			let thisTexture = this.textures[name];
-
-			// Remove from editor
-			thisTexture.element.parentNode.removeChild(thisTexture.element);
-			delete this.textures[name];
-
-			// Remove from project
-			delete projectTab.activeProject.textures[name];
-
-			// Re-parse all custom materials
-			for (let uuid in materialsTab.materials) {
-				materialsTab.materials[uuid].parse(false); // false means without logging
-			}
+			let name = this.textures[uuid].name;
+			this.textures[uuid].delete();
 
 			editorLog(`Removed texture: ${name}`, "info");
 		}

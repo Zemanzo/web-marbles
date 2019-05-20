@@ -1,16 +1,23 @@
 import * as THREE from "three";
+import "three/examples/js/nodes/THREE.Nodes";
 import { editorLog } from "./log";
 import { texturesTab } from "./textures";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 
-let _defaultMaterial = new THREE.MeshStandardMaterial({ color: 0xff00ff });
+function DefaultMaterial() {
+	let material = new THREE.StandardNodeMaterial();
+	material.color = new THREE.ColorNode(0xff00ff);
+	material.build();
+	return material;
+}
 
 // Material object
 function Material(uuid, projectData) {
 	this.uuid = uuid;
 	this.projectData = projectData; // Project reference for this material
+	this.compiledMaterial = new DefaultMaterial();
 
 	// Related DOM elements
 	this.element = document.getElementById("materialTemplate").cloneNode(true); // deep clone
@@ -18,8 +25,8 @@ function Material(uuid, projectData) {
 	this.element.classList.remove("itemTemplate");
 
 	this.elements = {};
-	this.elements.textarea = this.element.getElementsByTagName("textarea")[0];
 	this.elements.itemName = this.element.getElementsByClassName("itemName")[0];
+	this.elements.textureSelects = this.element.getElementsByClassName("textureSelect");
 
 	// Load material-related data if it exists in the project
 	if (this.projectData.name) {
@@ -28,17 +35,11 @@ function Material(uuid, projectData) {
 		this.elements.itemName.value = this.name = this.projectData.name = "";
 	}
 
-	if (this.projectData.script) {
-		this.elements.textarea.value = this.script = this.projectData.script;
-	} else {
-		this.elements.textarea.value = this.script = this.projectData.script = null;
-	}
-
 	// Array of option elements that are part of the model material selection
 	this.optionElements = [];
 
 	// Set a default material
-	this.compiledMaterial = _defaultMaterial.clone();
+	this.compiledMaterial = new DefaultMaterial();
 
 	// Add events
 	let self = this;
@@ -47,15 +48,21 @@ function Material(uuid, projectData) {
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
-	this.elements.textarea.addEventListener("keydown", function(event) {
-		if (event.key === "s" && event.ctrlKey) {
-			event.preventDefault();
-			self.parse();
-		}
-	}, false);
 
 	// Display UUID
 	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
+
+	// Add texture option elements
+	for (let selectElement of this.elements.textureSelects) {
+		for (let textureUuid in texturesTab.textures) {
+			let texture = texturesTab.textures[textureUuid];
+			let optionElement = texture.createOptionElement();
+			if (this.projectData[selectElement.dataset.textureMapType] === textureUuid) {
+				optionElement.selected = true;
+			}
+			selectElement.add(optionElement);
+		}
+	}
 
 	// Add custom material options to each model childMesh
 	this.element = materialsTab.elements.materialList.insertBefore(this.element, document.getElementById("addMaterial"));
@@ -76,32 +83,91 @@ function Material(uuid, projectData) {
 	}
 }
 
-Material.prototype.parse = function(shouldLog = true) {
-	// To restart the CSS animation
-	this.elements.textarea.style.animationName = "";
-	void this.elements.textarea.offsetWidth;
+Material.prototype.parse = function() {
+	let diffuseA = this.projectData["diffuse-a"] = this.element.querySelector("[data-texture-map-type=diffuse-a]").value;
+	let diffuseB = this.projectData["diffuse-b"] = this.element.querySelector("[data-texture-map-type=diffuse-b]").value;
+	let mask	 = this.projectData["mask"]		 = this.element.querySelector("[data-texture-map-type=mask]").value;
+	let normalA  = this.projectData["normal-a"]  = this.element.querySelector("[data-texture-map-type=normal-a]").value;
+	let normalB  = this.projectData["normal-b"]  = this.element.querySelector("[data-texture-map-type=normal-b]").value;
 
-	try {
-		this.projectData.script = this.script = this.elements.textarea.value;
-		let compiledMaterial = Function("textures", "THREE", this.script)(texturesTab.textures, THREE);
-		if (compiledMaterial instanceof THREE.Material) {
-			this.compiledMaterial.copy(compiledMaterial);
-			this.compiledMaterial.needsUpdate = true;
-			if (shouldLog) {
-				editorLog(`Succesfully parsed material script! (${this.name})`, "success");
-			}
-			this.elements.textarea.style.animationName = "parseSuccess";
+	function getTexture(uuid) {
+		if (uuid && texturesTab.textures[uuid]) {
+			return texturesTab.textures[uuid].map;
 		} else {
-			throw "return value is not a valid THREE Material";
+			return false;
 		}
-	} catch (error) {
-		this.compiledMaterial.copy(_defaultMaterial.clone());
-		this.compiledMaterial.needsUpdate = true;
-		if (shouldLog) {
-			editorLog(`Failed to parse script. ${error}`, "error");
-		}
-		this.elements.textarea.style.animationName = "parseFailure";
 	}
+
+	if ( !(getTexture(diffuseA) && getTexture(diffuseB) && getTexture(mask)) ) {
+		editorLog(`Unable to parse custom material ${this.name}, missing textures`, "warning");
+		return;
+	}
+
+	let material;
+	material = new THREE.StandardNodeMaterial();
+	material.roughness = new THREE.FloatNode(.9);
+	material.metalness = new THREE.FloatNode(0);
+
+	function createUv(scale = 1, offset = 0) {
+		let uvOffset = new THREE.FloatNode(offset);
+		let uvScale = new THREE.FloatNode(scale);
+
+		let uvNode = new THREE.UVNode();
+		let offsetNode = new THREE.OperatorNode(
+			uvOffset,
+			uvNode,
+			THREE.OperatorNode.ADD
+		);
+		let scaleNode = new THREE.OperatorNode(
+			offsetNode,
+			uvScale,
+			THREE.OperatorNode.MUL
+		);
+
+		return scaleNode;
+	}
+
+
+	// Diffuse maps (optional)
+	let diffuseNodeA = new THREE.TextureNode(getTexture(diffuseA), createUv(35));
+	let diffuseNodeB = new THREE.TextureNode(getTexture(diffuseB), createUv(35));
+	let maskNode = new THREE.TextureNode(getTexture(mask), createUv());
+	let maskAlphaChannel = new THREE.SwitchNode(maskNode, "w");
+	let diffuseBlend = new THREE.Math3Node(
+		diffuseNodeA,
+		diffuseNodeB,
+		maskAlphaChannel,
+		THREE.Math3Node.MIX
+	);
+	material.color = diffuseBlend;
+
+	// Normals (optional)
+	if (getTexture(normalA) && getTexture(normalB)) {
+		let normalNodeA = new THREE.TextureNode(getTexture(normalA), createUv(35));
+		let normalNodeB = new THREE.TextureNode(getTexture(normalB), createUv(35));
+		let normalBlend = new THREE.Math3Node(
+			normalNodeA,
+			normalNodeB,
+			maskAlphaChannel,
+			THREE.Math3Node.MIX
+		);
+
+		material.normal = new THREE.NormalMapNode(normalBlend);
+
+		let normalScaleNode = new THREE.OperatorNode(
+			new THREE.TextureNode(getTexture("mask"), createUv()),
+			new THREE.FloatNode(1),
+			THREE.OperatorNode.MUL
+		);
+
+		material.normalScale = normalScaleNode;
+	}
+
+	// build shader
+	material.build();
+
+	// set material
+	this.compiledMaterial.copy(material);
 };
 
 Material.prototype.onNameChange = function(name) {
@@ -161,7 +227,7 @@ let materialsTab = function() {
 		materials: {},
 
 		initialize: function() {
-			// Add to DOM
+			// Get DOM
 			materialsTab.elements.materialList = document.getElementById("materialList");
 
 			document.getElementById("newMaterial").addEventListener("click", function() {
