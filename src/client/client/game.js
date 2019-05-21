@@ -145,6 +145,7 @@ let game = (function() {
 				}
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
+				renderCore.activeLevel.openGates();
 				_DOMElements.state.innerHTML = "Race started!";
 				break;
 
@@ -152,6 +153,7 @@ let game = (function() {
 			case "finished":
 				if (!isInitialState) {
 					_audio.end.play();
+					renderCore.activeLevel.closeGates();
 
 					_DOMElements.raceLeaderboard.className = "visible";
 
