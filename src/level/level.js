@@ -10,6 +10,8 @@ function Level() {
 		roundLength: 160
 	};
 
+	this.textures = {};
+	this.materials = {};
 	this.models = {};
 	this.prefabs = {};
 	this.worldObjects = {};
@@ -29,13 +31,23 @@ Level.prototype.addTexture = function(name, fileContents) {
 
 Level.prototype.addMaterial = function(uuid) {
 	this.materials[uuid] = {
-		entities: {}
+		entities: {},
+		"diffuse-a": {},
+		"diffuse-b": {},
+		mask: {},
+		"normal-a": {},
+		"normal-b": {},
+		side: 0, // THREE.FrontSide, but to avoid importing the entire THREE library for just this...
+		roughness: .5,
+		metalness: .5
 	};
-	retu
+	return this.materials[uuid];
+};
 
 Level.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
 		file: fileContents,
+		childMeshes: {},
 		convexData: null,
 		concaveData: {
 			indices: null,
@@ -99,6 +111,7 @@ Level.prototype.validateLevel = function() {
 				}
 			}
 		};
+
 		// Check main properties + world/gameplay params
 		let template = new Level();
 		validateObject(this, template, true);
