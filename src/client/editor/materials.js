@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import "three/examples/js/nodes/THREE.Nodes";
-import { editorLog } from "./log";
+import { CustomMaterial } from "../render/custom-material";
 import { texturesTab } from "./textures";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
@@ -19,6 +19,8 @@ function Material(uuid, projectData) {
 	this.projectData = projectData; // Project reference for this material
 	this.compiledMaterial = new DefaultMaterial();
 
+	let self = this;
+
 	// Related DOM elements
 	this.element = document.getElementById("materialTemplate").cloneNode(true); // deep clone
 	this.element.removeAttribute("id");
@@ -27,6 +29,45 @@ function Material(uuid, projectData) {
 	this.elements = {};
 	this.elements.itemName = this.element.getElementsByClassName("itemName")[0];
 	this.elements.textureSelects = this.element.getElementsByClassName("textureSelect");
+	this.elements.textureUVs = this.element.getElementsByClassName("textureUV");
+
+	// UV button for every texture input
+	for (let uvButton of this.elements.textureUVs) {
+		let materialProperty = uvButton.dataset.textureMapType;
+
+		// Add property inputs
+		let clone = document.getElementById("textureUVTransformTemplate").cloneNode(true);
+		clone.removeAttribute("id");
+		clone.className = "textureUVTransform";
+		for (let input of clone.getElementsByTagName("input")) {
+			let uvProperty = input.dataset.uvProperty;
+
+			if (self.projectData[materialProperty][uvProperty]) {
+				input.value = self.projectData[materialProperty][uvProperty];
+			} else {
+				self.projectData[materialProperty][uvProperty] = input.valueAsNumber;
+			}
+
+			let setUvProperty = function() {
+				self.projectData[materialProperty][uvProperty] = this.valueAsNumber;
+			};
+
+			input.addEventListener("input", setUvProperty, false);
+			input.addEventListener("change", setUvProperty, false);
+		}
+
+		uvButton.appendChild(clone);
+
+		// Add event to UV button
+		uvButton.addEventListener("click", function(event) {
+			if (event.target !== uvButton) {
+				return;
+			}
+
+			this.classList.toggle("visible");
+			this.getElementsByClassName("textureUVTransform")[0].classList.toggle("visible");
+		}, false);
+	}
 
 	// Load material-related data if it exists in the project
 	if (this.projectData.name) {
@@ -42,12 +83,31 @@ function Material(uuid, projectData) {
 	this.compiledMaterial = new DefaultMaterial();
 
 	// Add events
-	let self = this;
 	this.elements.itemName.addEventListener("input", function() { self.onNameChange(this.value); }, false);
 	this.elements.itemName.addEventListener("change", function() { self.onNameChange(this.value); }, false);
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
+
+	// Add property events
+	for (let selectElement of this.elements.textureSelects) {
+		selectElement.addEventListener("change", function() {
+			let property = this.dataset.textureMapType;
+			self.projectData[property].textureUuid = this.value;
+			console.log(property, self.projectData[property]);
+		}, false);
+	}
+
+	let setSide = function() { self.projectData.side = this.value; };
+	this.element.getElementsByClassName("side")[0].addEventListener("change", setSide, false);
+
+	let setRoughness = function() { self.projectData.roughness = this.valueAsNumber; };
+	this.element.getElementsByClassName("roughness")[0].addEventListener("input", setRoughness, false);
+	this.element.getElementsByClassName("roughness")[0].addEventListener("change", setRoughness, false);
+
+	let setMetalness = function() { self.projectData.metalness = this.valueAsNumber; };
+	this.element.getElementsByClassName("metalness")[0].addEventListener("input", setMetalness, false);
+	this.element.getElementsByClassName("metalness")[0].addEventListener("change", setMetalness, false);
 
 	// Display UUID
 	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
@@ -84,90 +144,37 @@ function Material(uuid, projectData) {
 }
 
 Material.prototype.parse = function() {
-	let diffuseA = this.projectData["diffuse-a"] = this.element.querySelector("[data-texture-map-type=diffuse-a]").value;
-	let diffuseB = this.projectData["diffuse-b"] = this.element.querySelector("[data-texture-map-type=diffuse-b]").value;
-	let mask	 = this.projectData["mask"]		 = this.element.querySelector("[data-texture-map-type=mask]").value;
-	let normalA  = this.projectData["normal-a"]  = this.element.querySelector("[data-texture-map-type=normal-a]").value;
-	let normalB  = this.projectData["normal-b"]  = this.element.querySelector("[data-texture-map-type=normal-b]").value;
-
-	function getTexture(uuid) {
-		if (uuid && texturesTab.textures[uuid]) {
-			return texturesTab.textures[uuid].map;
+	function toTextureProperty(textureData) {
+		if (textureData.textureUuid && texturesTab.textures[textureData.textureUuid]) {
+			let textureProperty = {};
+			Object.assign(textureProperty, textureData); // We shouldn't modify textureData, so we copy the data to a temporary object instead
+			textureProperty.texture = texturesTab.textures[textureData.textureUuid].map;
+			return textureProperty;
 		} else {
-			return false;
+			return null;
 		}
 	}
 
-	if ( !(getTexture(diffuseA) && getTexture(diffuseB) && getTexture(mask)) ) {
-		editorLog(`Unable to parse custom material ${this.name}, missing textures`, "warning");
-		return;
+	let properties = {
+		side: this.projectData.side,
+		roughness: this.projectData.roughness,
+		metalness: this.projectData.metalness,
+		diffuseA: toTextureProperty(this.projectData["diffuse-a"]),
+		diffuseB: toTextureProperty(this.projectData["diffuse-b"]),
+		mask:	  toTextureProperty(this.projectData["mask"]),
+		normalA:  toTextureProperty(this.projectData["normal-a"]),
+		normalB:  toTextureProperty(this.projectData["normal-b"])
+	};
+
+	console.log(properties);
+
+	try {
+		let customMaterial = new CustomMaterial(properties);
+		this.compiledMaterial.copy(customMaterial.material);
+		this.compiledMaterial.needsUpdate = true;
+	} catch (error) {
+		console.warn(error);
 	}
-
-	let material;
-	material = new THREE.StandardNodeMaterial();
-	material.roughness = new THREE.FloatNode(.9);
-	material.metalness = new THREE.FloatNode(0);
-
-	function createUv(scale = 1, offset = 0) {
-		let uvOffset = new THREE.FloatNode(offset);
-		let uvScale = new THREE.FloatNode(scale);
-
-		let uvNode = new THREE.UVNode();
-		let offsetNode = new THREE.OperatorNode(
-			uvOffset,
-			uvNode,
-			THREE.OperatorNode.ADD
-		);
-		let scaleNode = new THREE.OperatorNode(
-			offsetNode,
-			uvScale,
-			THREE.OperatorNode.MUL
-		);
-
-		return scaleNode;
-	}
-
-
-	// Diffuse maps (optional)
-	let diffuseNodeA = new THREE.TextureNode(getTexture(diffuseA), createUv(35));
-	let diffuseNodeB = new THREE.TextureNode(getTexture(diffuseB), createUv(35));
-	let maskNode = new THREE.TextureNode(getTexture(mask), createUv());
-	let maskAlphaChannel = new THREE.SwitchNode(maskNode, "w");
-	let diffuseBlend = new THREE.Math3Node(
-		diffuseNodeA,
-		diffuseNodeB,
-		maskAlphaChannel,
-		THREE.Math3Node.MIX
-	);
-	material.color = diffuseBlend;
-
-	// Normals (optional)
-	if (getTexture(normalA) && getTexture(normalB)) {
-		let normalNodeA = new THREE.TextureNode(getTexture(normalA), createUv(35));
-		let normalNodeB = new THREE.TextureNode(getTexture(normalB), createUv(35));
-		let normalBlend = new THREE.Math3Node(
-			normalNodeA,
-			normalNodeB,
-			maskAlphaChannel,
-			THREE.Math3Node.MIX
-		);
-
-		material.normal = new THREE.NormalMapNode(normalBlend);
-
-		let normalScaleNode = new THREE.OperatorNode(
-			new THREE.TextureNode(getTexture("mask"), createUv()),
-			new THREE.FloatNode(1),
-			THREE.OperatorNode.MUL
-		);
-
-		material.normalScale = normalScaleNode;
-	}
-
-	// build shader
-	material.build();
-
-	// set material
-	this.compiledMaterial.copy(material);
 };
 
 Material.prototype.onNameChange = function(name) {

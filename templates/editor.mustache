@@ -71,6 +71,24 @@
 								Since the GLTF specification does not support all types of materials, you can create your own material here.
 							</div>
 							<div id="materialList" class="itemList">
+								<!-- Texture UV tranform template, placed here to avoid nested template -->
+								<div id="textureUVTransformTemplate">
+									<div>
+										Offset X: <input type="number" data-uv-property="offsetX" value="0" step=".1" required/>
+									</div>
+									<div>
+										Offset Y: <input type="number" data-uv-property="offsetY" value="0" step=".1" required/>
+									</div>
+									<div>
+										Scale X:  <input type="number" data-uv-property="scaleX" value="1" step=".1" required/>
+									</div>
+									<div>
+										Scale Y:  <input type="number" data-uv-property="scaleY" value="1" step=".1" required/>
+									</div>
+									<div>
+										Rotation: <input type="number" data-uv-property="rotation" value="0" step=".1" required/>
+									</div>
+								</div>
 								<div class="itemTemplate item material collapsed" id="materialTemplate">
 									<div class="itemHeader">
 										<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
@@ -83,38 +101,38 @@
 										</div>
 									</div>
 									<div class="materialProperties">
-										<div title="required">Diffuse map A*</div>
+										<div title="required">Diffuse map A</div>
 										<select class="textureSelect" data-texture-map-type="diffuse-a">
 											<option value="null" selected>&lt; Select texture &gt;</option>
 										</select>
-										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="diffuse-a">UV</div>
 
-										<div title="required">Diffuse map B*</div>
+										<div title="required">Diffuse map B</div>
 										<select class="textureSelect" data-texture-map-type="diffuse-b">
 											<option value="null" selected>&lt; Select texture &gt;</option>
 										</select>
-										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="diffuse-b">UV</div>
 
-										<div title="required">Mask*</div>
+										<div title="required">Mask</div>
 										<select class="textureSelect" data-texture-map-type="mask">
 											<option value="null" selected>&lt; Select texture &gt;</option>
 										</select>
-										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="mask">UV</div>
 
 										<div>Normal map A</div>
 										<select class="textureSelect" data-texture-map-type="normal-a">
 											<option value="null" selected>&lt; Select texture &gt;</option>
 										</select>
-										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="normal-a">UV</div>
 
 										<div>Normal map B</div>
 										<select class="textureSelect" data-texture-map-type="normal-b">
 											<option value="null" selected>&lt; Select texture &gt;</option>
 										</select>
-										<input class="textureScale" type="number" value="1" step="1" min="0" required/>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="normal-b">UV</div>
 
 										<div>Side</div>
-										<select class="span-2">
+										<select class="side span-2">
 											<option value="FrontSide" selected>Front side</option>
 											<option value="BackSide">Back side</option>
 											<option value="DoubleSide">Both sides</option>

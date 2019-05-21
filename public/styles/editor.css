@@ -264,6 +264,53 @@ body {
 		text-decoration: underline;
 	}
 
+.textureUV {
+	position: relative;
+	cursor: pointer;
+	text-align: center;
+	background-color: #555;
+	margin: 0px 4px;
+	font-weight: 600;
+	color: #111;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+	.textureUV:hover {
+		background-color: #797979;
+	}
+
+	.textureUV.visible {
+		background-color: var(--theme-color-dark);
+	}
+
+	.textureUV.visible:hover {
+		background-color: var(--theme-color);
+	}
+
+	#textureUVTransformTemplate {
+		display: none;
+	}
+
+	.textureUVTransform {
+		display: none;
+		position: absolute;
+		cursor: default;
+		background: #555;
+		color: #eee;
+		box-shadow: #000 2px 1px 5px;
+		font-weight: normal;
+		width: 300px;
+		top: -10px;
+		right: 44px;
+		padding: 4px;
+	}
+
+	.textureUVTransform.visible {
+		display: flex;
+	}
+
 /* Models */
 #models {
 	overflow-y: auto;
