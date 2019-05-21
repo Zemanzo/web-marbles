@@ -11,13 +11,13 @@ let game = (function() {
 		_enteredMarbleList = [],
 
 		_serverData = {
-			currentGameState: undefined,
-			roundStartTime: undefined,
-			maxRoundLength: undefined,
-			enterPeriodTimeRemaining: undefined,
-			enterPeriodLength: undefined,
+			currentGameState: null,
+			roundStartTime: null,
+			maxRoundLength: null,
+			enterPeriodTimeRemaining: null,
+			enterPeriodLength: null,
 
-			levelId: undefined
+			levelId: null
 		},
 
 		_roundTimerStartDate,
@@ -242,6 +242,10 @@ let game = (function() {
 				_DOMElements.state.innerText = "Race finished!";
 				break;
 			}
+		},
+
+		getCurrentGameState: function() {
+			return _serverData.currentGameState;
 		},
 
 		spawnMarble: function(marble) {
