@@ -38,7 +38,9 @@ function Model(name, sceneObject, projectData) {
 	// List model children
 	let childMeshes = _getChildMeshes(this.sceneObject);
 	for (let i = 0; i < childMeshes.length; i++) {
-		this.projectData.childMeshes[i] = {};
+		if (!this.projectData.childMeshes[i]) {
+			this.projectData.childMeshes[i] = {};
+		}
 		this.childMeshes.push(
 			new ChildMesh(childMeshes[i], this, this.projectData.childMeshes[i])
 		);
@@ -344,7 +346,6 @@ let modelsTab = function() {
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
 						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
-						console.log(projectData.childMeshes);
 						modelsTab.loadModel(file.name, file.reader.result, projectData);
 					};
 

@@ -1,17 +1,8 @@
-import * as THREE from "three";
-import "three/examples/js/nodes/THREE.Nodes";
-import { CustomMaterial } from "../render/custom-material";
+import { DefaultMaterial, CustomMaterial } from "../render/custom-material";
 import { texturesTab } from "./textures";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
 import { generateTinyUUID } from "../generate-tiny-uuid";
-
-function DefaultMaterial() {
-	let material = new THREE.StandardNodeMaterial();
-	material.color = new THREE.ColorNode(0xff00ff);
-	material.build();
-	return material;
-}
 
 // Material object
 function Material(uuid, projectData) {
