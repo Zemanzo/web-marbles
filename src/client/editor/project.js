@@ -269,7 +269,7 @@ let projectTab = function() {
 			}
 
 			let modelLoaders = [];
-			for(let key in this.activeProject.models) {
+			for (let key in this.activeProject.models) {
 				modelLoaders.push(
 					modelsTab.loadModel(key, this.activeProject.models[key].file, this.activeProject.models[key])
 						.catch( error => {return error;})
@@ -289,8 +289,9 @@ let projectTab = function() {
 
 				// Add custom materials to childMeshes where applicable
 				for (let modelName in modelsTab.models) {
-					for (let uuid in modelsTab.models[modelName].childMeshes) {
-						modelsTab.models[modelName].childMeshes[uuid].setMaterial(this.activeProject.models[modelName].childMeshes[uuid].material);
+					for (let i = 0; i < modelsTab.models[modelName].childMeshes.length; i++) {
+						let childMesh = modelsTab.models[modelName].childMeshes[i];
+						childMesh.setMaterial(this.activeProject.models[modelName].childMeshes[i].material);
 					}
 				}
 

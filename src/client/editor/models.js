@@ -6,7 +6,6 @@ import { renderCore } from "../render/render-core";
 import { materialsTab } from "./materials";
 import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
-import { generateTinyUUID } from "../generate-tiny-uuid";
 
 // model object
 function Model(name, sceneObject, projectData) {
@@ -18,7 +17,7 @@ function Model(name, sceneObject, projectData) {
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
 	this.element = null;
 	this.prefabEntities = {};
-	this.childMeshes = {};
+	this.childMeshes = [];
 	this.changed = false;
 
 	// Add to scene
@@ -39,8 +38,10 @@ function Model(name, sceneObject, projectData) {
 	// List model children
 	let childMeshes = _getChildMeshes(this.sceneObject);
 	for (let i = 0; i < childMeshes.length; i++) {
-		let childMeshUuid = Object.keys(projectData.childMeshes)[i] || generateTinyUUID(); // Child meshes are always parsed in the same order
-		this.childMeshes[childMeshUuid] = new ChildMesh(childMeshUuid, childMeshes[i], this);
+		this.projectData.childMeshes[i] = {};
+		this.childMeshes.push(
+			new ChildMesh(childMeshes[i], this, this.projectData.childMeshes[i])
+		);
 	}
 
 	// Add collapse functionality
@@ -223,13 +224,13 @@ Model.prototype.getConcaveGeometry = function() {
 	return this.concaveGeo;
 };
 
-function ChildMesh(uuid, mesh, parent) {
-	this.uuid = uuid;
+function ChildMesh(mesh, parent, projectData) {
 	this.mesh = mesh;
 	this.parent = parent;
+	this.projectData = projectData;
 
-	if (!this.parent.projectData.childMeshes[uuid]) {
-		this.parent.projectData.childMeshes[uuid] = { material: null };
+	if (!this.projectData) {
+		this.projectData = { material: null };
 	}
 
 	this.element = document.createElement("div");
@@ -259,7 +260,7 @@ function ChildMesh(uuid, mesh, parent) {
 	for (let materialUuid in materialsTab.materials) {
 		let material = materialsTab.materials[materialUuid];
 		optionElement = material.createOptionElement();
-		if (this.parent.projectData.childMeshes[uuid].material === materialUuid) {
+		if (this.projectData.material === materialUuid) {
 			optionElement.selected = true;
 		}
 		optionElement.addEventListener("click", function() { self.setMaterial(materialUuid); }, false);
@@ -276,10 +277,10 @@ ChildMesh.prototype.setMaterial = function(materialUuid) {
 	// If no material is provided, fall back to the original material.
 	if (!materialUuid) {
 		this.mesh.material = this.originalMaterial;
-		this.parent.projectData.childMeshes[this.uuid].material = null;
+		this.projectData.material = null;
 	} else {
 		this.mesh.material = materialsTab.materials[materialUuid].compiledMaterial;
-		this.parent.projectData.childMeshes[this.uuid].material = materialUuid;
+		this.projectData.material = materialUuid;
 	}
 
 	// Update prefabs
@@ -294,12 +295,12 @@ ChildMesh.prototype.setMaterial = function(materialUuid) {
 function _getChildMeshes(obj) {
 	let children = [];
 
-	// Add own vertices if they exist
+	// Add all objects that are of type Mesh
 	if (obj.type === "Mesh") {
 		children.push(obj);
 	}
 
-	// Add any vertices of child objects
+	// Add any child objects
 	for (let c = 0; c < obj.children.length; c++) {
 		children = children.concat(_getChildMeshes(obj.children[c]));
 	}
@@ -342,8 +343,9 @@ let modelsTab = function() {
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
-						let project = projectTab.activeProject.addModel(file.name, file.reader.result);
-						modelsTab.loadModel(file.name, file.reader.result, project);
+						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
+						console.log(projectData.childMeshes);
+						modelsTab.loadModel(file.name, file.reader.result, projectData);
 					};
 
 					file.reader.onerror = function() {

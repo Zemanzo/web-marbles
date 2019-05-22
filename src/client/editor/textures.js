@@ -9,6 +9,7 @@ import { generateTinyUUID } from "../generate-tiny-uuid";
 function Texture(uuid, name, texture, projectData) {
 	this.uuid = uuid;
 	this.name = name;
+	if (!projectData.name) projectData.name = name;
 	this.map = new THREE.TextureLoader().load(texture);
 	this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
 	this.projectData = projectData; // Project reference for this texture
@@ -99,8 +100,9 @@ let texturesTab = function() {
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load texture and add it to the project
-						let project = projectTab.activeProject.addTexture(file.name, file.reader.result);
-						texturesTab.addTexture(generateTinyUUID(), file.name, file.reader.result, project);
+						let uuid = generateTinyUUID();
+						let project = projectTab.activeProject.addTexture(uuid, file.reader.result);
+						texturesTab.addTexture(uuid, file.name, file.reader.result, project);
 					};
 
 					file.reader.onerror = function() {
