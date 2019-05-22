@@ -7,6 +7,7 @@ import * as Cookies from "js-cookie";
 import * as Stats from "stats-js";
 import * as config from "../config";
 import { CameraFlyControls } from "./cameras";
+import { CustomMaterial } from "./custom-material";
 import domReady from "../dom-ready";
 
 let _userData = Cookies.getJSON("user_data");
@@ -210,7 +211,7 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 
 	// Water
 	this.water = new Water(this.sky.sunLight);
-	this.scene.add(this.water.waterObject);
+	//this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
 }
 
@@ -224,7 +225,62 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	this.water.setHeight(data.world.waterLevel);
 	this.sky.recalculate({ inclination: data.world.sunInclination });
 
-	// Load models
+	// Load textures
+	let textures = {};
+	for (let textureUuid in data.textures) {
+		textures[textureUuid] = Object.assign({}, data.textures[textureUuid]);
+		textures[textureUuid].texture = new THREE.TextureLoader().load(textures[textureUuid].file);
+		textures[textureUuid].texture.wrapS = textures[textureUuid].texture.wrapT = THREE.RepeatWrapping;
+	}
+
+	// Load materials
+	let materials = {};
+	for (let materialUuid in data.materials) {
+		// For each material property that uses a texture, set the appropriate texture in the data so it can be used by CustomMaterial
+		let textureProperties = ["diffuse-a", "diffuse-b", "mask", "normal-a", "normal-b"];
+		for (let property of textureProperties) {
+			let materialProperty = data.materials[materialUuid][property];
+			materialProperty.texture = textures[materialProperty.textureUuid].texture;
+		}
+
+		// Create an object that can be parsed by CustomMaterial
+		let properties = {
+			side:	   data.materials[materialUuid].side,
+			roughness: data.materials[materialUuid].roughness,
+			metalness: data.materials[materialUuid].metalness,
+			diffuseA:  data.materials[materialUuid]["diffuse-a"],
+			diffuseB:  data.materials[materialUuid]["diffuse-b"],
+			mask:	   data.materials[materialUuid]["mask"],
+			normalA:   data.materials[materialUuid]["normal-a"],
+			normalB:   data.materials[materialUuid]["normal-b"]
+		};
+
+		try {
+			materials[materialUuid] = new CustomMaterial(properties);
+		} catch (error) {
+			console.warn(error);
+		}
+	}
+
+	// Load models & childMeshes, apply custom materials where appropriate
+	let childNumber = null;
+	function setChildMeshMaterials(obj, childMeshes) {
+		let children = [];
+
+		if (obj.type === "Mesh") {
+			if (materials[childMeshes[childNumber].material] != null) {
+				console.log(materials[childMeshes[childNumber].material]);
+				obj.material = materials[childMeshes[childNumber].material].material;
+			}
+			childNumber++;
+		}
+
+		for (let c = 0; c < obj.children.length; c++) {
+			children = children.concat(setChildMeshMaterials(obj.children[c], childMeshes));
+		}
+		return children;
+	}
+
 	let modelPromises = [];
 	let models = {};
 	for (let modelName in data.models) {
@@ -233,6 +289,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				try {
 					_GLTFLoader.parse(data.models[modelName].file, null,
 						function(model) {
+							childNumber = 0;
+							setChildMeshMaterials(model.scene, data.models[modelName].childMeshes);
 							models[modelName] = model.scene;
 							resolve();
 						}, function(error) {

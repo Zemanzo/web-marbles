@@ -22,11 +22,11 @@ function Level() {
 	};
 }
 
-Level.prototype.addTexture = function(name, fileContents) {
-	this.textures[name] = {
+Level.prototype.addTexture = function(uuid, fileContents) {
+	this.textures[uuid] = {
 		file: fileContents
 	};
-	return this.textures[name];
+	return this.textures[uuid];
 };
 
 Level.prototype.addMaterial = function(uuid) {
@@ -47,7 +47,7 @@ Level.prototype.addMaterial = function(uuid) {
 Level.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
 		file: fileContents,
-		childMeshes: {},
+		childMeshes: [],
 		convexData: null,
 		concaveData: {
 			indices: null,
@@ -151,6 +151,7 @@ Level.prototype.validateLevel = function() {
 				case "file":
 				case "convexData":
 				case "concaveData":
+				case "childMeshes":
 					break;
 				default:
 					console.warn(`Level validation: Removed unused model property "${key}"`);

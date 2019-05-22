@@ -24,6 +24,7 @@ function CustomMaterial(properties) {
 		normalNodeA,
 		normalNodeB;
 
+	console.log(properties.diffuseA.texture);
 	diffuseNodeA = new THREE.TextureNode(properties.diffuseA.texture);
 	diffuseNodeA.uv = new THREE.UVTransformNode();
 	setUvTransformWithObject(diffuseNodeA.uv, properties.diffuseA);
@@ -82,11 +83,6 @@ function CustomMaterial(properties) {
 	if (properties.side) {
 		this.material.side = THREE[properties.side];
 	}
-
-	// build shader
-	this.material.build();
-
-	console.log("done");
 }
 
 export { CustomMaterial };

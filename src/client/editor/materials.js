@@ -89,26 +89,6 @@ function Material(uuid, projectData) {
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
 
-	// Add property events
-	for (let selectElement of this.elements.textureSelects) {
-		selectElement.addEventListener("change", function() {
-			let property = this.dataset.textureMapType;
-			self.projectData[property].textureUuid = this.value;
-			console.log(property, self.projectData[property]);
-		}, false);
-	}
-
-	let setSide = function() { self.projectData.side = this.value; };
-	this.element.getElementsByClassName("side")[0].addEventListener("change", setSide, false);
-
-	let setRoughness = function() { self.projectData.roughness = this.valueAsNumber; };
-	this.element.getElementsByClassName("roughness")[0].addEventListener("input", setRoughness, false);
-	this.element.getElementsByClassName("roughness")[0].addEventListener("change", setRoughness, false);
-
-	let setMetalness = function() { self.projectData.metalness = this.valueAsNumber; };
-	this.element.getElementsByClassName("metalness")[0].addEventListener("input", setMetalness, false);
-	this.element.getElementsByClassName("metalness")[0].addEventListener("change", setMetalness, false);
-
 	// Display UUID
 	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
 
@@ -122,15 +102,37 @@ function Material(uuid, projectData) {
 			}
 			selectElement.add(optionElement);
 		}
+
+		// Add property events
+		let property = selectElement.dataset.textureMapType;
+
+		selectElement.addEventListener("change", function() {
+			self.projectData[property].textureUuid = this.value;
+		}, false);
+
+		if (typeof this.projectData[property].textureUuid !== "undefined") selectElement.value = this.projectData[property].textureUuid;
 	}
+
+	let setSide = function() { self.projectData.side = this.value; };
+	this.element.getElementsByClassName("side")[0].addEventListener("change", setSide, false);
+	if (typeof this.projectData.side !== "undefined") this.element.getElementsByClassName("side")[0].value = this.projectData.side;
+
+	let setRoughness = function() { self.projectData.roughness = this.valueAsNumber; };
+	this.element.getElementsByClassName("roughness")[0].addEventListener("input", setRoughness, false);
+	this.element.getElementsByClassName("roughness")[0].addEventListener("change", setRoughness, false);
+	if (typeof this.projectData.roughness !== "undefined") this.element.getElementsByClassName("roughness")[0].value = this.projectData.roughness;
+
+	let setMetalness = function() { self.projectData.metalness = this.valueAsNumber; };
+	this.element.getElementsByClassName("metalness")[0].addEventListener("input", setMetalness, false);
+	this.element.getElementsByClassName("metalness")[0].addEventListener("change", setMetalness, false);
+	if (typeof this.projectData.metalness !== "undefined") this.element.getElementsByClassName("metalness")[0].value = this.projectData.metalness;
 
 	// Add custom material options to each model childMesh
 	this.element = materialsTab.elements.materialList.insertBefore(this.element, document.getElementById("addMaterial"));
 
 	for (let name in modelsTab.models) {
 		let model = modelsTab.models[name];
-		for (let uuid in model.childMeshes) {
-			let childMesh = model.childMeshes[uuid];
+		for (let childMesh of model.childMeshes) {
 			let optionElement = this.createOptionElement();
 			let self = this;
 
@@ -166,11 +168,10 @@ Material.prototype.parse = function() {
 		normalB:  toTextureProperty(this.projectData["normal-b"])
 	};
 
-	console.log(properties);
-
 	try {
 		let customMaterial = new CustomMaterial(properties);
 		this.compiledMaterial.copy(customMaterial.material);
+		this.compiledMaterial.build();
 		this.compiledMaterial.needsUpdate = true;
 	} catch (error) {
 		console.warn(error);
@@ -209,8 +210,7 @@ Material.prototype.delete = function() {
 	// Model child meshes that use this material should revert to using their original material
 	for (let name in modelsTab.models) {
 		let model = modelsTab.models[name];
-		for (let childMeshUuid in model.childMeshes) {
-			let childMesh = model.childMeshes[childMeshUuid];
+		for (let childMesh of model.childMeshes) {
 			if (childMesh.mesh.material === this.compiledMaterial) {
 				childMesh.setMaterial();
 			}
