@@ -1,6 +1,13 @@
 import * as THREE from "three";
 import "three/examples/js/nodes/THREE.Nodes";
 
+function DefaultMaterial() {
+	let material = new THREE.StandardNodeMaterial();
+	material.color = new THREE.ColorNode(0xff00ff);
+	material.build();
+	return material;
+}
+
 function CustomMaterial(properties) {
 	// Create new material
 	this.material = new THREE.StandardNodeMaterial();
@@ -24,7 +31,6 @@ function CustomMaterial(properties) {
 		normalNodeA,
 		normalNodeB;
 
-	console.log(properties.diffuseA.texture);
 	diffuseNodeA = new THREE.TextureNode(properties.diffuseA.texture);
 	diffuseNodeA.uv = new THREE.UVTransformNode();
 	setUvTransformWithObject(diffuseNodeA.uv, properties.diffuseA);
@@ -85,4 +91,4 @@ function CustomMaterial(properties) {
 	}
 }
 
-export { CustomMaterial };
+export { DefaultMaterial, CustomMaterial };

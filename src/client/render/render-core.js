@@ -210,8 +210,8 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.scene.add(this.sky.skyObject);
 
 	// Water
-	this.water = new Water(this.sky.sunLight);
-	//this.scene.add(this.water.waterObject);
+	this.water = new Water(this.scene, this.sky.sunLight);
+	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
 }
 
@@ -256,7 +256,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		};
 
 		try {
-			materials[materialUuid] = new CustomMaterial(properties);
+			materials[materialUuid] = (new CustomMaterial(properties)).material;
+			materials[materialUuid].build();
 		} catch (error) {
 			console.warn(error);
 		}
@@ -269,8 +270,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 
 		if (obj.type === "Mesh") {
 			if (materials[childMeshes[childNumber].material] != null) {
-				console.log(materials[childMeshes[childNumber].material]);
-				obj.material = materials[childMeshes[childNumber].material].material;
+				obj.material = materials[childMeshes[childNumber].material];
 			}
 			childNumber++;
 		}
@@ -340,7 +340,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 };
 
 // Water
-function Water(sunLight, waterLevel = 0, fog = false) {
+function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 	let geometry = this.geometry = new THREE.PlaneBufferGeometry(10000, 10000);
 
 	this.waterObject = new THREE.Water(
@@ -363,6 +363,22 @@ function Water(sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
+	let tempFunction = this.waterObject.onBeforeRender;
+	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
+		for (let object of parentScene.children) {
+			if (object.userData.reflectInWater !== true) {
+				object.visible = false;
+			}
+		}
+
+		tempFunction(renderer, scene, camera);
+
+		for (let object of parentScene.children) {
+			if (object.userData.reflectInWater !== true) {
+				object.visible = true;
+			}
+		}
+	};
 }
 
 Water.prototype.setHeight = function(newHeight) {
@@ -377,6 +393,7 @@ Water.prototype.update = function() {
 function Sky(scene, parameters = {}) {
 	this.scene = scene;
 	this.skyObject = new THREE.Sky();
+	this.skyObject.userData.reflectInWater = true;
 	this.skyObject.scale.setScalar(10000);
 
 	// Light
