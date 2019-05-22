@@ -365,8 +365,10 @@ function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.material.uniforms.size.value = 8;
 	let tempFunction = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
+		let tempHide = [];
 		for (let object of parentScene.children) {
-			if (object.userData.reflectInWater !== true) {
+			if (object.userData.reflectInWater !== true && object.visible === true) {
+				tempHide.push(object);
 				object.visible = false;
 			}
 		}
@@ -374,7 +376,7 @@ function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 		tempFunction(renderer, scene, camera);
 
 		for (let object of parentScene.children) {
-			if (object.userData.reflectInWater !== true) {
+			if (tempHide.includes(object)) {
 				object.visible = true;
 			}
 		}
