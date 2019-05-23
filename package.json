@@ -42,7 +42,6 @@
     "js-cookie": "^2.2.0",
     "msgpack-lite": "^0.1.26",
     "mustache-express": "^1.2.5",
-    "obj-file-parser": "^0.5.0",
     "pako": "^1.0.10",
     "reconnecting-websocket": "4.1.9",
     "request": "^2.88.0",
