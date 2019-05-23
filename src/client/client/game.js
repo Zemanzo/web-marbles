@@ -11,13 +11,13 @@ let game = (function() {
 		_enteredMarbleList = [],
 
 		_serverData = {
-			currentGameState: undefined,
-			roundStartTime: undefined,
-			maxRoundLength: undefined,
-			enterPeriodTimeRemaining: undefined,
-			enterPeriodLength: undefined,
+			currentGameState: null,
+			roundStartTime: null,
+			maxRoundLength: null,
+			enterPeriodTimeRemaining: null,
+			enterPeriodLength: null,
 
-			levelId: undefined
+			levelId: null
 		},
 
 		_roundTimerStartDate,
@@ -145,6 +145,7 @@ let game = (function() {
 				}
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
+				renderCore.activeLevel.openGates();
 				_DOMElements.state.innerHTML = "Race started!";
 				break;
 
@@ -152,6 +153,7 @@ let game = (function() {
 			case "finished":
 				if (!isInitialState) {
 					_audio.end.play();
+					renderCore.activeLevel.closeGates();
 
 					_DOMElements.raceLeaderboard.className = "visible";
 
@@ -240,6 +242,10 @@ let game = (function() {
 				_DOMElements.state.innerText = "Race finished!";
 				break;
 			}
+		},
+
+		getCurrentGameState: function() {
+			return _serverData.currentGameState;
 		},
 
 		spawnMarble: function(marble) {

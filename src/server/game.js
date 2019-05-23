@@ -223,7 +223,6 @@ let game = function() {
 				this.startTime = undefined;
 
 				// Close the gate
-				//physics.world.setAllGatesState("close");
 				physics.world.closeGates();
 
 				// Remove all marbles

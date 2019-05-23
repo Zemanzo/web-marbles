@@ -199,6 +199,9 @@ let renderCore = function() {
 
 function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
 	this.scene = new THREE.Scene();
+	this.levelScene = new THREE.Scene(); // Scene for all loaded level objects
+	this.scene.add(this.levelScene);
+	this.startingGates = [];
 
 	// Ambient light
 	let ambientLight = new THREE.AmbientLight(0x746070);
@@ -218,8 +221,26 @@ MarbleLevel.prototype.update = function() {
 	this.water.update();
 };
 
+MarbleLevel.prototype.openGates = function() {
+	for(let i = 0; i < this.startingGates.length; i++) {
+		this.startingGates[i].visible = false;
+	}
+};
+
+MarbleLevel.prototype.closeGates = function() {
+	for(let i = 0; i < this.startingGates.length; i++) {
+		this.startingGates[i].visible = true;
+	}
+};
+
 // Parses the level data and returns a Promise that resolves once it is fully done loading
 MarbleLevel.prototype.loadLevel = function(data) {
+	// Reset loaded data if there is any
+	this.scene.remove(this.levelScene);
+	this.startingGates = [];
+	this.levelScene = new THREE.Scene();
+	this.scene.add(this.levelScene);
+
 	// Load environmental variables
 	this.water.setHeight(data.world.waterLevel);
 	this.sky.recalculate({ inclination: data.world.sunInclination });
@@ -260,6 +281,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			for (let entity of Object.values(data.prefabs[prefabUuid].entities)) {
 				if (entity.type === "object" && entity.model) {
 					let clone = models[entity.model].clone();
+					clone.userData.functionality = entity.functionality;
 
 					clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
 					clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
@@ -276,7 +298,14 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			let clone = prefabs[object.prefab].clone();
 			clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
 			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
-			this.scene.add(clone);
+			this.levelScene.add(clone);
+
+			// Keep starting gates in a separate array for opening/closing
+			for(let i = 0; i < clone.children.length; i++) {
+				if(clone.children[i].userData.functionality === "startgate") {
+					this.startingGates.push(clone.children[i]);
+				}
+			}
 		}
 	});
 };
