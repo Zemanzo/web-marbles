@@ -191,6 +191,44 @@ module.exports = function() {
 				}
 			}
 
+			if (exportType === "publishClient") {
+				// Remove all unused materials
+				let usedMaterials = [];
+				for (let key in project.models) {
+					let model = project.models[key];
+					for (let childMesh of model.childMeshes) {
+						if (childMesh.material && !usedMaterials.includes(childMesh.material)) {
+							usedMaterials.push(childMesh.material);
+						}
+					}
+				}
+
+				let usedTextures = [];
+				for (let uuid in project.materials) {
+					if (!usedMaterials.includes(uuid)) {
+						delete project.materials[uuid];
+					} else { // Remove all unused textures
+						let material = project.materials[uuid];
+						for (let key in material) {
+							let value = material[key];
+							if (
+								typeof value === "object"
+								&& value.textureUuid
+								&& !usedTextures.includes(value.textureUuid)
+							) {
+								usedTextures.push(value.textureUuid);
+							}
+						}
+					}
+				}
+
+				for (let uuid in project.textures) {
+					if (!usedTextures.includes(uuid)) {
+						delete project.textures[uuid];
+					}
+				}
+			}
+
 			switch(exportType) {
 			case "exportProject":
 				project.type = "project";
