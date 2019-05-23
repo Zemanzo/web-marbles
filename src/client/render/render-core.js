@@ -289,8 +289,10 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				try {
 					_GLTFLoader.parse(data.models[modelName].file, null,
 						function(model) {
-							childNumber = 0;
-							setChildMeshMaterials(model.scene, data.models[modelName].childMeshes);
+							if (data.models[modelName].childMeshes.length > 0) {
+								childNumber = 0;
+								setChildMeshMaterials(model.scene, data.models[modelName].childMeshes);
+							}
 							models[modelName] = model.scene;
 							resolve();
 						}, function(error) {

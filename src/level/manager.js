@@ -51,6 +51,13 @@ module.exports = function() {
 				if(semver.lt(loadedLevel.version, "0.2.1")) {
 					loadedLevel.exportDate = 0;
 				}
+				if(semver.lt(loadedLevel.version, "0.3.0")) {
+					loadedLevel.textures = {};
+					loadedLevel.materials = {};
+					for (let key in loadedLevel.models) {
+						loadedLevel.models[key].childMeshes = [];
+					}
+				}
 
 				if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
 					console.log(`Converted level from v${loadedLevel.version} to v${this.getCurrentVersion()}`);
@@ -71,10 +78,15 @@ module.exports = function() {
 
 		prepareExport(project, exportType, exportDate) {
 			if(exportType === "publishServer") {
+				// Remove textures & materials
+				delete project.textures;
+				delete project.materials;
+
 				// Remove raw model data
 				for(let key in project.models) {
 					let model = project.models[key];
 					delete model.file;
+					delete model.childMeshes;
 
 					// Remove unused collider data
 					let usesConvex = false;
