@@ -1,7 +1,7 @@
 function Level() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.2.1";
+	this.version = "0.3.0";
 	this.type = "project";
 	this.exportDate = 0;
 
@@ -127,6 +127,12 @@ Level.prototype.validateLevel = function() {
 					return false;
 				}
 			} else {
+				if (model.childMeshes) {
+					if (!Array.isArray(model.childMeshes)) {
+						console.error(`Level validation failed: ${modelName}'s childMesh data is incorrect.`);
+						return false;
+					}
+				}
 				if(model.convexData) {
 					if(!Array.isArray(model.convexData)
 						|| typeof model.convexData[0] !== "number") {
