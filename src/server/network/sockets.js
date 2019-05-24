@@ -112,7 +112,7 @@ const setupChat = function(db, chatWebhook) {
 				disableEveryone: true
 			});
 
-			ws.send(JSON.stringify({
+			chatSocketManager.emit(JSON.stringify({
 				username: row.username,
 				discriminator: row.discriminator,
 				content: message.content

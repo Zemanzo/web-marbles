@@ -1,3 +1,4 @@
+import domReady from "../dom-ready";
 import { network as config } from "../config";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
@@ -11,19 +12,18 @@ let ws = new ReconnectingWebSocket(wsUri, [], {
 
 let cookieData;
 
-function init() {
-	// Simple function that returns current date as Date object or integer (ms since epoch)
-	let now = function(ms) {
-		let date = new Date();
-		if (ms)
-			return date.getTime();
-		else
-			return date;
-	};
+function inIframe() {
+	try {
+		return window.self !== window.top;
+	} catch (e) {
+		return true;
+	}
+}
 
+domReady.then(() => {
 	// String formatted timestamp
 	let timestamp = function() {
-		return now()
+		return new Date()
 			.toLocaleTimeString([], {
 				hour: "2-digit",
 				minute: "2-digit"
@@ -31,6 +31,10 @@ function init() {
 			.replace(/ /g, "")
 			.toLowerCase();
 	};
+
+	if (inIframe()) {
+		document.body.style.background = "#06060666";
+	}
 
 	// Add discord link open as new window
 	document.getElementById("discordLink").addEventListener("click", authenticationWindow, false);
@@ -42,55 +46,50 @@ function init() {
 	// Check for former authentication
 	cookieData = Cookies.getJSON("user_data");
 
-	// If there is former data, check if it is not outdated.
-	if (cookieData) {
+	if (
+		// If there is former data, check if it is not outdated.
+		cookieData
+
 		// See if current date is later than origin date + expiration period
-		if ( now(true) < cookieData.access_granted + cookieData.expires_in * 1000 ) {
-			// Request a fresh token
-			var xhr = new XMLHttpRequest();
-			xhr.onreadystatechange = function() {
-				if (this.readyState == 4 && this.status == 200) {
-					let response = JSON.parse(xhr.responseText);
-					response.id = cookieData.id;
-					response.username = cookieData.username;
-					response.discriminator = cookieData.discriminator;
-					response.avatar = cookieData.avatar;
-					let days = (response.expires_in / 62400) - 0.1; // seconds to days minus some slack
-					Cookies.set("user_data", response, { expires: days });
-					cookieData = response;
+		&& Date.now() < cookieData.access_granted + cookieData.expires_in * 1000
+	) {
+		// Request a fresh token
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				let response = JSON.parse(xhr.responseText);
 
-					// Add login message
-					let clone = chatMessageTemplate.cloneNode(true);
-					clone.removeAttribute("id");
-
-					clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
-					clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
-					clone.getElementsByClassName("content")[0].innerText = `Logged in as ${cookieData.username}`;
-					clone.getElementsByClassName("content")[0].style.marginLeft = "0px";
-					clone.getElementsByClassName("content")[0].style.color = "#999";
-					clone.getElementsByClassName("content")[0].style.fontStyle = "italic";
-
-					chatMessages.insertAdjacentElement("beforeend", clone);
+				if (response.authorized && response.refreshed && response.tokenBody) {
+					response.tokenBody.id = cookieData.id;
+					response.tokenBody.username = cookieData.username;
+					response.tokenBody.discriminator = cookieData.discriminator;
+					response.tokenBody.avatar = cookieData.avatar;
+					let days = (response.tokenBody.expires_in / 62400) - 0.1; // seconds to days minus some slack
+					Cookies.set("user_data", response.tokenBody, { expires: days });
+					cookieData = response.tokenBody;
 				}
-			};
-			xhr.open("POST", "/chat", true);
-			xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-			xhr.send(
-				JSON.stringify({
-					"type": "refresh_token",
-					"id": cookieData.id,
-					"access_token": cookieData.access_token
-				})
-			);
 
-			isAuthorized(cookieData);
-		}
+				// Redundant check as non-authorized requests are returned as a 400
+				if (response.authorized) {
+					onAuthorization(cookieData);
+				}
+			}
+		};
+		xhr.open("POST", "/chat", true);
+		xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+		xhr.send(
+			JSON.stringify({
+				"type": "refresh_token",
+				"id": cookieData.id,
+				"access_token": cookieData.access_token
+			})
+		);
 	}
 
-	let lastMessageSent = now(true);
+	let lastMessageSent = Date.now();
 	let sendMessage = function(message) {
 		// Check whether messages are not being spammed.
-		let messageTimestamp = now(true);
+		let messageTimestamp = Date.now();
 		if (messageTimestamp > lastMessageSent + 500) {
 			ws.send(JSON.stringify({
 				access_token: cookieData.access_token,
@@ -196,7 +195,7 @@ function init() {
 			window.location.reload(true);
 		}
 	}, false);
-}
+});
 
 let authWindow;
 function authenticationWindow() {
@@ -213,16 +212,14 @@ function authenticationWindow() {
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
 	if (event.data && event.data.success && event.origin === window.location.origin) {
-		isAuthorized(event.data.response);
+		onAuthorization(event.data.response);
 		cookieData = Cookies.getJSON("user_data");
 		authWindow.close();
 	}
 }
 
-function isAuthorized(data) {
+function onAuthorization(data) {
 	document.getElementById("userAvatar").src = `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.jpg`;
 	document.getElementById("userName").innerText = `${data.username}#${data.discriminator}`;
 	document.getElementById("chatInputContainer").className = "authorized";
 }
-
-window.addEventListener("DOMContentLoaded", init, false);

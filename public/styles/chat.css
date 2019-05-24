@@ -19,7 +19,7 @@ body {
 	flex: 1;
 	font-family: "Quicksand", sans-serif;
 	font-size: 13px;
-	background: #06060666;
+	background: #111;
 	color: #eee;
 	height: 100vh;
 	display: flex;
@@ -28,7 +28,7 @@ body {
 	margin: 0;
 	padding: 0;
 	max-width: 90ch;
-	max-height: 600px;
+	max-height: 900px;
 }
 
 header {
