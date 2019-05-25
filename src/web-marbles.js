@@ -35,8 +35,7 @@ game.setSocketManager(socketGameplay);
 let discordManager = null,
 	socketChat;
 if (config.discord.enabled) {
-	let DiscordManager = require("./server/chat/discord-manager");
-	discordManager = new DiscordManager();
+	discordManager = require("./server/chat/discord-manager");
 	socketChat = discordManager.initialize(db);
 }
 
@@ -95,6 +94,8 @@ if (config.discord.enabled) {
 		if (req.query && req.query.code) {
 			// If we receive a code, the client is trying to authorize with Discord and we must handle this request.
 			discordManager.authorizeClient(req, res);
+		} else if (req.query && req.query.error) {
+			res.render("chat-redirect");
 		} else {
 			// Otherwise, simply display the chat.
 			let discordData = {
