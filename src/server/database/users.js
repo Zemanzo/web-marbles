@@ -80,6 +80,27 @@ module.exports = function(db, common) {
 			]);
 		},
 
+		// Only allow a refresh if they haven't gotten one in over 24 hours
+		_idIsAllowedRefresh: db.prepare(
+			`SELECT
+				timestamp_refresh_last
+			FROM
+				users
+			WHERE
+				id = ?
+			`
+		),
+
+		idIsAllowedRefresh(id, access_token) {
+			if (this.idIsAuthenticated(id, access_token)) {
+				let row = this._idIsAllowedRefresh.get(id);
+				if (row && Date.now() - row.timestamp_refresh_last > (24 * 3600 * 1000) ) {
+					return true;
+				}
+			}
+			return false;
+		},
+
 		// new user through the chat embed
 		_insertNewUserEmbed: db.prepare(
 			`INSERT OR ABORT INTO users (

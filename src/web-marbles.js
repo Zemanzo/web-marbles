@@ -32,11 +32,11 @@ const socketGameplay = sockets.setupGameplay(db, config, game, levels);
 game.setSocketManager(socketGameplay);
 
 // Set up chat
-let discord = null,
+let discordManager = null,
 	socketChat;
 if (config.discord.enabled) {
-	discord = require("./server/chat/discord");
-	socketChat = discord.initialize(db);
+	discordManager = require("./server/chat/discord-manager");
+	socketChat = discordManager.initialize(db);
 }
 
 // Express connections
@@ -87,120 +87,31 @@ app.get("/client", function(req, res) {
 });
 
 if (config.discord.enabled) {
-	const request = require("request");
+	let redirectUri = encodeURIComponent(`${config.discord.redirectUriRoot}chat`);
+	let scope = encodeURIComponent(config.discord.scope);
+
 	app.get("/chat", function(req, res) {
-		if (req.query) {
-			if (req.query.code) {
-				let options = {
-					url: "https://discordapp.com/api/oauth2/token",
-					form: {
-						client_id: config.discord.clientId,
-						client_secret: config.discord.clientSecret,
-						grant_type: "authorization_code",
-						code: req.query.code,
-						redirect_uri: `${config.discord.redirectUriRoot}chat`,
-						scope: config.discord.scope
-					}
-				};
-
-				let callback = function(error, response, token_body) {
-					if (!error && response.statusCode === 200) {
-						token_body = JSON.parse(token_body);
-
-						request.get({
-							url: "https://discordapp.com/api/users/@me",
-							headers: {
-								"Authorization": `Bearer ${token_body.access_token}`
-							}
-						}, function(error, response, user_body) {
-							if (!error && response.statusCode === 200) {
-								user_body = JSON.parse(user_body);
-
-								let exists = db.user.idExists(user_body.id);
-
-								token_body.access_granted = Date.now();
-
-								if (exists)
-									db.user.updateTokenById(token_body, user_body.id);
-								else
-									db.user.insertNewUserEmbed(token_body, user_body, config.discord.scope);
-
-								res.render("chat", {
-									invitelink: config.discord.inviteLink,
-									user_data: JSON.stringify({
-										id: user_body.id,
-										username: user_body.username,
-										access_token: token_body.access_token,
-										access_granted: token_body.access_granted,
-										expires_in: token_body.expires_in,
-										discriminator: user_body.discriminator,
-										avatar: user_body.avatar
-									}),
-									success: true
-								});
-							} else {
-								log.error(error, response.statusCode);
-							}
-						});
-					} else {
-						res.render("chat", {
-							invitelink: config.discord.inviteLink,
-							success: false
-						});
-					}
-				};
-
-				request.post(options, callback);
-				return;
-			}
-		}
-
-		let discordData = {};
-		if (config.discord.enabled) {
-			discordData = {
+		if (req.query && req.query.code) {
+			// If we receive a code, the client is trying to authorize with Discord and we must handle this request.
+			discordManager.authorizeClient(req, res);
+		} else if (req.query && req.query.error) {
+			res.render("chat-redirect");
+		} else {
+			// Otherwise, simply display the chat.
+			let discordData = {
 				invitelink: config.discord.inviteLink,
 				client_id: config.discord.clientId,
-				redirect_uri: encodeURIComponent(`${config.discord.redirectUriRoot}chat`),
-				scope: encodeURIComponent(config.discord.scope) // separated with spaces
+				redirect_uri: redirectUri,
+				scope: scope
 			};
+
+			res.render("chat", discordData);
 		}
-		res.render("chat", discordData);
 	});
 
 	app.post("/chat", function(req, res) {
-		if (config.discord.enabled && req.body) {
-			// Request new access_token
-			if (
-				req.body.type == "refresh_token"
-				&& req.body.id
-				&& req.body.access_token
-				&& db.user.idIsAuthenticated(req.body.id, req.body.access_token)
-			) {
-				let row = db.user.getTokenById(req.body.id);
-				let options = {
-					url: "https://discordapp.com/api/oauth2/token",
-					form: {
-						client_id: config.discord.clientId,
-						client_secret: config.discord.clientSecret,
-						grant_type: "refresh_token",
-						refresh_token: row.refresh_token,
-						redirect_uri: `${config.discord.redirectUriRoot}chat`,
-						scope: row.scope
-					}
-				};
-				let callback = function(error, response, token_body) {
-					if (!error && response.statusCode === 200) {
-						token_body = JSON.parse(token_body);
-						token_body.access_granted = Date.now();
-
-						db.user.updateTokenById(token_body, req.body.id);
-
-						res.send(token_body);
-					}
-				};
-
-				request.post(options, callback);
-			}
+		if (req.body && req.body.type === "refresh_token") {
+			discordManager.refreshClient(req, res);
 		}
 	});
 } else {
@@ -303,7 +214,7 @@ function shutdown() {
 		// Discord
 		if (config.discord.enabled) {
 			promises.push(
-				discord.stop().then(() => {
+				discordManager.stop().then(() => {
 					log.warn("DISCORD client & webhook(s) stopped");
 				})
 			);

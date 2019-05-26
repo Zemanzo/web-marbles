@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Meta -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Chat - Manzo's Marbles</title>
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+
+		<!-- Stylesheets -->
+		<link href="fontello/css/fontello.css" rel="stylesheet">
+		<link href="styles/common.css" rel="stylesheet" type="text/css">
+		<link href="styles/chat.css" rel="stylesheet" type="text/css">
+
+		<!-- Scripts -->
+		<script src="dist/discordApiRedirect.js"></script>
+	</head>
+	<body>
+		<div id="await">
+			<h1>(Spinny load icon here)</h1>
+			<p>Processing...</p>
+		</div>
+		<div id="success">
+			<h1>Success!</h1>
+			<p>You can now close this window, if it doesn't do so automatically.</p>
+		</div>
+		<div id="failure">
+			<h1>Failure...</h1>
+			<p>Hmmm, something went wrong. Close this window and try again?</p>
+		</div>
+		<div id="response" data-response='{{{user_data}}}'></div> <!-- single quotes because the JSON contains double quotes -->
+	</body>
+</html>
