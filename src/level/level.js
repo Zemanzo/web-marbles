@@ -22,22 +22,34 @@ function Level() {
 	};
 }
 
-Level.prototype.addTexture = function(uuid, fileContents) {
+Level.prototype.addTexture = function(uuid, name, fileContents) {
 	this.textures[uuid] = {
+		name,
 		file: fileContents
 	};
 	return this.textures[uuid];
 };
 
-Level.prototype.addMaterial = function(uuid) {
+let createDefaultTextureProperties = function() {
+	return {
+		textureUuid: null,
+		offsetX: 0,
+		offsetY: 0,
+		scaleX: 1,
+		scaleY: 1,
+		rotation: 0
+	};
+};
+
+Level.prototype.addMaterial = function(uuid, name = "") {
 	this.materials[uuid] = {
-		entities: {},
-		"diffuse-a": {},
-		"diffuse-b": {},
-		mask: {},
-		"normal-a": {},
-		"normal-b": {},
-		side: 0, // THREE.FrontSide, but to avoid importing the entire THREE library for just this...
+		name,
+		"diffuse-a": createDefaultTextureProperties(),
+		"diffuse-b": createDefaultTextureProperties(),
+		mask: createDefaultTextureProperties(),
+		"normal-a": createDefaultTextureProperties(),
+		"normal-b": createDefaultTextureProperties(),
+		side: "FrontSide",
 		roughness: .5,
 		metalness: .5
 	};
@@ -117,6 +129,37 @@ Level.prototype.validateLevel = function() {
 		validateObject(this, template, true);
 		validateObject(this.world, template.world, true);
 		validateObject(this.gameplay, template.gameplay, true);
+
+		// Validate texture properties
+		if (this.textures) {
+			let textureTemplate = {
+				name: "",
+				file: ""
+			};
+			for (let textureUuid in this.textures) {
+				let texture = this.textures[textureUuid];
+				validateObject(texture, textureTemplate, true);
+			}
+		}
+
+		// Validate material properties
+		if (this.materials) {
+			let materialTemplate = {
+				name: "",
+				"diffuse-a": createDefaultTextureProperties(),
+				"diffuse-b": createDefaultTextureProperties(),
+				mask: createDefaultTextureProperties(),
+				"normal-a": createDefaultTextureProperties(),
+				"normal-b": createDefaultTextureProperties(),
+				side: "FrontSide",
+				roughness: .5,
+				metalness: .5
+			};
+			for (let materialUuid in this.materials) {
+				let material = this.materials[materialUuid];
+				validateObject(material, materialTemplate, true);
+			}
+		}
 
 		// Validate model properties
 		for(let modelName in this.models) {

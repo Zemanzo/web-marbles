@@ -39,7 +39,7 @@ function Model(name, sceneObject, projectData) {
 	let childMeshes = _getChildMeshes(this.sceneObject);
 	for (let i = 0; i < childMeshes.length; i++) {
 		if (!this.projectData.childMeshes[i]) {
-			this.projectData.childMeshes[i] = {};
+			this.projectData.childMeshes[i] = { material: null };
 		}
 		this.childMeshes.push(
 			new ChildMesh(childMeshes[i], this, this.projectData.childMeshes[i])
@@ -230,10 +230,6 @@ function ChildMesh(mesh, parent, projectData) {
 	this.mesh = mesh;
 	this.parent = parent;
 	this.projectData = projectData;
-
-	if (!this.projectData) {
-		this.projectData = { material: null };
-	}
 
 	this.element = document.createElement("div");
 	let self = this;

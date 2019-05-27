@@ -6,11 +6,22 @@ import { editorLog } from "./log";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 
 // texture object
-function Texture(uuid, name, texture, projectData) {
+function Texture(uuid, projectData) {
+	let self = this;
 	this.uuid = uuid;
-	this.name = name;
-	if (!projectData.name) projectData.name = name;
-	this.map = new THREE.TextureLoader().load(texture);
+	this.name = projectData.name;
+	this.map = new THREE.TextureLoader().load(
+		projectData.file,
+		function() { // success
+			editorLog(`Loaded texture: ${self.name}`, "info");
+		},
+		undefined,
+		function(error) { // error
+			editorLog(`Unable to load texture (${self.name}): ${error}`, "error");
+			console.error(error);
+			self.delete();
+		}
+	);
 	this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
 	this.projectData = projectData; // Project reference for this texture
 	this.element = null;
@@ -20,13 +31,13 @@ function Texture(uuid, name, texture, projectData) {
 	this.element = document.getElementById("textureTemplate").cloneNode(true);
 
 	// Add to texture list
-	this.element.id = name;
-	this.element.getElementsByClassName("image")[0].src = texture;
-	this.element.getElementsByClassName("name")[0].innerText = name;
+	this.element.id = projectData.name;
+	this.element.getElementsByClassName("image")[0].src = projectData.file;
+	this.element.getElementsByClassName("name")[0].innerText = this.name;
 
 	// Delete texture button
 	this.element.getElementsByClassName("delete")[0].addEventListener("click", () => {
-		if (confirm(`Are you sure you want to delete texture ${name}?`)) {
+		if (confirm(`Are you sure you want to delete texture ${self.name}?`)) {
 			texturesTab.removeTexture(uuid);
 		}
 	}, false);
@@ -101,8 +112,8 @@ let texturesTab = function() {
 					file.reader.onload = function() {
 						// Attempt to load texture and add it to the project
 						let uuid = generateTinyUUID();
-						let project = projectTab.activeProject.addTexture(uuid, file.reader.result);
-						texturesTab.addTexture(uuid, file.name, file.reader.result, project);
+						let project = projectTab.activeProject.addTexture(uuid, file.name, file.reader.result);
+						texturesTab.addTexture(uuid, project);
 					};
 
 					file.reader.onerror = function() {
@@ -123,8 +134,8 @@ let texturesTab = function() {
 			modelsTab.group.visible = false;
 		},
 
-		addTexture: function(uuid, name, texture, project) {
-			texturesTab.textures[uuid] = new Texture(uuid, name, texture, project);
+		addTexture: function(uuid, project) {
+			texturesTab.textures[uuid] = new Texture(uuid, project);
 		},
 
 		removeTexture: function(uuid) {

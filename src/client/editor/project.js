@@ -260,7 +260,7 @@ let projectTab = function() {
 			this.activeProject = loadedProject;
 
 			for (let key in this.activeProject.textures) {
-				texturesTab.addTexture(key, this.activeProject.textures[key].name, this.activeProject.textures[key].file, this.activeProject.textures[key]);
+				texturesTab.addTexture(key, this.activeProject.textures[key]);
 			}
 
 			for (let key in this.activeProject.materials) {

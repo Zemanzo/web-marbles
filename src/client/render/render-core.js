@@ -228,7 +228,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load textures
 	let textures = {};
 	for (let textureUuid in data.textures) {
-		textures[textureUuid] = Object.assign({}, data.textures[textureUuid]);
+		textures[textureUuid] = data.textures[textureUuid];
 		textures[textureUuid].texture = new THREE.TextureLoader().load(textures[textureUuid].file);
 		textures[textureUuid].texture.wrapS = textures[textureUuid].texture.wrapT = THREE.RepeatWrapping;
 	}
@@ -257,7 +257,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 
 		try {
 			materials[materialUuid] = (new CustomMaterial(properties)).material;
-			materials[materialUuid].build();
+			materials[materialUuid].needsUpdate = true;
 		} catch (error) {
 			console.warn(error);
 		}
@@ -365,7 +365,7 @@ function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
-	let tempFunction = this.waterObject.onBeforeRender;
+	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
 		let tempHide = [];
 		for (let object of parentScene.children) {
@@ -375,7 +375,7 @@ function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 			}
 		}
 
-		tempFunction(renderer, scene, camera);
+		originalOnBeforeRender(renderer, scene, camera);
 
 		for (let object of parentScene.children) {
 			if (tempHide.includes(object)) {
