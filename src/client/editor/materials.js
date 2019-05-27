@@ -2,6 +2,7 @@ import { DefaultMaterial, CustomMaterial } from "../render/custom-material";
 import { texturesTab } from "./textures";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
+import { editorLog } from "./log";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 
 // Material object
@@ -30,14 +31,10 @@ function Material(uuid, projectData) {
 		let clone = document.getElementById("textureUVTransformTemplate").cloneNode(true);
 		clone.removeAttribute("id");
 		clone.className = "textureUVTransform";
+
 		for (let input of clone.getElementsByTagName("input")) {
 			let uvProperty = input.dataset.uvProperty;
-
-			if (self.projectData[materialProperty][uvProperty]) {
-				input.value = self.projectData[materialProperty][uvProperty];
-			} else {
-				self.projectData[materialProperty][uvProperty] = input.valueAsNumber;
-			}
+			input.value = self.projectData[materialProperty][uvProperty];
 
 			let setUvProperty = function() {
 				self.projectData[materialProperty][uvProperty] = this.valueAsNumber;
@@ -60,24 +57,41 @@ function Material(uuid, projectData) {
 		}, false);
 	}
 
-	// Load material-related data if it exists in the project
-	if (this.projectData.name) {
-		this.elements.itemName.value = this.name = this.projectData.name;
-	} else {
-		this.elements.itemName.value = this.name = this.projectData.name = "";
-	}
+	// Add name
+	this.elements.itemName.value = this.name = this.projectData.name;
 
 	// Array of option elements that are part of the model material selection
 	this.optionElements = [];
-
-	// Set a default material
-	this.compiledMaterial = new DefaultMaterial();
 
 	// Add events
 	this.elements.itemName.addEventListener("input", function() { self.onNameChange(this.value); }, false);
 	this.elements.itemName.addEventListener("change", function() { self.onNameChange(this.value); }, false);
 	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() { self.delete(); }, false);
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+		let modelText = "";
+		if (Object.keys(modelsTab.models).length > 0) {
+			// I bet you mine is sillier. Which is also a silly word.
+			let uniqueModels = {};
+			let uniqueChildMeshes = [];
+			for (let key in modelsTab.models) {
+				for (let childMesh of modelsTab.models[key].childMeshes) {
+					if (childMesh.projectData.material === self.uuid) {
+						uniqueModels[key] = true;
+						uniqueChildMeshes.push(true);
+					}
+				}
+			}
+			let modelCount = Object.keys(uniqueModels).length;
+			let childMeshCount = uniqueChildMeshes.length;
+			if (modelCount > 0) {
+				modelText = `\nThis will alter ${childMeshCount} childmesh${childMeshCount === 1 ? "" : "es"} in ${modelCount} model${modelCount === 1 ? "" : "s"}!`;
+			}
+		}
+
+		if (confirm(`Are you sure you want to delete material ${self.name}?${modelText}`)) {
+			self.delete();
+		}
+	}, false);
 	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
 
 	// Display UUID
@@ -101,22 +115,24 @@ function Material(uuid, projectData) {
 			self.projectData[property].textureUuid = this.value;
 		}, false);
 
-		if (typeof this.projectData[property].textureUuid !== "undefined") selectElement.value = this.projectData[property].textureUuid;
+		if (this.projectData[property].textureUuid !== null) {
+			selectElement.value = this.projectData[property].textureUuid;
+		}
 	}
 
 	let setSide = function() { self.projectData.side = this.value; };
 	this.element.getElementsByClassName("side")[0].addEventListener("change", setSide, false);
-	if (typeof this.projectData.side !== "undefined") this.element.getElementsByClassName("side")[0].value = this.projectData.side;
+	this.element.getElementsByClassName("side")[0].value = this.projectData.side;
 
 	let setRoughness = function() { self.projectData.roughness = this.valueAsNumber; };
 	this.element.getElementsByClassName("roughness")[0].addEventListener("input", setRoughness, false);
 	this.element.getElementsByClassName("roughness")[0].addEventListener("change", setRoughness, false);
-	if (typeof this.projectData.roughness !== "undefined") this.element.getElementsByClassName("roughness")[0].value = this.projectData.roughness;
+	this.element.getElementsByClassName("roughness")[0].value = this.projectData.roughness;
 
 	let setMetalness = function() { self.projectData.metalness = this.valueAsNumber; };
 	this.element.getElementsByClassName("metalness")[0].addEventListener("input", setMetalness, false);
 	this.element.getElementsByClassName("metalness")[0].addEventListener("change", setMetalness, false);
-	if (typeof this.projectData.metalness !== "undefined") this.element.getElementsByClassName("metalness")[0].value = this.projectData.metalness;
+	this.element.getElementsByClassName("metalness")[0].value = this.projectData.metalness;
 
 	// Add custom material options to each model childMesh
 	this.element = materialsTab.elements.materialList.insertBefore(this.element, document.getElementById("addMaterial"));
@@ -162,16 +178,16 @@ Material.prototype.parse = function() {
 	try {
 		let customMaterial = new CustomMaterial(properties);
 		this.compiledMaterial.copy(customMaterial.material);
-		this.compiledMaterial.build();
 		this.compiledMaterial.needsUpdate = true;
 	} catch (error) {
+		editorLog(`Failed to parse custom material: ${error}`, "error");
 		console.warn(error);
 	}
 };
 
 Material.prototype.onNameChange = function(name) {
 	for (let element of this.optionElements) {
-		element.innerText = name;
+		element.innerText = `(${this.uuid}) ${this.name}`;
 	}
 	this.name = name;
 	this.projectData.name = name;
@@ -185,7 +201,7 @@ Material.prototype.toggleCollapse = function() {
 Material.prototype.createOptionElement = function() {
 	let optionElement = document.createElement("option");
 	optionElement.className = `option-${this.uuid}`;
-	optionElement.innerText = this.name;
+	optionElement.innerText = `(${this.uuid}) ${this.name}`;
 
 	this.optionElements.push(optionElement);
 
