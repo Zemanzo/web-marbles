@@ -7,7 +7,7 @@ import { modelsTab } from "./models";
 import { prefabsTab } from "./prefabs";
 import { worldTab } from "./world";
 import { projectTab } from "./project";
-import * as levelManager from "../../level/manager";
+import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
 
 
@@ -125,7 +125,7 @@ let editor = function() {
 			worldTab.initialize();
 
 			// Update version number
-			document.getElementById("editorVersion").innerHTML = `v${levelManager.getCurrentVersion()}`;
+			document.getElementById("editorVersion").innerHTML = `v${levelIO.getCurrentVersion()}`;
 
 			// Menu
 			let childValue = 0;
