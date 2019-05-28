@@ -109,10 +109,16 @@ function CustomMaterial(properties) {
 		setUvTransformWithObject(normalNodeA.uv, {});
 	}
 
-	if (properties.normalB && properties.mask) {
-		normalNodeB = new THREE.TextureNode(properties.normalB.texture);
-		normalNodeB.uv = new THREE.UVTransformNode();
-		setUvTransformWithObject(normalNodeB.uv, properties.normalB);
+	if (properties.mask) {
+		if (properties.normalB) {
+			normalNodeB = new THREE.TextureNode(properties.normalB.texture);
+			normalNodeB.uv = new THREE.UVTransformNode();
+			setUvTransformWithObject(normalNodeB.uv, properties.normalB);
+		} else {
+			normalNodeB = new THREE.TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
+			normalNodeB.uv = new THREE.UVTransformNode();
+			setUvTransformWithObject(normalNodeB.uv, {});
+		}
 
 		let normalBlend = new THREE.Math3Node(
 			normalNodeA,
