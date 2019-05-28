@@ -7,6 +7,7 @@ import * as Cookies from "js-cookie";
 import * as Stats from "stats-js";
 import * as config from "../config";
 import { CameraFlyControls } from "./cameras";
+import { CustomMaterial } from "./custom-material";
 import domReady from "../dom-ready";
 
 let _userData = Cookies.getJSON("user_data");
@@ -212,7 +213,7 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.scene.add(this.sky.skyObject);
 
 	// Water
-	this.water = new Water(this.sky.sunLight);
+	this.water = new Water(this.scene, this.sky.sunLight);
 	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
 }
@@ -245,7 +246,61 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	this.water.setHeight(data.world.waterLevel);
 	this.sky.recalculate({ inclination: data.world.sunInclination });
 
-	// Load models
+	// Load textures
+	let textures = {};
+	for (let textureUuid in data.textures) {
+		textures[textureUuid] = new THREE.TextureLoader().load(data.textures[textureUuid].file);
+		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE.RepeatWrapping;
+	}
+
+	// Load materials
+	let materials = {};
+	for (let materialUuid in data.materials) {
+		// For each material property that uses a texture, set the appropriate texture in the data so it can be used by CustomMaterial
+		let textureProperties = ["diffuse-a", "diffuse-b", "mask", "normal-a", "normal-b"];
+		for (let property of textureProperties) {
+			let materialProperty = data.materials[materialUuid][property];
+			materialProperty.texture = textures[materialProperty.textureUuid];
+		}
+
+		// Create an object that can be parsed by CustomMaterial
+		let properties = {
+			side:	   data.materials[materialUuid].side,
+			roughness: data.materials[materialUuid].roughness,
+			metalness: data.materials[materialUuid].metalness,
+			diffuseA:  data.materials[materialUuid]["diffuse-a"],
+			diffuseB:  data.materials[materialUuid]["diffuse-b"],
+			mask:	   data.materials[materialUuid]["mask"],
+			normalA:   data.materials[materialUuid]["normal-a"],
+			normalB:   data.materials[materialUuid]["normal-b"]
+		};
+
+		try {
+			materials[materialUuid] = (new CustomMaterial(properties)).material;
+			materials[materialUuid].needsUpdate = true;
+		} catch (error) {
+			console.warn(error);
+		}
+	}
+
+	// Load models & childMeshes, apply custom materials where appropriate
+	let childNumber = null;
+	function setChildMeshMaterials(obj, childMeshes) {
+		let children = [];
+
+		if (obj.type === "Mesh") {
+			if (materials[childMeshes[childNumber].material] != null) {
+				obj.material = materials[childMeshes[childNumber].material];
+			}
+			childNumber++;
+		}
+
+		for (let c = 0; c < obj.children.length; c++) {
+			children = children.concat(setChildMeshMaterials(obj.children[c], childMeshes));
+		}
+		return children;
+	}
+
 	let modelPromises = [];
 	let models = {};
 	for (let modelName in data.models) {
@@ -254,6 +309,10 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				try {
 					_GLTFLoader.parse(data.models[modelName].file, null,
 						function(model) {
+							if (data.models[modelName].childMeshes.length > 0) {
+								childNumber = 0;
+								setChildMeshMaterials(model.scene, data.models[modelName].childMeshes);
+							}
 							models[modelName] = model.scene;
 							resolve();
 						}, function(error) {
@@ -311,7 +370,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 };
 
 // Water
-function Water(sunLight, waterLevel = 0, fog = false) {
+function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 	let geometry = this.geometry = new THREE.PlaneBufferGeometry(10000, 10000);
 
 	this.waterObject = new THREE.Water(
@@ -334,6 +393,24 @@ function Water(sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
+	let originalOnBeforeRender = this.waterObject.onBeforeRender;
+	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
+		let tempHide = [];
+		for (let object of parentScene.children) {
+			if (object.userData.reflectInWater !== true && object.visible === true) {
+				tempHide.push(object);
+				object.visible = false;
+			}
+		}
+
+		originalOnBeforeRender(renderer, scene, camera);
+
+		for (let object of parentScene.children) {
+			if (tempHide.includes(object)) {
+				object.visible = true;
+			}
+		}
+	};
 }
 
 Water.prototype.setHeight = function(newHeight) {
@@ -348,6 +425,7 @@ Water.prototype.update = function() {
 function Sky(scene, parameters = {}) {
 	this.scene = scene;
 	this.skyObject = new THREE.Sky();
+	this.skyObject.userData.reflectInWater = true;
 	this.skyObject.scale.setScalar(10000);
 
 	// Light

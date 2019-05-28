@@ -1,7 +1,7 @@
 function Level() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.2.1";
+	this.version = "0.3.0";
 	this.type = "project";
 	this.exportDate = 0;
 
@@ -10,6 +10,8 @@ function Level() {
 		roundLength: 160
 	};
 
+	this.textures = {};
+	this.materials = {};
 	this.models = {};
 	this.prefabs = {};
 	this.worldObjects = {};
@@ -20,9 +22,44 @@ function Level() {
 	};
 }
 
+Level.prototype.addTexture = function(uuid, name, fileContents) {
+	this.textures[uuid] = {
+		name,
+		file: fileContents
+	};
+	return this.textures[uuid];
+};
+
+let createDefaultTextureProperties = function() {
+	return {
+		textureUuid: null,
+		offsetX: 0,
+		offsetY: 0,
+		scaleX: 1,
+		scaleY: 1,
+		rotation: 0
+	};
+};
+
+Level.prototype.addMaterial = function(uuid, name = "") {
+	this.materials[uuid] = {
+		name,
+		"diffuse-a": createDefaultTextureProperties(),
+		"diffuse-b": createDefaultTextureProperties(),
+		mask: createDefaultTextureProperties(),
+		"normal-a": createDefaultTextureProperties(),
+		"normal-b": createDefaultTextureProperties(),
+		side: "FrontSide",
+		roughness: .5,
+		metalness: .5
+	};
+	return this.materials[uuid];
+};
+
 Level.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
 		file: fileContents,
+		childMeshes: [],
 		convexData: null,
 		concaveData: {
 			indices: null,
@@ -54,7 +91,7 @@ Level.prototype.getLevelId = function() {
 // If properties are missing or of the wrong type, it should attempt to reset them if possible (and warn the user)
 Level.prototype.validateLevel = function() {
 	// A level without these aren't considered valid
-	if(typeof this.models !== "object"
+	if (typeof this.models !== "object"
 	|| typeof this.prefabs !== "object"
 	|| typeof this.worldObjects !== "object"
 	|| typeof this.gameplay !== "object"
@@ -86,11 +123,46 @@ Level.prototype.validateLevel = function() {
 				}
 			}
 		};
+
 		// Check main properties + world/gameplay params
 		let template = new Level();
 		validateObject(this, template, true);
 		validateObject(this.world, template.world, true);
 		validateObject(this.gameplay, template.gameplay, true);
+
+		if (this.type !== "levelServer") {
+			if (typeof this.textures !== "object" || typeof this.materials !== "object") {
+				console.error("Level validation failed: Missing vital level properties");
+				return false;
+			}
+
+			// Validate texture properties
+			let textureTemplate = {
+				name: "",
+				file: ""
+			};
+			for (let textureUuid in this.textures) {
+				let texture = this.textures[textureUuid];
+				validateObject(texture, textureTemplate, true);
+			}
+
+			// Validate material properties
+			let materialTemplate = {
+				name: "",
+				"diffuse-a": createDefaultTextureProperties(),
+				"diffuse-b": createDefaultTextureProperties(),
+				mask: createDefaultTextureProperties(),
+				"normal-a": createDefaultTextureProperties(),
+				"normal-b": createDefaultTextureProperties(),
+				side: "FrontSide",
+				roughness: .5,
+				metalness: .5
+			};
+			for (let materialUuid in this.materials) {
+				let material = this.materials[materialUuid];
+				validateObject(material, materialTemplate, true);
+			}
+		}
 
 		// Validate model properties
 		for(let modelName in this.models) {
@@ -101,6 +173,12 @@ Level.prototype.validateLevel = function() {
 					return false;
 				}
 			} else {
+				if (model.childMeshes) {
+					if (!Array.isArray(model.childMeshes)) {
+						console.error(`Level validation failed: ${modelName}'s childMesh data is incorrect.`);
+						return false;
+					}
+				}
 				if(model.convexData) {
 					if(!Array.isArray(model.convexData)
 						|| typeof model.convexData[0] !== "number") {
@@ -125,6 +203,7 @@ Level.prototype.validateLevel = function() {
 				case "file":
 				case "convexData":
 				case "concaveData":
+				case "childMeshes":
 					break;
 				default:
 					console.warn(`Level validation: Removed unused model property "${key}"`);

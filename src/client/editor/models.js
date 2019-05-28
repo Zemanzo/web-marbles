@@ -3,6 +3,7 @@ import "three/examples/js/loaders/GLTFLoader";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { renderCore } from "../render/render-core";
+import { materialsTab } from "./materials";
 import "three/examples/js/QuickHull";
 import "three/examples/js/geometries/ConvexGeometry";
 
@@ -16,6 +17,8 @@ function Model(name, sceneObject, projectData) {
 	this.concaveGeo = null; // For colliders. null - not generated, false - invalid
 	this.element = null;
 	this.prefabEntities = {};
+	this.childMeshes = [];
+	this.changed = false;
 
 	// Add to scene
 	modelsTab.group.add(this.sceneObject);
@@ -23,36 +26,91 @@ function Model(name, sceneObject, projectData) {
 
 	// Deep clone for editor
 	this.element = document.getElementById("modelTemplate").cloneNode(true);
+	this.element.classList.remove("itemTemplate");
 
 	// Add to model list
 	this.element.id = name;
-	this.element.getElementsByClassName("name")[0].innerHTML = name;
-	this.element.getElementsByClassName("name")[0].addEventListener("mousedown", function() {
+	this.element.getElementsByClassName("itemName")[0].innerHTML = name;
+	this.element.getElementsByClassName("showItem")[0].addEventListener("mousedown", function() {
 		modelsTab.select(name);
 	}, false);
 
+	// List model children
+	let childMeshes = _getChildMeshes(this.sceneObject);
+	for (let i = 0; i < childMeshes.length; i++) {
+		if (!this.projectData.childMeshes[i]) {
+			this.projectData.childMeshes[i] = { material: null };
+		}
+		this.childMeshes.push(
+			new ChildMesh(childMeshes[i], this, this.projectData.childMeshes[i])
+		);
+	}
+
+	// Add collapse functionality
+	let self = this;
+	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
+
 	// Delete model button
-	this.element.getElementsByClassName("delete")[0].addEventListener("click", () => {
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
 		let prefabText = "";
-		if(Object.keys(this.prefabEntities).length > 0) {
+		if(Object.keys(self.prefabEntities).length > 0) {
 			// This is quite a silly unique prefab counter isn't it?
 			let uniquePrefabs = {};
-			for(let key in this.prefabEntities) {
-				uniquePrefabs[this.prefabEntities[key].parent.uuid] = {};
+			for (let key in self.prefabEntities) {
+				uniquePrefabs[self.prefabEntities[key].parent.uuid] = {};
 			}
-			let entityCount = Object.keys(this.prefabEntities).length;
+			let entityCount = Object.keys(self.prefabEntities).length;
 			let prefabCount = Object.keys(uniquePrefabs).length;
 			prefabText = `\nThis will alter ${entityCount} object${entityCount === 1 ? "" : "s"} in ${prefabCount} prefab${prefabCount === 1 ? "" : "s"}!`;
 		}
 
 		if( confirm(`Are you sure you want to delete model ${name}?${prefabText}`) ) {
-			modelsTab.removeModel(name);
+			self.delete();
 		}
 	}, false);
 
 	// Add to DOM
 	this.element = document.getElementById("models").appendChild(this.element);
 }
+
+Model.prototype.show = function() {
+	this.sceneObject.visible = true;
+	this.element.classList.add("selected");
+	this.element.getElementsByClassName("showItem")[0].children[0].className = "icon-eye";
+};
+
+Model.prototype.hide = function() {
+	this.sceneObject.visible = false;
+	this.element.classList.remove("selected");
+	this.element.getElementsByClassName("showItem")[0].children[0].className = "icon-eye-off";
+};
+
+Model.prototype.toggleCollapse = function() {
+	this.element.getElementsByClassName("collapse")[0].children[0].classList.toggle("rotated");
+	this.element.classList.toggle("collapsed");
+};
+
+Model.prototype.delete = function() {
+	// Deselect
+	this.hide();
+
+	// Remove from scene group
+	modelsTab.group.remove(this.sceneObject);
+
+	// Remove from all prefab objects currently using this model
+	while (Object.keys(this.prefabEntities).length > 0) {
+		this.prefabEntities[Object.keys(this.prefabEntities)[0]].setModel(null);
+	}
+
+	// Remove from editor
+	this.element.parentNode.removeChild(this.element);
+	delete modelsTab.models[this.name];
+
+	// Remove from project
+	delete projectTab.activeProject.models[this.name];
+
+	editorLog(`Removed model: ${this.name}`, "info");
+};
 
 // Recursive function: Returns an array of all vertices of this 3D object and any child objects.
 // Vertices are in world space.
@@ -168,6 +226,85 @@ Model.prototype.getConcaveGeometry = function() {
 	return this.concaveGeo;
 };
 
+function ChildMesh(mesh, parent, projectData) {
+	this.mesh = mesh;
+	this.parent = parent;
+	this.projectData = projectData;
+
+	this.element = document.createElement("div");
+	let self = this;
+
+	// Element that has information about the child mesh
+	this.element.className = "childMesh";
+
+	// Element for the child mesh name
+	let childElementName = document.createElement("div");
+	childElementName.innerText = mesh.name;
+
+	// Element that allows selecting a custom material;
+	this.selectElement = document.createElement("select");
+
+	// Store the original material in case we'd want to switch back
+	this.originalMaterial = mesh.material.clone();
+
+	// Add options, starting with default
+	let optionElement = document.createElement("option");
+	optionElement.innerText = "Original";
+	optionElement.style.fontStyle = "italic";
+	optionElement.selected = true;
+	optionElement.addEventListener("click", function() { self.setMaterial(); }, false);
+	this.selectElement.add(optionElement);
+
+	for (let materialUuid in materialsTab.materials) {
+		let material = materialsTab.materials[materialUuid];
+		optionElement = material.createOptionElement();
+		if (this.projectData.material === materialUuid) {
+			optionElement.selected = true;
+		}
+		optionElement.addEventListener("click", function() { self.setMaterial(materialUuid); }, false);
+		this.selectElement.add(optionElement);
+	}
+
+	// Slap it all together
+	this.element.appendChild(childElementName);
+	this.element.appendChild(this.selectElement);
+	this.parent.element.getElementsByClassName("itemDetails")[0].appendChild(this.element);
+}
+
+ChildMesh.prototype.setMaterial = function(materialUuid) {
+	// If no material is provided, fall back to the original material.
+	if (!materialUuid) {
+		this.mesh.material = this.originalMaterial;
+		this.projectData.material = null;
+	} else {
+		this.mesh.material = materialsTab.materials[materialUuid].compiledMaterial;
+		this.projectData.material = materialUuid;
+	}
+
+	// Update prefabs
+	for (let prefabEntity in this.parent.prefabEntities) {
+		if (this.parent.prefabEntities[prefabEntity].type === "object") {
+			this.parent.prefabEntities[prefabEntity].setModel(this.parent.name);
+		}
+	}
+};
+
+// Recursive function: Returns an array of all (child) meshes this 3D object has.
+function _getChildMeshes(obj) {
+	let children = [];
+
+	// Add all objects that are of type Mesh
+	if (obj.type === "Mesh") {
+		children.push(obj);
+	}
+
+	// Add any child objects
+	for (let c = 0; c < obj.children.length; c++) {
+		children = children.concat(_getChildMeshes(obj.children[c]));
+	}
+	return children;
+}
+
 
 let modelsTab = function() {
 	let _GLTFLoader = null;
@@ -204,8 +341,8 @@ let modelsTab = function() {
 					file.reader = new FileReader();
 					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
-						let project = projectTab.activeProject.addModel(file.name, file.reader.result);
-						modelsTab.loadModel(file.name, file.reader.result, project);
+						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
+						modelsTab.loadModel(file.name, file.reader.result, projectData);
 					};
 
 					file.reader.onerror = function() {
@@ -219,21 +356,18 @@ let modelsTab = function() {
 		},
 
 		select: function(name) {
+			// Deselect previously selected model, if applicable
 			if (_selectedModel) {
-				_selectedModel.sceneObject.visible = false;
-				_selectedModel.element.className = "model";
+				_selectedModel.hide();
 			}
-			_selectedModel = modelsTab.models[name];
-			_selectedModel.sceneObject.visible = true;
-			_selectedModel.element.className = "model selected";
-		},
 
-		deselect: function() {
-			if(_selectedModel) {
-				_selectedModel.sceneObject.visible = false;
-				_selectedModel.element.className = "model";
+			// If it was the same model as before, set selectedModel to null
+			if (_selectedModel === modelsTab.models[name]) {
+				_selectedModel = null;
+			} else {
+				_selectedModel = modelsTab.models[name];
+				_selectedModel.show();
 			}
-			_selectedModel = null;
 		},
 
 		// Loads the model into the editor, adds it to the project if isNewModel is true
@@ -243,6 +377,7 @@ let modelsTab = function() {
 					_GLTFLoader.parse(fileContents, null,
 						function(model) {
 							modelsTab.models[modelName] = new Model(modelName, model.scene, project);
+							modelsTab.select(modelName);
 							editorLog(`Loaded model: ${modelName}`, "info");
 							resolve("success");
 						}, function(error) {
@@ -263,34 +398,6 @@ let modelsTab = function() {
 			} );
 
 			return promise;
-		},
-
-		removeModel: function(name) {
-			if(name in this.models === false) {
-				console.log(`Attempted to remove model ${name}, but no such model exists!`);
-			}
-
-			// Deselect
-			if (_selectedModel === name) this.deselect();
-
-			let thisModel = this.models[name];
-
-			// Remove from scene group
-			modelsTab.group.remove(thisModel.sceneObject);
-
-			// Remove from all prefab objects currently using this model
-			while(Object.keys(thisModel.prefabEntities).length > 0) {
-				thisModel.prefabEntities[Object.keys(thisModel.prefabEntities)[0]].setModel(null);
-			}
-
-			// Remove from editor
-			thisModel.element.parentNode.removeChild(thisModel.element);
-			delete this.models[name];
-
-			// Remove from project
-			delete projectTab.activeProject.models[name];
-
-			editorLog(`Removed model: ${name}`, "info");
 		},
 
 		onTabActive: function() {

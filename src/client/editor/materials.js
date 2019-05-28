@@ -1,39 +1,272 @@
-import { MeshStandardMaterial, MeshPhongMaterial } from "three";
+import { DefaultMaterial, CustomMaterial } from "../render/custom-material";
+import { texturesTab } from "./textures";
+import { modelsTab } from "./models";
+import { projectTab } from "./project";
+import { editorLog } from "./log";
+import { generateTinyUUID } from "../generate-tiny-uuid";
 
-// Default physics material
-export let physicsMaterial = new MeshStandardMaterial({
-	color: 0x000000,
-	emissive: 0xff00ff,
-	roughness: 1,
-	wireframe: true
-});
+// Material object
+function Material(uuid, projectData) {
+	this.uuid = uuid;
+	this.projectData = projectData; // Project reference for this material
+	this.compiledMaterial = new DefaultMaterial();
 
-// Start area material
-export let startMaterial = new MeshPhongMaterial({
-	color: 0x000000,
-	specular: 0x333333,
-	emissive: 0x00cc00,
-	shininess: 10,
-	opacity: 0.5,
-	transparent: true
-});
+	let self = this;
 
-// End area material
-export let endMaterial = new MeshPhongMaterial({
-	color: 0x000000,
-	specular: 0x333333,
-	emissive: 0xcc0000,
-	shininess: 10,
-	opacity: 0.5,
-	transparent: true
-});
+	// Related DOM elements
+	this.element = document.getElementById("materialTemplate").cloneNode(true); // deep clone
+	this.element.removeAttribute("id");
+	this.element.classList.remove("itemTemplate");
 
-// End area material
-export let gateMaterial = new MeshPhongMaterial({
-	color: 0x000000,
-	specular: 0x333333,
-	emissive: 0xcc7700,
-	shininess: 10,
-	opacity: 0.5,
-	transparent: true
-});
+	this.elements = {};
+	this.elements.itemName = this.element.getElementsByClassName("itemName")[0];
+	this.elements.textureSelects = this.element.getElementsByClassName("textureSelect");
+	this.elements.textureUVs = this.element.getElementsByClassName("textureUV");
+
+	// UV button for every texture input
+	for (let uvButton of this.elements.textureUVs) {
+		let materialProperty = uvButton.dataset.textureMapType;
+
+		// Add property inputs
+		let clone = document.getElementById("textureUVTransformTemplate").cloneNode(true);
+		clone.removeAttribute("id");
+		clone.className = "textureUVTransform";
+
+		for (let input of clone.getElementsByTagName("input")) {
+			let uvProperty = input.dataset.uvProperty;
+			input.value = self.projectData[materialProperty][uvProperty];
+
+			let setUvProperty = function() {
+				self.projectData[materialProperty][uvProperty] = this.valueAsNumber;
+			};
+
+			input.addEventListener("input", setUvProperty, false);
+			input.addEventListener("change", setUvProperty, false);
+		}
+
+		uvButton.appendChild(clone);
+
+		// Add event to UV button
+		uvButton.addEventListener("click", function(event) {
+			if (event.target !== uvButton) {
+				return;
+			}
+
+			this.classList.toggle("visible");
+			this.getElementsByClassName("textureUVTransform")[0].classList.toggle("visible");
+		}, false);
+	}
+
+	// Add name
+	this.elements.itemName.value = this.name = this.projectData.name;
+
+	// Array of option elements that are part of the model material selection
+	this.optionElements = [];
+
+	// Add events
+	this.elements.itemName.addEventListener("input", function() { self.onNameChange(this.value); }, false);
+	this.elements.itemName.addEventListener("change", function() { self.onNameChange(this.value); }, false);
+	this.element.getElementsByClassName("collapse")[0].addEventListener("click", function() { self.toggleCollapse(); }, false);
+	this.element.getElementsByClassName("delete")[0].addEventListener("click", function() {
+		let modelText = "";
+		if (Object.keys(modelsTab.models).length > 0) {
+			// I bet you mine is sillier. Which is also a silly word.
+			let uniqueModels = {};
+			let uniqueChildMeshes = [];
+			for (let key in modelsTab.models) {
+				for (let childMesh of modelsTab.models[key].childMeshes) {
+					if (childMesh.projectData.material === self.uuid) {
+						uniqueModels[key] = true;
+						uniqueChildMeshes.push(true);
+					}
+				}
+			}
+			let modelCount = Object.keys(uniqueModels).length;
+			let childMeshCount = uniqueChildMeshes.length;
+			if (modelCount > 0) {
+				modelText = `\nThis will alter ${childMeshCount} childmesh${childMeshCount === 1 ? "" : "es"} in ${modelCount} model${modelCount === 1 ? "" : "s"}!`;
+			}
+		}
+
+		if (confirm(`Are you sure you want to delete material ${self.name}?${modelText}`)) {
+			self.delete();
+		}
+	}, false);
+	this.element.getElementsByClassName("parse")[0].addEventListener("click", function() { self.parse(); }, false);
+
+	// Display UUID
+	this.element.getElementsByClassName("itemDetailsId")[0].innerHTML = uuid;
+
+	// Add texture option elements
+	for (let selectElement of this.elements.textureSelects) {
+		for (let textureUuid in texturesTab.textures) {
+			let texture = texturesTab.textures[textureUuid];
+			let optionElement = texture.createOptionElement();
+			if (this.projectData[selectElement.dataset.textureMapType] === textureUuid) {
+				optionElement.selected = true;
+			}
+			selectElement.add(optionElement);
+		}
+
+		// Add property events
+		let property = selectElement.dataset.textureMapType;
+
+		selectElement.addEventListener("change", function() {
+			self.projectData[property].textureUuid = this.value;
+		}, false);
+
+		if (this.projectData[property].textureUuid !== null) {
+			selectElement.value = this.projectData[property].textureUuid;
+		}
+	}
+
+	let setSide = function() { self.projectData.side = this.value; };
+	this.element.getElementsByClassName("side")[0].addEventListener("change", setSide, false);
+	this.element.getElementsByClassName("side")[0].value = this.projectData.side;
+
+	let setRoughness = function() { self.projectData.roughness = this.valueAsNumber; };
+	this.element.getElementsByClassName("roughness")[0].addEventListener("input", setRoughness, false);
+	this.element.getElementsByClassName("roughness")[0].addEventListener("change", setRoughness, false);
+	this.element.getElementsByClassName("roughness")[0].value = this.projectData.roughness;
+
+	let setMetalness = function() { self.projectData.metalness = this.valueAsNumber; };
+	this.element.getElementsByClassName("metalness")[0].addEventListener("input", setMetalness, false);
+	this.element.getElementsByClassName("metalness")[0].addEventListener("change", setMetalness, false);
+	this.element.getElementsByClassName("metalness")[0].value = this.projectData.metalness;
+
+	// Add custom material options to each model childMesh
+	this.element = materialsTab.elements.materialList.insertBefore(this.element, document.getElementById("addMaterial"));
+
+	for (let name in modelsTab.models) {
+		let model = modelsTab.models[name];
+		for (let childMesh of model.childMeshes) {
+			let optionElement = this.createOptionElement();
+			let self = this;
+
+			optionElement.addEventListener("click", function() {
+				childMesh.setMaterial(self.uuid);
+			}, false);
+
+			childMesh.selectElement.add(optionElement);
+		}
+	}
+}
+
+Material.prototype.parse = function() {
+	function toTextureProperty(textureData) {
+		if (textureData.textureUuid && texturesTab.textures[textureData.textureUuid]) {
+			let textureProperty = {};
+			Object.assign(textureProperty, textureData); // We shouldn't modify textureData, so we copy the data to a temporary object instead
+			textureProperty.texture = texturesTab.textures[textureData.textureUuid].map;
+			return textureProperty;
+		} else {
+			return null;
+		}
+	}
+
+	let properties = {
+		side: this.projectData.side,
+		roughness: this.projectData.roughness,
+		metalness: this.projectData.metalness,
+		diffuseA: toTextureProperty(this.projectData["diffuse-a"]),
+		diffuseB: toTextureProperty(this.projectData["diffuse-b"]),
+		mask:	  toTextureProperty(this.projectData["mask"]),
+		normalA:  toTextureProperty(this.projectData["normal-a"]),
+		normalB:  toTextureProperty(this.projectData["normal-b"])
+	};
+
+	try {
+		let customMaterial = new CustomMaterial(properties);
+		this.compiledMaterial.copy(customMaterial.material);
+		this.compiledMaterial.needsUpdate = true;
+	} catch (error) {
+		editorLog(`Failed to parse custom material: ${error}`, "error");
+		console.warn(error);
+	}
+};
+
+Material.prototype.onNameChange = function(name) {
+	for (let element of this.optionElements) {
+		element.innerText = `(${this.uuid}) ${this.name}`;
+	}
+	this.name = name;
+	this.projectData.name = name;
+};
+
+Material.prototype.toggleCollapse = function() {
+	this.element.getElementsByClassName("collapse")[0].children[0].classList.toggle("rotated");
+	this.element.classList.toggle("collapsed");
+};
+
+Material.prototype.createOptionElement = function() {
+	let optionElement = document.createElement("option");
+	optionElement.className = `option-${this.uuid}`;
+	optionElement.innerText = `(${this.uuid}) ${this.name}`;
+
+	this.optionElements.push(optionElement);
+
+	return optionElement;
+};
+
+Material.prototype.delete = function() {
+	// Remove from model selects
+	for (let element of this.optionElements) {
+		element.parentNode.removeChild(element);
+	}
+
+	// Model child meshes that use this material should revert to using their original material
+	for (let name in modelsTab.models) {
+		let model = modelsTab.models[name];
+		for (let childMesh of model.childMeshes) {
+			if (childMesh.mesh.material === this.compiledMaterial) {
+				childMesh.setMaterial();
+			}
+		}
+	}
+
+	// Remove from editor
+	this.element.parentNode.removeChild(this.element);
+	delete materialsTab.materials[this.uuid];
+
+	// Remove from project
+	delete projectTab.activeProject.materials[this.name];
+};
+
+let materialsTab = function() {
+	return {
+		elements: {
+			materialList: null
+		},
+
+		materials: {},
+
+		initialize: function() {
+			// Get DOM
+			materialsTab.elements.materialList = document.getElementById("materialList");
+
+			document.getElementById("newMaterial").addEventListener("click", function() {
+				let uuid = generateTinyUUID();
+				let project = projectTab.activeProject.addMaterial(uuid);
+				materialsTab.addMaterial(uuid, project);
+
+				// Focus to name input so user can start typing right away
+				materialsTab.materials[uuid].element.getElementsByClassName("itemName")[0].focus();
+			}, false);
+		},
+
+		// Add a material with the provided uuid and project-side object
+		addMaterial: function(uuid, project) {
+			materialsTab.materials[uuid] = new Material(uuid, project);
+		},
+
+		onTabActive: function() {
+			modelsTab.group.visible = true;
+		},
+
+		onTabInactive: function() {
+			modelsTab.group.visible = false;
+		}
+	};
+}();
+
+export { materialsTab };

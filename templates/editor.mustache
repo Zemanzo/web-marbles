@@ -39,6 +39,8 @@
 
 			<div id="menu">
 				<div id="menuOptions">
+					<div title="Textures"><i class="icon-picture"></i></div>
+					<div title="Materials"><i class="icon-brush"></i></div>
 					<div title="Models" class="selected"><i class="icon-cube"></i></div>
 					<div title="Prefabs"><i class="icon-cubes"></i></div>
 					<div title="World"><i class="icon-globe"></i></div>
@@ -48,17 +50,128 @@
 				<div id="menuContent">
 					<div id="properties">
 						<div>
-							<h3>Models</h3>
-							<div id="models">
-								<div class="model" id="modelTemplate">
-									<div class="name">template.gltf</div>
-									<button class="delete" title="Delete model"><i class="icon-trash"></i></button>
+							<h3>Textures</h3>
+							<div id="textures">
+								<div class="texture" id="textureTemplate">
+									<img class="image" src="template.jpeg"/>
+									<div class="name">template.jpeg</div>
+									<button class="delete" title="Delete texture"><i class="icon-trash"></i></button>
 								</div>
 							</div>
+							<div id="addTexture" class="add">
+								<input type="file" class="addFileInput" id="addTextureFile" multiple accept=".jpg,.jpeg,.png" />
+								<i class="icon-plus"></i>
+								<span>Add texture(s)</span>
+							</div>
+						</div>
+
+						<div>
+							<h3>Custom materials</h3>
+							<div id="materialsInformation">
+								Since the GLTF specification does not support all types of materials, you can create your own material here.
+							</div>
+							<div id="materialList" class="itemList">
+								<!-- Texture UV tranform template, placed here to avoid nested template -->
+								<div id="textureUVTransformTemplate">
+									<div>
+										Offset X: <input type="number" data-uv-property="offsetX" value="0" step=".1" required/>
+									</div>
+									<div>
+										Offset Y: <input type="number" data-uv-property="offsetY" value="0" step=".1" required/>
+									</div>
+									<div>
+										Scale X:  <input type="number" data-uv-property="scaleX" value="1" step=".1" required/>
+									</div>
+									<div>
+										Scale Y:  <input type="number" data-uv-property="scaleY" value="1" step=".1" required/>
+									</div>
+									<div>
+										Rotation: <input type="number" data-uv-property="rotation" value="0" step=".1" required/>
+									</div>
+								</div>
+								<div class="itemTemplate item material collapsed" id="materialTemplate">
+									<div class="itemHeader">
+										<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
+										<input type="text" class="itemName" placeholder="Add a name..."/>
+										<button class="delete" title="Delete material"><i class="icon-trash"></i></button>
+									</div>
+									<div class="itemDetails">
+										<div class="itemDetailsId">
+											REKT
+										</div>
+									</div>
+									<div class="materialProperties">
+										<div title="required">Diffuse map A</div>
+										<select class="textureSelect" data-texture-map-type="diffuse-a">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="diffuse-a">UV</div>
+
+										<div title="required">Diffuse map B</div>
+										<select class="textureSelect" data-texture-map-type="diffuse-b">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="diffuse-b">UV</div>
+
+										<div title="required">Mask</div>
+										<select class="textureSelect" data-texture-map-type="mask">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="mask">UV</div>
+
+										<div>Normal map A</div>
+										<select class="textureSelect" data-texture-map-type="normal-a">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="normal-a">UV</div>
+
+										<div>Normal map B</div>
+										<select class="textureSelect" data-texture-map-type="normal-b">
+											<option value="null" selected>&lt; Select texture &gt;</option>
+										</select>
+										<div class="textureUV" tabindex="0" role="button" data-texture-map-type="normal-b">UV</div>
+
+										<div>Side</div>
+										<select class="side span-2">
+											<option value="FrontSide" selected>Front side</option>
+											<option value="BackSide">Back side</option>
+											<option value="DoubleSide">Both sides</option>
+										</select>
+
+										<div class="span-2">Roughness</div>
+										<input class="roughness" type="number" value=".5" step=".01" min="0" max="1" required/>
+
+										<div class="span-2">Metalness</div>
+										<input class="metalness" type="number" value=".5" step=".01" min="0" max="1" required/>
+									</div>
+									<button class="parse" title="Parse material (ctrl+s when the text input has focus)">SAVE & PARSE</button>
+								</div>
+
+								<div id="newMaterial" class="add">
+									<i class="icon-plus"></i>
+									<span>New material</span>
+								</div>
+							</div>
+						</div>
+
+						<div>
+							<h3>Models</h3>
 							<div id="addModel" class="add">
 								<input type="file" class="addFileInput" id="addModelFile" multiple accept=".gltf,.glb" />
 								<i class="icon-plus"></i>
 								<span>Add model(s)</span>
+							</div>
+							<div id="models">
+								<div class="itemTemplate item model collapsed" id="modelTemplate">
+									<div class="itemHeader">
+										<button class="showItem" title="Show this model"><i class="icon-eye-off"></i></button>
+										<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
+										<div class="itemName">template.gltf</div>
+										<button class="delete" title="Delete model"><i class="icon-trash"></i></button>
+									</div>
+									<div class="itemDetails">
+									</div>
+								</div>
 							</div>
 						</div>
 
@@ -177,20 +290,20 @@
 								</table>
 							</div>
 							<h3>List</h3>
-							<div id="prefabsList">
-								<div class="prefab collapsed" id="prefabTemplate">
-									<div class="prefabHeader">
-										<button class="showPrefab" title="Show this prefab"><i class="icon-eye"></i></button>
+							<div class="itemList" id="prefabsList">
+								<div class="itemTemplate item prefab collapsed" id="prefabTemplate">
+									<div class="itemHeader">
+										<button class="showItem" title="Show this prefab"><i class="icon-eye"></i></button>
 										<button class="collapse" title="Collapse"><i class="icon-right-dir"></i></button>
-										<input type="text" class="prefabName" placeholder="Add a name..."/>
+										<input type="text" class="itemName" placeholder="Add a name..."/>
 										<!-- <button class="duplicate" title="Duplicate prefab"><i class="icofont-copy-alt"></i></button> -->
 										<button class="delete" title="Delete prefab"><i class="icon-trash"></i></button>
 									</div>
-									<div class="prefabDetails">
+									<div class="itemDetails">
 										<div class="detailsColor">
 											<input type="color" class="prefabColor"/>
 										</div>
-										<div class="detailsID">
+										<div class="itemDetailsId">
 											LMAO
 										</div>
 									<!-- <div class="detailsObjects">
@@ -254,7 +367,6 @@
 										<span>Add prefab</span>
 									</div>
 								</div>
-
 							</div>
 
 							<div id="worldMeta">

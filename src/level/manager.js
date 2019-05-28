@@ -51,6 +51,13 @@ module.exports = function() {
 				if(semver.lt(loadedLevel.version, "0.2.1")) {
 					loadedLevel.exportDate = 0;
 				}
+				if(semver.lt(loadedLevel.version, "0.3.0")) {
+					loadedLevel.textures = {};
+					loadedLevel.materials = {};
+					for (let key in loadedLevel.models) {
+						loadedLevel.models[key].childMeshes = [];
+					}
+				}
 
 				if(semver.lt(loadedLevel.version, this.getCurrentVersion())) {
 					console.log(`Converted level from v${loadedLevel.version} to v${this.getCurrentVersion()}`);
@@ -71,10 +78,15 @@ module.exports = function() {
 
 		prepareExport(project, exportType, exportDate) {
 			if(exportType === "publishServer") {
+				// Remove textures & materials
+				delete project.textures;
+				delete project.materials;
+
 				// Remove raw model data
 				for(let key in project.models) {
 					let model = project.models[key];
 					delete model.file;
+					delete model.childMeshes;
 
 					// Remove unused collider data
 					let usesConvex = false;
@@ -176,6 +188,44 @@ module.exports = function() {
 				}
 				for(let i = 0; i < unusedModels.length; i++) {
 					delete project.models[unusedModels[i]];
+				}
+			}
+
+			if (exportType === "publishClient") {
+				// Remove all unused materials
+				let usedMaterials = [];
+				for (let key in project.models) {
+					let model = project.models[key];
+					for (let childMesh of model.childMeshes) {
+						if (childMesh.material && !usedMaterials.includes(childMesh.material)) {
+							usedMaterials.push(childMesh.material);
+						}
+					}
+				}
+
+				let usedTextures = [];
+				for (let uuid in project.materials) {
+					if (!usedMaterials.includes(uuid)) {
+						delete project.materials[uuid];
+					} else { // Remove all unused textures
+						let material = project.materials[uuid];
+						for (let key in material) {
+							let value = material[key];
+							if (
+								typeof value === "object"
+								&& value.textureUuid
+								&& !usedTextures.includes(value.textureUuid)
+							) {
+								usedTextures.push(value.textureUuid);
+							}
+						}
+					}
+				}
+
+				for (let uuid in project.textures) {
+					if (!usedTextures.includes(uuid)) {
+						delete project.textures[uuid];
+					}
 				}
 			}
 
