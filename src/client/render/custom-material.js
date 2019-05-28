@@ -1,13 +1,13 @@
 import * as THREE from "three";
 import "three/examples/js/nodes/THREE.Nodes";
 
-let fallbackTexture = function() {
+let _createFlatColorTexture = function(color) {
 	let canvas = document.createElement("canvas");
 	canvas.width = 32;
 	canvas.height = 32; // who needs pixels anyway
 
 	let context = canvas.getContext("2d");
-	context.fillStyle = "#ffffff";
+	context.fillStyle = color || "#ffffff";
 	context.fillRect(0, 0, 128, 128);
 
 	return new THREE.TextureLoader().load(
@@ -15,10 +15,10 @@ let fallbackTexture = function() {
 		undefined,
 		undefined,
 		function(error) {
-			console.error("This is kind of embarassing but... The fallback texture failed to load...", error);
+			console.error("This is kind of embarassing but... The generated texture failed to load...", error);
 		}
 	);
-}();
+};
 
 function DefaultMaterial() {
 	let material = new THREE.StandardNodeMaterial();
@@ -46,7 +46,7 @@ function CustomMaterial(properties) {
 	}
 
 	function createFallbackTextureNode() {
-		let fallbackNode = new THREE.TextureNode(fallbackTexture);
+		let fallbackNode = new THREE.TextureNode( _createFlatColorTexture("#ffffff") );
 		fallbackNode.uv = new THREE.UVTransformNode();
 		setUvTransformWithObject(fallbackNode.uv, {});
 		return fallbackNode;
@@ -103,9 +103,13 @@ function CustomMaterial(properties) {
 		normalNodeA = new THREE.TextureNode(properties.normalA.texture);
 		normalNodeA.uv = new THREE.UVTransformNode();
 		setUvTransformWithObject(normalNodeA.uv, properties.normalA);
+	} else {
+		normalNodeA = new THREE.TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
+		normalNodeA.uv = new THREE.UVTransformNode();
+		setUvTransformWithObject(normalNodeA.uv, {});
 	}
 
-	if (properties.normalA && properties.normalB && properties.mask) {
+	if (properties.normalB && properties.mask) {
 		normalNodeB = new THREE.TextureNode(properties.normalB.texture);
 		normalNodeB.uv = new THREE.UVTransformNode();
 		setUvTransformWithObject(normalNodeB.uv, properties.normalB);
