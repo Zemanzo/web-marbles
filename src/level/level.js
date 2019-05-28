@@ -91,7 +91,9 @@ Level.prototype.getLevelId = function() {
 // If properties are missing or of the wrong type, it should attempt to reset them if possible (and warn the user)
 Level.prototype.validateLevel = function() {
 	// A level without these aren't considered valid
-	if(typeof this.models !== "object"
+	if (typeof this.textures !== "object"
+	|| typeof this.materials !== "object"
+	|| typeof this.models !== "object"
 	|| typeof this.prefabs !== "object"
 	|| typeof this.worldObjects !== "object"
 	|| typeof this.gameplay !== "object"
@@ -131,34 +133,30 @@ Level.prototype.validateLevel = function() {
 		validateObject(this.gameplay, template.gameplay, true);
 
 		// Validate texture properties
-		if (this.textures) {
-			let textureTemplate = {
-				name: "",
-				file: ""
-			};
-			for (let textureUuid in this.textures) {
-				let texture = this.textures[textureUuid];
-				validateObject(texture, textureTemplate, true);
-			}
+		let textureTemplate = {
+			name: "",
+			file: ""
+		};
+		for (let textureUuid in this.textures) {
+			let texture = this.textures[textureUuid];
+			validateObject(texture, textureTemplate, true);
 		}
 
 		// Validate material properties
-		if (this.materials) {
-			let materialTemplate = {
-				name: "",
-				"diffuse-a": createDefaultTextureProperties(),
-				"diffuse-b": createDefaultTextureProperties(),
-				mask: createDefaultTextureProperties(),
-				"normal-a": createDefaultTextureProperties(),
-				"normal-b": createDefaultTextureProperties(),
-				side: "FrontSide",
-				roughness: .5,
-				metalness: .5
-			};
-			for (let materialUuid in this.materials) {
-				let material = this.materials[materialUuid];
-				validateObject(material, materialTemplate, true);
-			}
+		let materialTemplate = {
+			name: "",
+			"diffuse-a": createDefaultTextureProperties(),
+			"diffuse-b": createDefaultTextureProperties(),
+			mask: createDefaultTextureProperties(),
+			"normal-a": createDefaultTextureProperties(),
+			"normal-b": createDefaultTextureProperties(),
+			side: "FrontSide",
+			roughness: .5,
+			metalness: .5
+		};
+		for (let materialUuid in this.materials) {
+			let material = this.materials[materialUuid];
+			validateObject(material, materialTemplate, true);
 		}
 
 		// Validate model properties
