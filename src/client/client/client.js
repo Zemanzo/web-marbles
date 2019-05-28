@@ -3,7 +3,7 @@ import "./render";
 import { net as networking } from "./networking";
 import { game } from "./game";
 import { renderCore } from "../render/render-core";
-import * as levelManager from "../../level/manager";
+import * as levelIO from "../../level/level-io";
 
 // If both promises fulfill, start rendering & fill entries field
 Promise.all([networking.socketReady, domReady]).then(() => {
@@ -22,7 +22,7 @@ networking.socketReady.then((initialData) => {
 			return response.arrayBuffer();
 		})
 		.then((buffer) => {
-			let levelData = levelManager.load(buffer);
+			let levelData = levelIO.load(buffer);
 			renderCore.activeLevel.loadLevel(levelData)
 				.then( () => {
 					if(game.getCurrentGameState() === "started") {

@@ -1,6 +1,6 @@
 import * as pako from "pako";
 import * as msgPack from "msgpack-lite";
-import * as levelManager from "../../level/manager";
+import * as levelIO from "../../level/level-io";
 
 
 onmessage = function(message) {
@@ -20,7 +20,7 @@ let exportProject = function(data, exportType, exportStart, useCompression) {
 			extension = ".mmc";
 		}
 
-		data = levelManager.prepareExport(data, exportType, exportStart);
+		data = levelIO.prepareExport(data, exportType, exportStart);
 		if(data === null) {
 			postMessage({
 				type: "error",
