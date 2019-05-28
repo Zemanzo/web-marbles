@@ -260,7 +260,11 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		let textureProperties = ["diffuse-a", "diffuse-b", "mask", "normal-a", "normal-b"];
 		for (let property of textureProperties) {
 			let materialProperty = data.materials[materialUuid][property];
-			materialProperty.texture = textures[materialProperty.textureUuid];
+			if (materialProperty.textureUuid) {
+				materialProperty.texture = textures[materialProperty.textureUuid];
+			} else {
+				data.materials[materialUuid][property] = null;
+			}
 		}
 
 		// Create an object that can be parsed by CustomMaterial
