@@ -228,9 +228,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load textures
 	let textures = {};
 	for (let textureUuid in data.textures) {
-		textures[textureUuid] = data.textures[textureUuid];
-		textures[textureUuid].texture = new THREE.TextureLoader().load(textures[textureUuid].file);
-		textures[textureUuid].texture.wrapS = textures[textureUuid].texture.wrapT = THREE.RepeatWrapping;
+		textures[textureUuid] = new THREE.TextureLoader().load(data.textures[textureUuid].file);
+		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE.RepeatWrapping;
 	}
 
 	// Load materials
@@ -240,7 +239,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		let textureProperties = ["diffuse-a", "diffuse-b", "mask", "normal-a", "normal-b"];
 		for (let property of textureProperties) {
 			let materialProperty = data.materials[materialUuid][property];
-			materialProperty.texture = textures[materialProperty.textureUuid].texture;
+			materialProperty.texture = textures[materialProperty.textureUuid];
 		}
 
 		// Create an object that can be parsed by CustomMaterial
