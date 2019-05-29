@@ -78,6 +78,13 @@ let renderCore = function() {
 			} else { // Initialize
 				_mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
+				_defaultModel = new THREE.Mesh(
+					new THREE.BoxBufferGeometry(1, 1, 1, 1),
+					new THREE.MeshStandardMaterial({
+						color: 0x000000,
+						emissive: 0xff00ff,
+						wireframe: true
+					})); // The fallback for the fallback. Is replaced by the real fallback mesh if loading succeeds.
 
 				// Default model
 				try {
@@ -93,7 +100,7 @@ let renderCore = function() {
 						null,
 
 						function(error) {
-							console.error("An error occurred when loading the model", error);
+							console.error("An error occurred when loading the fallback model", error);
 						}
 					);
 				}
