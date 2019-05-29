@@ -1,0 +1,13 @@
+body {
+	padding-top:200px;
+}
+
+h1 {
+	font-size: 5em;
+	color: var(--theme-color);
+}
+
+.column {
+	font-size: 1.2em;
+	color: #999;
+}

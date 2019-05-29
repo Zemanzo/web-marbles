@@ -1,10 +1,11 @@
-[![Discord](https://img.shields.io/discord/478527288854708226.svg?label=discord)](https://discord.gg/XB3k9T5)
+[![Discord](https://img.shields.io/discord/478527288854708226.svg?color=%237289DA&label=discord&logo=discord)](https://discord.gg/XB3k9T5)
 [![Dependencies](https://img.shields.io/david/Zemanzo/web-marbles.svg)](https://david-dm.org/Zemanzo/web-marbles)
-[![TravisCI](https://img.shields.io/travis/com/Zemanzo/web-marbles.svg)](https://travis-ci.com/Zemanzo/web-marbles)
+[![TravisCI](https://img.shields.io/travis/com/Zemanzo/web-marbles.svg?logo=travis)](https://travis-ci.com/Zemanzo/web-marbles)
+[![Patreon](https://img.shields.io/badge/support%20us-patreon-%23e85b46.svg?logo=patreon)](https://www.patreon.com/webmarbles)
 
 # web-marbles
 
-![Cinematic shot of the environment so far](https://i.imgur.com/bUGES4s.jpg)
+![Cinematic shot of the level with some marbles rolling down](https://i.imgur.com/f4GIrU5.png)
 
 Aims to recreate Marble Racing from the ground up, as a fully web based game. The goal is to make it cost-effective, being able to run it on a relatively low-cost server leaving all rendering to the client. Inspired by the [original Marble Racing](http://twitch.tv/marbleracing) Twitch game.
 

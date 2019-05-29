@@ -5,6 +5,10 @@
 const userConfig = require("./config.user");
 const config = {};
 
+config.contact = {};
+config.contact.email = "your.email@address.org"; // You can also supply an encrypted or hashed version, which will be decoded with config.contact.decode
+config.contact.decode = false; // Setting this to a function will take config.contact.email where requested and decodes it using this function
+
 config.controls = {};
 config.controls.camera = {};
 config.controls.camera.speed = 150;

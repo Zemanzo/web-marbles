@@ -1,64 +1,73 @@
 module.exports = function() {
 	return {
-		ammo: require("ammo")(),
+		ammo: require("ammo.js")(),
 		world: null,
-		shapes: { // Future container for collision shape re-usage
+		shapes: { // Container for collision shape re-usage
 			defaultMarble: null
 		},
 
-		// Currently unused/untested
-		addTerrainShape(name, mapObj) {
-			// Up axis = 0 for X, 1 for Y, 2 for Z. Normally 1 = Y is used.
-			let upAxis = 1;
+		// Creates a convex shape using the given vertexData as float array
+		createConvexShape(name, vertexData) {
+			let convexShape = new this.ammo.btConvexHullShape();
+			let vertex = new this.ammo.btVector3();
 
-			// hdt, height data type. "PHY_FLOAT" is used. Possible values are "PHY_FLOAT", "PHY_UCHAR", "PHY_SHORT"
-			let hdt = "PHY_FLOAT";
+			for (let i = 0; i < vertexData.length / 3; i++) {
+				vertex.setValue(
+					vertexData[i * 3],
+					vertexData[i * 3 + 1],
+					vertexData[i * 3 + 2]);
 
-			// Set this to your needs (inverts the triangles)
-			let flipQuadEdges = false;
-
-			// Creates height data buffer in Ammo heap
-			let ammoHeightData = null;
-			ammoHeightData = this.ammo._malloc(4 * mapObj.width * mapObj.depth);
-
-			// Copy the javascript height data array to the Ammo one.
-			let p = 0,
-				p2 = 0;
-
-			for (let j = 0; j < mapObj.depth; j++) {
-				for (let i = 0; i < mapObj.width; i++) {
-					// write 32-bit float data to memory
-					this.ammo.HEAPF32[ammoHeightData + p2 >> 2] = mapObj.zArray[p];
-					p++;
-
-					// 4 bytes/float
-					p2 += 4;
-				}
+				// Add vertex, recalc AABB if this is the last one we add
+				convexShape.addPoint(vertex, i == (vertexData.length / 3) - 1);
 			}
 
-			// Creates the heightfield physics shape
-			let heightFieldShape = new this.ammo.btHeightfieldTerrainShape(
-				mapObj.width,
-				mapObj.depth,
-				ammoHeightData,
-				1,
-				mapObj.minZ,
-				mapObj.maxZ,
-				upAxis,
-				hdt,
-				flipQuadEdges
-			);
+			if(name in this.shapes) {
+				this.shapes[name].convex = convexShape;
+			} else {
+				this.shapes[name] = {
+					convex: convexShape,
+					concave: null
+				};
+			}
+		},
 
-			// Set horizontal scale
-			let scaleX = mapObj.gridDistance;
-			let scaleZ = mapObj.gridDistance;
-			heightFieldShape.setLocalScaling(new this.ammo.btVector3(scaleX, 1, scaleZ));
+		// Creates a concave shape using the given vertexData as float array and indexData as indices
+		createConcaveShape(name, vertexData, indexData) {
+			let mesh = new this.ammo.btTriangleMesh(true, false);
 
-			heightFieldShape.setMargin(0.05);
+			let v0 = new this.ammo.btVector3();
+			let v1 = new this.ammo.btVector3();
+			let v2 = new this.ammo.btVector3();
+			for(let t = 0; t < indexData.length / 3; t++) {
+				v0.setValue(
+					vertexData[ indexData[t * 3 + 0] * 3 + 0 ],
+					vertexData[ indexData[t * 3 + 0] * 3 + 1 ],
+					vertexData[ indexData[t * 3 + 0] * 3 + 2 ]);
+				v1.setValue(
+					vertexData[ indexData[t * 3 + 1] * 3 + 0 ],
+					vertexData[ indexData[t * 3 + 1] * 3 + 1 ],
+					vertexData[ indexData[t * 3 + 1] * 3 + 2 ]);
+				v2.setValue(
+					vertexData[ indexData[t * 3 + 2] * 3 + 0 ],
+					vertexData[ indexData[t * 3 + 2] * 3 + 1 ],
+					vertexData[ indexData[t * 3 + 2] * 3 + 2 ]);
+				mesh.addTriangle(v0, v1, v2, true);
+			}
+			let concaveShape = new this.ammo.btBvhTriangleMeshShape(mesh, true, true);
 
-			this.shapes[name] = heightFieldShape;
+			if(name in this.shapes) {
+				this.shapes[name].concave = concaveShape;
+			} else {
+				this.shapes[name] = {
+					convex: null,
+					concave: concaveShape
+				};
+			}
+		},
 
-			return heightFieldShape;
+		// Destroys the shape data for the given name
+		destroyShape(name) {
+			delete this.shapes[name];
 		}
 	};
 }();

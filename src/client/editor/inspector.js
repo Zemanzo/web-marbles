@@ -1,4 +1,3 @@
-import * as THREE from "three";
 
 let inspector = function() {
 	return {
@@ -42,7 +41,9 @@ let inspector = function() {
 						width: null,
 						height: null,
 						depth: null
-					}
+					},
+					mesh: document.getElementById("inspectorColliderList"),
+					meshType: document.getElementById("inspectorColliderType")
 				}
 			};
 
@@ -113,7 +114,7 @@ let inspector = function() {
 			};
 			document.getElementById("inspectorFunction").addEventListener("change", inspectorChangeFunction, false);
 
-			// Change collider shape (except terrain)
+			// Change collider shape
 			let inspectorChangeShape = function() {
 				if (inspector.selected) {
 					let shape = inspector.elements.shape.value;
@@ -124,11 +125,32 @@ let inspector = function() {
 					inspector.elements.shapeProperties.input.height.value = 1;
 					inspector.elements.shapeProperties.input.depth.value = 1;
 					inspector.elements.shapeProperties.input.radius.value = 1;
+					inspector.elements.shapeProperties.mesh.value = "null";
+					inspector.elements.shapeProperties.meshType.value = "convex";
+					inspector.elements.shapeProperties.meshType.disabled = true;
 
 					document.getElementById("shapeProperties").className = `shapeProperties colliderProperty ${shape}`;
 				}
 			};
 			inspector.elements.shape.addEventListener("change", inspectorChangeShape, false);
+
+			// Change collider mesh
+			let inspectorChangeCollisionMesh = function() {
+				if (inspector.selected) {
+					inspector.selected.setModel(this.value);
+					inspector.elements.shapeProperties.meshType.value = "convex";
+					inspector.elements.shapeProperties.meshType.disabled = this.value === "null";
+				}
+			};
+			inspector.elements.shapeProperties.mesh.addEventListener("change", inspectorChangeCollisionMesh, false);
+
+			// Change collider mesh type
+			let inspectorChangeCollisionMeshType = function() {
+				if (inspector.selected) {
+					inspector.selected.setConvex(this.value === "convex");
+				}
+			};
+			inspector.elements.shapeProperties.meshType.addEventListener("change", inspectorChangeCollisionMeshType, false);
 
 			// Change transform
 			let transformElements = inspector.elements.transform;
@@ -310,7 +332,8 @@ let inspector = function() {
 			// Reset any disabled inputs. Will be disabled again when necessary.
 			inspector.disabled.all(false);
 
-			if (selected.type === "object" && selected.model) document.getElementById("inspectorModelList").value = selected.model;
+			inspector.elements.model.value = "null";
+			if (selected.type === "object" && selected.model) inspector.elements.model.value = selected.model;
 
 			// If a collider shape is selected, fill the inputs with the appropriate values
 			if (selected.type === "collider") {
@@ -324,11 +347,19 @@ let inspector = function() {
 				inspector.elements.shapeProperties.input.width.value  = 1;
 				inspector.elements.shapeProperties.input.height.value = 1;
 				inspector.elements.shapeProperties.input.depth.value  = 1;
+				inspector.elements.shapeProperties.mesh.value = "null";
+				inspector.elements.shapeProperties.meshType.value = "convex";
+				inspector.elements.shapeProperties.meshType.disabled = true;
 
 				if("radius" in colliderData) inspector.elements.shapeProperties.input.radius.value = colliderData.radius;
 				if("width" in colliderData) inspector.elements.shapeProperties.input.width.value = colliderData.width;
 				if("height" in colliderData) inspector.elements.shapeProperties.input.height.value = colliderData.height;
 				if("depth" in colliderData) inspector.elements.shapeProperties.input.depth.value = colliderData.depth;
+				if("convex" in colliderData) inspector.elements.shapeProperties.meshType.value = colliderData.convex ? "convex" : "concave";
+				if("model" in colliderData) {
+					inspector.elements.shapeProperties.mesh.value = colliderData.model;
+					inspector.elements.shapeProperties.meshType.disabled = colliderData.model === null;
+				}
 			}
 
 			document.getElementById("inspectorFunction").value = selected.functionality;

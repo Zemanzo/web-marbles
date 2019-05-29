@@ -1,71 +1,52 @@
 import * as pako from "pako";
+import * as msgPack from "msgpack-lite";
+import * as levelManager from "../../level/manager";
 
-let serialize = {
-	start: null
-};
 
 onmessage = function(message) {
-	serialize.start = message.data.serializationStart || new Date();
-	exportProject(message.data.payload, message.data.exportAsLevel, message.data.useCompression);
+	exportProject(message.data.payload, message.data.exportType, message.data.exportStart, message.data.useCompression);
 };
 
-let exportProject = function(data, exportAsLevel, useCompression) {
-	sendLog(`Payload received. (${(new Date()) - serialize.start}ms)`);
+let exportProject = function(data, exportType, exportStart, useCompression) {
+	sendLog(`Payload received. (${Date.now() - exportStart}ms)`);
 
 	try {
-		let fileName = data.mapName;
+		let fileName = data.levelName;
+		let extension = ".mmp";
 
-		if(exportAsLevel) {
-			// Remove all unused prefabs
-			let unusedPrefabs = Object.keys(data.prefabs);
-			for(let key in data.worldObjects) {
-				let index = unusedPrefabs.indexOf(data.worldObjects[key].prefab);
-				if(index !== -1) {
-					unusedPrefabs.splice(index, 1);
-				}
-			}
-			for(let i = 0; i < unusedPrefabs.length; i++) {
-				delete data.prefabs[unusedPrefabs[i]];
-			}
+		if(exportType === "publishServer") {
+			extension = ".mms";
+		} else if(exportType === "publishClient") {
+			extension = ".mmc";
+		}
 
-			// Remove all unused models
-			let unusedModels = Object.keys(data.models);
-			for(let key in data.prefabs) {
-				let prefab = data.prefabs[key];
-				for(let ent in prefab.entities) {
-					let entity = prefab.entities[ent];
-					if("model" in entity) {
-						let index = unusedModels.indexOf(entity.model);
-						if(index !== -1) {
-							unusedModels.splice(index, 1);
-						}
-					}
-				}
-			}
-			for(let i = 0; i < unusedModels.length; i++) {
-				delete data.models[unusedModels[i]];
-			}
+		data = levelManager.prepareExport(data, exportType, exportStart);
+		if(data === null) {
+			postMessage({
+				type: "error",
+				payload: "Level export failed, check console for details."
+			});
+			return;
 		}
 
 		// Converting to file-ready format
-		data = JSON.stringify(data);
-		sendLog(`File data prepared. (${(new Date()) - serialize.start}ms)`);
+		data = msgPack.encode(data);
+		sendLog(`File data prepared. (${Date.now() - exportStart}ms)`);
 
 		if(useCompression) {
 			let startLength = data.length;
-			sendLog("Starting compression. (This might take a while...)");
+			sendLog("Starting compression...");
 			data = pako.deflate(data);
 			let compressionRatio = Math.round((data.length / startLength) * 10000) * .01;
-			sendLog(`Data compressed! (${compressionRatio}% of original) (${(new Date()) - serialize.start}ms)`);
+			sendLog(`Data compressed! (${compressionRatio}% of original) (${Date.now() - exportStart}ms)`);
 		}
 
-		let extension = useCompression ? ".mmb" : ".mmp";
 		let filetype = useCompression ? "application/octet-stream" : "application/json";
 		let filename = `${fileName}${extension}`;
 		let file = new File([data], filename, {type: filetype});
 		let objectUrl = URL.createObjectURL(file);
 
-		sendLog(`Serialization succesful! (${(new Date()) - serialize.start}ms)`, "success");
+		sendLog(`Serialization successful! (${Date.now() - exportStart}ms)`, "success");
 		postMessage({
 			type: "publishSuccess",
 			payload: {

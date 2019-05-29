@@ -8,7 +8,9 @@ module.exports = {
 		client: "./src/client/client/client.js",
 		editor: "./src/client/editor/editor.js",
 		chat: "./src/client/chat/chat.js",
-		discordApiRedirect: "./src/client/chat/discord-api-redirect.js"
+		discordApiRedirect: "./src/client/chat/discord-api-redirect.js",
+		contact: "./src/client/contact.js",
+		debug: "./src/client/client/debug.js"
 	},
 	output: {
 		filename: "[name].js",

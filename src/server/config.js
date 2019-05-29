@@ -9,15 +9,6 @@ const config = {};
 /* Marbles */
 config.marbles = {};
 config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
-config.marbles.mapRotation = [
-	{
-		name: "map4v2.obj",
-		startGate: {
-			position: {x: -23, y: 8, z: 50},
-			size: [7.5, 6, .5]
-		}
-	}
-];
 
 // Bots
 config.marbles.bots = {};
@@ -40,13 +31,13 @@ config.marbles.bots.names = [
 	}
 ];
 
-// Game rules -- Move this to the mapRotation and have it set per map.
+// Global game rules
 config.marbles.rules = {};
 config.marbles.rules.maxPlayerCount = 250; // Maximum amount of players that can enter in a single round
 config.marbles.rules.maxMarbleCount = 500; // Maximum amount of marbles that can be entered in a single round
-config.marbles.rules.enterPeriod = 40; // Time in seconds
-config.marbles.rules.maxRoundLength = 160; // Time in seconds
-config.marbles.rules.waitAfterFinish = 40; // Time in seconds
+config.marbles.rules.enterPeriod = 20; // Time in seconds
+config.marbles.rules.finishPeriod = 15; // Time in seconds
+config.marbles.rules.timeUntilDnf = 30; // Time in seconds
 
 // Earning points
 config.marbles.scoring = {};
@@ -66,9 +57,9 @@ config.marbles.scoring.pointsAwardedForFinishing = 0;
 // G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
 config.marbles.scoring.pointScale = 1.5;
 
-/* Maps */
-config.maps = {};
-config.maps.folderPath = `${__dirname}/../../public/resources/maps`;
+/* Levels */
+config.levels = {};
+config.levels.folderPath = `${__dirname}/../../public/resources/maps`;
 
 /* Database */
 config.database = {};
@@ -80,6 +71,7 @@ config.editor.enabled = true;
 
 /* Discord integration */
 config.discord = {};
+config.discord.enabled = true; // Disabling Discord should only be done when debugging! This is not for production.
 
 config.discord.clientId = "<USE CONFIG.USER.JS OVERRIDE>";
 config.discord.clientSecret = "<USE CONFIG.USER.JS OVERRIDE>";

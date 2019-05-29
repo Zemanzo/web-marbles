@@ -3,7 +3,6 @@ import ReconnectingWebSocket from "reconnecting-websocket";
 import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
-import { addMap } from "./render";
 
 let wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 let ws = new ReconnectingWebSocket(wsUri, [], {
@@ -45,15 +44,11 @@ net.socketReady = new Promise((resolve) => {
 
 			// Initial marble sizes, colors and names
 			net.marbleData = message.initialMarbleData;
-			addMap(message.mapId);
 
 			// Unused anywhere else, cleaner to get rid of it now.
 			delete message.initialMarbleData;
-			delete message.mapId;
 
-			console.log(message);
-
-			game.setInitialGameState(Promise.resolve(message));
+			game.setInitialGameState(message);
 
 			resolve(message);
 			break;
@@ -73,16 +68,15 @@ net.socketReady = new Promise((resolve) => {
 			game.finishMarble(JSON.parse(message));
 			break;
 		case "state":
-			game.setCurrentGameState(message);
+			game.setCurrentGameState(JSON.parse(message));
 			break;
 		case "notification":
 			message = JSON.parse(message);
-			console.log(message);
-			new HUDNotification(message.content, message.style);
+			new HUDNotification(message.content, message.duration, message.style);
 			break;
 		}
 	});
-}).then(() => {
+}).then((message) => {
 	/* Physics syncing */
 	// Once connection is acknowledged, start requesting physics updates
 	let getServerData = function() {
@@ -98,7 +92,7 @@ net.socketReady = new Promise((resolve) => {
 	};
 	getServerData();
 
-	return true;
+	return message;
 });
 
 export { net, ws };

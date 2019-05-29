@@ -5,6 +5,10 @@ domReady.then(() => {
 	let response = document.getElementById("response").dataset.response;
 
 	try {
+		let queryParameters = window.location.search.substr(1).split("&").map( el => el.split("=") );
+		if (queryParameters[0][0] === "error" && queryParameters[0][1] === "access_denied") {
+			window.close();
+		}
 		if (response) {
 			let user_data = JSON.parse(response);
 

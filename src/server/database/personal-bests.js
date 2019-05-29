@@ -6,25 +6,25 @@ module.exports = function(db, common) {
 			FROM
 				personal_bests
 			WHERE
-				map_id IS ?
+				level_id IS ?
 				AND
 				user_id IS ?`
 		),
 
-		getPersonalBest(map, id) {
-			return this._getPersonalBest.get([map, id]);
+		getPersonalBest(level, id) {
+			return this._getPersonalBest.get([level, id]);
 		},
 
 		_insertPersonalBest: db.prepare(
 			`INSERT OR ABORT INTO personal_bests (
 				time_best,
-				map_id,
+				level_id,
 				user_id
 			) VALUES (?,?,?)`
 		),
 
-		insertPersonalBest(time, map, id) {
-			this._insertPersonalBest.run([time, map, id]);
+		insertPersonalBest(time, level, id) {
+			this._insertPersonalBest.run([time, level, id]);
 		},
 
 		_updatePersonalBest: db.prepare(
@@ -33,30 +33,37 @@ module.exports = function(db, common) {
 			SET
 				time_best = ?
 			WHERE
-				map_id IS ?
+				level_id IS ?
 				AND
 				user_id IS ?
 				AND
 				time_best > ?`
 		),
 
-		updatePersonalBest(time, map, id) {
-			this._updatePersonalBest.run([time, map, id, time]);
+		updatePersonalBest(time, level, id) {
+			this._updatePersonalBest.run([time, level, id, time]);
 		},
 
 		// batch update user statistics
-		batchInsertOrUpdatePersonalBest(batch, map) {
+		batchInsertOrUpdatePersonalBest(batch, level) {
+			let personalBestIds = [];
+
 			common.beginTransaction.run();
 
 			for (let user of batch) {
-				if (this.getPersonalBest(map, user.id)) {
-					this.updatePersonalBest(user.time, map, user.id);
-				} else {
-					this.insertPersonalBest(user.time, map, user.id);
+				let pb = this.getPersonalBest(level, user.id);
+				if (user.time && pb && pb.time_best && pb.time_best > user.time) {
+					this.updatePersonalBest(user.time, level, user.id);
+					personalBestIds.push(user.id);
+				} else if (user.time && !pb) {
+					this.insertPersonalBest(user.time, level, user.id);
+					personalBestIds.push(user.id);
 				}
 			}
 
 			common.endTransaction.run();
+
+			return personalBestIds;
 		}
 	};
 };

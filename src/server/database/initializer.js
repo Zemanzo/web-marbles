@@ -1,12 +1,12 @@
 const log = require("../../log");
 
 module.exports = function(db) {
-	let _schemaVersion = 1;
+	let _schemaVersion = 3;
 
 	return {
 		_users: db.prepare(
 			`CREATE TABLE IF NOT EXISTS users (
-				id INTEGER UNIQUE,
+				id TEXT UNIQUE,
 				username TEXT,
 				discriminator TEXT,
 				avatar TEXT,
@@ -22,7 +22,7 @@ module.exports = function(db) {
 				stat_marbles_entered INTEGER,
 				stat_marbles_finished INTEGER,
 				stat_marbles_not_finished INTEGER,
-				stat_unique_maps_played INTEGER,
+				stat_unique_levels_played INTEGER,
 				timestamp_first_login INTEGER,
 				timestamp_first_marble INTEGER,
 				PRIMARY KEY('id')
@@ -34,7 +34,7 @@ module.exports = function(db) {
 				timestamp_start INTEGER,
 				timestamp_end INTEGER,
 				time_best INTEGER,
-				map_id TEXT,
+				level_id TEXT,
 				stat_points_awarded INTEGER,
 				stat_marbles_entered INTEGER,
 				stat_marbles_finished INTEGER,
@@ -45,8 +45,8 @@ module.exports = function(db) {
 			)`
 		),
 
-		_maps: db.prepare(
-			`CREATE TABLE IF NOT EXISTS maps (
+		_levels: db.prepare(
+			`CREATE TABLE IF NOT EXISTS levels (
 				id TEXT UNIQUE,
 				name TEXT,
 				author TEXT,
@@ -65,8 +65,8 @@ module.exports = function(db) {
 
 		_personalBests: db.prepare(
 			`CREATE TABLE IF NOT EXISTS personal_bests (
-				user_id INTEGER,
-				map_id TEXT,
+				user_id TEXT,
+				level_id TEXT,
 				time_best INTEGER
 			)`
 		),
@@ -81,7 +81,7 @@ module.exports = function(db) {
 				// Create tables
 				this._users.run();
 				this._rounds.run();
-				this._maps.run();
+				this._levels.run();
 				this._personalBests.run();
 			} else {
 				log.throw("DATABASE: Schema version does not match. Please remove your outdated database.");

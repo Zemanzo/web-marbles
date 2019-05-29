@@ -13,30 +13,9 @@
 		<link href="styles/chat.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
-		{{#success}}
-		<script src="dist/discordApiRedirect.js"></script>
-		{{/success}}
-		{{^success}}
 		<script src="dist/chat.js"></script>
-		{{/success}}
 	</head>
 	<body>
-		{{#success}}
-		<div id="await">
-			<h1>(Spinny load icon here)</h1>
-			<p>Processing...</p>
-		</div>
-		<div id="success">
-			<h1>Success!</h1>
-			<p>You can now close this window, if it doesn't do so automatically.</p>
-		</div>
-		<div id="failure">
-			<h1>Failure...</h1>
-			<p>Hmmm, something went wrong. Close this window and try again?</p>
-		</div>
-		<div id="response" data-response='{{{user_data}}}'></div> <!-- single quotes because the JSON contains double quotes -->
-		{{/success}}
-		{{^success}}
 		<header>
 			<div><img src="images/discord_powered.svg" alt="DISCORD POWERED"/></div>
 		</header>
@@ -86,6 +65,5 @@
 				</div>
 			</div>
 		</div>
-		{{/success}}
 	</body>
 </html>

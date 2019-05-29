@@ -80,6 +80,27 @@ module.exports = function(db, common) {
 			]);
 		},
 
+		// Only allow a refresh if they haven't gotten one in over 24 hours
+		_idIsAllowedRefresh: db.prepare(
+			`SELECT
+				timestamp_refresh_last
+			FROM
+				users
+			WHERE
+				id = ?
+			`
+		),
+
+		idIsAllowedRefresh(id, access_token) {
+			if (this.idIsAuthenticated(id, access_token)) {
+				let row = this._idIsAllowedRefresh.get(id);
+				if (row && Date.now() - row.timestamp_refresh_last > (24 * 3600 * 1000) ) {
+					return true;
+				}
+			}
+			return false;
+		},
+
 		// new user through the chat embed
 		_insertNewUserEmbed: db.prepare(
 			`INSERT OR ABORT INTO users (
@@ -99,7 +120,7 @@ module.exports = function(db, common) {
 				stat_marbles_entered,
 				stat_marbles_finished,
 				stat_marbles_not_finished,
-				stat_unique_maps_played,
+				stat_unique_levels_played,
 				timestamp_first_login
 			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
@@ -141,7 +162,7 @@ module.exports = function(db, common) {
 				stat_marbles_entered,
 				stat_marbles_finished,
 				stat_marbles_not_finished,
-				stat_unique_maps_played,
+				stat_unique_levels_played,
 				timestamp_first_login
 			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
@@ -296,6 +317,27 @@ module.exports = function(db, common) {
 			}
 
 			common.endTransaction.run();
+		},
+
+		_getPointsById: db.prepare(
+			`SELECT
+				stat_points_earned
+			FROM
+				users
+			WHERE
+				id = ?`
+		),
+
+		getPointsById(id) {
+			return this._getPointsById.get(id);
+		},
+
+		// Reasons for this approach can be found here https://github.com/JoshuaWise/better-sqlite3/issues/81
+		batchGetPoints(batch) {
+			const idList = batch.map(user => user.id);
+			const params = "?,".repeat(idList.length).slice(0, -1);
+			const statement = db.prepare(`SELECT stat_points_earned, id FROM users WHERE id IN (${params})`);
+			return statement.all(idList);
 		}
 	};
 };

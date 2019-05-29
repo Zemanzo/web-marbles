@@ -84,9 +84,48 @@
 		</header>
 		<section id="viewport">
 			<div class="overlay">
+				<div id="raceLeaderboard">
+					<div class="header">
+						Race results - <span class="levelName">Awesome Marble Track</span> <span class="author">by <span class="authorName">The One and Only</span></span>
+					</div>
+					<div id="results">
+						<div class="header">
+							<div class="rank">#</div>
+							<div class="name">NAME</div>
+							<div class="record">&nbsp;</div>
+							<div class="time">TIME</div>
+							<div class="timediff">DIFF</div>
+							<div class="points">POINTS</div>
+							<div class="pointstotal">TOTAL</div>
+						</div>
+						<div class="resultsEntry" id="resultsListTemplate">
+							<div class="rank">0</div>
+							<div class="name">Zemanzo</div>
+							<div class="record">&nbsp;</div>
+							<div class="time">DNF</div>
+							<div class="timediff">-</div>
+							<div class="points">-</div>
+							<div class="pointstotal">-</div>
+						</div>
+						<div id="resultsList">
+						</div>
+					</div>
+				</div>
+
+				{{#discordEnabled}}
 				<div id="chat">
 					<iframe src="/chat" frameborder="0"></iframe>
 				</div>
+				{{/discordEnabled}}
+				{{^discordEnabled}}
+				<script src="dist/debug.js"></script>
+				<div id="chat">
+					Amount: <input type="number" id="debugAmount"/>
+					<br/><button id="debugAdd">Add marble</button>
+					<br/><button id="debugStart">Start race</button>
+					<br/><button id="debugEnd">End race</button>
+				</div>
+				{{/discordEnabled}}
 
 				<div id="notifications">
 					<div id="notification-template" class="notification">
@@ -97,7 +136,7 @@
 		</section>
 		<section id="sidebar">
 			<div id="gameState">
-				<h2 id="state">Enter marbles now!</h2>
+				<h2 id="state">...</h2>
 			</div>
 			<div id="timer" class="themeNumber">
 				...
