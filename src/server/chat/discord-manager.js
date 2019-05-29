@@ -142,7 +142,7 @@ const discordManager = function() {
 						},
 						tokenBody = null;
 
-					request.post(options).then((token_body) => {
+					return request.post(options).then((token_body) => {
 						tokenBody = JSON.parse(token_body);
 						tokenBody.access_granted = Date.now();
 
@@ -155,7 +155,9 @@ const discordManager = function() {
 						};
 
 						res.send(response);
-						return;
+					},
+					() => {
+						res.status(400).send({ authorized: false, refreshed: false });
 					});
 				} else if (this.db.user.idIsAuthenticated(req.body.id, req.body.access_token)) {
 					res.send({ authorized: true, refreshed: false });
