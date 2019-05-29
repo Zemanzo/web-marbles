@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import "./render";
+import domReady from "../dom-ready";
 import { inspector } from "./inspector";
 import { texturesTab } from "./textures";
 import { materialsTab } from "./materials";
@@ -9,6 +9,9 @@ import { worldTab } from "./world";
 import { projectTab } from "./project";
 import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
+import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
+import * as Level from "../../level/level";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
@@ -226,9 +229,20 @@ let editor = function() {
 	};
 }();
 
-window.addEventListener("DOMContentLoaded", function() {
-	editor.initialize();
-}, false);
+
+// Editor core initialization
+renderCore.initialize();
+levelManager.initialize();
+
+// Add visual helpers to level
+let gridHelper = new THREE.GridHelper(20, 20);
+levelManager.activeLevel.scene.add(gridHelper);
+gridHelper.position.y = -.01;
+let axesHelper = new THREE.AxesHelper(3);
+levelManager.activeLevel.scene.add(axesHelper);
+
+// Initialize DOM elements and tabs
+domReady.then( () => {editor.initialize();} );
 
 window.onbeforeunload = function(e) {
 	let dialogText = "Leave? You might lose unsaved changes!";
