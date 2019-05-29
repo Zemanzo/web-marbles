@@ -2,16 +2,24 @@ const config = require("./server/config");
 const log = require("./log");
 
 // Splash screen
-require("colors");
+try {
+	require("colors");
+} catch (error) {
+	throw new Error("Missing dependencies. Run `yarn` before trying again.");
+}
 console.log(" web-marbles".cyan);
 console.log(`   by ${"Z".green}emanz${"o".green}`);
 console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 
 // Database
 const db = require("./server/database/manager");
-db.setCurrentDatabase(
-	require("better-sqlite3")(config.database.path)
-);
+try {
+	db.setCurrentDatabase(
+		require("better-sqlite3")(config.database.path)
+	);
+} catch(error) {
+	throw new Error(`Could not initialize the database. It might be unreadable or corrupted. Check the read/write permissions, or remove the database file and try again.\n${error}`);
+}
 
 // Fetch levels & build primary level
 const levels = require("./server/levels/manager");
