@@ -11,8 +11,8 @@ const _GLTFLoader = new THREE.GLTFLoader();
 
 function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
 	this.scene = new THREE.Scene();
-	this.levelScene = new THREE.Scene(); // Scene for all loaded level objects
-	this.scene.add(this.levelScene);
+	this.levelObjects = new THREE.Scene(); // Scene for all loaded level objects
+	this.scene.add(this.levelObjects);
 	this.startingGates = [];
 
 	// Ambient light
@@ -20,11 +20,11 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.scene.add(ambientLight);
 
 	// Sky + Sunlight
-	this.sky = new Sky(this.scene);
+	this.sky = new Sky();
 	this.scene.add(this.sky.skyObject);
 
 	// Water
-	this.water = new Water(this.scene, this.sky.sunLight);
+	this.water = new Water(this, this.sky.sunLight);
 	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
 }
@@ -48,10 +48,10 @@ MarbleLevel.prototype.closeGates = function() {
 // Parses the level data and returns a Promise that resolves once it is fully done loading
 MarbleLevel.prototype.loadLevel = function(data) {
 	// Reset loaded data if there is any
-	this.scene.remove(this.levelScene);
+	this.scene.remove(this.levelObjects);
 	this.startingGates = [];
-	this.levelScene = new THREE.Scene();
-	this.scene.add(this.levelScene);
+	this.levelObjects = new THREE.Scene();
+	this.scene.add(this.levelObjects);
 
 	// Load environmental variables
 	this.water.setHeight(data.world.waterLevel);
@@ -168,7 +168,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			let clone = prefabs[object.prefab].clone();
 			clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
 			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
-			this.levelScene.add(clone);
+			this.levelObjects.add(clone);
 
 			// Keep starting gates in a separate array for opening/closing
 			for(let i = 0; i < clone.children.length; i++) {
@@ -181,7 +181,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 };
 
 // Water
-function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
+function Water(parent, sunLight, waterLevel = 0, fog = false) {
+	this.parent = parent; // The owning MarbleLevel
 	let geometry = this.geometry = new THREE.PlaneBufferGeometry(10000, 10000);
 
 	this.waterObject = new THREE.Water(
@@ -206,21 +207,9 @@ function Water(parentScene, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.material.uniforms.size.value = 8;
 	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
-		let tempHide = [];
-		for (let object of parentScene.children) {
-			if (object.userData.reflectInWater !== true && object.visible === true) {
-				tempHide.push(object);
-				object.visible = false;
-			}
-		}
-
+		parent.levelObjects.visible = false;
 		originalOnBeforeRender(renderer, scene, camera);
-
-		for (let object of parentScene.children) {
-			if (tempHide.includes(object)) {
-				object.visible = true;
-			}
-		}
+		parent.levelObjects.visible = true;
 	};
 }
 
@@ -233,8 +222,7 @@ Water.prototype.update = function() {
 };
 
 // Skybox
-function Sky(scene, parameters = {}) {
-	this.scene = scene;
+function Sky(parameters = {}) {
 	this.skyObject = new THREE.Sky();
 	this.skyObject.userData.reflectInWater = true;
 	this.skyObject.scale.setScalar(10000);
