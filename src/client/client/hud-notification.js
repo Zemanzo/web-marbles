@@ -37,7 +37,7 @@ HUDNotification.prototype.remove = function() {
 		this.node.style.opacity = 0;
 
 		// Remove node
-		setTimeout(function() {
+		setTimeout( () => {
 			elements.notifications.removeChild(this.node);
 		}, 1000);
 	});
