@@ -2,11 +2,7 @@ const config = require("./server/config");
 const log = require("./log");
 
 // Splash screen
-try {
-	require("colors");
-} catch (error) {
-	throw new Error("Missing dependencies. Run `yarn` before trying again.");
-}
+require("colors");
 console.log(" web-marbles".cyan);
 console.log(`   by ${"Z".green}emanz${"o".green}`);
 console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
