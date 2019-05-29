@@ -317,7 +317,7 @@ let modelsTab = function() {
 		initialize: function() {
 			_GLTFLoader = new THREE.GLTFLoader();
 			this.group = new THREE.Group();
-			levelManager.activeLevel.scene.add(this.group);
+			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 
 			// Add models button

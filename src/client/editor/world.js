@@ -74,7 +74,7 @@ let worldTab = function() {
 		initialize: function() {
 			this.elements.prefabList = document.getElementById("worldPrefabList");
 			this.group = new THREE.Group();
-			levelManager.activeLevel.scene.add(this.group);
+			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 
 			this.onProjectLoad(projectTab.activeProject);
