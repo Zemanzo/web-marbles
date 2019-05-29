@@ -1,9 +1,19 @@
 import domReady from "../dom-ready";
+import { renderCore } from "../render/render-core";
 import "./render";
 import { net as networking } from "./networking";
 import { game } from "./game";
-import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
 import * as levelIO from "../../level/level-io";
+
+// Initialize client modules
+renderCore.initialize();
+levelManager.initialize();
+domReady.then( () => {
+	// Coming soon
+	//game.initialize();
+	//networking.initialize();
+});
 
 // If both promises fulfill, start rendering & fill entries field
 Promise.all([networking.socketReady, domReady]).then(() => {
@@ -23,10 +33,10 @@ networking.socketReady.then((initialData) => {
 		})
 		.then((buffer) => {
 			let levelData = levelIO.load(buffer);
-			renderCore.activeLevel.loadLevel(levelData)
+			levelManager.activeLevel.loadLevel(levelData)
 				.then( () => {
 					if(game.getCurrentGameState() === "started") {
-						renderCore.activeLevel.openGates();
+						levelManager.activeLevel.openGates();
 					}
 				});
 		});

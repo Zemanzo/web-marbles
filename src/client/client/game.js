@@ -1,6 +1,7 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
 import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
 
 let game = (function() {
 	let _audio = {
@@ -145,7 +146,7 @@ let game = (function() {
 				}
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
-				renderCore.activeLevel.openGates();
+				levelManager.activeLevel.openGates();
 				_DOMElements.state.innerHTML = "Race started!";
 				break;
 
@@ -153,7 +154,7 @@ let game = (function() {
 			case "finished":
 				if (!isInitialState) {
 					_audio.end.play();
-					renderCore.activeLevel.closeGates();
+					levelManager.activeLevel.closeGates();
 
 					_DOMElements.raceLeaderboard.className = "visible";
 
