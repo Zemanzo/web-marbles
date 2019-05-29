@@ -1,5 +1,5 @@
 import { renderCore } from "../render/render-core";
-import { net as networking } from "./networking";
+import { networking } from "./networking";
 import * as config from "../config";
 
 // This will change another time
