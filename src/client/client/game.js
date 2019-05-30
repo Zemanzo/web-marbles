@@ -1,3 +1,4 @@
+import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
 import { renderCore } from "../render/render-core";
 import { levelManager } from "../level-manager";
@@ -26,6 +27,7 @@ let game = function() {
 		_enterPeriodTimerInterval,
 		_startTimerIsRunning = false,
 
+		_initPromise = null,
 		_DOMReadyTimestamp,
 		_DOMElements = {},
 
@@ -68,21 +70,29 @@ let game = function() {
 	};
 
 	return {
-		initialize: function() {
-			_DOMReadyTimestamp = (new Date()).getTime();
 
-			// Get element references
-			_DOMElements.timer = document.getElementById("timer");
-			_DOMElements.state = document.getElementById("state");
-			_DOMElements.entries = document.getElementById("entries");
-			_DOMElements.gameInfo = document.getElementById("gameInfo");
-			_DOMElements.marbleList = document.getElementById("marbleList");
-			_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
-			_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
-			_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
-			_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
-			_DOMElements.resultsList = document.getElementById("resultsList");
-			_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+		// Returns a Promise that resolves once initialization is complete
+		// Can be called multiple times but will initialize only once
+		initialize: function() {
+			if(!_initPromise) {
+				_initPromise = domReady.then( () => {
+					_DOMReadyTimestamp = (new Date()).getTime();
+
+					// Get element references
+					_DOMElements.timer = document.getElementById("timer");
+					_DOMElements.state = document.getElementById("state");
+					_DOMElements.entries = document.getElementById("entries");
+					_DOMElements.gameInfo = document.getElementById("gameInfo");
+					_DOMElements.marbleList = document.getElementById("marbleList");
+					_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
+					_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
+					_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
+					_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
+					_DOMElements.resultsList = document.getElementById("resultsList");
+					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+				});
+			}
+			return _initPromise;
 		},
 
 		setCurrentGameState: function(newStateData, isInitialState = false) {

@@ -10,35 +10,40 @@ let networking = function() {
 	let _helper = null;
 
 	let _processMessageEvent = function(event) {
-		let { type, message } = _helper.extractSocketMessageType(event.data);
-		message = JSON.parse(message);
+		game.initialize().then( () => { // Wait for game to be ready before processing events
+			let { type, message } = _helper.extractSocketMessageType(event.data);
+			message = JSON.parse(message);
 
-		switch(type) {
-		case "initial_data":
-			game.initializeGameState(message);
-			_requestPhysics(); // Start the request physics loop
-			break;
-		case "request_physics":
-			if (message) { // False if there is no data to process
-				networking.marblePositions = new Float32Array(Object.values(message.pos));
-				networking.marbleRotations = new Float32Array(Object.values(message.rot));
+			switch(type) {
+			case "initial_data":
+				game.initializeGameState(message);
+				_requestPhysics(); // Start the request physics loop
+				break;
+			case "request_physics":
+				if (message) { // False if there is no data to process
+					networking.marblePositions = new Float32Array(Object.values(message.pos));
+					networking.marbleRotations = new Float32Array(Object.values(message.rot));
+				}
+				networking.lastUpdate = 0;
+				networking.ready--;
+				break;
+			case "new_marble":
+				game.spawnMarble(message);
+				break;
+			case "finished_marble":
+				game.finishMarble(message);
+				break;
+			case "state":
+				game.setCurrentGameState(message);
+				break;
+			case "notification":
+				new HUDNotification(message.content, message.duration, message.style);
+				break;
+			default:
+				console.warn(`Received unknown network message of type "${type}".`, message);
+				break;
 			}
-			networking.lastUpdate = 0;
-			networking.ready--;
-			break;
-		case "new_marble":
-			game.spawnMarble(message);
-			break;
-		case "finished_marble":
-			game.finishMarble(message);
-			break;
-		case "state":
-			game.setCurrentGameState(message);
-			break;
-		case "notification":
-			new HUDNotification(message.content, message.duration, message.style);
-			break;
-		}
+		});
 	};
 
 	let _requestPhysics = function() {
