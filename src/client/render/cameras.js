@@ -27,7 +27,7 @@ let addRegisteredEventListener = function(scope, event, func, capture) {
 	@method disable Disables the controls.
 	@method update Updates the controls. Should be called in some update loop.
 */
-export function CameraFlyControls(
+function FreeCamera(
 	scene,
 	renderer,
 	options
@@ -50,10 +50,10 @@ export function CameraFlyControls(
 		options.disableOnBlur = true;
 
 	if (!options.defaultPosition)
-		options.defaultPosition = { x: 0, y: 0, z: 0 };
+		options.defaultPosition = { x: -8, y: 57, z: 30 };
 
 	if (!options.defaultRotation)
-		options.defaultRotation = { x: 0, y: 0, z: 0 };
+		options.defaultRotation = { x: -0.35, y: 0, z: 0 };
 
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
@@ -63,12 +63,33 @@ export function CameraFlyControls(
 	this.moveBackward = false;
 	this.moveLeft = false;
 	this.moveRight = false;
+	this.moveUp = false;
+	this.moveDown = false;
 
 	this.prevTime = performance.now();
 	this.velocity = new Vector3();
 	this.direction = new Vector3();
 
-	let listeners = [];
+	this.controls = new PointerLockControls(options.camera, renderer.domElement);
+	let _listeners = [];
+
+	let self = this;
+
+	/**
+	 * Halts the camera in place
+	 */
+	this.stop = (function() {
+		this.velocity.x = 0;
+		this.velocity.y = 0;
+		this.velocity.z = 0;
+
+		this.moveForward = false;
+		this.moveBackward = false;
+		this.moveLeft = false;
+		this.moveRight = false;
+		this.moveUp = false;
+		this.moveDown = false;
+	}).bind(this);
 
 	/**
 	 * Enables the controls
@@ -80,21 +101,32 @@ export function CameraFlyControls(
 		// Hook pointer lock state change events
 		func = function() {
 			// document.pointerLockElement is null if pointerlock is inactive
-			if (document.pointerLockElement !== options.pointerLockElement) stop();
+			if (document.pointerLockElement !== options.pointerLockElement) self.stop();
 		};
-		listeners.push( addRegisteredEventListener(document, "pointerlockchange", func, false) );
+		_listeners.push( addRegisteredEventListener(document, "pointerlockchange", func, false) );
 
 		// Request pointerlock
 		func = function() {
-			controls.lock();
+			self.controls.lock();
 		};
-		listeners.push( addRegisteredEventListener(options.pointerLockElement, "mousedown", func, false) );
+		_listeners.push( addRegisteredEventListener(options.pointerLockElement, "mousedown", func, false) );
 
 		// Release pointerlock
 		func = function() {
-			controls.unlock();
+			self.controls.unlock();
 		};
-		listeners.push( addRegisteredEventListener(document, "mouseup", func, false) );
+		_listeners.push( addRegisteredEventListener(document, "mouseup", func, false) );
+
+
+		// Using the scrolling wheel allows a user to speed up or slow down.
+		let _speedStep = -5;
+		func = function(event) {
+			let newSpeed = self.speed + _speedStep * event.deltaY;
+			if (self.controls.isLocked === true && newSpeed > 10 && newSpeed < 1000) {
+				self.speed = newSpeed;
+			}
+		};
+		_listeners.push( addRegisteredEventListener(window, "wheel", func, false) );
 
 		// Movement keys
 		func = function(event) {
@@ -126,11 +158,19 @@ export function CameraFlyControls(
 			case 68: // d
 				this.moveRight = bool;
 				break;
+
+			case 81: // q
+				this.moveDown = bool;
+				break;
+
+			case 69: // e
+				this.moveUp = bool;
+				break;
 			}
 		};
 
-		listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
-		listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
+		_listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
+		_listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
 
 		this.update = function() {
 			update.bind(this)();
@@ -143,10 +183,10 @@ export function CameraFlyControls(
 	this.disable = function() {
 		this.enabled = false;
 
-		stop();
+		self.stop();
 
 		// remove listeners
-		listeners.forEach((el)=>{
+		_listeners.forEach((el)=>{
 			el();
 		});
 
@@ -156,70 +196,67 @@ export function CameraFlyControls(
 
 	if (options.disableOnBlur === true) {
 		document.addEventListener("visibilitychange", (function() {
-			if (document.hidden)
+			if (document.hidden) {
 				this.disable();
-			else
+			} else {
 				this.enable();
+			}
 		}).bind(this), false);
 	}
 
-	let stop = this.stop = (function() {
-		this.velocity.x = 0;
-		this.velocity.y = 0;
-		this.velocity.z = 0;
-
-		this.moveForward = false;
-		this.moveBackward = false;
-		this.moveLeft = false;
-		this.moveRight = false;
-	}).bind(this);
-
-	let controls = this.controls = new PointerLockControls(options.camera, renderer.domElement);
-
 	this.toDefaults = function() {
-		controls.getObject().position.x = options.defaultPosition.x;
-		controls.getObject().position.y = options.defaultPosition.y;
-		controls.getObject().position.z = options.defaultPosition.z;
+		self.controls.getObject().position.x = options.defaultPosition.x;
+		self.controls.getObject().position.y = options.defaultPosition.y;
+		self.controls.getObject().position.z = options.defaultPosition.z;
 
-		controls.getObject().rotation.x = options.defaultRotation.x;
-		controls.getObject().rotation.y = options.defaultRotation.y;
-		controls.getObject().rotation.z = options.defaultRotation.z;
+		self.controls.getObject().rotation.x = options.defaultRotation.x;
+		self.controls.getObject().rotation.y = options.defaultRotation.y;
+		self.controls.getObject().rotation.z = options.defaultRotation.z;
 	};
 	this.toDefaults();
 
-	scene.add(controls.getObject());
+	scene.add(self.controls.getObject());
 
 	// Call this function in the update loop to update the controls.
-	let time, delta;
+	let _time, _delta;
 	let update = function() {
-		time = performance.now();
-		delta = ( time - this.prevTime ) / 1000;
+		_time = performance.now();
+		_delta = ( _time - this.prevTime ) / 1000;
 
-		this.velocity.x -= this.velocity.x * 10.0 * delta;
-		this.velocity.y -= this.velocity.y * 10.0 * delta;
-		this.velocity.z -= this.velocity.z * 10.0 * delta;
+		this.velocity.x -= this.velocity.x * 10.0 * _delta;
+		this.velocity.y -= this.velocity.y * 10.0 * _delta;
+		this.velocity.z -= this.velocity.z * 10.0 * _delta;
 
 		this.direction.z = Number( this.moveForward ) - Number( this.moveBackward );
-		this.direction.y = Number( this.moveForward ) - Number( this.moveBackward );
+		this.direction.y = (this.moveDown || this.moveUp)
+			? Number(this.moveDown) - Number(this.moveUp)
+			: Number(this.moveForward) - Number(this.moveBackward);
 		this.direction.x = Number( this.moveLeft ) - Number( this.moveRight );
 		this.direction.normalize(); // this ensures consistent movements in all directions
 
 		if ( this.controls.isLocked === true ) {
-			if ( this.moveForward || this.moveBackward )
-				this.velocity.z -= this.direction.z * this.speed * delta;
+			if ( this.moveForward || this.moveBackward ) {
+				this.velocity.z -= this.direction.z * this.speed * _delta;
+			}
 
-			if ( this.moveForward || this.moveBackward )
-				this.velocity.y -= this.direction.y * this.speed * delta * (-this.camera.parent.rotation.x * Math.PI * .5);
+			if ( this.moveDown || this.moveUp ) {
+				this.velocity.y -= this.direction.y * this.speed * _delta;
+			} else if ( this.moveForward || this.moveBackward ) {
+				this.velocity.y -= this.direction.y * this.speed * _delta * (-this.camera.parent.rotation.x * Math.PI * .5);
+			}
 
-			if ( this.moveLeft || this.moveRight )
-				this.velocity.x -= this.direction.x * this.speed * delta;
+			if ( this.moveLeft || this.moveRight ) {
+				this.velocity.x -= this.direction.x * this.speed * _delta;
+			}
 		}
-		controls.getObject().translateX( this.velocity.x * delta );
-		controls.getObject().translateY( this.velocity.y * delta );
-		controls.getObject().translateZ( this.velocity.z * delta );
+		self.controls.getObject().translateX( this.velocity.x * _delta );
+		self.controls.getObject().translateY( this.velocity.y * _delta );
+		self.controls.getObject().translateZ( this.velocity.z * _delta );
 
-		this.prevTime = time;
+		this.prevTime = _time;
 	};
 
 	this.enable();
 }
+
+export { FreeCamera };

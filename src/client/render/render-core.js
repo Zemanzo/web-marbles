@@ -4,7 +4,7 @@ import "three/examples/js/loaders/GLTFLoader";
 import * as Cookies from "js-cookie";
 import * as Stats from "stats-js";
 import * as config from "../config";
-import { CameraFlyControls } from "./cameras";
+import { FreeCamera } from "./cameras";
 import domReady from "../dom-ready";
 import { levelManager } from "../level-manager";
 
@@ -120,7 +120,7 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				_controls = new CameraFlyControls(_mainScene, _renderer);
+				_controls = new FreeCamera(_mainScene, _renderer);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
