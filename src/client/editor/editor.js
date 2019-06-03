@@ -243,10 +243,9 @@ levelManager.activeLevel.scene.add(axesHelper);
 // Initialize DOM elements and tabs
 domReady.then( () => {editor.initialize();} );
 
-window.onbeforeunload = function(e) {
-	let dialogText = "Leave? You might lose unsaved changes!";
-	e.returnValue = dialogText;
-	return dialogText;
-};
+window.addEventListener("beforeunload", function(e) {
+	e.returnValue = "Leave? You might lose unsaved changes!";
+	return e.returnValue;
+});
 
 export { editor, EditorObject };
