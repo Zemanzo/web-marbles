@@ -1,10 +1,10 @@
-import { renderCore } from "../render/render-core";
+import { marbleManager } from "../marble-manager";
 import { networking } from "./networking";
 import * as config from "../config";
 
 // This will change another time
-renderCore.updateMarbles = function() {
-	renderCore.updateMarbleMeshes(
+marbleManager.updateMarbles = function() {
+	marbleManager.updateMarbleMeshes(
 		networking.marblePositions,
 		networking.marbleRotations,
 		networking.lastUpdate
