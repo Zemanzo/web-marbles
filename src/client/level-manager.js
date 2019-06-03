@@ -21,7 +21,7 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 
 	// Sky + Sunlight
 	this.sky = new Sky();
-	this.scene.add(this.sky.skyObject);
+	this.scene.add(this.sky.group);
 
 	// Water
 	this.water = new Water(this, this.sky.sunLight);
@@ -107,6 +107,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			if (materials[childMeshes[childNumber].material] != null) {
 				obj.material = materials[childMeshes[childNumber].material];
 			}
+			obj.receiveShadow = true;
 			childNumber++;
 		}
 
@@ -227,15 +228,17 @@ Water.prototype.update = function() {
 
 // Skybox
 function Sky(parameters = {}) {
+	// Wrapper group for all entities related to the sky
+	this.group = new THREE.Group();
 	this.skyObject = new THREE.Sky();
-	this.skyObject.userData.reflectInWater = true;
 	this.skyObject.scale.setScalar(10000);
+	this.group.add(this.skyObject);
 
 	// Light
 	let sunLight = this.sunLight = new THREE.DirectionalLight(0xf5d0d0, 1.5);
 	sunLight.castShadow = true;
 
-	this.skyObject.add(sunLight);
+	this.group.add(sunLight);
 
 	let uniforms = this.skyObject.material.uniforms;
 	uniforms.turbidity.value = 10;
@@ -271,7 +274,7 @@ Sky.prototype.recalculate = function(parameters) {
 	this.sunLight.shadow.mapSize.height = 2048; // default
 	this.sunLight.shadow.camera.near = 3500;
 	this.sunLight.shadow.camera.far = 4200;
-	this.sunLight.shadow.camera.left = -60;
+	this.sunLight.shadow.camera.left = -69;
 	this.sunLight.shadow.camera.right = 60;
 	this.sunLight.shadow.camera.top = 50;
 	this.sunLight.shadow.camera.bottom = -30;
@@ -284,9 +287,9 @@ Sky.prototype.recalculate = function(parameters) {
 Sky.prototype.toggleDebugHelper = function(state) {
 	if (!this.shadowHelper && state) this.shadowHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
 	if (state) {
-		this.skyObject.add(this.shadowHelper);
+		this.group.add(this.shadowHelper);
 	} else if (this.shadowHelper) {
-		this.skyObject.remove(this.shadowHelper);
+		this.group.remove(this.shadowHelper);
 	}
 };
 
