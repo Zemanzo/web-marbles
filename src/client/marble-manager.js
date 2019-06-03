@@ -11,24 +11,33 @@ let marbleManager = function() {
 	return {
 		marbleGroup: null, // Group containing marble instances
 		marbleNames: null, // Group containing name sprites
+		marbleGeometry: null,
 
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
 			this.marbleNames = new THREE.Group();
 			renderCore.getMainScene().add(this.marbleGroup);
 			renderCore.getMainScene().add(this.marbleNames);
+
+			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
 		},
 
-		spawnMarble: function(data) {
-			let marbleMesh = new MarbleMesh(data);
+		spawnMarble: function(marbleData) {
+			let marbleMesh = new MarbleMesh(marbleData);
 			_marbles.push(marbleMesh);
 			this.marbleGroup.add(marbleMesh.mesh);
 			this.marbleNames.add(marbleMesh.nameSprite);
 		},
 
-		// removeMarble: function(id) {
-		// 	// TODO
-		// },
+		removeMarble: function(entryId) {
+			for (let marble of _marbles) {
+				if(marble.entryId === entryId) {
+					this.marbleGroup.remove(marble.mesh);
+					this.marbleNames.remove(marble.nameSprite);
+					return;
+				}
+			}
+		},
 
 		clearMarbles: function() {
 			for (let marble of _marbles) {
@@ -69,18 +78,22 @@ let marbleManager = function() {
 }();
 
 // Marbles
-const MarbleMesh = function(tags) {
-	this.size = tags.size;
-	this.color = tags.color;
-	this.name = tags.name;
+const MarbleMesh = function(marbleData) {
+	this.size = marbleData.size;
+	this.color = marbleData.color;
+	this.name = marbleData.name;
+	this.entryId = marbleData.entryId;
 
-	this.geometry = new THREE.SphereBufferGeometry(this.size, 9, 9);
+	this.geometry = marbleManager.marbleGeometry;
 	this.materialColor = new THREE.Color(this.color);
 	this.material = new THREE.MeshStandardMaterial({ color: this.materialColor });
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 
+	// Set scale based on marble size
+	this.mesh.scale.x = this.mesh.scale.y = this.mesh.scale.z = this.size;
+
 	// Useful for debugging
-	this.mesh.name = `Marble (${tags.name})`;
+	this.mesh.name = `Marble (${marbleData.name})`;
 
 	// Shadows
 	this.mesh.castShadow = config.graphics.castShadow.marbles;
