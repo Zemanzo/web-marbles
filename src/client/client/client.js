@@ -11,9 +11,9 @@ levelManager.initialize();
 marbleManager.initialize();
 game.initialize();
 
-function clientUpdate() {
-	levelManager.activeLevel.update();
-	networking.update();
+function clientUpdate(deltaTime) {
+	levelManager.activeLevel.update(deltaTime);
+	networking.update(deltaTime);
 }
 
 renderCore.clientUpdateCallback = clientUpdate;

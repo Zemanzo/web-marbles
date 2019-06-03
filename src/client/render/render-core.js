@@ -13,13 +13,18 @@ let renderCore = function() {
 		_viewport = null, // DOM viewport element
 		_stats = null,
 		_controls = null,
-		_defaultModel = null;
+		_defaultModel = null,
+		_previousTime = Date.now();
 
 	// Core render loop
 	const _animate = function() {
+		let now = Date.now();
+		let deltaTime = (now - _previousTime) * 0.001; // Time in seconds
+		_previousTime = now;
+
 		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
 		if (_controls.enabled === true) {
-			_controls.update();
+			_controls.update(deltaTime);
 		}
 
 		// Request new frame
@@ -28,7 +33,7 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		renderCore.clientUpdateCallback();
+		renderCore.clientUpdateCallback(deltaTime);
 
 		// Render the darn thing
 		_renderer.render(_mainScene, _controls.camera);
@@ -118,6 +123,7 @@ let renderCore = function() {
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
+					_previousTime = Date.now(); // Update loop starts from this point in time, ignore load time
 					_viewport = document.getElementById("viewport");
 
 					_onCanvasResize();

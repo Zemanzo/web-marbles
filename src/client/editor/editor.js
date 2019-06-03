@@ -229,8 +229,8 @@ let editor = function() {
 			modelsTab.onTabActive();
 		},
 
-		update: function() {
-			levelManager.activeLevel.update();
+		update: function(deltaTime) {
+			levelManager.activeLevel.update(deltaTime);
 		}
 	};
 }();

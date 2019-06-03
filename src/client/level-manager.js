@@ -29,8 +29,8 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.sky.water = this.water;
 }
 
-MarbleLevel.prototype.update = function() {
-	this.water.update();
+MarbleLevel.prototype.update = function(deltaTime) {
+	this.water.update(deltaTime);
 };
 
 MarbleLevel.prototype.openGates = function() {
@@ -222,8 +222,8 @@ Water.prototype.setHeight = function(newHeight) {
 	this.waterObject.position.y = newHeight;
 };
 
-Water.prototype.update = function() {
-	this.waterObject.material.uniforms.time.value += 1.0 / 60.0;
+Water.prototype.update = function(deltaTime) {
+	this.waterObject.material.uniforms.time.value += deltaTime;
 };
 
 // Skybox

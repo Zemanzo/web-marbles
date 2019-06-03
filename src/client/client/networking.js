@@ -90,7 +90,7 @@ let networking = function() {
 			_helper = new TypedSocketHelper("/gameplay");
 		},
 
-		update: function() {
+		update: function(deltaTime) {
 			// Placeholder update code until network buffer is implemented
 			marbleManager.interpolateMarbles(
 				_marblePositions,
