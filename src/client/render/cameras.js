@@ -218,9 +218,9 @@ function FreeCamera(
 
 	// Call this function in the update loop to update the controls.
 	let update = function(deltaTime) {
-		this.velocity.x -= this.velocity.x * 10.0 * deltaTime;
-		this.velocity.y -= this.velocity.y * 10.0 * deltaTime;
-		this.velocity.z -= this.velocity.z * 10.0 * deltaTime;
+		this.velocity.x -= this.velocity.x * Math.min(1, 10.0 * deltaTime);
+		this.velocity.y -= this.velocity.y * Math.min(1, 10.0 * deltaTime);
+		this.velocity.z -= this.velocity.z * Math.min(1, 10.0 * deltaTime);
 
 		this.direction.z = Number( this.moveForward ) - Number( this.moveBackward );
 		this.direction.y = (this.moveDown || this.moveUp)
