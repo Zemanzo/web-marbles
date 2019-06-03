@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
+import * as config from "../config";
 import * as Stats from "stats-js";
 import { FreeCamera } from "./cameras";
 import domReady from "../dom-ready";
@@ -140,6 +141,14 @@ let renderCore = function() {
 
 		clientUpdateCallback: function() {
 			// Overridable function for the client and editor to attach their update functions to.
+		},
+
+		waterReflectsLevel: function() {
+			return config.graphics.reflection.level;
+		},
+
+		waterReflectsMarbles: function() {
+			return config.graphics.reflection.marbles;
 		},
 
 		getDefaultModel: function() {

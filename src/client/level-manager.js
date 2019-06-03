@@ -6,6 +6,7 @@ import "three/examples/js/loaders/GLTFLoader";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
+import { marbleManager } from "./marble-manager";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -212,9 +213,15 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.material.uniforms.size.value = 8;
 	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
-		parent.levelObjects.visible = false;
+		if(!renderCore.waterReflectsLevel()) parent.levelObjects.visible = false;
+		if(!renderCore.waterReflectsMarbles()) marbleManager.marbleGroup.visible = false;
+		marbleManager.marbleNames.visible = false;
+
 		originalOnBeforeRender(renderer, scene, camera);
+
 		parent.levelObjects.visible = true;
+		marbleManager.marbleGroup.visible = true;
+		marbleManager.marbleNames.visible = true;
 	};
 }
 
