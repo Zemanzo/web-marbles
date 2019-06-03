@@ -1,4 +1,4 @@
-const Level = require("./level");
+const LevelData = require("./level-data");
 const pako = require("pako");
 const msgPack = require("msgpack-lite");
 const semver = require("semver");
@@ -6,7 +6,7 @@ const semver = require("semver");
 module.exports = function() {
 	return {
 		getCurrentVersion() {
-			return new Level().version;
+			return new LevelData().version;
 		},
 
 		// Loads a level based on the given file data.
@@ -71,7 +71,7 @@ module.exports = function() {
 				return null;
 			}
 
-			Object.setPrototypeOf(loadedLevel, Level.prototype);
+			Object.setPrototypeOf(loadedLevel, LevelData.prototype);
 			if(!loadedLevel.validateLevel()) return null;
 			return loadedLevel;
 		},
@@ -244,7 +244,7 @@ module.exports = function() {
 
 			// In case of export using a web worker, the level doesn't keep any of its functions
 			// Hence this function is called from the prototype
-			if(!Level.prototype.validateLevel.call(project)) return null;
+			if(!LevelData.prototype.validateLevel.call(project)) return null;
 			return project;
 		}
 	};

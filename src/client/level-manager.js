@@ -5,7 +5,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
-import * as Level from "../level/level";
+import * as LevelData from "../level/level-data";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -306,7 +306,7 @@ let levelManager = function() {
 
 		initialize: function() {
 			let level = new MarbleLevel();
-			level.loadLevel(new Level()); // Load default level properties
+			level.loadLevel(new LevelData()); // Load default level properties
 			this.setActiveLevel(level);
 		}
 	};

@@ -1,4 +1,4 @@
-function Level() {
+function LevelData() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
 	this.version = "0.3.0";
@@ -22,7 +22,7 @@ function Level() {
 	};
 }
 
-Level.prototype.addTexture = function(uuid, name, fileContents) {
+LevelData.prototype.addTexture = function(uuid, name, fileContents) {
 	this.textures[uuid] = {
 		name,
 		file: fileContents
@@ -41,7 +41,7 @@ let createDefaultTextureProperties = function() {
 	};
 };
 
-Level.prototype.addMaterial = function(uuid, name = "") {
+LevelData.prototype.addMaterial = function(uuid, name = "") {
 	this.materials[uuid] = {
 		name,
 		"diffuse-a": createDefaultTextureProperties(),
@@ -56,7 +56,7 @@ Level.prototype.addMaterial = function(uuid, name = "") {
 	return this.materials[uuid];
 };
 
-Level.prototype.addModel = function(name, fileContents) {
+LevelData.prototype.addModel = function(name, fileContents) {
 	this.models[name] = {
 		file: fileContents,
 		childMeshes: [],
@@ -69,27 +69,27 @@ Level.prototype.addModel = function(name, fileContents) {
 	return this.models[name];
 };
 
-Level.prototype.addPrefab = function(uuid) {
+LevelData.prototype.addPrefab = function(uuid) {
 	this.prefabs[uuid] = {
 		entities: {}
 	};
 	return this.prefabs[uuid];
 };
 
-Level.prototype.addWorldObject = function(uuid, prefabUuid) {
+LevelData.prototype.addWorldObject = function(uuid, prefabUuid) {
 	this.worldObjects[uuid] = {
 		prefab: prefabUuid
 	};
 	return this.worldObjects[uuid];
 };
 
-Level.prototype.getLevelId = function() {
+LevelData.prototype.getLevelId = function() {
 	return `${this.levelName}_${this.exportDate}`;
 };
 
 // Returns true if level is considered valid, false on failure.
 // If properties are missing or of the wrong type, it should attempt to reset them if possible (and warn the user)
-Level.prototype.validateLevel = function() {
+LevelData.prototype.validateLevel = function() {
 	// A level without these aren't considered valid
 	if (typeof this.models !== "object"
 	|| typeof this.prefabs !== "object"
@@ -125,7 +125,7 @@ Level.prototype.validateLevel = function() {
 		};
 
 		// Check main properties + world/gameplay params
-		let template = new Level();
+		let template = new LevelData();
 		validateObject(this, template, true);
 		validateObject(this.world, template.world, true);
 		validateObject(this.gameplay, template.gameplay, true);
@@ -387,4 +387,4 @@ Level.prototype.validateLevel = function() {
 	return true;
 };
 
-module.exports = Level;
+module.exports = LevelData;

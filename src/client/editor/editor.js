@@ -11,7 +11,6 @@ import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
 import { renderCore } from "../render/render-core";
 import { levelManager } from "../level-manager";
-import * as Level from "../../level/level";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
