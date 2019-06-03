@@ -1,7 +1,7 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
-import { renderCore } from "../render/render-core";
 import { levelManager } from "../level-manager";
+import { marbleManager } from "../marble-manager";
 import * as levelIO from "../../level/level-io";
 
 let game = function() {
@@ -107,7 +107,7 @@ let game = function() {
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
-				renderCore.removeAllMarbleMeshes();
+				marbleManager.clearMarbles();
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -263,7 +263,7 @@ let game = function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			renderCore.addMarbleMesh(marble);
+			marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);

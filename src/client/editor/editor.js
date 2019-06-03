@@ -11,6 +11,7 @@ import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
 import { renderCore } from "../render/render-core";
 import { levelManager } from "../level-manager";
+import { marbleManager } from "../marble-manager";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
@@ -232,6 +233,7 @@ let editor = function() {
 // Editor core initialization
 renderCore.initialize();
 levelManager.initialize();
+marbleManager.initialize();
 
 // Add visual helpers to level
 let gridHelper = new THREE.GridHelper(20, 20);
