@@ -4,8 +4,6 @@ import "three/examples/js/loaders/GLTFLoader";
 import * as Stats from "stats-js";
 import { CameraFlyControls } from "./cameras";
 import domReady from "../dom-ready";
-import { levelManager } from "../level-manager";
-import { marbleManager } from "../marble-manager";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -30,8 +28,7 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		marbleManager.updateMarbles();
-		if(levelManager.activeLevel) levelManager.activeLevel.update();
+		renderCore.clientUpdateCallback();
 
 		// Render the darn thing
 		_renderer.render(_mainScene, _controls.camera);
@@ -133,6 +130,10 @@ let renderCore = function() {
 					_animate();
 				});
 			}
+		},
+
+		clientUpdateCallback: function() {
+			// Overridable function for the client and editor to attach their update functions to.
 		},
 
 		getDefaultModel: function() {
