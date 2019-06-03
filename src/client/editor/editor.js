@@ -127,6 +127,8 @@ let editor = function() {
 			prefabsTab.initialize();
 			worldTab.initialize();
 
+			renderCore.clientUpdateCallback = this.update;
+
 			// Update version number
 			document.getElementById("editorVersion").innerHTML = `v${levelIO.getCurrentVersion()}`;
 
@@ -225,6 +227,10 @@ let editor = function() {
 			// Models tab is the active tab on load
 			document.getElementById("properties").firstElementChild.style.marginLeft = "-200%";
 			modelsTab.onTabActive();
+		},
+
+		update: function() {
+			levelManager.activeLevel.update();
 		}
 	};
 }();

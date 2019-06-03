@@ -47,16 +47,12 @@ let marbleManager = function() {
 			_marbles = [];
 		},
 
-		updateMarbles: function() {
-			// Currently gets overridden in client's render.js
-		},
-
-		updateMarbleMeshes: function(newPositions, newRotations, delta) {
+		interpolateMarbles: function(newPositions, newRotations, interval) {
 			for (let i = 0; i < _marbles.length; i++) {
 				// Positions
-				_marbles[i].mesh.position.x = THREE.Math.lerp(_marbles[i].mesh.position.x || 0, newPositions[i * 3 + 0], delta);
-				_marbles[i].mesh.position.y = THREE.Math.lerp(_marbles[i].mesh.position.y || 0, newPositions[i * 3 + 2], delta);
-				_marbles[i].mesh.position.z = THREE.Math.lerp(_marbles[i].mesh.position.z || 0, newPositions[i * 3 + 1], delta);
+				_marbles[i].mesh.position.x = THREE.Math.lerp(_marbles[i].mesh.position.x || 0, newPositions[i * 3 + 0], interval);
+				_marbles[i].mesh.position.y = THREE.Math.lerp(_marbles[i].mesh.position.y || 0, newPositions[i * 3 + 2], interval);
+				_marbles[i].mesh.position.z = THREE.Math.lerp(_marbles[i].mesh.position.z || 0, newPositions[i * 3 + 1], interval);
 
 				// Rotations
 				_marbles[i].mesh.quaternion.set(
