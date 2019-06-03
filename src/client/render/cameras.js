@@ -196,7 +196,6 @@ function FreeCamera(
 
 	if (options.disableOnBlur === true) {
 		document.addEventListener("visibilitychange", (function() {
-			console.log(document.hidden);
 			if (document.hidden) {
 				this.disable();
 			} else {
