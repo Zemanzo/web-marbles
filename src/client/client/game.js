@@ -1,8 +1,10 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
 import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
+import * as levelIO from "../../level/level-io";
 
-let game = (function() {
+let game = function() {
 	let _audio = {
 			start: new Audio("resources/audio/start.mp3"),
 			end: new Audio("resources/audio/end.mp3")
@@ -25,6 +27,7 @@ let game = (function() {
 		_enterPeriodTimerInterval,
 		_startTimerIsRunning = false,
 
+		_initPromise = null,
 		_DOMReadyTimestamp,
 		_DOMElements = {},
 
@@ -66,25 +69,32 @@ let game = (function() {
 		}
 	};
 
-	// DOM ready
-	domReady.then(() => {
-		_DOMReadyTimestamp = (new Date()).getTime();
-
-		// Get element references
-		_DOMElements.timer = document.getElementById("timer");
-		_DOMElements.state = document.getElementById("state");
-		_DOMElements.entries = document.getElementById("entries");
-		_DOMElements.gameInfo = document.getElementById("gameInfo");
-		_DOMElements.marbleList = document.getElementById("marbleList");
-		_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
-		_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
-		_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
-		_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
-		_DOMElements.resultsList = document.getElementById("resultsList");
-		_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
-	});
-
 	return {
+
+		// Returns a Promise that resolves once initialization is complete
+		// Can be called multiple times but will initialize only once
+		initialize: function() {
+			if(!_initPromise) {
+				_initPromise = domReady.then( () => {
+					_DOMReadyTimestamp = (new Date()).getTime();
+
+					// Get element references
+					_DOMElements.timer = document.getElementById("timer");
+					_DOMElements.state = document.getElementById("state");
+					_DOMElements.entries = document.getElementById("entries");
+					_DOMElements.gameInfo = document.getElementById("gameInfo");
+					_DOMElements.marbleList = document.getElementById("marbleList");
+					_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
+					_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
+					_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
+					_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
+					_DOMElements.resultsList = document.getElementById("resultsList");
+					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+				});
+			}
+			return _initPromise;
+		},
+
 		setCurrentGameState: function(newStateData, isInitialState = false) {
 			let newState = newStateData.state;
 
@@ -145,7 +155,7 @@ let game = (function() {
 				}
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
-				renderCore.activeLevel.openGates();
+				levelManager.activeLevel.openGates();
 				_DOMElements.state.innerHTML = "Race started!";
 				break;
 
@@ -153,7 +163,7 @@ let game = (function() {
 			case "finished":
 				if (!isInitialState) {
 					_audio.end.play();
-					renderCore.activeLevel.closeGates();
+					levelManager.activeLevel.closeGates();
 
 					_DOMElements.raceLeaderboard.className = "visible";
 
@@ -280,17 +290,35 @@ let game = (function() {
 			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `🏁 ${(marble.time * .001).toFixed(2)}s`;
 		},
 
-		// Fill gamestate properties in UI
-		setInitialGameState: function(gameState) {
+		// Initialize game's state, marbles, and level based on server's initial_data
+		initializeGameState: function(gameState) {
 			_requestComplete = Date.now();
+			_serverData = gameState;
+			this.setCurrentGameState({state: _serverData.currentGameState}, true);
 
-			domReady.then(() => {
-				_serverData = gameState;
+			// Spawn marbles
+			for (let i = 0; i < gameState.initialMarbleData.length; i++) {
+				this.spawnMarble(gameState.initialMarbleData[i]);
+			}
 
-				this.setCurrentGameState({state: _serverData.currentGameState}, true);
-			});
+			// Start loading the level asynchronously
+			let levelName = gameState.levelId;
+			fetch(`/resources/maps/${levelName}.mmc`)
+				.then((response) => {
+					// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
+					return response.arrayBuffer();
+				})
+				.then((buffer) => {
+					let levelData = levelIO.load(buffer);
+					levelManager.activeLevel.loadLevel(levelData)
+						.then( () => {
+							if(this.getCurrentGameState() === "started") {
+								levelManager.activeLevel.openGates();
+							}
+						});
+				});
 		}
 	};
-})();
+}();
 
 export { game };
