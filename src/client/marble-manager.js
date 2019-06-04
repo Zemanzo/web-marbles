@@ -16,6 +16,7 @@ let marbleManager = function() {
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
 			this.marbleNamesGroup = new THREE.Group();
+			this.marbleNamesGroup.renderOrder = 1;
 			renderCore.mainScene.add(this.marbleGroup);
 			renderCore.mainScene.add(this.marbleNamesGroup);
 
