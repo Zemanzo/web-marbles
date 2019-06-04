@@ -215,13 +215,13 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
 		if(!renderCore.waterReflectsLevel()) parent.levelObjects.visible = false;
 		if(!renderCore.waterReflectsMarbles()) marbleManager.marbleGroup.visible = false;
-		marbleManager.marbleNames.visible = false;
+		marbleManager.marbleNamesGroup.visible = false;
 
 		originalOnBeforeRender(renderer, scene, camera);
 
 		parent.levelObjects.visible = true;
 		marbleManager.marbleGroup.visible = true;
-		marbleManager.marbleNames.visible = true;
+		marbleManager.marbleNamesGroup.visible = true;
 	};
 }
 
@@ -308,10 +308,10 @@ let levelManager = function() {
 		// Set a new active level
 		setActiveLevel: function(marbleLevel) {
 			if (this.activeLevel) {
-				renderCore.getMainScene().remove(this.activeLevel.scene);
+				renderCore.mainScene.remove(this.activeLevel.scene);
 			}
 			this.activeLevel = marbleLevel;
-			renderCore.getMainScene().add(this.activeLevel.scene);
+			renderCore.mainScene.add(this.activeLevel.scene);
 		},
 
 		initialize: function() {

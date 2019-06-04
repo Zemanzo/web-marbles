@@ -9,8 +9,7 @@ import domReady from "../dom-ready";
 const _GLTFLoader = new THREE.GLTFLoader();
 
 let renderCore = function() {
-	let _mainScene = null,
-		_renderer = null,
+	let _renderer = null,
 		_viewport = null, // DOM viewport element
 		_stats = null,
 		_controls = null,
@@ -34,10 +33,10 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		renderCore.clientUpdateCallback(deltaTime);
+		renderCore.updateCallback(deltaTime);
 
 		// Render the darn thing
-		_renderer.render(_mainScene, _controls.camera);
+		_renderer.render(renderCore.mainScene, _controls.camera);
 
 		_stats.end();
 	};
@@ -60,6 +59,8 @@ let renderCore = function() {
 	};
 
 	return {
+		mainScene: null,
+
 		initialize: function() {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {
@@ -76,7 +77,7 @@ let renderCore = function() {
 					_viewport.appendChild(warning);
 				});
 			} else { // Initialize
-				_mainScene = new THREE.Scene();
+				this.mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
 				_defaultModel = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(1, 1, 1, 1),
@@ -120,7 +121,7 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				_controls = new FreeCamera(_mainScene, _renderer);
+				_controls = new FreeCamera(this.mainScene, _renderer);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
@@ -139,7 +140,7 @@ let renderCore = function() {
 			}
 		},
 
-		clientUpdateCallback: function() {
+		updateCallback: function() {
 			// Overridable function for the client and editor to attach their update functions to.
 		},
 
@@ -153,10 +154,6 @@ let renderCore = function() {
 
 		getDefaultModel: function() {
 			return _defaultModel;
-		},
-
-		getMainScene: function() {
-			return _mainScene;
 		}
 	};
 }();

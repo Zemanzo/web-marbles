@@ -10,14 +10,14 @@ let marbleManager = function() {
 	let _marbles = []; // Array of marbles that currently exist in the scene
 	return {
 		marbleGroup: null, // Group containing marble instances
-		marbleNames: null, // Group containing name sprites
+		marbleNamesGroup: null, // Group containing name sprites
 		marbleGeometry: null,
 
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
-			this.marbleNames = new THREE.Group();
-			renderCore.getMainScene().add(this.marbleGroup);
-			renderCore.getMainScene().add(this.marbleNames);
+			this.marbleNamesGroup = new THREE.Group();
+			renderCore.mainScene.add(this.marbleGroup);
+			renderCore.mainScene.add(this.marbleNamesGroup);
 
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
 		},
@@ -26,14 +26,14 @@ let marbleManager = function() {
 			let marbleMesh = new MarbleMesh(marbleData);
 			_marbles.push(marbleMesh);
 			this.marbleGroup.add(marbleMesh.mesh);
-			this.marbleNames.add(marbleMesh.nameSprite);
+			this.marbleNamesGroup.add(marbleMesh.nameSprite);
 		},
 
 		removeMarble: function(entryId) {
 			for (let marble of _marbles) {
 				if(marble.entryId === entryId) {
 					this.marbleGroup.remove(marble.mesh);
-					this.marbleNames.remove(marble.nameSprite);
+					this.marbleNamesGroup.remove(marble.nameSprite);
 					return;
 				}
 			}
@@ -42,7 +42,7 @@ let marbleManager = function() {
 		clearMarbles: function() {
 			for (let marble of _marbles) {
 				this.marbleGroup.remove(marble.mesh);
-				this.marbleNames.remove(marble.nameSprite);
+				this.marbleNamesGroup.remove(marble.nameSprite);
 			}
 			_marbles = [];
 		},

@@ -16,4 +16,4 @@ function clientUpdate(deltaTime) {
 	networking.update(deltaTime);
 }
 
-renderCore.clientUpdateCallback = clientUpdate;
+renderCore.updateCallback = clientUpdate;
