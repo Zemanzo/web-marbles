@@ -1,5 +1,5 @@
 import "three/examples/js/controls/PointerLockControls";
-import { PerspectiveCamera, Vector3, PointerLockControls } from "three";
+import { PerspectiveCamera, Vector3, PointerLockControls, Math as ThreeMath, Euler } from "three";
 
 let addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
@@ -252,4 +252,98 @@ function FreeCamera(
 	this.enable();
 }
 
-export { FreeCamera };
+
+/**
+	Generates a camera that automatically tracks the supplied target object.
+
+	The constructor takes the following arguments:
+	@constructor
+	@param {THREE.Scene} scene THREE scene object to add the camera to
+	@param {THREE.Renderer} renderer THREE renderer the camera should use
+	@param {THREE.Object3D} target THREE object that should be tracked
+
+	Methods:
+	@method enable Enables the controls.
+	@method disable Disables the controls.
+	@method update Updates the controls. Should be called in some update loop.
+	@method setTarget Sets the target object that needs to be tracked.
+*/
+function TrackingCamera(
+	scene,
+	renderer,
+	target
+) {
+	this.camera = new PerspectiveCamera(
+		75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000
+	);
+
+	this.target = target;
+
+	this.prevTime = performance.now();
+
+	/**
+	 * Enables the controls
+	 */
+	this.enable = function() {
+		this.enabled = true;
+
+		this.update = function() {
+			update.bind(this)();
+		};
+	};
+
+	/**
+	 * Disables the controls
+	 */
+	this.disable = function() {
+		this.enabled = false;
+
+		// null update function
+		this.update = () => void 0;
+	};
+
+	this.setTarget = function(target) {
+		this.target = target;
+	};
+
+	document.addEventListener("visibilitychange", (function() {
+		if (document.hidden) {
+			this.disable();
+		} else {
+			this.enable();
+		}
+	}).bind(this), false);
+
+	scene.add(this.camera);
+
+	// Call this function in the update loop to update the controls.
+	let update = function() {
+		if (this.target && this.target.position) {
+			if (Math.abs(this.camera.position.x - this.target.position.x) > 2) {
+				this.camera.position.x = ThreeMath.lerp(this.camera.position.x, this.target.position.x, .01);
+			}
+
+			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, this.target.position.y + 7, .01) || this.camera.position.y;
+
+			if (Math.abs(this.camera.position.z - this.target.position.z) > 2) {
+				this.camera.position.z = ThreeMath.lerp(this.camera.position.z, this.target.position.z, .01);
+			}
+
+			if (isNaN(this.camera.rotation._x) || isNaN(this.camera.rotation._y) || isNaN(this.camera.rotation._z)) {
+				this.camera.setRotationFromEuler(new Euler());
+				console.log(this.camera.rotation, this.camera.position);
+			} else {
+				//this.camera.quaternion.slerp(targetQuaternion, .1);
+				this.camera.lookAt(this.target.position);
+			}
+		} else {
+			this.camera.position.x = -8;
+			this.camera.position.y = 57;
+			this.camera.position.z = 30;
+		}
+	};
+
+	this.enable();
+}
+
+export { FreeCamera, TrackingCamera };

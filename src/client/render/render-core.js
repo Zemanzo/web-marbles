@@ -3,7 +3,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
 import * as config from "../config";
 import * as Stats from "stats-js";
-import { FreeCamera } from "./cameras";
+import { FreeCamera, TrackingCamera } from "./cameras";
 import domReady from "../dom-ready";
 
 const _GLTFLoader = new THREE.GLTFLoader();
@@ -121,7 +121,7 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				_controls = new FreeCamera(this.mainScene, _renderer);
+				_controls = new TrackingCamera(this.mainScene, _renderer);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
