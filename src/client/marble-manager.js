@@ -29,6 +29,8 @@ let marbleManager = function() {
 			this.marbleGroup.add(marbleMesh.mesh);
 			this.marbleNamesGroup.add(marbleMesh.nameSprite);
 			renderCore.controls.setTarget(marbleMesh.mesh);
+
+			return marbleMesh.mesh;
 		},
 
 		removeMarble: function(entryId) {

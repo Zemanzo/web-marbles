@@ -12,7 +12,6 @@ let renderCore = function() {
 	let _renderer = null,
 		_viewport = null, // DOM viewport element
 		_stats = null,
-		_controls = null,
 		_defaultModel = null,
 		_previousTime = Date.now();
 
@@ -23,8 +22,8 @@ let renderCore = function() {
 		_previousTime = now;
 
 		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
-		if (_controls.enabled === true) {
-			_controls.update(deltaTime);
+		if (renderCore.controls.enabled === true) {
+			renderCore.controls.update();
 		}
 
 		// Request new frame
@@ -36,7 +35,7 @@ let renderCore = function() {
 		renderCore.updateCallback(deltaTime);
 
 		// Render the darn thing
-		_renderer.render(renderCore.mainScene, _controls.camera);
+		_renderer.render(this.mainScene, renderCore.controls.camera);
 
 		_stats.end();
 	};
@@ -44,8 +43,8 @@ let renderCore = function() {
 	const _onCanvasResize = function() {
 		_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 
-		_controls.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
-		_controls.camera.updateProjectionMatrix();
+		renderCore.controls.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
+		renderCore.controls.camera.updateProjectionMatrix();
 	};
 
 	// From https://github.com/mrdoob/three.js/blob/master/examples/js/WebGL.js
@@ -60,6 +59,7 @@ let renderCore = function() {
 
 	return {
 		mainScene: null,
+		controls: null,
 
 		initialize: function() {
 			// Check for WebGL availability and display a warning when it is missing.
@@ -121,7 +121,7 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				_controls = new TrackingCamera(this.mainScene, _renderer);
+				this.controls = new TrackingCamera(this.mainScene, _renderer);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
