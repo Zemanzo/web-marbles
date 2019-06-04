@@ -66,7 +66,6 @@ function FreeCamera(
 	this.moveUp = false;
 	this.moveDown = false;
 
-	this.prevTime = performance.now();
 	this.velocity = new Vector3();
 	this.direction = new Vector3();
 
@@ -172,8 +171,8 @@ function FreeCamera(
 		_listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
 		_listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
 
-		this.update = function() {
-			update.bind(this)();
+		this.update = function(deltaTime) {
+			update.bind(this)(deltaTime);
 		};
 	};
 
@@ -218,14 +217,10 @@ function FreeCamera(
 	scene.add(self.controls.getObject());
 
 	// Call this function in the update loop to update the controls.
-	let _time, _delta;
-	let update = function() {
-		_time = performance.now();
-		_delta = ( _time - this.prevTime ) / 1000;
-
-		this.velocity.x -= this.velocity.x * 10.0 * _delta;
-		this.velocity.y -= this.velocity.y * 10.0 * _delta;
-		this.velocity.z -= this.velocity.z * 10.0 * _delta;
+	let update = function(deltaTime) {
+		this.velocity.x -= this.velocity.x * Math.min(1, 10.0 * deltaTime);
+		this.velocity.y -= this.velocity.y * Math.min(1, 10.0 * deltaTime);
+		this.velocity.z -= this.velocity.z * Math.min(1, 10.0 * deltaTime);
 
 		this.direction.z = Number( this.moveForward ) - Number( this.moveBackward );
 		this.direction.y = (this.moveDown || this.moveUp)
@@ -236,24 +231,22 @@ function FreeCamera(
 
 		if ( this.controls.isLocked === true ) {
 			if ( this.moveForward || this.moveBackward ) {
-				this.velocity.z -= this.direction.z * this.speed * _delta;
+				this.velocity.z -= this.direction.z * this.speed * deltaTime;
 			}
 
 			if ( this.moveDown || this.moveUp ) {
-				this.velocity.y -= this.direction.y * this.speed * _delta;
+				this.velocity.y -= this.direction.y * this.speed * deltaTime;
 			} else if ( this.moveForward || this.moveBackward ) {
-				this.velocity.y -= this.direction.y * this.speed * _delta * (-this.camera.parent.rotation.x * Math.PI * .5);
+				this.velocity.y -= this.direction.y * this.speed * deltaTime * (-this.camera.parent.rotation.x * Math.PI * .5);
 			}
 
 			if ( this.moveLeft || this.moveRight ) {
-				this.velocity.x -= this.direction.x * this.speed * _delta;
+				this.velocity.x -= this.direction.x * this.speed * deltaTime;
 			}
 		}
-		self.controls.getObject().translateX( this.velocity.x * _delta );
-		self.controls.getObject().translateY( this.velocity.y * _delta );
-		self.controls.getObject().translateZ( this.velocity.z * _delta );
-
-		this.prevTime = _time;
+		self.controls.getObject().translateX( this.velocity.x * deltaTime );
+		self.controls.getObject().translateY( this.velocity.y * deltaTime );
+		self.controls.getObject().translateZ( this.velocity.z * deltaTime );
 	};
 
 	this.enable();

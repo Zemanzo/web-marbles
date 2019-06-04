@@ -6,6 +6,7 @@ import "three/examples/js/loaders/GLTFLoader";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
+import { marbleManager } from "./marble-manager";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -29,8 +30,8 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.sky.water = this.water;
 }
 
-MarbleLevel.prototype.update = function() {
-	this.water.update();
+MarbleLevel.prototype.update = function(deltaTime) {
+	this.water.update(deltaTime);
 };
 
 MarbleLevel.prototype.openGates = function() {
@@ -212,9 +213,15 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.material.uniforms.size.value = 8;
 	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
-		parent.levelObjects.visible = false;
+		if(!renderCore.waterReflectsLevel()) parent.levelObjects.visible = false;
+		if(!renderCore.waterReflectsMarbles()) marbleManager.marbleGroup.visible = false;
+		marbleManager.marbleNamesGroup.visible = false;
+
 		originalOnBeforeRender(renderer, scene, camera);
+
 		parent.levelObjects.visible = true;
+		marbleManager.marbleGroup.visible = true;
+		marbleManager.marbleNamesGroup.visible = true;
 	};
 }
 
@@ -222,8 +229,8 @@ Water.prototype.setHeight = function(newHeight) {
 	this.waterObject.position.y = newHeight;
 };
 
-Water.prototype.update = function() {
-	this.waterObject.material.uniforms.time.value += 1.0 / 60.0;
+Water.prototype.update = function(deltaTime) {
+	this.waterObject.material.uniforms.time.value += deltaTime;
 };
 
 // Skybox
@@ -301,10 +308,10 @@ let levelManager = function() {
 		// Set a new active level
 		setActiveLevel: function(marbleLevel) {
 			if (this.activeLevel) {
-				renderCore.getMainScene().remove(this.activeLevel.scene);
+				renderCore.mainScene.remove(this.activeLevel.scene);
 			}
 			this.activeLevel = marbleLevel;
-			renderCore.getMainScene().add(this.activeLevel.scene);
+			renderCore.mainScene.add(this.activeLevel.scene);
 		},
 
 		initialize: function() {

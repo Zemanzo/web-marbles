@@ -1,30 +1,30 @@
 import * as THREE from "three";
 import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
-import * as Cookies from "js-cookie";
-import * as Stats from "stats-js";
 import * as config from "../config";
+import * as Stats from "stats-js";
 import { FreeCamera } from "./cameras";
 import domReady from "../dom-ready";
-import { levelManager } from "../level-manager";
 
-let _userData = Cookies.getJSON("user_data");
 const _GLTFLoader = new THREE.GLTFLoader();
 
 let renderCore = function() {
-	let _mainScene = null,
-		_renderer = null,
-		_marbleMeshes = [],
+	let _renderer = null,
 		_viewport = null, // DOM viewport element
 		_stats = null,
 		_controls = null,
-		_defaultModel = null;
+		_defaultModel = null,
+		_previousTime = Date.now();
 
 	// Core render loop
 	const _animate = function() {
+		let now = Date.now();
+		let deltaTime = (now - _previousTime) * 0.001; // Time in seconds
+		_previousTime = now;
+
 		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
 		if (_controls.enabled === true) {
-			_controls.update();
+			_controls.update(deltaTime);
 		}
 
 		// Request new frame
@@ -33,11 +33,10 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		renderCore.updateMarbles();
-		if(levelManager.activeLevel) levelManager.activeLevel.update();
+		renderCore.updateCallback(deltaTime);
 
 		// Render the darn thing
-		_renderer.render(_mainScene, _controls.camera);
+		_renderer.render(renderCore.mainScene, _controls.camera);
 
 		_stats.end();
 	};
@@ -60,6 +59,8 @@ let renderCore = function() {
 	};
 
 	return {
+		mainScene: null,
+
 		initialize: function() {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {
@@ -76,7 +77,7 @@ let renderCore = function() {
 					_viewport.appendChild(warning);
 				});
 			} else { // Initialize
-				_mainScene = new THREE.Scene();
+				this.mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
 				_defaultModel = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(1, 1, 1, 1),
@@ -120,10 +121,11 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				_controls = new FreeCamera(_mainScene, _renderer);
+				_controls = new FreeCamera(this.mainScene, _renderer);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
+					_previousTime = Date.now(); // Update loop starts from this point in time, ignore load time
 					_viewport = document.getElementById("viewport");
 
 					_onCanvasResize();
@@ -138,113 +140,23 @@ let renderCore = function() {
 			}
 		},
 
+		updateCallback: function() {
+			// Overridable function for the client and editor to attach their update functions to.
+		},
+
+		waterReflectsLevel: function() {
+			return config.graphics.reflection.level;
+		},
+
+		waterReflectsMarbles: function() {
+			return config.graphics.reflection.marbles;
+		},
+
 		getDefaultModel: function() {
 			return _defaultModel;
-		},
-
-		getMainScene: function() {
-			return _mainScene;
-		},
-
-		updateMarbles: function() {},
-
-		addMarbleMesh: function(data) {
-			let marbleMesh = new MarbleMesh(data);
-			_marbleMeshes.push(marbleMesh);
-			_mainScene.add(marbleMesh.mesh);
-			_mainScene.add(marbleMesh.nameSprite);
-		},
-
-		removeAllMarbleMeshes: function() {
-			for (let marble of _marbleMeshes) {
-				for (let i = marble.mesh.children.length; i >= 0; i--) {
-					_mainScene.remove(marble.mesh.children[i]);
-				}
-				_mainScene.remove(marble.nameSprite);
-				_mainScene.remove(marble.mesh);
-			}
-
-			_marbleMeshes = [];
-		},
-
-		updateMarbleMeshes: function(newPositions, newRotations, delta) {
-			for (let i = 0; i < _marbleMeshes.length; i++) {
-				// Positions
-				_marbleMeshes[i].mesh.position.x = THREE.Math.lerp(_marbleMeshes[i].mesh.position.x || 0, newPositions[i * 3 + 0], delta);
-				_marbleMeshes[i].mesh.position.y = THREE.Math.lerp(_marbleMeshes[i].mesh.position.y || 0, newPositions[i * 3 + 2], delta);
-				_marbleMeshes[i].mesh.position.z = THREE.Math.lerp(_marbleMeshes[i].mesh.position.z || 0, newPositions[i * 3 + 1], delta);
-
-				// Rotations
-				_marbleMeshes[i].mesh.quaternion.set(
-					newRotations[i * 4 + 0],
-					newRotations[i * 4 + 1],
-					newRotations[i * 4 + 2],
-					newRotations[i * 4 + 3]
-				);
-
-				// Also update the nameSprite position
-				if (_marbleMeshes[i].nameSprite) {
-					_marbleMeshes[i].nameSprite.position.x = (_marbleMeshes[i].mesh.position.x || 0);
-					_marbleMeshes[i].nameSprite.position.y = (_marbleMeshes[i].mesh.position.y || 0) + _marbleMeshes[i].size - .1;
-					_marbleMeshes[i].nameSprite.position.z = (_marbleMeshes[i].mesh.position.z || 0);
-				}
-			}
 		}
 	};
 }();
-
-// Marbles
-const MarbleMesh = function(tags) {
-	this.size = tags.size;
-	this.color = tags.color;
-	this.name = tags.name;
-
-	this.geometry = new THREE.SphereBufferGeometry(this.size, 9, 9);
-	this.materialColor = new THREE.Color(this.color);
-	this.material = new THREE.MeshStandardMaterial({ color: this.materialColor });
-	this.mesh = new THREE.Mesh(this.geometry, this.material);
-
-	// Useful for debugging
-	this.mesh.name = `Marble (${tags.name})`;
-
-	// Shadows
-	this.mesh.castShadow = config.graphics.castShadow.marbles;
-	this.mesh.receiveShadow = config.graphics.receiveShadow.marbles;
-
-	// Highlight own name
-	let nameSpriteOptions = {};
-	if (_userData && _userData.username === this.name) {
-		nameSpriteOptions.color = "#BA0069";
-	}
-
-	// Add name sprite (we avoid parenting, because this will also cause it to inherit the rotation which we do not want)
-	this.nameSprite = makeTextSprite(this.name, nameSpriteOptions);
-};
-
-const makeTextSprite = function(message, options = {}) {
-	let fontFamily = options.fontFamily || "Courier New";
-	let fontSize = 48;
-
-	let canvas = document.createElement("canvas");
-	canvas.width = 512;
-	canvas.height = 128;
-
-	let context = canvas.getContext("2d");
-	context.font = `Bold ${fontSize}px ${fontFamily}`;
-	context.textAlign = "center";
-	context.fillStyle = options.color || "#ffffff";
-	context.fillText(message, 256, fontSize);
-
-	// Canvas contents will be used for a texture
-	let texture = new THREE.Texture(canvas);
-	texture.needsUpdate = true;
-
-	let spriteMaterial = new THREE.SpriteMaterial({ map: texture });
-	let sprite = new THREE.Sprite(spriteMaterial);
-	sprite.scale.set(4, 1, 1.0);
-
-	return sprite;
-};
 
 export {
 	renderCore

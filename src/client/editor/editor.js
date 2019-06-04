@@ -11,6 +11,7 @@ import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
 import { renderCore } from "../render/render-core";
 import { levelManager } from "../level-manager";
+import { marbleManager } from "../marble-manager";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
@@ -126,6 +127,8 @@ let editor = function() {
 			prefabsTab.initialize();
 			worldTab.initialize();
 
+			renderCore.updateCallback = this.update;
+
 			// Update version number
 			document.getElementById("editorVersion").innerHTML = `v${levelIO.getCurrentVersion()}`;
 
@@ -224,6 +227,10 @@ let editor = function() {
 			// Models tab is the active tab on load
 			document.getElementById("properties").firstElementChild.style.marginLeft = "-200%";
 			modelsTab.onTabActive();
+		},
+
+		update: function(deltaTime) {
+			levelManager.activeLevel.update(deltaTime);
 		}
 	};
 }();
@@ -232,6 +239,7 @@ let editor = function() {
 // Editor core initialization
 renderCore.initialize();
 levelManager.initialize();
+marbleManager.initialize();
 
 // Add visual helpers to level
 let gridHelper = new THREE.GridHelper(20, 20);
