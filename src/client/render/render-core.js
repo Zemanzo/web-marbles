@@ -23,7 +23,7 @@ let renderCore = function() {
 
 		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
 		if (renderCore.controls.enabled === true) {
-			renderCore.controls.update();
+			renderCore.controls.update(deltaTime);
 		}
 
 		// Request new frame
