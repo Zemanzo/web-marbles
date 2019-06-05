@@ -35,7 +35,7 @@ let renderCore = function() {
 		renderCore.updateCallback(deltaTime);
 
 		// Render the darn thing
-		_renderer.render(this.mainScene, renderCore.controls.camera);
+		_renderer.render(renderCore.mainScene, renderCore.controls.camera);
 
 		_stats.end();
 	};
@@ -61,7 +61,7 @@ let renderCore = function() {
 		mainScene: null,
 		controls: null,
 
-		initialize: function() {
+		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {
 				domReady.then(() => {
@@ -121,7 +121,16 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				this.controls = new TrackingCamera(this.mainScene, _renderer);
+				switch (defaultCameraType) {
+				case "TrackingCamera":
+					this.controls = new TrackingCamera(this.mainScene, _renderer);
+					break;
+				case "FreeCamera":
+				default:
+					this.controls = new FreeCamera(this.mainScene, _renderer);
+					break;
+				}
+
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {

@@ -1,5 +1,13 @@
 import "three/examples/js/controls/PointerLockControls";
-import { PerspectiveCamera, Vector3, PointerLockControls, Math as ThreeMath, Euler, Quaternion } from "three";
+import {
+	Vector3,
+	Matrix4,
+	PerspectiveCamera,
+	PointerLockControls,
+	Math as ThreeMath,
+	Euler,
+	Quaternion
+} from "three";
 
 let addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
@@ -53,6 +61,7 @@ function FreeCamera(
 	if (!options.defaultRotation)
 		options.defaultRotation = { x: -0.35, y: 0, z: 0 };
 
+	this.type = "FreeCamera";
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
 	this.speed = options.speed;
@@ -294,6 +303,7 @@ function TrackingCamera(
 		)
 	);
 
+	this.type = "TrackingCamera";
 	this.camera = options.camera;
 	this.target = null;
 
@@ -342,6 +352,7 @@ function TrackingCamera(
 	scene.add(this.camera);
 
 	// Call this function in the update loop to update the controls.
+	let targetQuaternion;
 	let update = function() {
 		if (this.target) {
 			if (Math.abs(this.camera.position.x - this.target.position.x) > 2) {
@@ -356,10 +367,9 @@ function TrackingCamera(
 
 			if (isNaN(this.camera.rotation._x) || isNaN(this.camera.rotation._y) || isNaN(this.camera.rotation._z)) {
 				this.camera.setRotationFromEuler(new Euler());
-				console.log(this.camera.rotation, this.camera.position);
 			} else {
-				//this.camera.quaternion.slerp(targetQuaternion, .1);
-				this.camera.lookAt(this.target.position);
+				targetQuaternion = _lookAtWithReturn(this.camera, this.target);
+				this.camera.quaternion.slerp(targetQuaternion, .1);
 			}
 		} else {
 			this.camera.position.x = ThreeMath.lerp(this.camera.position.x, options.defaultPosition.x, .01);
@@ -367,7 +377,6 @@ function TrackingCamera(
 			this.camera.position.z = ThreeMath.lerp(this.camera.position.z, options.defaultPosition.z, .01);
 
 			if (this.camera.quaternion.angleTo(defaultQuaternion) > .01) {
-				console.log("slerp!");
 				this.camera.quaternion.copy(
 					this.camera.quaternion.slerp(defaultQuaternion, .01)
 				);
@@ -377,5 +386,38 @@ function TrackingCamera(
 
 	this.enable();
 }
+
+// Because the .lookAt function of three.js does not return a value but applies it immediately.
+const _lookAtWithReturn = function() {
+	let q1 = new Quaternion();
+	let q2 = new Quaternion();
+	let m1 = new Matrix4();
+	let position = new Vector3();
+	let parent;
+
+	return function(object, target) {
+		parent = object.parent;
+
+		q2 = object.quaternion.clone();
+
+		object.updateWorldMatrix(true, false);
+
+		position.setFromMatrixPosition(object.matrixWorld);
+
+		if (object.isCamera || object.isLight) {
+			m1.lookAt(position, target.position, object.up);
+		} else {
+			m1.lookAt(target.position, position, object.up);
+		}
+
+		q2.setFromRotationMatrix(m1);
+
+		if (parent) {
+			m1.extractRotation(parent.matrixWorld);
+			q1.setFromRotationMatrix(m1);
+			return q2.premultiply(q1.inverse());
+		}
+	};
+}();
 
 export { FreeCamera, TrackingCamera };

@@ -2,6 +2,7 @@ import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
+import { renderCore } from "../render/render-core";
 import * as levelIO from "../../level/level-io";
 
 let game = function() {
@@ -108,7 +109,9 @@ let game = function() {
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
 				marbleManager.clearMarbles();
-				renderCore.controls.setTarget(null);
+				if (renderCore.controls.type === "TrackingCamera") {
+					renderCore.controls.setTarget(null);
+				}
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -270,7 +273,9 @@ let game = function() {
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
 			listEntry.addEventListener("click", function() {
-				renderCore.controls.setTarget(mesh);
+				if (renderCore.controls.type === "TrackingCamera") {
+					renderCore.controls.setTarget(mesh);
+				}
 			}, false);
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.background = marble.color;

@@ -237,7 +237,7 @@ let editor = function() {
 
 
 // Editor core initialization
-renderCore.initialize();
+renderCore.initialize("FreeCamera");
 levelManager.initialize();
 marbleManager.initialize();
 

@@ -6,7 +6,7 @@ import { marbleManager } from "../marble-manager";
 
 // Initialize client modules
 networking.initialize();
-renderCore.initialize();
+renderCore.initialize("TrackingCamera");
 levelManager.initialize();
 marbleManager.initialize();
 game.initialize();
