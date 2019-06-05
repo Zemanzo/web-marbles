@@ -28,7 +28,6 @@ let marbleManager = function() {
 			_marbles.push(marbleMesh);
 			this.marbleGroup.add(marbleMesh.mesh);
 			this.marbleNamesGroup.add(marbleMesh.nameSprite);
-			renderCore.controls.setTarget(marbleMesh.mesh);
 
 			return marbleMesh.mesh;
 		},

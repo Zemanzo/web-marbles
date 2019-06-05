@@ -5,6 +5,8 @@ import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
 import * as levelIO from "../../level/level-io";
 
+let _userData = Cookies.getJSON("user_data");
+
 let game = function() {
 	let _audio = {
 			start: new Audio("resources/audio/start.mp3"),
@@ -32,8 +34,30 @@ let game = function() {
 		_DOMReadyTimestamp,
 		_DOMElements = {},
 
+		_marbleBeingTracked = null,
+
 		_requestComplete,
 		_requestStart = Date.now();
+
+	let _toggleMarbleTracking = function(marble, mesh) {
+		if (renderCore.controls.type === "TrackingCamera") {
+			if (_marbleBeingTracked === marble) {
+				_marbleBeingTracked = null;
+				mesh = null;
+				marble.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
+			} else {
+				if (_marbleBeingTracked) {
+					_marbleBeingTracked.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
+				}
+				_marbleBeingTracked = marble;
+				marble.listEntryElement.getElementsByClassName("camera")[0].classList.add("selected");
+			}
+
+			if (mesh !== undefined) {
+				renderCore.controls.setTarget(mesh);
+			}
+		}
+	};
 
 	let _startTimerInterval = function(s) {
 		// Make sure it only runs once
@@ -109,6 +133,7 @@ let game = function() {
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
 				marbleManager.clearMarbles();
+				_marbleBeingTracked = null;
 				if (renderCore.controls.type === "TrackingCamera") {
 					renderCore.controls.setTarget(null);
 				}
@@ -185,9 +210,6 @@ let game = function() {
 
 					_DOMElements.resultsList.innerHTML = "";
 
-					// Get current user_data to see if any row needs to be highlighted
-					let user_data = Cookies.getJSON("user_data");
-
 					// Build leaderboard DOM
 					let resultsListFragment = new DocumentFragment();
 					for (let i = 0; i < _enteredMarbleList.length; i++) {
@@ -197,7 +219,7 @@ let game = function() {
 						resultsEntry.removeAttribute("id");
 
 						// Highlight for current player
-						if (user_data && user_data.id === marble.userId) {
+						if (_userData && _userData.id === marble.userId) {
 							resultsEntry.className += " currentPlayer";
 						}
 
@@ -272,17 +294,24 @@ let game = function() {
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
-			listEntry.addEventListener("click", function() {
-				if (renderCore.controls.type === "TrackingCamera") {
-					renderCore.controls.setTarget(mesh);
-				}
+			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
+				_toggleMarbleTracking(marble, mesh);
 			}, false);
+			if (marble.finished) listEntry.classList.add("finished");
+			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
-			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `🏁 ${(marble.time * .001).toFixed(2)}s` : "";
+			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `${(marble.time * .001).toFixed(2)}s` : "";
 			listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(marble.rank) && marble.rank !== null ? `#${marble.rank + 1}` : "";
 			listEntry.style.order = marble.rank;
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
+
+			if (_userData && _userData.username === marble.name) {
+				if (!renderCore.controls.target && renderCore.controls.type === "TrackingCamera") {
+					_toggleMarbleTracking(marble, mesh);
+				}
+				listEntry.classList.add("player");
+			}
 
 			_DOMElements.marbleList.appendChild(listEntry);
 			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
@@ -294,9 +323,10 @@ let game = function() {
 			_enteredMarbleList[marble.id].time = marble.time;
 			_enteredMarbleList[marble.id].points = marble.points;
 
+			_enteredMarbleList[marble.id].listEntryElement.classList.add("finished");
 			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${marble.rank + 1}`;
 			_enteredMarbleList[marble.id].listEntryElement.style.order = marble.rank;
-			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `🏁 ${(marble.time * .001).toFixed(2)}s`;
+			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `${(marble.time * .001).toFixed(2)}s`;
 		},
 
 		// Initialize game's state, marbles, and level based on server's initial_data
