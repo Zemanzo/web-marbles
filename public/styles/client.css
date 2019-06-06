@@ -566,15 +566,25 @@ p {
 }
 
 .marbleListEntry {
-	margin: 0px 8px;
 	display: flex;
 	order: 9999;
 }
-
-	.marbleListEntry .rank {
-		min-width: 2.5em;
+	.marbleListEntry.player {
+		background-color: var(--theme-color-dark);
+	}
+	.marbleListEntry .camera {
 		margin-right: 8px;
 		text-align: right;
+		visibility: hidden;
+		cursor: pointer;
+	}
+	.marbleListEntry:hover .camera {
+		visibility: visible;
+		color: #666;
+	}
+	.marbleListEntry .camera.selected {
+		visibility: visible;
+		color: inherit;
 	}
 
 	.marbleListEntry .color {
@@ -594,4 +604,31 @@ p {
 
 	.marbleListEntry .name {
 		flex: 1;
+	}
+
+	.marbleListEntry .status {
+		margin: 0px 4px;
+	}
+		.marbleListEntry .status .icon-cancel {
+			color: #b44;
+			display: none;
+		}
+		.marbleListEntry .status .icon-flag-checkered {
+			color: #7b7;
+			display: none;
+		}
+		.marbleListEntry.finished .status .icon-flag-checkered { display: block; }
+
+	.marbleListEntry .rank {
+		font-family: "Share Tech Mono", monospace;
+		min-width: 2.5em;
+		margin-right: 8px;
+		text-align: right;
+	}
+
+	.marbleListEntry .time {
+		font-family: "Share Tech Mono", monospace;
+		min-width: 4em;
+		text-align: right;
+		color:#999;
 	}

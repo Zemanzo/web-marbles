@@ -1,5 +1,13 @@
 import "three/examples/js/controls/PointerLockControls";
-import { PerspectiveCamera, Vector3, PointerLockControls } from "three";
+import {
+	Vector3,
+	Matrix4,
+	PerspectiveCamera,
+	PointerLockControls,
+	Math as ThreeMath,
+	Euler,
+	Quaternion
+} from "three";
 
 let addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
@@ -26,15 +34,13 @@ let addRegisteredEventListener = function(scope, event, func, capture) {
 	@method enable Enables the controls.
 	@method disable Disables the controls.
 	@method update Updates the controls. Should be called in some update loop.
+	@method toDefaults Sets the camera back to its default position.
 */
 function FreeCamera(
 	scene,
 	renderer,
-	options
+	options = {}
 ) {
-	if (!options)
-		options = {};
-
 	if (!options.pointerLockElement)
 		options.pointerLockElement = renderer.domElement;
 
@@ -55,6 +61,7 @@ function FreeCamera(
 	if (!options.defaultRotation)
 		options.defaultRotation = { x: -0.35, y: 0, z: 0 };
 
+	this.type = "FreeCamera";
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
 	this.speed = options.speed;
@@ -252,4 +259,165 @@ function FreeCamera(
 	this.enable();
 }
 
-export { FreeCamera };
+
+/**
+	Generates a camera that automatically tracks the supplied target object.
+
+	The constructor takes the following arguments:
+	@constructor
+	@param {THREE.Scene} scene THREE scene object to add the camera to
+	@param {THREE.Renderer} renderer THREE renderer the camera should use
+	@param {THREE.Object3D} target THREE object that should be tracked
+
+	Methods:
+	@method enable Enables the controls.
+	@method disable Disables the controls.
+	@method update Updates the controls. Should be called in some update loop.
+	@method setTarget Sets the target object that needs to be tracked.
+*/
+function TrackingCamera(
+	scene,
+	renderer,
+	options = {}
+) {
+	if (!options.pointerLockElement)
+		options.pointerLockElement = renderer.domElement;
+
+	if (!options.camera)
+		options.camera = new PerspectiveCamera(
+			75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000
+		);
+
+	if (!options.defaultPosition)
+		options.defaultPosition = { x: -3, y: 60, z: -7 };
+
+	if (!options.defaultRotation)
+		options.defaultRotation = { x: -0.45, y: Math.PI * .8, z: 0 };
+
+	let defaultQuaternion = new Quaternion().setFromEuler(
+		new Euler(
+			options.defaultRotation.x,
+			options.defaultRotation.y,
+			options.defaultRotation.z,
+			"YXZ"
+		)
+	);
+
+	this.type = "TrackingCamera";
+	this.camera = options.camera;
+	this.target = null;
+
+	/**
+	 * Enables the controls
+	 */
+	this.enable = function() {
+		this.enabled = true;
+
+		this.update = function() {
+			update.bind(this)();
+		};
+	};
+
+	/**
+	 * Disables the controls
+	 */
+	this.disable = function() {
+		this.enabled = false;
+
+		// null update function
+		this.update = () => void 0;
+	};
+
+	this.setTarget = function(target) {
+		this.target = target;
+	};
+
+	document.addEventListener("visibilitychange", (function() {
+		if (document.hidden) {
+			this.disable();
+		} else {
+			this.enable();
+		}
+	}).bind(this), false);
+
+	this.toDefaults = function() {
+		this.camera.position.x = options.defaultPosition.x;
+		this.camera.position.y = options.defaultPosition.y;
+		this.camera.position.z = options.defaultPosition.z;
+
+		this.camera.quaternion.copy(defaultQuaternion);
+	};
+	this.toDefaults();
+
+	scene.add(this.camera);
+
+	// Call this function in the update loop to update the controls.
+	let targetQuaternion;
+	let update = function() {
+		if (this.target) {
+			if (Math.abs(this.camera.position.x - this.target.position.x) > 2) {
+				this.camera.position.x = ThreeMath.lerp(this.camera.position.x, this.target.position.x, .01);
+			}
+
+			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, this.target.position.y + 7, .01) || this.camera.position.y;
+
+			if (Math.abs(this.camera.position.z - this.target.position.z) > 2) {
+				this.camera.position.z = ThreeMath.lerp(this.camera.position.z, this.target.position.z, .01);
+			}
+
+			if (isNaN(this.camera.rotation._x) || isNaN(this.camera.rotation._y) || isNaN(this.camera.rotation._z)) {
+				this.camera.setRotationFromEuler(new Euler());
+			} else {
+				targetQuaternion = _lookAtWithReturn(this.camera, this.target);
+				this.camera.quaternion.slerp(targetQuaternion, .1);
+			}
+		} else {
+			this.camera.position.x = ThreeMath.lerp(this.camera.position.x, options.defaultPosition.x, .01);
+			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, options.defaultPosition.y, .01);
+			this.camera.position.z = ThreeMath.lerp(this.camera.position.z, options.defaultPosition.z, .01);
+
+			if (this.camera.quaternion.angleTo(defaultQuaternion) > .01) {
+				this.camera.quaternion.copy(
+					this.camera.quaternion.slerp(defaultQuaternion, .01)
+				);
+			}
+		}
+	};
+
+	this.enable();
+}
+
+// Because the .lookAt function of three.js does not return a value but applies it immediately.
+const _lookAtWithReturn = function() {
+	let q1 = new Quaternion();
+	let q2 = new Quaternion();
+	let m1 = new Matrix4();
+	let position = new Vector3();
+	let parent;
+
+	return function(object, target) {
+		parent = object.parent;
+
+		q2 = object.quaternion.clone();
+
+		object.updateWorldMatrix(true, false);
+
+		position.setFromMatrixPosition(object.matrixWorld);
+
+		if (object.isCamera || object.isLight) {
+			m1.lookAt(position, target.position, object.up);
+		} else {
+			m1.lookAt(target.position, position, object.up);
+		}
+
+		q2.setFromRotationMatrix(m1);
+
+		if (parent) {
+			m1.extractRotation(parent.matrixWorld);
+			q1.setFromRotationMatrix(m1);
+			return q2.premultiply(q1.inverse());
+		}
+	};
+}();
+
+export { FreeCamera, TrackingCamera };
