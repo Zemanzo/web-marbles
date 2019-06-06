@@ -39,17 +39,18 @@ let game = function() {
 		_requestComplete,
 		_requestStart = Date.now();
 
-	let _toggleMarbleTracking = function(marble, mesh) {
+	let _toggleMarbleTracking = function(marble) {
 		if (renderCore.controls.type === "TrackingCamera") {
+			let mesh = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
-				mesh = null;
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 			} else {
 				if (_marbleBeingTracked) {
 					_marbleBeingTracked.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 				}
 				_marbleBeingTracked = marble;
+				mesh = marble.mesh;
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.add("selected");
 			}
 
@@ -289,13 +290,13 @@ let game = function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			let mesh = marbleManager.spawnMarble(marble);
+			marble = marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
 			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
-				_toggleMarbleTracking(marble, mesh);
+				_toggleMarbleTracking(marble);
 			}, false);
 			if (marble.finished) listEntry.classList.add("finished");
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
@@ -306,9 +307,9 @@ let game = function() {
 			listEntry.style.order = marble.rank;
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
-			if (_userData && _userData.username === marble.name) {
+			if (_userData && _userData.id === marble.userId) {
 				if (!renderCore.controls.target && renderCore.controls.type === "TrackingCamera") {
-					_toggleMarbleTracking(marble, mesh);
+					_toggleMarbleTracking(marble);
 				}
 				listEntry.classList.add("player");
 			}

@@ -13,18 +13,15 @@ let renderCore = function() {
 		_viewport = null, // DOM viewport element
 		_stats = null,
 		_defaultModel = null,
-		_previousTime = Date.now();
+		_previousTime = Date.now(),
+		_frameTime,
+		_deltaTime;
 
 	// Core render loop
 	const _animate = function() {
-		let now = Date.now();
-		let deltaTime = (now - _previousTime) * 0.001; // Time in seconds
-		_previousTime = now;
-
-		// Update active controls, needs to be buttery smooth, thus is called before requesting the next frame
-		if (renderCore.controls.enabled === true) {
-			renderCore.controls.update(deltaTime);
-		}
+		_frameTime = Date.now();
+		_deltaTime = (_frameTime - _previousTime) * 0.001; // Time in seconds
+		_previousTime = _frameTime;
 
 		// Request new frame
 		requestAnimationFrame(_animate);
@@ -32,7 +29,11 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		renderCore.updateCallback(deltaTime);
+		renderCore.updateCallback(_deltaTime);
+
+		if (renderCore.controls.enabled === true) {
+			renderCore.controls.update(_deltaTime);
+		}
 
 		// Render the darn thing
 		_renderer.render(renderCore.mainScene, renderCore.controls.camera);
