@@ -13,15 +13,13 @@ let renderCore = function() {
 		_viewport = null, // DOM viewport element
 		_stats = null,
 		_defaultModel = null,
-		_previousTime = Date.now(),
-		_frameTime,
-		_deltaTime;
+		_previousTime = Date.now();
 
 	// Core render loop
 	const _animate = function() {
-		_frameTime = Date.now();
-		_deltaTime = (_frameTime - _previousTime) * 0.001; // Time in seconds
-		_previousTime = _frameTime;
+		let now = Date.now();
+		let deltaTime = (now - _previousTime) * 0.001; // Time in seconds
+		_previousTime = now;
 
 		// Request new frame
 		requestAnimationFrame(_animate);
@@ -29,10 +27,10 @@ let renderCore = function() {
 		_stats.begin();
 
 		// Make updates
-		renderCore.updateCallback(_deltaTime);
+		renderCore.updateCallback(deltaTime);
 
 		if (renderCore.controls.enabled === true) {
-			renderCore.controls.update(_deltaTime);
+			renderCore.controls.update(deltaTime);
 		}
 
 		// Render the darn thing

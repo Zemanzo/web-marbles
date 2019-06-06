@@ -290,7 +290,7 @@ let game = function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			marble = marbleManager.spawnMarble(marble);
+			marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
