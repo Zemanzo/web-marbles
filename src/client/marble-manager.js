@@ -101,7 +101,7 @@ const MarbleMesh = function(marbleData) {
 	let nameSpriteOptions = {};
 	if (_userData && _userData.username === this.name) {
 		nameSpriteOptions.color = "#BA0069";
-		nameSpriteOptions.drawOnTop = 9e9;
+		nameSpriteOptions.renderOrder = 9e9;
 	}
 
 	// Add name sprite (we avoid parenting, because this will also cause it to inherit the rotation which we do not want)
@@ -134,8 +134,8 @@ const makeTextSprite = function(message, options = {}) {
 	});
 
 	let sprite = new THREE.Sprite(spriteMaterial);
-	sprite.scale.set(0.65, 0.25, 1.0);
-	sprite.renderOrder = options.drawOnTop || 1;
+	sprite.scale.set(0.3, 0.1, 1.0);
+	if (options.renderOrder) sprite.renderOrder = options.renderOrder;
 
 	return sprite;
 };
