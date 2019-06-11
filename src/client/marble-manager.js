@@ -99,7 +99,7 @@ const MarbleMesh = function(marbleData) {
 
 	// Highlight own name
 	let nameSpriteOptions = {};
-	if (_userData && _userData.username === this.name) {
+	if (_userData && _userData.id === marbleData.userId) {
 		nameSpriteOptions.color = "#BA0069";
 		nameSpriteOptions.renderOrder = 9e9;
 	}
