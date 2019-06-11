@@ -126,11 +126,11 @@ const makeTextSprite = function(message, options = {}) {
 	let texture = new THREE.Texture(canvas);
 	texture.needsUpdate = true;
 
-	let spriteMaterial = new THREE.SpriteMaterial({ 
+	let spriteMaterial = new THREE.SpriteMaterial({
 		map: texture,
 		sizeAttenuation: false,
 		depthWrite: false,
-		depthTest: false,
+		depthTest: false
 	});
 
 	let sprite = new THREE.Sprite(spriteMaterial);
