@@ -1,6 +1,6 @@
 import { editorLog } from "./log";
-import * as Level from "../../level/level";
-import * as levelManager from "../../level/manager";
+import * as LevelData from "../../level/level-data";
+import * as levelIO from "../../level/level-io";
 import SerializeWorker from "./serialize.worker";
 import { worldTab } from "./world";
 import { prefabsTab } from "./prefabs";
@@ -63,7 +63,7 @@ let projectTab = function() {
 		activeProject: null,
 
 		initialize: function() {
-			this.activeProject = new Level();
+			this.activeProject = new LevelData();
 
 			// Setting elements
 			_elements.exportPublish = document.getElementById("exportPublish");
@@ -229,7 +229,7 @@ let projectTab = function() {
 		},
 
 		importProject: function(loadedFile) {
-			let loadedProject = levelManager.load(loadedFile);
+			let loadedProject = levelIO.load(loadedFile);
 
 			if(!loadedProject) {
 				editorLog("Unable to load project. Check console for details.", "error");

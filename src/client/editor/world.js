@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 import { EditorObject } from "./editor";
 import { prefabsTab } from "./prefabs";
@@ -74,7 +74,7 @@ let worldTab = function() {
 		initialize: function() {
 			this.elements.prefabList = document.getElementById("worldPrefabList");
 			this.group = new THREE.Group();
-			renderCore.activeLevel.scene.add(this.group);
+			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 
 			this.onProjectLoad(projectTab.activeProject);
@@ -105,13 +105,13 @@ let worldTab = function() {
 
 		setWaterLevel: function(height) {
 			this.worldParameters.waterLevel = height;
-			renderCore.activeLevel.water.waterObject.position.y = height;
+			levelManager.activeLevel.water.waterObject.position.y = height;
 		},
 
 		setSunInclination: function(inclination) {
 			this.worldParameters.sunInclination = inclination;
-			renderCore.activeLevel.sky.parameters.inclination = inclination;
-			renderCore.activeLevel.sky.recalculate();
+			levelManager.activeLevel.sky.parameters.inclination = inclination;
+			levelManager.activeLevel.sky.recalculate();
 		},
 
 		addWorldObject: function(uuid, prefab, project) {

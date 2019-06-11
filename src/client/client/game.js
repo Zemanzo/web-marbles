@@ -1,8 +1,13 @@
 import domReady from "../dom-ready";
 import * as Cookies from "js-cookie";
+import { levelManager } from "../level-manager";
+import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
+import * as levelIO from "../../level/level-io";
 
-let game = (function() {
+let _userData = Cookies.getJSON("user_data");
+
+let game = function() {
 	let _audio = {
 			start: new Audio("resources/audio/start.mp3"),
 			end: new Audio("resources/audio/end.mp3")
@@ -25,11 +30,35 @@ let game = (function() {
 		_enterPeriodTimerInterval,
 		_startTimerIsRunning = false,
 
+		_initPromise = null,
 		_DOMReadyTimestamp,
 		_DOMElements = {},
 
+		_marbleBeingTracked = null,
+
 		_requestComplete,
 		_requestStart = Date.now();
+
+	let _toggleMarbleTracking = function(marble) {
+		if (renderCore.controls.type === "TrackingCamera") {
+			let mesh = null;
+			if (_marbleBeingTracked === marble) {
+				_marbleBeingTracked = null;
+				marble.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
+			} else {
+				if (_marbleBeingTracked) {
+					_marbleBeingTracked.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
+				}
+				_marbleBeingTracked = marble;
+				mesh = marble.mesh;
+				marble.listEntryElement.getElementsByClassName("camera")[0].classList.add("selected");
+			}
+
+			if (mesh !== undefined) {
+				renderCore.controls.setTarget(mesh);
+			}
+		}
+	};
 
 	let _startTimerInterval = function(s) {
 		// Make sure it only runs once
@@ -66,25 +95,32 @@ let game = (function() {
 		}
 	};
 
-	// DOM ready
-	domReady.then(() => {
-		_DOMReadyTimestamp = (new Date()).getTime();
-
-		// Get element references
-		_DOMElements.timer = document.getElementById("timer");
-		_DOMElements.state = document.getElementById("state");
-		_DOMElements.entries = document.getElementById("entries");
-		_DOMElements.gameInfo = document.getElementById("gameInfo");
-		_DOMElements.marbleList = document.getElementById("marbleList");
-		_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
-		_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
-		_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
-		_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
-		_DOMElements.resultsList = document.getElementById("resultsList");
-		_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
-	});
-
 	return {
+
+		// Returns a Promise that resolves once initialization is complete
+		// Can be called multiple times but will initialize only once
+		initialize: function() {
+			if(!_initPromise) {
+				_initPromise = domReady.then( () => {
+					_DOMReadyTimestamp = (new Date()).getTime();
+
+					// Get element references
+					_DOMElements.timer = document.getElementById("timer");
+					_DOMElements.state = document.getElementById("state");
+					_DOMElements.entries = document.getElementById("entries");
+					_DOMElements.gameInfo = document.getElementById("gameInfo");
+					_DOMElements.marbleList = document.getElementById("marbleList");
+					_DOMElements.marbleListTemplate = document.getElementById("marbleListTemplate");
+					_DOMElements.raceLeaderboard = document.getElementById("raceLeaderboard");
+					_DOMElements.raceLeaderboardLevelName = _DOMElements.raceLeaderboard.getElementsByClassName("levelName")[0];
+					_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
+					_DOMElements.resultsList = document.getElementById("resultsList");
+					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+				});
+			}
+			return _initPromise;
+		},
+
 		setCurrentGameState: function(newStateData, isInitialState = false) {
 			let newState = newStateData.state;
 
@@ -97,7 +133,11 @@ let game = (function() {
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
-				renderCore.removeAllMarbleMeshes();
+				marbleManager.clearMarbles();
+				_marbleBeingTracked = null;
+				if (renderCore.controls.type === "TrackingCamera") {
+					renderCore.controls.setTarget(null);
+				}
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
@@ -145,7 +185,7 @@ let game = (function() {
 				}
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
-				renderCore.activeLevel.openGates();
+				levelManager.activeLevel.openGates();
 				_DOMElements.state.innerHTML = "Race started!";
 				break;
 
@@ -153,7 +193,7 @@ let game = (function() {
 			case "finished":
 				if (!isInitialState) {
 					_audio.end.play();
-					renderCore.activeLevel.closeGates();
+					levelManager.activeLevel.closeGates();
 
 					_DOMElements.raceLeaderboard.className = "visible";
 
@@ -171,9 +211,6 @@ let game = (function() {
 
 					_DOMElements.resultsList.innerHTML = "";
 
-					// Get current user_data to see if any row needs to be highlighted
-					let user_data = Cookies.getJSON("user_data");
-
 					// Build leaderboard DOM
 					let resultsListFragment = new DocumentFragment();
 					for (let i = 0; i < _enteredMarbleList.length; i++) {
@@ -183,7 +220,7 @@ let game = (function() {
 						resultsEntry.removeAttribute("id");
 
 						// Highlight for current player
-						if (user_data && user_data.id === marble.userId) {
+						if (_userData && _userData.id === marble.userId) {
 							resultsEntry.className += " currentPlayer";
 						}
 
@@ -253,17 +290,29 @@ let game = (function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			renderCore.addMarbleMesh(marble);
+			marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
+			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
+				_toggleMarbleTracking(marble);
+			}, false);
+			if (marble.finished) listEntry.classList.add("finished");
+			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
-			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `🏁 ${(marble.time * .001).toFixed(2)}s` : "";
+			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `${(marble.time * .001).toFixed(2)}s` : "";
 			listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(marble.rank) && marble.rank !== null ? `#${marble.rank + 1}` : "";
 			listEntry.style.order = marble.rank;
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
+
+			if (_userData && _userData.id === marble.userId) {
+				if (!renderCore.controls.target && renderCore.controls.type === "TrackingCamera") {
+					_toggleMarbleTracking(marble);
+				}
+				listEntry.classList.add("player");
+			}
 
 			_DOMElements.marbleList.appendChild(listEntry);
 			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
@@ -275,22 +324,41 @@ let game = (function() {
 			_enteredMarbleList[marble.id].time = marble.time;
 			_enteredMarbleList[marble.id].points = marble.points;
 
+			_enteredMarbleList[marble.id].listEntryElement.classList.add("finished");
 			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${marble.rank + 1}`;
 			_enteredMarbleList[marble.id].listEntryElement.style.order = marble.rank;
-			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `🏁 ${(marble.time * .001).toFixed(2)}s`;
+			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `${(marble.time * .001).toFixed(2)}s`;
 		},
 
-		// Fill gamestate properties in UI
-		setInitialGameState: function(gameState) {
+		// Initialize game's state, marbles, and level based on server's initial_data
+		initializeGameState: function(gameState) {
 			_requestComplete = Date.now();
+			_serverData = gameState;
+			this.setCurrentGameState({state: _serverData.currentGameState}, true);
 
-			domReady.then(() => {
-				_serverData = gameState;
+			// Spawn marbles
+			for (let i = 0; i < gameState.initialMarbleData.length; i++) {
+				this.spawnMarble(gameState.initialMarbleData[i]);
+			}
 
-				this.setCurrentGameState({state: _serverData.currentGameState}, true);
-			});
+			// Start loading the level asynchronously
+			let levelName = gameState.levelId;
+			fetch(`/resources/maps/${levelName}.mmc`)
+				.then((response) => {
+					// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
+					return response.arrayBuffer();
+				})
+				.then((buffer) => {
+					let levelData = levelIO.load(buffer);
+					levelManager.activeLevel.loadLevel(levelData)
+						.then( () => {
+							if(this.getCurrentGameState() === "started") {
+								levelManager.activeLevel.openGates();
+							}
+						});
+				});
 		}
 	};
-})();
+}();
 
 export { game };

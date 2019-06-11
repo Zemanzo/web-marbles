@@ -1,7 +1,7 @@
 const fs = require("fs");
 const config = require("../config");
 const log = require("../../log");
-const levelLoader = require("../../level/manager");
+const levelIO = require("../../level/level-io");
 
 // Scan for levels
 function retrieveLevels() {
@@ -34,7 +34,7 @@ function loadLevel(levelName) {
 	return new Promise((resolve, reject) => {
 		fs.readFile(`${config.levels.folderPath}/${levelName}.mms`, function(error, fileBuffer) {
 			try {
-				let level = levelLoader.load(fileBuffer);
+				let level = levelIO.load(fileBuffer);
 				if(!level) {
 					console.log(`Unable to load ${levelName}.mms`);
 					reject(level);

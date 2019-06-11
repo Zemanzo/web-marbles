@@ -26,6 +26,9 @@ config.graphics.castShadow = {};
 config.graphics.castShadow.marbles = true;
 config.graphics.receiveShadow = {};
 config.graphics.receiveShadow.marbles = false;
+config.graphics.reflection = {};
+config.graphics.reflection.marbles = false;
+config.graphics.reflection.level = false;
 
 /* Override any user properties set in config.user.js */
 for(let key in userConfig) {

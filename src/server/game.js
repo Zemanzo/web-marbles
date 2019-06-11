@@ -10,7 +10,7 @@ function Marble(id, entryId, name, color) {
 	this.useFancy = Math.random() > .99;
 	this.color = color || _randomHexColor();
 	this.name = name || "Nightbot";
-	this.size = (Math.random() > .95 ? (.3 + Math.random() * .7) : false) || 0.2;
+	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
 	this.ammoBody = null;
 	this.finished = false;
 	this.rank = null;
@@ -138,8 +138,11 @@ let game = function() {
 
 		// Spawns marble unless the maximum amount of marbles has been hit
 		spawnMarble(id, name, color) {
-			// Check whether we have reached the maximum marble limit
-			if (_marbles.length >= config.marbles.rules.maxMarbleCount) return;
+			if (
+				// Check whether the game state disallows new marbles
+				this.currentGameState === "finished"
+				// Check whether we have reached the maximum marble limit
+				|| _marbles.length >= config.marbles.rules.maxMarbleCount) return;
 
 			let newMarble = new Marble(id, _marbles.length, name, color);
 			_marbles.push(newMarble);
