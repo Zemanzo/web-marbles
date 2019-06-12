@@ -135,8 +135,10 @@ let renderCore = function() {
 					_onCanvasResize();
 
 					window.addEventListener("resize", _onCanvasResize, false);
-					document.getElementById("cameraFree").addEventListener("click", this.setCameraStyle, false);
-					document.getElementById("cameraTracking").addEventListener("click", this.setCameraStyle, false);
+					let _cameraFreeButton = document.getElementById("cameraFree"),
+						_cameraTrackingButton = document.getElementById("cameraTracking");
+					if (_cameraFreeButton) _cameraFreeButton.addEventListener("click", this.setCameraStyle, false);
+					if (_cameraTrackingButton) _cameraTrackingButton.addEventListener("click", this.setCameraStyle, false);
 
 					_viewport.appendChild(_renderer.domElement);
 					_viewport.appendChild(_stats.dom);
@@ -186,9 +188,11 @@ let renderCore = function() {
 			// Set selected camera style in DOM
 			domReady.then(() => {
 				let node = document.querySelector(`[data-type=${type}]`);
-				let selected = node.parentNode.getElementsByClassName("selected")[0];
-				if (selected) selected.classList.remove("selected");
-				node.classList.add("selected");
+				if (node) {
+					let selected = node.parentNode.getElementsByClassName("selected")[0];
+					if (selected) selected.classList.remove("selected");
+					node.classList.add("selected");
+				}
 			});
 		},
 
