@@ -59,6 +59,8 @@ let renderCore = function() {
 	return {
 		mainScene: null,
 		controls: null,
+		freeCamera: null,
+		trackingCamera: null,
 
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
@@ -120,16 +122,10 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				switch (defaultCameraType) {
-				case "TrackingCamera":
-					this.controls = new TrackingCamera(this.mainScene, _renderer);
-					break;
-				case "FreeCamera":
-				default:
-					this.controls = new FreeCamera(this.mainScene, _renderer);
-					break;
-				}
+				this.trackingCamera = new TrackingCamera(this.mainScene, _renderer, { enabledByDefault: false });
+				this.freeCamera = new FreeCamera(this.mainScene, _renderer, { enabledByDefault: false });
 
+				this.setCameraStyle(defaultCameraType);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
@@ -139,6 +135,8 @@ let renderCore = function() {
 					_onCanvasResize();
 
 					window.addEventListener("resize", _onCanvasResize, false);
+					document.getElementById("cameraFree").addEventListener("click", this.setCameraStyle, false);
+					document.getElementById("cameraTracking").addEventListener("click", this.setCameraStyle, false);
 
 					_viewport.appendChild(_renderer.domElement);
 					_viewport.appendChild(_stats.dom);
@@ -146,6 +144,52 @@ let renderCore = function() {
 					_animate();
 				});
 			}
+		},
+
+		setCameraStyle: function(type) {
+			// If this function is called from an event, use the event origin node to determine what type to become
+			if (this && typeof type !== "string") type = this.dataset.type;
+
+			// Check if we're not already the camera type we try to become
+			if (renderCore.controls && type === renderCore.controls.type) return; // Is already this type.
+
+			// Helper function that copies position and rotation from previously used camera
+			function copyPositionAndRotation(target, source) {
+				target.camera.position.copy(source.camera.position);
+				target.camera.rotation.copy(source.camera.rotation);
+			}
+
+			// Copy over transform data, disable previously used camera / controls, enable new camera / controls
+			switch (type) {
+			case "TrackingCamera":
+				if (renderCore.controls) {
+					copyPositionAndRotation(renderCore.trackingCamera, renderCore.controls);
+					renderCore.controls.disable();
+				}
+				renderCore.controls = renderCore.trackingCamera;
+				break;
+			case "FreeCamera":
+			default:
+				if (renderCore.controls) {
+					copyPositionAndRotation(renderCore.freeCamera, renderCore.controls);
+					renderCore.freeCamera.camera.rotation.z = 0; // Make sure we're not at an angle
+					renderCore.controls.disable();
+				}
+				renderCore.controls = renderCore.freeCamera;
+				break;
+			}
+
+			renderCore.controls.enable();
+
+			if (_viewport) _onCanvasResize();
+
+			// Set selected camera style in DOM
+			domReady.then(() => {
+				let node = document.querySelector(`[data-type=${type}]`);
+				let selected = node.parentNode.getElementsByClassName("selected")[0];
+				if (selected) selected.classList.remove("selected");
+				node.classList.add("selected");
+			});
 		},
 
 		updateCallback: function() {
