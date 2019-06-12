@@ -3,7 +3,6 @@ import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
-import * as levelIO from "../../level/level-io";
 
 let _userData = Cookies.getJSON("user_data");
 
@@ -14,6 +13,8 @@ let game = function() {
 		},
 
 		_enteredMarbleList = [],
+
+		_currentLevelId = null,
 
 		_serverData = {
 			currentGameState: null,
@@ -343,20 +344,14 @@ let game = function() {
 
 			// Start loading the level asynchronously
 			let levelName = gameState.levelId;
-			fetch(`/resources/maps/${levelName}.mmc`)
-				.then((response) => {
-					// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
-					return response.arrayBuffer();
-				})
-				.then((buffer) => {
-					let levelData = levelIO.load(buffer);
-					levelManager.activeLevel.loadLevel(levelData)
-						.then( () => {
-							if(this.getCurrentGameState() === "started") {
-								levelManager.activeLevel.openGates();
-							}
-						});
+			if(_currentLevelId !== levelName) {
+				_currentLevelId = levelName;
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelName}.mmc`).then( () => {
+					if(this.getCurrentGameState() === "started") {
+						levelManager.activeLevel.openGates();
+					}
 				});
+			}
 		}
 	};
 }();
