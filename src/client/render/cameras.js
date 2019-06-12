@@ -9,11 +9,16 @@ import {
 	Quaternion
 } from "three";
 
-let addRegisteredEventListener = function(scope, event, func, capture) {
+const addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
 	return () => {
 		scope.removeEventListener(event, func, capture);
 	};
+};
+
+const cameras = {
+	CAMERA_FREE: 1,
+	CAMERA_TRACKING: 2
 };
 
 /**
@@ -65,7 +70,7 @@ function FreeCamera(
 	if (!options.defaultRotation)
 		options.defaultRotation = { x: -0.35, y: 0, z: 0 };
 
-	this.type = "FreeCamera";
+	this.type = cameras.CAMERA_FREE;
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
 	this.camera.rotation.order = "YXZ";
@@ -305,7 +310,7 @@ function TrackingCamera(
 			75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000
 		);
 
-	if (!options.enabledByDefault)
+	if (typeof options.enabledByDefault === "undefined")
 		options.enabledByDefault = true;
 
 	if (!options.defaultPosition)
@@ -323,7 +328,7 @@ function TrackingCamera(
 		)
 	);
 
-	this.type = "TrackingCamera";
+	this.type = cameras.CAMERA_TRACKING;
 	this.camera = options.camera;
 	this.camera.rotation.order = "YXZ";
 	this.target = null;
@@ -445,4 +450,4 @@ const _lookAtWithReturn = function() {
 	};
 }();
 
-export { FreeCamera, TrackingCamera };
+export { cameras, FreeCamera, TrackingCamera };
