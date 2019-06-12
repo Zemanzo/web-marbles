@@ -3,7 +3,7 @@ import "three/examples/js/loaders/LoaderSupport";
 import "three/examples/js/loaders/GLTFLoader";
 import * as config from "../config";
 import * as Stats from "stats-js";
-import { FreeCamera, TrackingCamera } from "./cameras";
+import { cameras, FreeCamera, TrackingCamera } from "./cameras";
 import domReady from "../dom-ready";
 
 const _GLTFLoader = new THREE.GLTFLoader();
@@ -29,12 +29,12 @@ let renderCore = function() {
 		// Make updates
 		renderCore.updateCallback(deltaTime);
 
-		if (renderCore.controls.enabled === true) {
-			renderCore.controls.update(deltaTime);
+		if (renderCore.activeCamera.enabled === true) {
+			renderCore.activeCamera.update(deltaTime);
 		}
 
 		// Render the darn thing
-		_renderer.render(renderCore.mainScene, renderCore.controls.camera);
+		_renderer.render(renderCore.mainScene, renderCore.activeCamera.camera);
 
 		_stats.end();
 	};
@@ -42,8 +42,8 @@ let renderCore = function() {
 	const _onCanvasResize = function() {
 		_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 
-		renderCore.controls.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
-		renderCore.controls.camera.updateProjectionMatrix();
+		renderCore.activeCamera.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
+		renderCore.activeCamera.camera.updateProjectionMatrix();
 	};
 
 	// From https://github.com/mrdoob/three.js/blob/master/examples/js/WebGL.js
@@ -58,7 +58,7 @@ let renderCore = function() {
 
 	return {
 		mainScene: null,
-		controls: null,
+		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
 
@@ -137,8 +137,8 @@ let renderCore = function() {
 					window.addEventListener("resize", _onCanvasResize, false);
 					let _cameraFreeButton = document.getElementById("cameraFree"),
 						_cameraTrackingButton = document.getElementById("cameraTracking");
-					if (_cameraFreeButton) _cameraFreeButton.addEventListener("click", this.setCameraStyle, false);
-					if (_cameraTrackingButton) _cameraTrackingButton.addEventListener("click", this.setCameraStyle, false);
+					if (_cameraFreeButton) _cameraFreeButton.addEventListener("click", () => { this.setCameraStyle(cameras.CAMERA_FREE); }, false);
+					if (_cameraTrackingButton) _cameraTrackingButton.addEventListener("click", () => { this.setCameraStyle(cameras.CAMERA_TRACKING); }, false);
 
 					_viewport.appendChild(_renderer.domElement);
 					_viewport.appendChild(_stats.dom);
@@ -149,11 +149,8 @@ let renderCore = function() {
 		},
 
 		setCameraStyle: function(type) {
-			// If this function is called from an event, use the event origin node to determine what type to become
-			if (this && typeof type !== "string") type = this.dataset.type;
-
 			// Check if we're not already the camera type we try to become
-			if (renderCore.controls && type === renderCore.controls.type) return; // Is already this type.
+			if (renderCore.activeCamera && type === renderCore.activeCamera.type) return; // Is already this type.
 
 			// Helper function that copies position and rotation from previously used camera
 			function copyPositionAndRotation(target, source) {
@@ -162,32 +159,35 @@ let renderCore = function() {
 			}
 
 			// Copy over transform data, disable previously used camera / controls, enable new camera / controls
+			let nodeId;
 			switch (type) {
-			case "TrackingCamera":
-				if (renderCore.controls) {
-					copyPositionAndRotation(renderCore.trackingCamera, renderCore.controls);
-					renderCore.controls.disable();
+			case cameras.CAMERA_TRACKING:
+				if (renderCore.activeCamera) {
+					copyPositionAndRotation(renderCore.trackingCamera, renderCore.activeCamera);
+					renderCore.activeCamera.disable();
 				}
-				renderCore.controls = renderCore.trackingCamera;
+				renderCore.activeCamera = renderCore.trackingCamera;
+				nodeId = "cameraTracking";
 				break;
-			case "FreeCamera":
+			case cameras.CAMERA_FREE:
 			default:
-				if (renderCore.controls) {
-					copyPositionAndRotation(renderCore.freeCamera, renderCore.controls);
+				if (renderCore.activeCamera) {
+					copyPositionAndRotation(renderCore.freeCamera, renderCore.activeCamera);
 					renderCore.freeCamera.camera.rotation.z = 0; // Make sure we're not at an angle
-					renderCore.controls.disable();
+					renderCore.activeCamera.disable();
 				}
-				renderCore.controls = renderCore.freeCamera;
+				renderCore.activeCamera = renderCore.freeCamera;
+				nodeId = "cameraFree";
 				break;
 			}
 
-			renderCore.controls.enable();
+			renderCore.activeCamera.enable();
 
 			if (_viewport) _onCanvasResize();
 
 			// Set selected camera style in DOM
 			domReady.then(() => {
-				let node = document.querySelector(`[data-type=${type}]`);
+				let node = document.getElementById(nodeId);
 				if (node) {
 					let selected = node.parentNode.getElementsByClassName("selected")[0];
 					if (selected) selected.classList.remove("selected");

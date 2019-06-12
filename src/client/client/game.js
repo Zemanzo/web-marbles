@@ -39,11 +39,11 @@ let game = function() {
 		_requestComplete,
 		_requestStart = Date.now();
 
-	let _toggleMarbleTracking = function(marble, forceTracking) {
+	let _trackMarble = function(marble, forceTracking) {
 		if (forceTracking) {
 			renderCore.setCameraStyle("TrackingCamera");
 		}
-		if (renderCore.controls.type === "TrackingCamera") {
+		if (renderCore.activeCamera.type === "TrackingCamera") {
 			let mesh = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
@@ -297,7 +297,7 @@ let game = function() {
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
 			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
-				_toggleMarbleTracking(marble, true);
+				_trackMarble(marble, true);
 			}, false);
 			if (marble.finished) listEntry.classList.add("finished");
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
@@ -309,8 +309,8 @@ let game = function() {
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
 			if (_userData && _userData.id === marble.userId) {
-				if (!renderCore.controls.target) {
-					_toggleMarbleTracking(marble);
+				if (!renderCore.trackingCamera.target) {
+					_trackMarble(marble);
 				}
 				listEntry.classList.add("player");
 			}
