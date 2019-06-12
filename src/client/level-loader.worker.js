@@ -23,7 +23,8 @@ let loadLevelData = function(url) {
 					loadingFinished(true, levelData);
 				}
 			}
-		}).catch( (error) => {
+		})
+		.catch( (error) => {
 			console.log(error);
 			loadingFinished(false, "An unknown error occurred.");
 		});

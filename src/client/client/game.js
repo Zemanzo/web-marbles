@@ -343,10 +343,9 @@ let game = function() {
 			}
 
 			// Start loading the level asynchronously
-			let levelName = gameState.levelId;
-			if(_currentLevelId !== levelName) {
-				_currentLevelId = levelName;
-				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelName}.mmc`).then( () => {
+			if(_currentLevelId !== gameState.levelId) {
+				_currentLevelId = gameState.levelId;
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${_currentLevelId}.mmc`).then( () => {
 					if(this.getCurrentGameState() === "started") {
 						levelManager.activeLevel.openGates();
 					}
