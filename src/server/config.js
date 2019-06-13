@@ -108,7 +108,7 @@ config.uwebsockets.passphrase = "1234";
 /* Network */
 config.network = {};
 config.network.ssl = clientConfig.network.ssl;
-config.network.tickrate = 20; // Max amount of times physics data should be sent to clients per second.
+config.network.tickRate = 20; // Max amount of times game data should be sent to clients per second.
 
 /* Override any user properties set in config.user.js */
 for(let key in userConfig) {

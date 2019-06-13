@@ -3,11 +3,11 @@ const config = require("./config");
 const physics = require("../physics/manager");
 const levels = require("./levels/manager");
 const db = require("./database/manager");
+const msgPack = require("msgpack-lite");
 
 function Marble(id, entryId, name, color) {
 	this.userId = id;
 	this.entryId = entryId;
-	this.useFancy = Math.random() > .99;
 	this.color = color || _randomHexColor();
 	this.name = name || "Nightbot";
 	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
@@ -48,8 +48,23 @@ let game = function() {
 
 		_round = null;
 
+	let _netUpdateHandle = null; // Handle to setTimeout
+	let _netInterval = isNaN(config.network.tickRate) ? 50 : 1000 / config.network.tickRate;
+	let _netGameState = {
+		s: [
+			config.marbles.rules.enterPeriod,
+			config.marbles.rules.finishPeriod
+		]
+	};
+	let _netGameUpdate = {};
+	let _netGameStatePayload = null;
+
 	levels.currentLevelData.then((level) => {
 		_currentLevel = level;
+	});
+
+	levels.currentLevelName.then((name) => {
+		_netGameUpdate.l = name;
 	});
 
 	let _generateNewRoundData = function() {
@@ -82,6 +97,130 @@ let game = function() {
 		) + config.marbles.scoring.pointsAwardedForFinishing; // Plus potential bonus for finishing
 	};
 
+	// Triggers a network update loop if it hasn't started yet
+	let _triggerNetworkUpdate = function() {
+		if(!_netUpdateHandle) {
+			console.log("Starting netUpdate loop.");
+			// Start asap, but not during the code in which this function is called
+			_netUpdateHandle = setTimeout( _netUpdate, 0, Date.now());
+		}
+	};
+
+	// Network update function. Sets a timer to call itself if subsequent updates are desired
+	let _netUpdate = function(lastUpdate, combinedDelay) {
+		let now = Date.now();
+		let delta = now - lastUpdate;
+		//console.log(`The updatening happened! ${delta}ms`);
+
+		// Update code for:
+		// TODO: hudNotifications?
+
+		// Set currentGameTime on state changes for more accuracy
+		if(_netGameUpdate.g === "enter") {
+			_netGameUpdate.c = game.getEnterPeriodTimeRemaining();
+		} else if(_netGameUpdate.g === "started") {
+			_netGameUpdate.c = now - game.startTime;
+		}
+
+		if(_marbles.length > 0) {
+			// Get marble positions/rotations
+			let marbleData = game.getMarbleTransformations();
+			_netGameUpdate.p = marbleData.position;
+			_netGameUpdate.r = marbleData.rotation;
+
+			// Update time stamp
+			if(_netGameState.t === undefined) {
+				_netGameUpdate.t = 0; // If netGameState doesn't have this, this is the start
+			} else {
+				_netGameUpdate.t = _netGameState.t + delta;
+			}
+		}
+
+		// Here, emit for gameUpdate happens
+		let payload = msgPack.encode(_netGameUpdate);
+		_socketManager.emit(payload);
+
+		// After, _netGameState is updated based on _netGameUpdate
+		_netGameStatePayload = null;
+
+		// gameState
+		if(_netGameUpdate.g) {
+			_netGameState.g = _netGameUpdate.g;
+
+			// Remove all marbles if the state changed to finished
+			if(_netGameUpdate.g === "finished") { // TODO: Should be enum thing
+				delete _netGameState.n;
+				delete _netGameState.f; // Clients that join after a race don't have access to marble data
+				delete _netGameState.p;
+				delete _netGameState.r;
+			}
+		}
+
+		// currentGameTime
+		if(_netGameState.g === "enter") {
+			_netGameState.c = game.getEnterPeriodTimeRemaining();
+		} else if(_netGameState.g === "started") {
+			_netGameState.c = now - game.startTime;
+		} else {
+			delete _netGameState.c;
+		}
+
+		// Append new marbles if there are any
+		if(_netGameUpdate.n) {
+			if(!_netGameState.n) _netGameState.n = [];
+			_netGameState.n = _netGameState.n.concat(_netGameUpdate.n);
+		}
+
+		// Store marble positions/rotations if any exist
+		if(_netGameUpdate.p) {
+			_netGameState.p = _netGameUpdate.p;
+			_netGameState.r = _netGameUpdate.r;
+		}
+
+		// Update timestamp if it exists
+		if(_netGameUpdate.t !== undefined) {
+			_netGameState.t = _netGameUpdate.t;
+		} else {
+			delete _netGameState.t;
+		}
+
+		// Append finished marbles if there are any.
+		// Because last-moment finishes CAN happen but new clients don't have marble data
+		// when they enter a finished race, this isn't updated in the "finished" game state.
+		if(_netGameUpdate.f && _netGameUpdate.g !== "finished") {
+			if(!_netGameState.f) _netGameState.f = [];
+			_netGameState.f = _netGameState.f.concat(_netGameUpdate.f);
+		}
+
+		// levelId
+		if(_netGameUpdate.l) _netGameState.l = _netGameUpdate.l;
+
+		// Clear netGameUpdate
+		_netGameUpdate = {};
+
+		if(_marbles.length > 0) {
+			// Set timer for next network update
+			// If we're behind, shorten the interval time
+			let currentDelay = 0;
+			if(combinedDelay === undefined) {
+				// Start of update loop, start tracking accumalted delay
+				combinedDelay = 0;
+			} else {
+				// Update accumulated delay
+				currentDelay = delta - _netInterval;
+				combinedDelay += currentDelay;
+				if(combinedDelay > _netInterval * 10) {
+					log.warn("Game networking can't keep up! Skipping 10 network ticks...");
+					combinedDelay -= _netInterval * 10;
+				}
+			}
+			_netUpdateHandle = setTimeout( _netUpdate, Math.min(_netInterval, _netInterval - combinedDelay), now, combinedDelay);
+		} else {
+			console.log("No marbles present, stopping updates!");
+			_netUpdateHandle = null;
+		}
+	};
+
 	return {
 		currentGameState: "started", // "waiting", "enter", "starting", "started"
 		startTime: null,
@@ -92,6 +231,8 @@ let game = function() {
 		setCurrentGameState(newState, data) {
 			_socketManager.emit(JSON.stringify({ state: newState, data }), "state");
 			this.currentGameState = newState;
+			_netGameUpdate.g = newState;
+			_triggerNetworkUpdate();
 			log.info("Current state: ".magenta, this.currentGameState);
 		},
 
@@ -146,6 +287,11 @@ let game = function() {
 
 			let newMarble = new Marble(id, _marbles.length, name, color);
 			_marbles.push(newMarble);
+
+			// Add entry for network update
+			if(!_netGameUpdate.n) _netGameUpdate.n = [];
+			_netGameUpdate.n.push(newMarble.entryId, newMarble.userId, newMarble.name, newMarble.size, newMarble.color);
+			_triggerNetworkUpdate();
 
 			// Send client info on new marble, without the ammoBody property
 			function omitter(key, value) {
@@ -320,6 +466,10 @@ let game = function() {
 			// Increment the amount of marbles that finished this round
 			_round.marblesFinished++;
 
+			// Add entry for network update
+			if(!_netGameUpdate.f) _netGameUpdate.f = [];
+			_netGameUpdate.f.push(marble.entryId, playerEntry ? playerEntry.pointsEarned : 0, rank, time);
+
 			// Send client info on finished marble
 			_socketManager.emit(JSON.stringify({
 				id: marble.entryId,
@@ -353,6 +503,14 @@ let game = function() {
 
 		setSocketManager(socketManager) {
 			_socketManager = socketManager;
+		},
+
+		getInitialDataPayload() {
+			// Encode initial data payload once. Resets if the initial data changes
+			if(!_netGameStatePayload) {
+				_netGameStatePayload = msgPack.encode(_netGameState);
+			}
+			return _netGameStatePayload;
 		},
 
 		getMarbles() {
