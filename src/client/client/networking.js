@@ -158,9 +158,9 @@ let networking = function() {
 
 					// Interpolate over next buffer if we have it
 					if(_updateBuffer.length > 0) {
-						let nextTimeStamp = _updateBuffer[0].t;
-						if(nextTimeStamp !== undefined) {
-							let interval = _timeDeltaRemainder / nextTimeStamp;
+						let nextTimeDelta = _updateBuffer[0].t;
+						if(nextTimeDelta !== undefined) {
+							let interval = _timeDeltaRemainder / nextTimeDelta;
 							let interval2 = 1 - interval;
 
 							// Then, interpolate marbles based on that interval (0-1)
@@ -175,7 +175,7 @@ let networking = function() {
 								marblePositions[i] = _previousMarblePositions[i] * interval2 + nextPositions[i] * interval;
 							}
 							// Interpolate rotations
-							for(let i = 0; i < _previousMarblePositions.length; i += 4) {
+							for(let i = 0; i < _previousMarbleRotations.length; i += 4) {
 								let x0 = _previousMarbleRotations[i];
 								let y0 = _previousMarbleRotations[i + 1];
 								let z0 = _previousMarbleRotations[i + 2];
