@@ -1,13 +1,18 @@
 import * as THREE from "three";
+import "three/examples/js/loaders/LoaderSupport";
+import "three/examples/js/loaders/GLTFLoader";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
 import * as Cookies from "js-cookie";
+
+const _GLTFLoader = new THREE.GLTFLoader();
 
 let _userData = Cookies.getJSON("user_data");
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
 	let _marbles = []; // Array of marbles that currently exist in the scene
+
 	return {
 		marbleGroup: null, // Group containing marble instances
 		marbleNamesGroup: null, // Group containing name sprites
@@ -20,7 +25,33 @@ let marbleManager = function() {
 			renderCore.mainScene.add(this.marbleGroup);
 			renderCore.mainScene.add(this.marbleNamesGroup);
 
+			// Default marble model
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+			try {
+				_GLTFLoader.load(
+					"resources/models/marble-default.gltf",
+					function(gltf) { // success
+						marbleManager.marbleGeometry = gltf.scene.children[0].geometry;
+					},
+					undefined,
+					function(error) { // error
+						throw new Error(error);
+					}
+				);
+			}
+			catch (error) {
+				console.log("Unable to load default marble model, using fallback geometry", error);
+			}
+
+			// Default marble texture
+			this.marbleTexture = new THREE.TextureLoader().load(
+				"resources/skins/abstract.png",
+				undefined,
+				undefined,
+				function(error) { // error
+					console.log("Unable to load default texture", error);
+				}
+			);
 		},
 
 		spawnMarble: function(marbleData) {
@@ -84,7 +115,12 @@ const MarbleMesh = function(marbleData) {
 
 	this.geometry = marbleManager.marbleGeometry;
 	this.materialColor = new THREE.Color(this.color);
-	this.material = new THREE.MeshStandardMaterial({ color: this.materialColor });
+	this.material = new THREE.MeshStandardMaterial({
+		color: this.materialColor,
+		roughness: .9,
+		metalness: 0,
+		map: marbleManager.marbleTexture
+	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 
 	// Set scale based on marble size
