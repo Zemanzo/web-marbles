@@ -58,7 +58,7 @@ function FreeCamera(
 	if (!options.speed)
 		options.speed = 150;
 
-	if (!options.disableOnBlur)
+	if (typeof options.disableOnBlur === "undefined")
 		options.disableOnBlur = true;
 
 	if (typeof options.enabledByDefault === "undefined")
@@ -191,15 +191,16 @@ function FreeCamera(
 
 		// Disable on blur if applicable
 		if (options.disableOnBlur === true) {
-			_listeners.push(
-				addRegisteredEventListener(document, "visibilitychange", () => {
-					if (document.hidden) {
-						this.disable();
-					} else {
-						this.enable();
-					}
-				}, false)
-			);
+			let disabledByBlur = false;
+			document.addEventListener("visibilitychange", () => {
+				if (document.hidden && this.enabled) {
+					disabledByBlur = true;
+					this.disable();
+				} else if (disabledByBlur === true) {
+					disabledByBlur = false;
+					this.enable();
+				}
+			}, false);
 		}
 
 		this.update = function(deltaTime) {
