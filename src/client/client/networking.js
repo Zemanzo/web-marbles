@@ -1,6 +1,5 @@
 import { network as config } from "../config";
 import ReconnectingWebSocket from "reconnecting-websocket";
-import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
 import { marbleManager } from "../marble-manager";
@@ -9,23 +8,19 @@ import * as msgPack from "msgpack-lite";
 let networking = function() {
 	let _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 	let _ws = null;
-	let _helper = null;
+
+	let _updateBuffer = []; // Array of game updates, each containing events and marble data
+	let _timeDeltaRemainder = null; // Represents the timeDelta between two updates, or null if there are none
+	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer size
 	let _previousMarblePositions = null;
 	let _previousMarbleRotations = null;
-	let _ready = 0;
-	//let _requestsSkipped = 0; // Helps detect network issues
-
-	let _updateBuffer = [];
-	let _timeDeltaRemainder = null; // Represents the timeDelta between two updates, or null if there are none
-	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer length in milliseconds?
 
 	let _processMessageEvent = function(event) {
 		if(typeof event.data === "string") {
 			// This should only be a HUD Notification
-			if(event.data[0] === "{") { // I'll remove this dumb check when notifications are all we get this way
-				let message = JSON.parse(event.data);
-				new HUDNotification(message.content, message.duration, message.style);
-			}
+			console.log(event.data);
+			let message = JSON.parse(event.data);
+			new HUDNotification(message.content, message.duration, message.style);
 		} else {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
@@ -39,55 +34,6 @@ let networking = function() {
 			}
 			return;
 		}
-
-		return;
-
-		game.initialize().then( () => { // Wait for game to be ready before processing events
-			let { type, message } = _helper.extractSocketMessageType(event.data);
-			message = JSON.parse(message);
-
-			switch(type) {
-			case "initial_data":
-				game.initializeGameState(message);
-				_requestPhysics(); // Start the request physics loop
-				break;
-			case "request_physics":
-				if (message) { // False if there is no data to process
-					_marblePositions = new Float32Array(Object.values(message.pos));
-					_marbleRotations = new Float32Array(Object.values(message.rot));
-				}
-				_lastUpdate = 0;
-				_ready--;
-				break;
-			case "new_marble":
-				game.spawnMarble(message);
-				break;
-			case "finished_marble":
-				game.finishMarble(message);
-				break;
-			case "state":
-				game.setCurrentGameState(message);
-				break;
-			case "notification":
-				new HUDNotification(message.content, message.duration, message.style);
-				break;
-			default:
-				console.warn(`Received unknown network message of type "${type}".`, message);
-				break;
-			}
-		});
-	};
-
-	let _requestPhysics = function() {
-		if (_ready < config.tickrate && networking.websocketOpen) {
-			_ready++;
-			_ws.send(
-				_helper.addMessageType(Date.now().toString(), "request_physics")
-			);
-		} else if (networking.websocketOpen) {
-			//_requestsSkipped++;
-		}
-		setTimeout(_requestPhysics, 1000 / config.tickrate);
 	};
 
 	let _processGameEvents = function(thisUpdate) {
@@ -157,7 +103,6 @@ let networking = function() {
 
 			_ws.addEventListener("open", () => {
 				this.websocketOpen = true;
-				_ready = 0;
 			});
 
 			_ws.addEventListener("close", () => {
@@ -167,8 +112,6 @@ let networking = function() {
 			_ws.addEventListener("message", (event) => {
 				_processMessageEvent(event);
 			});
-
-			_helper = new TypedSocketHelper("/gameplay");
 		},
 
 		update: function(deltaTime) {
@@ -187,7 +130,7 @@ let networking = function() {
 						// This wasn't the initial data update, meaning we lagged behind
 						_updateBuffer[0].t = 0;
 						_desiredBufferSize = Math.min(_desiredBufferSize + 1, config.maxBufferSize);
-						console.warn(`Client connection can't keep up! Increasing buffer length to ${_desiredBufferSize}`);
+						console.warn(`Client connection can't keep up! Increasing minimum buffer length to ${_desiredBufferSize}`);
 					}
 					let total = 0;
 					for(let i = 0; i < _updateBuffer.length; i++)
@@ -208,7 +151,6 @@ let networking = function() {
 					while(_updateBuffer.length > 0
 							&& _updateBuffer[0].t !== undefined
 							&& _timeDeltaRemainder >= _updateBuffer[0].t) {
-						//console.log(`Processing a keyframe at ${_bufferTimeStamp} for buffer ${_updateBuffer[0].t}`);
 						_processGameEvents(_updateBuffer[0]);
 						_timeDeltaRemainder -= _updateBuffer[0].t;
 						_updateBuffer.splice(0, 1);

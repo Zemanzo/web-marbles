@@ -110,10 +110,6 @@ let game = function() {
 	let _netUpdate = function(lastUpdate, combinedDelay) {
 		let now = Date.now();
 		let delta = now - lastUpdate;
-		//console.log(`The updatening happened! ${delta}ms`);
-
-		// Update code for:
-		// TODO: hudNotifications?
 
 		// Set currentGameTime on state changes for more accuracy
 		if(_netGameUpdate.g === "enter") {
@@ -217,7 +213,7 @@ let game = function() {
 			}
 			_netUpdateHandle = setTimeout( _netUpdate, Math.min(_netInterval, _netInterval - combinedDelay), now, combinedDelay);
 		} else {
-			console.log("No marbles present, stopping updates!");
+			console.log("No marbles present, stopping updates.");
 			_netUpdateHandle = null;
 		}
 	};
@@ -229,8 +225,7 @@ let game = function() {
 		enterTimeout: null,
 
 		// Sets currentGameState and informs all connected clients about the state change
-		setCurrentGameState(newState, data) {
-			_socketManager.emit(JSON.stringify({ state: newState, data }), "state");
+		setCurrentGameState(newState) {
 			this.currentGameState = newState;
 			_netGameUpdate.g = newState;
 			_triggerNetworkUpdate();
@@ -294,13 +289,6 @@ let game = function() {
 			_netGameUpdate.n.push(newMarble.entryId, newMarble.userId, newMarble.name, newMarble.size, newMarble.color);
 			_triggerNetworkUpdate();
 
-			// Send client info on new marble, without the ammoBody property
-			function omitter(key, value) {
-				if(key === "ammoBody") return undefined;
-				return value;
-			}
-			_socketManager.emit(JSON.stringify(newMarble, omitter), "new_marble");
-
 			// Check for player / marble limits
 			if (
 				(
@@ -320,8 +308,6 @@ let game = function() {
 
 		end() {
 			if (this.currentGameState === "started") {
-				let additionalData = {};
-
 				// Set the last few round parameters and store it in the database
 				if (_round) {
 					_round.end = Date.now();
@@ -341,42 +327,26 @@ let game = function() {
 					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
 					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
 
-					for (let user of pointTotals) {
-						additionalData[user.id] = { pointsTotal: user.stat_points_earned };
-
-						if (personalBestIds.includes(user.id)) {
-							additionalData[user.id].record = "pb";
-						}
-					}
-
 					if(_playersEnteredList.length > 0 && _netGameUpdate.c === undefined) _netGameUpdate.c = [];
 
 					// Points earned in this round
 					for (let player of _playersEnteredList) {
-						additionalData[player.id].pointsEarned = player.pointsEarned;
-
-						_netGameUpdate.c.push(player.id);
-						_netGameUpdate.c.push(player.pointsEarned);
+						let pointTotal = 0;
 						for (let user of pointTotals) {
 							if(user.id === player.id) {
-								_netGameUpdate.c.push(user.stat_points_earned); // This is the TOTAL points earned
+								pointTotal = user.stat_points_earned;
 							}
 						}
+						let record = 0;
 						if (personalBestIds.includes(player.id)) {
-							_netGameUpdate.c.push(1);
-						} else {
-							_netGameUpdate.c.push(0);
+							record = 1;
 						}
+						_netGameUpdate.c.push(player.id, player.pointsEarned, pointTotal, record);
 					}
-
-					additionalData.level = {
-						name: _currentLevel.levelName,
-						author: _currentLevel.authorName
-					};
 				}
 
 				// Set state to finished, and send additional data to the client.
-				this.setCurrentGameState("finished", additionalData);
+				this.setCurrentGameState("finished");
 
 				// Clear any remaining timeouts
 				clearTimeout(this.gameplayMaxTimeout);
@@ -485,14 +455,6 @@ let game = function() {
 			// Add entry for network update
 			if(!_netGameUpdate.f) _netGameUpdate.f = [];
 			_netGameUpdate.f.push(marble.entryId, time);
-
-			// Send client info on finished marble
-			_socketManager.emit(JSON.stringify({
-				id: marble.entryId,
-				rank,
-				time,
-				points: playerEntry ? playerEntry.pointsEarned : undefined
-			}), "finished_marble");
 
 			// If this is the first marble that finished, set a timeout to end the game soon
 			if (_firstMarbleHasFinished === false) {
