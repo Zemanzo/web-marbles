@@ -182,7 +182,6 @@ let game = function() {
 
 			// The race has finished
 			case "finished":
-				console.log(additionalData);
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
 					levelManager.activeLevel.closeGates();

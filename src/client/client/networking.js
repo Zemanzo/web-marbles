@@ -23,9 +23,13 @@ let networking = function() {
 		if(typeof event.data !== "string") {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
-			// TODO: Force progression if buffer gets too large
-			if(_updateBuffer.length > 30) {
-				console.warn(`Currently ${_updateBuffer.length} updates behind!`);
+
+			// Force progression if buffer gets too large
+			// This may happen frequently with inactive tabs
+			while(_updateBuffer.length > config.maxBufferSize) {
+				_processGameEvents(_updateBuffer[0]);
+				_updateBuffer.splice(0, 1);
+				if(_timeDeltaRemainder !== null) _timeDeltaRemainder = 0;
 			}
 			return;
 		}
@@ -176,7 +180,7 @@ let networking = function() {
 					if(_updateBuffer[0].t > 0) {
 						// This wasn't the initial data update, meaning we lagged behind
 						_updateBuffer[0].t = 0;
-						_desiredBufferSize++;
+						_desiredBufferSize = Math.min(_desiredBufferSize + 1, config.maxBufferSize);
 						console.warn(`Client connection can't keep up! Increasing buffer length to ${_desiredBufferSize}`);
 					}
 					let total = 0;
