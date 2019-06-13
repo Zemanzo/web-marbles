@@ -9,11 +9,16 @@ import {
 	Quaternion
 } from "three";
 
-let addRegisteredEventListener = function(scope, event, func, capture) {
+const addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
 	return () => {
 		scope.removeEventListener(event, func, capture);
 	};
+};
+
+const cameras = {
+	CAMERA_FREE: 1,
+	CAMERA_TRACKING: 2
 };
 
 /**
@@ -29,6 +34,7 @@ let addRegisteredEventListener = function(scope, event, func, capture) {
 	@param {THREE.Camera} options.camera THREE camera to use for applying controls to. Will generate new camera by default.
 	@param {Number} options.speed Fly control speed. Can be changed afterwards. 150 by default.
 	@param {Boolean} options.disableOnBlur Whether to disable camera on tabbing out. true by default.
+	@param {Boolean} options.enabledByDefault Whether the controls are enabled by default. true by default.
 
 	Methods:
 	@method enable Enables the controls.
@@ -52,8 +58,11 @@ function FreeCamera(
 	if (!options.speed)
 		options.speed = 150;
 
-	if (!options.disableOnBlur)
+	if (typeof options.disableOnBlur === "undefined")
 		options.disableOnBlur = true;
+
+	if (typeof options.enabledByDefault === "undefined")
+		options.enabledByDefault = true;
 
 	if (!options.defaultPosition)
 		options.defaultPosition = { x: -8, y: 57, z: 30 };
@@ -61,9 +70,10 @@ function FreeCamera(
 	if (!options.defaultRotation)
 		options.defaultRotation = { x: -0.35, y: 0, z: 0 };
 
-	this.type = "FreeCamera";
+	this.type = cameras.CAMERA_FREE;
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
+	this.camera.rotation.order = "YXZ";
 	this.speed = options.speed;
 
 	this.moveForward = false;
@@ -102,6 +112,7 @@ function FreeCamera(
 	 */
 	this.enable = function() {
 		this.enabled = true;
+
 		let func;
 
 		// Hook pointer lock state change events
@@ -175,8 +186,22 @@ function FreeCamera(
 			}
 		};
 
-		_listeners.push( addRegisteredEventListener(document, "keydown", func.bind(this), false) );
-		_listeners.push( addRegisteredEventListener(document, "keyup", func.bind(this), false) );
+		_listeners.push(addRegisteredEventListener(document, "keydown", func.bind(this), false));
+		_listeners.push(addRegisteredEventListener(document, "keyup", func.bind(this), false));
+
+		// Disable on blur if applicable
+		if (options.disableOnBlur === true) {
+			let disabledByBlur = false;
+			document.addEventListener("visibilitychange", () => {
+				if (document.hidden && this.enabled) {
+					disabledByBlur = true;
+					this.disable();
+				} else if (disabledByBlur === true) {
+					disabledByBlur = false;
+					this.enable();
+				}
+			}, false);
+		}
 
 		this.update = function(deltaTime) {
 			update.bind(this)(deltaTime);
@@ -199,16 +224,6 @@ function FreeCamera(
 		// null update function
 		this.update = () => void 0;
 	};
-
-	if (options.disableOnBlur === true) {
-		document.addEventListener("visibilitychange", (function() {
-			if (document.hidden) {
-				this.disable();
-			} else {
-				this.enable();
-			}
-		}).bind(this), false);
-	}
 
 	this.toDefaults = function() {
 		self.controls.getObject().position.x = options.defaultPosition.x;
@@ -256,7 +271,11 @@ function FreeCamera(
 		self.controls.getObject().translateZ( this.velocity.z * deltaTime );
 	};
 
-	this.enable();
+	if (options.enabledByDefault === true) {
+		this.enable();
+	} else {
+		this.disable();
+	}
 }
 
 
@@ -267,7 +286,11 @@ function FreeCamera(
 	@constructor
 	@param {THREE.Scene} scene THREE scene object to add the camera to
 	@param {THREE.Renderer} renderer THREE renderer the camera should use
-	@param {THREE.Object3D} target THREE object that should be tracked
+	@param {Object} options Options object
+	@param {Object} options.defaultPosition Sets the camera at this location ({x: Number, y: Number, z: Number})
+	@param {Object} options.defaultRotation Sets the camera rotation to this value (in radians, YXZ) ({x: Number, y: Number, z: Number})
+	@param {THREE.Camera} options.camera THREE camera to use for applying controls to. Will generate new camera by default.
+	@param {Boolean} options.enabledByDefault Whether the controls are enabled by default. true by default.
 
 	Methods:
 	@method enable Enables the controls.
@@ -288,6 +311,9 @@ function TrackingCamera(
 			75, renderer.domElement.clientWidth / renderer.domElement.clientHeight, 0.1, 5000
 		);
 
+	if (typeof options.enabledByDefault === "undefined")
+		options.enabledByDefault = true;
+
 	if (!options.defaultPosition)
 		options.defaultPosition = { x: -3, y: 60, z: -7 };
 
@@ -303,8 +329,9 @@ function TrackingCamera(
 		)
 	);
 
-	this.type = "TrackingCamera";
+	this.type = cameras.CAMERA_TRACKING;
 	this.camera = options.camera;
+	this.camera.rotation.order = "YXZ";
 	this.target = null;
 
 	/**
@@ -384,7 +411,11 @@ function TrackingCamera(
 		}
 	};
 
-	this.enable();
+	if (options.enabledByDefault) {
+		this.enable();
+	} else {
+		this.disable();
+	}
 }
 
 // Because the .lookAt function of three.js does not return a value but applies it immediately.
@@ -420,4 +451,4 @@ const _lookAtWithReturn = function() {
 	};
 }();
 
-export { FreeCamera, TrackingCamera };
+export { cameras, FreeCamera, TrackingCamera };
