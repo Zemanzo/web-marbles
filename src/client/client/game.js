@@ -3,6 +3,7 @@ import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
+import { cameras } from "../render/cameras";
 import * as levelIO from "../../level/level-io";
 
 let _userData = Cookies.getJSON("user_data");
@@ -41,9 +42,9 @@ let game = function() {
 
 	let _trackMarble = function(marble, forceTracking) {
 		if (forceTracking) {
-			renderCore.setCameraStyle("TrackingCamera");
+			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
 		}
-		if (renderCore.activeCamera.type === "TrackingCamera") {
+		if (renderCore.activeCamera.type === cameras.CAMERA_TRACKING) {
 			let mesh = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;

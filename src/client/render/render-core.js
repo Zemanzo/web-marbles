@@ -169,8 +169,9 @@ let renderCore = function() {
 				renderCore.activeCamera = renderCore.trackingCamera;
 				nodeId = "cameraTracking";
 				break;
-			case cameras.CAMERA_FREE:
 			default:
+				console.warn("No known camera type has been supplied, defaulting to free camera.");
+			case cameras.CAMERA_FREE:
 				if (renderCore.activeCamera) {
 					copyPositionAndRotation(renderCore.freeCamera, renderCore.activeCamera);
 					renderCore.freeCamera.camera.rotation.z = 0; // Make sure we're not at an angle

@@ -41,6 +41,8 @@
         "no-multiple-empty-lines":
             ["error", {"max": 2}],
         "no-trailing-spaces":
-            ["error"]
+            ["error"],
+        "no-fallthrough":
+            "off"
     }
 }
