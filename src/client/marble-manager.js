@@ -40,16 +40,16 @@ let marbleManager = function() {
 				);
 			}
 			catch (error) {
-				console.log("Unable to load default marble model, using fallback geometry", error);
+				console.warn("Unable to load default marble model, using fallback geometry", error);
 			}
 
 			// Default marble texture
 			this.marbleTexture = new THREE.TextureLoader().load(
-				"resources/skins/abstract.png",
+				"resources/skins/default.png",
 				undefined,
 				undefined,
 				function(error) { // error
-					console.log("Unable to load default texture", error);
+					console.warn("Unable to load default texture", error);
 				}
 			);
 		},
@@ -109,9 +109,10 @@ let marbleManager = function() {
 // Marbles
 const MarbleMesh = function(marbleData) {
 	this.size = marbleData.size;
-	this.color = marbleData.color;
 	this.name = marbleData.name;
 	this.entryId = marbleData.entryId;
+	this.color = marbleData.color;
+	this.skinId = marbleData.skinId;
 
 	this.geometry = marbleManager.marbleGeometry;
 	this.materialColor = new THREE.Color(this.color);
@@ -119,7 +120,7 @@ const MarbleMesh = function(marbleData) {
 		color: this.materialColor,
 		roughness: .9,
 		metalness: 0,
-		map: marbleManager.marbleTexture
+		map: renderCore.skins[this.skinId] || marbleManager.marbleTexture
 	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 

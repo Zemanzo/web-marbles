@@ -61,6 +61,7 @@ let renderCore = function() {
 		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
+		skins: null,
 
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
@@ -211,6 +212,20 @@ let renderCore = function() {
 
 		getDefaultModel: function() {
 			return _defaultModel;
+		},
+
+		getSkins: function(skinIds) {
+			this.skins = {};
+			for (let id of skinIds) {
+				this.skins[id] = new THREE.TextureLoader().load(
+					`resources/skins/${id}.png`,
+					undefined,
+					undefined,
+					function(error) { // error
+						console.warn(`Unable to load skin as texture (${id})`, error);
+					}
+				);
+			}
 		}
 	};
 }();

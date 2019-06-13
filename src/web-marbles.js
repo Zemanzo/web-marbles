@@ -20,6 +20,9 @@ try {
 // Fetch levels & build primary level
 const levels = require("./server/levels/manager");
 
+// Prepare marble skins
+const skins = require("./server/skins");
+
 // Set up physics world
 const physics = require("./physics/manager");
 physics.world.setTickRate(config.physics.steps);
@@ -178,9 +181,13 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-levels.currentLevelData.then(() => {
-	game.end();
-});
+Promise.all([skins.readyPromise, levels.currentLevelData])
+	.then(() => {
+		game.end();
+	})
+	.catch((error) => {
+		throw new Error(`Initialization failed during loading of assets: ${error}`);
+	});
 
 // Graceful shutdown
 process.on("exit", shutdown);

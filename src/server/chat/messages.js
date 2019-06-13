@@ -1,4 +1,30 @@
 const game = require("../game");
+const skins = require("../skins");
+
+const colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
+
+const createAttributesObject = function(messageContent) {
+	let messageSections = messageContent.split(" ");
+	let color, skinId;
+
+	for (let i = 1; i < Math.min(messageSections.length, 3); i++) {
+		if (!color) {
+			let match = messageSections[i].match(colorRegEx);
+			color = (match === null ? undefined : match[0]);
+			if (typeof color !== "undefined") continue;
+		}
+
+		if (!skinId) {
+			skinId = skins.idList.includes(messageSections[i]) ? messageSections[i] : undefined;
+			if (typeof skinId !== "undefined") continue;
+		}
+	}
+
+	return {
+		color,
+		skinId
+	};
+};
 
 const parse = function(messageContent, id, username, member) {
 	let isDeveloper = false;
@@ -10,14 +36,10 @@ const parse = function(messageContent, id, username, member) {
 	}
 
 	if (messageContent.startsWith("!marble")) {
-		let colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
-		let match = messageContent.match(colorRegEx);
-		let color = (match === null ? undefined : match[0]);
-
 		game.addPlayerEntry(
 			id,
 			username,
-			color
+			createAttributesObject(messageContent)
 		);
 	}
 
@@ -28,7 +50,11 @@ const parse = function(messageContent, id, username, member) {
 	else if (messageContent.startsWith("!lotsofbots") && isDeveloper) {
 		let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
 		for (let i = 0; i < amount; i++) {
-			game.spawnMarble();
+			game.spawnMarble(
+				undefined,
+				undefined,
+				createAttributesObject(messageContent)
+			);
 		}
 	}
 };
