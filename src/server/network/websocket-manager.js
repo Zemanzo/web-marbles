@@ -80,7 +80,7 @@ function Socket(
 				if (type) {
 					this._list[i].sendTyped(message, type);
 				} else {
-					this._list[i].send(message);
+					this._list[i].send(message, typeof message !== "string");
 				}
 			} else {
 				return false;

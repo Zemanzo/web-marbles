@@ -4,6 +4,7 @@ import { TypedSocketHelper } from "./typed-socket-helper";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
 import { marbleManager } from "../marble-manager";
+import * as msgPack from "msgpack-lite";
 
 let networking = function() {
 	let _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
@@ -16,6 +17,28 @@ let networking = function() {
 	//let _requestsSkipped = 0; // Helps detect network issues
 
 	let _processMessageEvent = function(event) {
+		if(typeof event.data !== "string") {
+			console.log(event.data);
+			let contents = msgPack.decode(new Uint8Array(event.data));
+			console.log(contents);
+			//console.log(`Timestamp: ${contents.t}`);
+			//console.log(`CurrentGameTime: ${contents.c}`);
+			return;
+		}
+		function byteLength(str) {
+			// returns the byte length of an utf8 string
+			let s = str.length;
+			for (let i = str.length - 1; i >= 0; i--) {
+				let code = str.charCodeAt(i);
+				if (code > 0x7f && code <= 0x7ff) s++;
+				else if (code > 0x7ff && code <= 0xffff) s += 2;
+				if (code >= 0xDC00 && code <= 0xDFFF) i--; //trail surrogate
+			}
+			return s;
+		}
+		//console.log(`request_physics byteLength: ${byteLength(event.data)}`);
+		//console.log(event.data);
+
 		game.initialize().then( () => { // Wait for game to be ready before processing events
 			let { type, message } = _helper.extractSocketMessageType(event.data);
 			message = JSON.parse(message);
@@ -73,6 +96,7 @@ let networking = function() {
 				maxReconnectionDelay: 30000,
 				reconnectionDelayGrowFactor: 2
 			});
+			_ws.binaryType = "arraybuffer";
 
 			_ws.addEventListener("open", () => {
 				this.websocketOpen = true;

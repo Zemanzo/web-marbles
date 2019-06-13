@@ -55,6 +55,9 @@ const setupGameplay = function(db, config, game, levels) {
 					}
 					ws.sendTyped(JSON.stringify(intialData, omitter), "initial_data");
 				});
+
+				// Send initial game data to client
+				ws.send(game.getInitialDataPayload(), true);
 			},
 			close: function(ws) {
 				log.info("A user disconnected...".red + ws.meta.name);
