@@ -348,9 +348,24 @@ let game = function() {
 						}
 					}
 
+					if(_playersEnteredList.length > 0 && _netGameUpdate.c === undefined) _netGameUpdate.c = [];
+
 					// Points earned in this round
 					for (let player of _playersEnteredList) {
 						additionalData[player.id].pointsEarned = player.pointsEarned;
+
+						_netGameUpdate.c.push(player.id);
+						_netGameUpdate.c.push(player.pointsEarned);
+						for (let user of pointTotals) {
+							if(user.id === player.id) {
+								_netGameUpdate.c.push(user.stat_points_earned); // This is the TOTAL points earned
+							}
+						}
+						if (personalBestIds.includes(player.id)) {
+							_netGameUpdate.c.push(1);
+						} else {
+							_netGameUpdate.c.push(0);
+						}
 					}
 
 					additionalData.level = {
@@ -468,7 +483,7 @@ let game = function() {
 
 			// Add entry for network update
 			if(!_netGameUpdate.f) _netGameUpdate.f = [];
-			_netGameUpdate.f.push(marble.entryId, playerEntry ? playerEntry.pointsEarned : 0, rank, time);
+			_netGameUpdate.f.push(marble.entryId, time);
 
 			// Send client info on finished marble
 			_socketManager.emit(JSON.stringify({

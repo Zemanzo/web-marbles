@@ -15,12 +15,14 @@ let networking = function() {
 	let _lastUpdate = 0;
 	let _ready = 0;
 	//let _requestsSkipped = 0; // Helps detect network issues
+	let _updateBuffer = [];
 
 	let _processMessageEvent = function(event) {
 		if(typeof event.data !== "string") {
-			console.log(event.data);
+			//console.log(event.data);
 			let contents = msgPack.decode(new Uint8Array(event.data));
-			console.log(contents);
+			//console.log(contents);
+			_updateBuffer.push(contents);
 			//console.log(`Timestamp: ${contents.t}`);
 			//console.log(`CurrentGameTime: ${contents.c}`);
 			return;
@@ -38,6 +40,8 @@ let networking = function() {
 		}
 		//console.log(`request_physics byteLength: ${byteLength(event.data)}`);
 		//console.log(event.data);
+
+		return;
 
 		game.initialize().then( () => { // Wait for game to be ready before processing events
 			let { type, message } = _helper.extractSocketMessageType(event.data);
@@ -115,17 +119,74 @@ let networking = function() {
 		},
 
 		update: function(deltaTime) {
-			// Placeholder update code until network buffer is implemented
-			marbleManager.interpolateMarbles(
-				_marblePositions,
-				_marbleRotations,
-				_lastUpdate
-			);
+			// Currently a non-buffer implementation for testing purposes!
+			while(_updateBuffer.length > 0) {
+				let thisUpdate = _updateBuffer[0];
 
-			if (_lastUpdate < 1.5) {
-				// FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
-				_lastUpdate += (config.tickrate / 60 / config.ticksToLerp);
+				// Update server constants
+				if(thisUpdate.s !== undefined) {
+					game.setServerConstants(thisUpdate.s[0], thisUpdate.s[1]);
+				}
+
+				// Update level ID
+				if(thisUpdate.l !== undefined) {
+					game.setLevel(thisUpdate.l);
+				}
+
+				// Update game state
+				if(thisUpdate.g !== undefined) {
+					console.log(thisUpdate);
+					game.setGameState(thisUpdate.g, thisUpdate.c);
+				}
+
+				// Add new marbles
+				if(thisUpdate.n !== undefined) {
+					for(let i = 0; i < thisUpdate.n.length; i += 5) {
+						let marble = {
+							entryId: thisUpdate.n[i],
+							userId: thisUpdate.n[i + 1],
+							name: thisUpdate.n[i + 2],
+							size: thisUpdate.n[i + 3],
+							color: thisUpdate.n[i + 4]
+						};
+						game.spawnMarble(marble);
+					}
+				}
+
+				// Update finished marbles
+				if(thisUpdate.f !== undefined) {
+					for(let i = 0; i < thisUpdate.f.length; i += 2) {
+						let marble = {
+							entryId: thisUpdate.f[i],
+							time: thisUpdate.f[i + 1]
+						};
+						game.finishMarble(marble);
+					}
+				}
+
+				//Just get marble transforms directly for now
+				if(thisUpdate.p !== undefined) {
+					marbleManager.interpolateMarbles(
+						thisUpdate.p,
+						thisUpdate.r,
+						1
+					);
+				}
+
+				_updateBuffer.splice(0, 1);
 			}
+
+			// // Placeholder update code until network buffer is implemented
+			// marbleManager.interpolateMarbles(
+			// 	_marblePositions,
+			// 	_marbleRotations,
+			// 	_lastUpdate
+			// );
+
+			// if (_lastUpdate < 1.5) {
+			// 	// FPS assumed to be 60, replace with fps when possible, or better: base it on real time.
+			// 	_lastUpdate += (config.tickrate / 60 / config.ticksToLerp);
+			// }
 		}
 	};
 }();

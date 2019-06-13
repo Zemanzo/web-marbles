@@ -30,6 +30,10 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
 
+	// Level Data
+	this.levelName = null;
+	this.authorName = null;
+
 	// Load default level properties
 	this.loadLevel(new LevelData());
 }
@@ -87,6 +91,10 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load environmental variables
 	this.water.setHeight(data.world.waterLevel);
 	this.sky.recalculate({ inclination: data.world.sunInclination });
+
+	// Set level meta data
+	this.levelName = data.levelName;
+	this.authorName = data.authorName;
 
 	// Load textures
 	let textures = {};
