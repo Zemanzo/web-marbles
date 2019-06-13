@@ -20,7 +20,13 @@ let networking = function() {
 	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer length in milliseconds?
 
 	let _processMessageEvent = function(event) {
-		if(typeof event.data !== "string") {
+		if(typeof event.data === "string") {
+			// This should only be a HUD Notification
+			if(event.data[0] === "{") { // I'll remove this dumb check when notifications are all we get this way
+				let message = JSON.parse(event.data);
+				new HUDNotification(message.content, message.duration, message.style);
+			}
+		} else {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
 
@@ -127,7 +133,7 @@ let networking = function() {
 			}
 		}
 
-		//Just set marble transforms directly for now
+		// Update marble positions
 		if(thisUpdate.p !== undefined) {
 			marbleManager.setMarbleTransforms(thisUpdate.p,	thisUpdate.r);
 			_previousMarblePositions = thisUpdate.p;
@@ -186,7 +192,7 @@ let networking = function() {
 					let total = 0;
 					for(let i = 0; i < _updateBuffer.length; i++)
 						if(_updateBuffer[i].t !== undefined) total += _updateBuffer[i].t;
-					console.log(`Buffer built up! buffer size is ${_updateBuffer.length} with a total length of ${total}ms`);
+					console.log(`Game buffer built up to size ${_updateBuffer.length} with a total length of ${total}ms`);
 				}
 			} else {
 				_timeDeltaRemainder += deltaTime * 1000;
@@ -196,7 +202,6 @@ let networking = function() {
 				if(_updateBuffer.length === 0) {
 					// This is the end of the buffer, meaning we have to build up again
 					// Either we were meant to reach the end here, or there's connection problems
-					console.log("updateBuffer empty, letting the buffer build up again...");
 					_timeDeltaRemainder = null;
 				} else {
 					// Trigger any game events that need to happen

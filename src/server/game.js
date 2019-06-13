@@ -312,7 +312,7 @@ let game = function() {
 				this.limitReached = true;
 				_socketManager.emit(JSON.stringify({
 					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
-				}), "notification");
+				}));
 				this.start();
 				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
 			}

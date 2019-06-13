@@ -200,7 +200,7 @@ function shutdown() {
 			style: {
 				backgroundColor: "#d00"
 			}
-		}), "notification");
+		}));
 
 		// Create a list of promises that all have to resolve before we can consider being shut down
 		let promises = [];
