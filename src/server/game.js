@@ -132,7 +132,7 @@ let game = function() {
 			if(_netGameState.t === undefined) {
 				_netGameUpdate.t = 0; // If netGameState doesn't have this, this is the start
 			} else {
-				_netGameUpdate.t = _netGameState.t + delta;
+				_netGameUpdate.t = delta; // If it does, set it to the time since last update
 			}
 		}
 
@@ -180,7 +180,7 @@ let game = function() {
 
 		// Update timestamp if it exists
 		if(_netGameUpdate.t !== undefined) {
-			_netGameState.t = _netGameUpdate.t;
+			_netGameState.t = 0; // For initial data, the first delta is 0
 		} else {
 			delete _netGameState.t;
 		}

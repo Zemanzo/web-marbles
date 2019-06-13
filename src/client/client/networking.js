@@ -12,21 +12,21 @@ let networking = function() {
 	let _helper = null;
 	let _previousMarblePositions = null;
 	let _previousMarbleRotations = null;
-	let _previousUpdateTimeStamp = null;
 	let _ready = 0;
 	//let _requestsSkipped = 0; // Helps detect network issues
 
 	let _updateBuffer = [];
-	let _bufferTimeStamp = null; // Matches the progression of gameUpdate's timeStamp, or null if there is none
-	let _buildBuffer = false; // Whether it should wait in order to build up a buffer
-	let _desiredBufferLength = 100; // Desired buffer length in milliseconds?
+	let _timeDeltaRemainder = null; // Represents the timeDelta between two updates, or null if there are none
+	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer length in milliseconds?
 
 	let _processMessageEvent = function(event) {
 		if(typeof event.data !== "string") {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
-			//console.log(`Timestamp: ${contents.t}`);
-			//console.log(`CurrentGameTime: ${contents.c}`);
+			// TODO: Force progression if buffer gets too large
+			if(_updateBuffer.length > 30) {
+				console.warn(`Currently ${_updateBuffer.length} updates behind!`);
+			}
 			return;
 		}
 
@@ -93,8 +93,9 @@ let networking = function() {
 
 		// Update game state
 		if(thisUpdate.g !== undefined) {
-			console.log(thisUpdate);
 			game.setGameState(thisUpdate.g, thisUpdate.c);
+			// Reset buffer size after each round
+			if(thisUpdate.g === "waiting") _desiredBufferSize = config.defaultBufferSize;
 		}
 
 		// Add new marbles
@@ -127,11 +128,9 @@ let networking = function() {
 			marbleManager.setMarbleTransforms(thisUpdate.p,	thisUpdate.r);
 			_previousMarblePositions = thisUpdate.p;
 			_previousMarbleRotations = thisUpdate.r;
-			_previousUpdateTimeStamp = thisUpdate.t;
 		} else {
 			_previousMarblePositions = null;
 			_previousMarbleRotations = null;
-			_previousUpdateTimeStamp = null;
 		}
 	};
 
@@ -163,8 +162,6 @@ let networking = function() {
 		},
 
 		update: function(deltaTime) {
-			if(_updateBuffer.length === 0) return;
-
 			// Process any updates without a timestamp immediately
 			while(_updateBuffer.length > 0 && _updateBuffer[0].t === undefined) {
 				_processGameEvents(_updateBuffer[0]);
@@ -172,34 +169,39 @@ let networking = function() {
 			}
 
 			// If progression hasn't started yet and the buffer isn't the desired length, wait
-			if(_bufferTimeStamp === null) {
-				if(_updateBuffer.length <= 5) {
-					_buildBuffer = true;
-					console.log(`Building up a buffer. Currently at ${_updateBuffer.length}`);
-				}
-				else {
-					_buildBuffer = false;
-					_bufferTimeStamp = _updateBuffer[0].t;
-					console.log(`Buffer built up! _bufferTimeStamp is ${_bufferTimeStamp}ms`);
+			if(_timeDeltaRemainder === null) {
+				if(_updateBuffer.length >= _desiredBufferSize) {
+					_timeDeltaRemainder = 0;
+
+					if(_updateBuffer[0].t > 0) {
+						// This wasn't the initial data update, meaning we lagged behind
+						_updateBuffer[0].t = 0;
+						_desiredBufferSize++;
+						console.warn(`Client connection can't keep up! Increasing buffer length to ${_desiredBufferSize}`);
+					}
+					let total = 0;
+					for(let i = 0; i < _updateBuffer.length; i++)
+						if(_updateBuffer[i].t !== undefined) total += _updateBuffer[i].t;
+					console.log(`Buffer built up! buffer size is ${_updateBuffer.length} with a total length of ${total}ms`);
 				}
 			} else {
-				_bufferTimeStamp += deltaTime * 1000;
+				_timeDeltaRemainder += deltaTime * 1000;
 			}
 
-			if(!_buildBuffer) {
+			if(_timeDeltaRemainder !== null) {
 				if(_updateBuffer.length === 0) {
 					// This is the end of the buffer, meaning we have to build up again
 					// Either we were meant to reach the end here, or there's connection problems
 					console.log("updateBuffer empty, letting the buffer build up again...");
-					_bufferTimeStamp = null;
-					_buildBuffer = true;
+					_timeDeltaRemainder = null;
 				} else {
 					// Trigger any game events that need to happen
 					while(_updateBuffer.length > 0
 							&& _updateBuffer[0].t !== undefined
-							&& _bufferTimeStamp >= _updateBuffer[0].t) {
+							&& _timeDeltaRemainder >= _updateBuffer[0].t) {
 						//console.log(`Processing a keyframe at ${_bufferTimeStamp} for buffer ${_updateBuffer[0].t}`);
 						_processGameEvents(_updateBuffer[0]);
+						_timeDeltaRemainder -= _updateBuffer[0].t;
 						_updateBuffer.splice(0, 1);
 					}
 
@@ -207,7 +209,7 @@ let networking = function() {
 					if(_updateBuffer.length > 0) {
 						let nextTimeStamp = _updateBuffer[0].t;
 						if(nextTimeStamp !== undefined) {
-							let interval = (_bufferTimeStamp - _previousUpdateTimeStamp) / (nextTimeStamp - _previousUpdateTimeStamp);
+							let interval = _timeDeltaRemainder / nextTimeStamp;
 							let interval2 = 1 - interval;
 
 							// Then, interpolate marbles based on that interval (0-1)
@@ -256,7 +258,6 @@ let networking = function() {
 								marbleRotations[i + 3] = wRes;
 							}
 
-							// Send it off
 							marbleManager.setMarbleTransforms(marblePositions, marbleRotations);
 						}
 					}

@@ -119,8 +119,6 @@ let game = function() {
 		setServerConstants: function(enterPeriod, finishPeriod) {
 			_serverData.enterPeriodLength = enterPeriod;
 			_serverData.finishPeriodLength = finishPeriod;
-			console.log("Server constants updated:");
-			console.log(_serverData);
 		},
 
 		setLevel: function(levelId) {
@@ -288,7 +286,6 @@ let game = function() {
 				break;
 			}
 			_serverData.currentGameState = newState;
-			console.log(`Game state changed to ${newState}`);
 		},
 
 		getCurrentGameState: function() {
