@@ -340,18 +340,6 @@ let game = function() {
 			finishedMarble.listEntryElement.getElementsByClassName("rank")[0].innerText = `#${finishedMarble.rank + 1}`;
 			finishedMarble.listEntryElement.getElementsByClassName("time")[0].innerText = `${(finishedMarble.time * .001).toFixed(2)}s`;
 			finishedMarble.listEntryElement.style.order = finishedMarble.rank;
-		},
-
-		// Initialize game's state, marbles, and level based on server's initial_data
-		initializeGameState: function(/*gameState*/) {
-			// _requestComplete = Date.now();
-			// _serverData = gameState;
-			// this.setCurrentGameState({state: _serverData.currentGameState}, true);
-
-			// // Spawn marbles
-			// for (let i = 0; i < gameState.initialMarbleData.length; i++) {
-			// 	this.spawnMarble(gameState.initialMarbleData[i]);
-			// }
 		}
 	};
 }();

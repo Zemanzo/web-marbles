@@ -153,6 +153,7 @@ let game = function() {
 				delete _netGameState.f; // Clients that join after a race don't have access to marble data
 				delete _netGameState.p;
 				delete _netGameState.r;
+				delete _netGameUpdate.t; // Timestamp no longer necessary, and won't be copied over
 			}
 		}
 
@@ -551,8 +552,8 @@ let game = function() {
 					_pos[i * 3 + 2] = p.y();
 
 					_rot[i * 4 + 0] = q.x();
-					_rot[i * 4 + 1] = q.z();
-					_rot[i * 4 + 2] = q.y();
+					_rot[i * 4 + 1] = q.y();
+					_rot[i * 4 + 2] = q.z();
 					_rot[i * 4 + 3] = q.w();
 				}
 			}
