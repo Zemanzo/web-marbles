@@ -377,6 +377,3 @@ module.exports = function() {
 		}
 	};
 }();
-
-// Physics will run by default
-module.exports.startUpdateInterval();

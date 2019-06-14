@@ -30,7 +30,7 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, config, game, levels);
+const socketGameplay = sockets.setupGameplay(db, config, game);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
@@ -200,7 +200,7 @@ function shutdown() {
 			style: {
 				backgroundColor: "#d00"
 			}
-		}), "notification");
+		}));
 
 		// Create a list of promises that all have to resolve before we can consider being shut down
 		let promises = [];

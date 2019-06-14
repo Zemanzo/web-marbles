@@ -49,12 +49,12 @@ let marbleManager = function() {
 			_marbles = [];
 		},
 
-		interpolateMarbles: function(newPositions, newRotations, interval) {
+		setMarbleTransforms: function(newPositions, newRotations) {
 			for (let i = 0; i < _marbles.length; i++) {
 				// Positions
-				_marbles[i].mesh.position.x = THREE.Math.lerp(_marbles[i].mesh.position.x || 0, newPositions[i * 3 + 0], interval);
-				_marbles[i].mesh.position.y = THREE.Math.lerp(_marbles[i].mesh.position.y || 0, newPositions[i * 3 + 2], interval);
-				_marbles[i].mesh.position.z = THREE.Math.lerp(_marbles[i].mesh.position.z || 0, newPositions[i * 3 + 1], interval);
+				_marbles[i].mesh.position.x = newPositions[i * 3 + 0];
+				_marbles[i].mesh.position.y = newPositions[i * 3 + 2];
+				_marbles[i].mesh.position.z = newPositions[i * 3 + 1];
 
 				// Rotations
 				_marbles[i].mesh.quaternion.set(
@@ -66,9 +66,9 @@ let marbleManager = function() {
 
 				// Also update the nameSprite position
 				if (_marbles[i].nameSprite) {
-					_marbles[i].nameSprite.position.x = (_marbles[i].mesh.position.x || 0);
-					_marbles[i].nameSprite.position.y = (_marbles[i].mesh.position.y || 0) + _marbles[i].size - .1;
-					_marbles[i].nameSprite.position.z = (_marbles[i].mesh.position.z || 0);
+					_marbles[i].nameSprite.position.x = _marbles[i].mesh.position.x;
+					_marbles[i].nameSprite.position.y = _marbles[i].mesh.position.y + _marbles[i].size - .1;
+					_marbles[i].nameSprite.position.z = _marbles[i].mesh.position.z;
 				}
 			}
 		}

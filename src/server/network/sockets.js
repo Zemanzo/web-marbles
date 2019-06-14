@@ -2,7 +2,7 @@ const socketManager = require("./websocket-manager");
 const messages = require("../chat/messages");
 const log = require("../../log");
 
-const setupGameplay = function(db, config, game, levels) {
+const setupGameplay = function(db, config, game) {
 	// Gameplay socket
 	let gameplaySocketManager = new socketManager.Socket(
 		"/gameplay",
@@ -33,28 +33,8 @@ const setupGameplay = function(db, config, game, levels) {
 				log.info("A user connected!".green + name);
 				ws.meta = { name };
 
-				let initialMarbleData = game.getMarbles();
-
-				Promise.all([levels.currentLevelName, levels.currentLevelData]).then((values) => {
-					let intialData = {
-						currentGameState: game.currentGameState,
-						roundStartTime: game.startTime,
-						maxRoundLength: values[1].gameplay.roundLength,
-						enterPeriodTimeRemaining: game.getEnterPeriodTimeRemaining(),
-						enterPeriodLength: config.marbles.rules.enterPeriod,
-						finishPeriodLength: config.marbles.rules.finishPeriod,
-
-						levelId: values[0],
-
-						initialMarbleData
-					};
-
-					function omitter(key, value) {
-						if(key === "ammoBody") return undefined;
-						return value;
-					}
-					ws.sendTyped(JSON.stringify(intialData, omitter), "initial_data");
-				});
+				// Send initial game data to client
+				ws.send(game.getInitialDataPayload(), true);
 			},
 			close: function(ws) {
 				log.info("A user disconnected...".red + ws.meta.name);
