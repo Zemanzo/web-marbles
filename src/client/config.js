@@ -15,7 +15,7 @@ config.controls.camera.speed = 150;
 
 config.network = {};
 config.network.ssl = false;
-config.network.defaultBufferSize = 2; // How many updates to buffer before starting playback. Increased automatically if needed
+config.network.defaultBufferSize = 3; // How many updates to buffer before starting playback. Increased automatically if needed
 config.network.maxBufferSize = 40;
 config.network.websockets = {};
 config.network.websockets.port = 3014;

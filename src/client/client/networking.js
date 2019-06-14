@@ -124,94 +124,87 @@ let networking = function() {
 
 			// If progression hasn't started yet and the buffer isn't the desired length, wait
 			if(_timeDeltaRemainder === null) {
-				if(_updateBuffer.length >= _desiredBufferSize) {
-					_timeDeltaRemainder = 0;
+				if(_updateBuffer.length > 0 && _updateBuffer[0].t > 0) {
+					// This wasn't the initial data update, meaning we lagged behind
+					_updateBuffer[0].t = 0;
+					_desiredBufferSize = Math.min(_desiredBufferSize + 1, config.maxBufferSize);
+					console.log(`Client connection can't keep up! Temporarily increasing minimum buffer length to ${_desiredBufferSize}`);
+				}
 
-					if(_updateBuffer[0].t > 0) {
-						// This wasn't the initial data update, meaning we lagged behind
-						_updateBuffer[0].t = 0;
-						_desiredBufferSize = Math.min(_desiredBufferSize + 1, config.maxBufferSize);
-						console.warn(`Client connection can't keep up! Increasing minimum buffer length to ${_desiredBufferSize}`);
-					}
-					let total = 0;
-					for(let i = 0; i < _updateBuffer.length; i++)
-						if(_updateBuffer[i].t !== undefined) total += _updateBuffer[i].t;
-					console.log(`Game buffer built up to size ${_updateBuffer.length} with a total length of ${total}ms`);
+				if(_updateBuffer.length >= _desiredBufferSize) {
+					_timeDeltaRemainder = 0; // Starting progression now
 				}
 			} else {
 				_timeDeltaRemainder += deltaTime * 1000;
 			}
 
 			if(_timeDeltaRemainder !== null) {
+				// Trigger any game events that need to happen
+				while(_updateBuffer.length > 0
+						&& _updateBuffer[0].t !== undefined
+						&& _timeDeltaRemainder >= _updateBuffer[0].t) {
+					_processGameEvents(_updateBuffer[0]);
+					_timeDeltaRemainder -= _updateBuffer[0].t;
+					_updateBuffer.splice(0, 1);
+				}
+
 				if(_updateBuffer.length === 0) {
 					// This is the end of the buffer, meaning we have to build up again
 					// Either we were meant to reach the end here, or there's connection problems
 					_timeDeltaRemainder = null;
 				} else {
-					// Trigger any game events that need to happen
-					while(_updateBuffer.length > 0
-							&& _updateBuffer[0].t !== undefined
-							&& _timeDeltaRemainder >= _updateBuffer[0].t) {
-						_processGameEvents(_updateBuffer[0]);
-						_timeDeltaRemainder -= _updateBuffer[0].t;
-						_updateBuffer.splice(0, 1);
-					}
+					// Interpolate over next buffer
+					let nextTimeDelta = _updateBuffer[0].t;
+					if(nextTimeDelta !== undefined && _timeDeltaRemainder > 0) {
+						let interval = _timeDeltaRemainder / nextTimeDelta;
+						let interval2 = 1 - interval;
 
-					// Interpolate over next buffer if we have it
-					if(_updateBuffer.length > 0) {
-						let nextTimeDelta = _updateBuffer[0].t;
-						if(nextTimeDelta !== undefined) {
-							let interval = _timeDeltaRemainder / nextTimeDelta;
-							let interval2 = 1 - interval;
+						let nextPositions = _updateBuffer[0].p;
+						let nextRotations = _updateBuffer[0].r;
 
-							// Then, interpolate marbles based on that interval (0-1)
-							let nextPositions = _updateBuffer[0].p;
-							let nextRotations = _updateBuffer[0].r;
+						let marblePositions = new Float32Array(_previousMarblePositions.length);
+						let marbleRotations = new Float32Array(_previousMarbleRotations.length);
 
-							let marblePositions = new Float32Array(_previousMarblePositions.length);
-							let marbleRotations = new Float32Array(_previousMarbleRotations.length);
-
-							// Interpolate positions
-							for(let i = 0; i < _previousMarblePositions.length; i++) {
-								marblePositions[i] = _previousMarblePositions[i] * interval2 + nextPositions[i] * interval;
-							}
-							// Interpolate rotations
-							for(let i = 0; i < _previousMarbleRotations.length; i += 4) {
-								let x0 = _previousMarbleRotations[i];
-								let y0 = _previousMarbleRotations[i + 1];
-								let z0 = _previousMarbleRotations[i + 2];
-								let w0 = _previousMarbleRotations[i + 3];
-								let x1 = nextRotations[i];
-								let y1 = nextRotations[i + 1];
-								let z1 = nextRotations[i + 2];
-								let w1 = nextRotations[i + 3];
-								let xRes, yRes, zRes, wRes;
-
-								if ((x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1) < 0) {
-									xRes = x0 + (-x1 - x0) * interval;
-									yRes = y0 + (-y1 - y0) * interval;
-									zRes = z0 + (-z1 - z0) * interval;
-									wRes = w0 + (-w1 - w0) * interval;
-								} else {
-									xRes = x0 + (x1 - x0) * interval;
-									yRes = y0 + (y1 - y0) * interval;
-									zRes = z0 + (z1 - z0) * interval;
-									wRes = w0 + (w1 - w0) * interval;
-								}
-								let l = 1 / Math.sqrt(xRes * xRes + yRes * yRes + zRes * zRes + wRes * wRes);
-								xRes *= l;
-								yRes *= l;
-								zRes *= l;
-								wRes *= l;
-
-								marbleRotations[i] = xRes;
-								marbleRotations[i + 1] = yRes;
-								marbleRotations[i + 2] = zRes;
-								marbleRotations[i + 3] = wRes;
-							}
-
-							marbleManager.setMarbleTransforms(marblePositions, marbleRotations);
+						// Interpolate positions
+						for(let i = 0; i < _previousMarblePositions.length; i++) {
+							marblePositions[i] = _previousMarblePositions[i] * interval2 + nextPositions[i] * interval;
 						}
+						// Interpolate rotations
+						for(let i = 0; i < _previousMarbleRotations.length; i += 4) {
+							let x0 = _previousMarbleRotations[i];
+							let y0 = _previousMarbleRotations[i + 1];
+							let z0 = _previousMarbleRotations[i + 2];
+							let w0 = _previousMarbleRotations[i + 3];
+							let x1 = nextRotations[i];
+							let y1 = nextRotations[i + 1];
+							let z1 = nextRotations[i + 2];
+							let w1 = nextRotations[i + 3];
+							let xRes, yRes, zRes, wRes;
+
+							if ((x0 * x1 + y0 * y1 + z0 * z1 + w0 * w1) < 0) {
+								xRes = x0 + (-x1 - x0) * interval;
+								yRes = y0 + (-y1 - y0) * interval;
+								zRes = z0 + (-z1 - z0) * interval;
+								wRes = w0 + (-w1 - w0) * interval;
+							} else {
+								xRes = x0 + (x1 - x0) * interval;
+								yRes = y0 + (y1 - y0) * interval;
+								zRes = z0 + (z1 - z0) * interval;
+								wRes = w0 + (w1 - w0) * interval;
+							}
+							let l = 1 / Math.sqrt(xRes * xRes + yRes * yRes + zRes * zRes + wRes * wRes);
+							xRes *= l;
+							yRes *= l;
+							zRes *= l;
+							wRes *= l;
+
+							marbleRotations[i] = xRes;
+							marbleRotations[i + 1] = yRes;
+							marbleRotations[i + 2] = zRes;
+							marbleRotations[i + 3] = wRes;
+						}
+
+						marbleManager.setMarbleTransforms(marblePositions, marbleRotations);
 					}
 				}
 			}
