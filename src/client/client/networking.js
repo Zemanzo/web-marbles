@@ -2,6 +2,7 @@ import { network as config } from "../config";
 import ReconnectingWebSocket from "reconnecting-websocket";
 import { HUDNotification } from "./hud-notification";
 import { game } from "./game";
+import * as gameConstants from "../../game-constants.json";
 import { marbleManager } from "../marble-manager";
 import * as msgPack from "msgpack-lite";
 
@@ -51,7 +52,7 @@ let networking = function() {
 		if(thisUpdate.g !== undefined) {
 			game.setGameState(thisUpdate.g, thisUpdate.c);
 			// Reset buffer size after each round
-			if(thisUpdate.g === "waiting") _desiredBufferSize = config.defaultBufferSize;
+			if(thisUpdate.g === gameConstants.STATE_WAITING) _desiredBufferSize = config.defaultBufferSize;
 		}
 
 		// Add new marbles

@@ -4,6 +4,7 @@ import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
+import * as gameConstants from "../../game-constants.json";
 
 let _userData = Cookies.getJSON("user_data");
 
@@ -127,7 +128,7 @@ let game = function() {
 				console.log(`Loading level: ${levelId}`);
 				_serverData.currentLevelId = levelId;
 				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelId}.mmc`).then( () => {
-					if(this.getCurrentGameState() === "started") {
+					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
 				});
@@ -135,11 +136,30 @@ let game = function() {
 		},
 
 		setGameState: function(newState, additionalData) {
-			_DOMElements.gameInfo.className = newState; // TODO: ???
+			// Set gameInfo style:
+			let gameInfoClass = "";
+			switch(newState) {
+			case gameConstants.STATE_WAITING:
+				gameInfoClass = "waiting";
+				break;
+			case gameConstants.STATE_ENTER:
+				gameInfoClass = "enter";
+				break;
+			case gameConstants.STATE_STARTING:
+				gameInfoClass = "starting";
+				break;
+			case gameConstants.STATE_STARTED:
+				gameInfoClass = "started";
+				break;
+			case gameConstants.STATE_FINISHED:
+				gameInfoClass = "finished";
+				break;
+			}
+			_DOMElements.gameInfo.className = gameInfoClass;
 
 			switch(newState) {
 			// Start of a new round
-			case "waiting":
+			case gameConstants.STATE_WAITING:
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
@@ -153,7 +173,7 @@ let game = function() {
 				break;
 
 			// First marble has been entered
-			case "enter":
+			case gameConstants.STATE_ENTER:
 				// Set text (set in the previous state unless this is the initial state)
 				_DOMElements.state.innerText = "Enter marbles now!";
 				// Start enter period countdown. additionalData is time left in ms
@@ -161,7 +181,7 @@ let game = function() {
 				break;
 
 			// Marbles can no longer be entered
-			case "starting":
+			case gameConstants.STATE_STARTING:
 				if (_serverData.currentGameState !== null) {
 					_audio.start.play();
 				}
@@ -171,7 +191,7 @@ let game = function() {
 				break;
 
 			// The race has started
-			case "started":
+			case gameConstants.STATE_STARTED:
 				// additionalData represents current race time here
 				_roundTimerStartDate = Date.now() - additionalData;
 				_roundTimerIsVisible = true;
@@ -181,7 +201,7 @@ let game = function() {
 				break;
 
 			// The race has finished
-			case "finished":
+			case gameConstants.STATE_FINISHED:
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
 					levelManager.activeLevel.closeGates();
@@ -242,10 +262,10 @@ let game = function() {
 						// In case our marble is human
 						if (marble.userId) {
 							// PBs and WRs
-							if (finishData[marble.userId].record === 1) {
+							if (finishData[marble.userId].record === gameConstants.RECORD_PB) {
 								resultsEntry.getElementsByClassName("record")[0].innerText = "PB";
 								resultsEntry.getElementsByClassName("record")[0].className += " pb";
-							} else if(finishData[marble.userId].record === 2) {
+							} else if(finishData[marble.userId].record === gameConstants.RECORD_WR) {
 								resultsEntry.getElementsByClassName("record")[0].innerText = "WR";
 								resultsEntry.getElementsByClassName("record")[0].className += " wr";
 							}
@@ -308,7 +328,6 @@ let game = function() {
 			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
 				_trackMarble(marble, true);
 			}, false);
-			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
 			listEntry.getElementsByClassName("time")[0].innerText = "";
