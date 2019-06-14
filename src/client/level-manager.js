@@ -84,6 +84,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	this.startingGates = [];
 	this.levelObjects = new THREE.Scene();
 	this.levelObjects.matrixAutoUpdate = false;
+	this.levelObjects.autoUpdate = false;
 	this.scene.add(this.levelObjects);
 
 	// Load environmental variables
@@ -209,16 +210,6 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
 			this.levelObjects.add(clone);
 
-			// Disable auto-update for objects and all children recursively
-			let disableAutoUpdate = function(obj) {
-				obj.updateMatrix();
-				obj.matrixAutoUpdate = false;
-				for(let i = 0; i < obj.children.length; i++)
-					disableAutoUpdate(obj.children[i]);
-			};
-
-			disableAutoUpdate(clone);
-
 			// Keep starting gate prefabObjects in a separate array for opening/closing
 			for(let i = 0; i < clone.children.length; i++) {
 				if(clone.children[i].userData.functionality === "startgate") {
@@ -226,6 +217,11 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				}
 			}
 		}
+		// Disable matrix updates
+		this.levelObjects.traverse( (obj) => {
+			obj.updateMatrix();
+			obj.matrixAutoUpdate = false;
+		});
 	});
 };
 
