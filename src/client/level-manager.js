@@ -8,6 +8,7 @@ import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
 import { marbleManager } from "./marble-manager";
 import LevelLoaderWorker from "./level-loader.worker";
+import * as config from "./config";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -139,7 +140,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			if (materials[childMeshes[childNumber].material] != null) {
 				obj.material = materials[childMeshes[childNumber].material];
 			}
-			obj.receiveShadow = true;
+			obj.castShadow = config.graphics.castShadow.level;
+			obj.receiveShadow = config.graphics.receiveShadow.level;
 			childNumber++;
 		}
 
