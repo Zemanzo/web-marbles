@@ -19,7 +19,6 @@ let networking = function() {
 	let _processMessageEvent = function(event) {
 		if(typeof event.data === "string") {
 			// This should only be a HUD Notification
-			console.log(event.data);
 			let message = JSON.parse(event.data);
 			new HUDNotification(message.content, message.duration, message.style);
 		} else {

@@ -136,30 +136,10 @@ let game = function() {
 		},
 
 		setGameState: function(newState, additionalData) {
-			// Set gameInfo style:
-			let gameInfoClass = "";
-			switch(newState) {
-			case gameConstants.STATE_WAITING:
-				gameInfoClass = "waiting";
-				break;
-			case gameConstants.STATE_ENTER:
-				gameInfoClass = "enter";
-				break;
-			case gameConstants.STATE_STARTING:
-				gameInfoClass = "starting";
-				break;
-			case gameConstants.STATE_STARTED:
-				gameInfoClass = "started";
-				break;
-			case gameConstants.STATE_FINISHED:
-				gameInfoClass = "finished";
-				break;
-			}
-			_DOMElements.gameInfo.className = gameInfoClass;
-
 			switch(newState) {
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
+				_DOMElements.gameInfo.className = "waiting";
 				_startTimerIsRunning = false;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
@@ -174,6 +154,7 @@ let game = function() {
 
 			// First marble has been entered
 			case gameConstants.STATE_ENTER:
+				_DOMElements.gameInfo.className = "enter";
 				// Set text (set in the previous state unless this is the initial state)
 				_DOMElements.state.innerText = "Enter marbles now!";
 				// Start enter period countdown. additionalData is time left in ms
@@ -182,6 +163,7 @@ let game = function() {
 
 			// Marbles can no longer be entered
 			case gameConstants.STATE_STARTING:
+				_DOMElements.gameInfo.className = "starting";
 				if (_serverData.currentGameState !== null) {
 					_audio.start.play();
 				}
@@ -192,6 +174,7 @@ let game = function() {
 
 			// The race has started
 			case gameConstants.STATE_STARTED:
+				_DOMElements.gameInfo.className = "started";
 				// additionalData represents current race time here
 				_roundTimerStartDate = Date.now() - additionalData;
 				_roundTimerIsVisible = true;
@@ -202,6 +185,7 @@ let game = function() {
 
 			// The race has finished
 			case gameConstants.STATE_FINISHED:
+				_DOMElements.gameInfo.className = "finished";
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
 					levelManager.activeLevel.closeGates();
@@ -303,6 +287,9 @@ let game = function() {
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Race finished!";
 				break;
+			default:
+				console.warn(`Unknown new state ID "${newState}" in setState.`);
+				return;
 			}
 			_serverData.currentGameState = newState;
 		},

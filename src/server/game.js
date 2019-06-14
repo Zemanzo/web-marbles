@@ -50,7 +50,7 @@ let game = function() {
 		_round = null;
 
 	let _netUpdateHandle = null; // Handle to setTimeout
-	let _netInterval = isNaN(config.network.tickRate) ? 50 : 1000 / config.network.tickRate;
+	let _netInterval = isNaN(config.network.tickRate) ? 100 : 1000 / config.network.tickRate;
 	let _netGameState = {
 		s: [
 			config.marbles.rules.enterPeriod,
@@ -101,7 +101,6 @@ let game = function() {
 	// Triggers a network update loop if it hasn't started yet
 	let _triggerNetworkUpdate = function() {
 		if(!_netUpdateHandle) {
-			console.log("Starting netUpdate loop.");
 			// Start asap, but not during the code in which this function is called
 			_netUpdateHandle = setTimeout( _netUpdate, 0, Date.now());
 		}
@@ -201,7 +200,7 @@ let game = function() {
 			// If we're behind, shorten the interval time
 			let currentDelay = 0;
 			if(combinedDelay === undefined) {
-				// Start of update loop, start tracking accumalted delay
+				// Start of update loop, start tracking accumulated delay
 				combinedDelay = 0;
 			} else {
 				// Update accumulated delay
@@ -214,7 +213,7 @@ let game = function() {
 			}
 			_netUpdateHandle = setTimeout( _netUpdate, Math.min(_netInterval, _netInterval - combinedDelay), now, combinedDelay);
 		} else {
-			console.log("No marbles present, stopping updates.");
+			// Stop scheduling updates
 			_netUpdateHandle = null;
 		}
 	};
