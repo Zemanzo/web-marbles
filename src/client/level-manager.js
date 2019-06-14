@@ -8,6 +8,7 @@ import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
 import { marbleManager } from "./marble-manager";
 import LevelLoaderWorker from "./level-loader.worker";
+import * as config from "./config";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -86,6 +87,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	this.scene.remove(this.levelObjects);
 	this.startingGates = [];
 	this.levelObjects = new THREE.Scene();
+	this.levelObjects.matrixAutoUpdate = false;
+	this.levelObjects.autoUpdate = false;
 	this.scene.add(this.levelObjects);
 
 	// Load environmental variables
@@ -146,7 +149,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			if (materials[childMeshes[childNumber].material] != null) {
 				obj.material = materials[childMeshes[childNumber].material];
 			}
-			obj.receiveShadow = true;
+			obj.castShadow = config.graphics.castShadow.level;
+			obj.receiveShadow = config.graphics.receiveShadow.level;
 			childNumber++;
 		}
 
@@ -214,13 +218,18 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
 			this.levelObjects.add(clone);
 
-			// Keep starting gates in a separate array for opening/closing
+			// Keep starting gate prefabObjects in a separate array for opening/closing
 			for(let i = 0; i < clone.children.length; i++) {
 				if(clone.children[i].userData.functionality === "startgate") {
 					this.startingGates.push(clone.children[i]);
 				}
 			}
 		}
+		// Disable matrix updates
+		this.levelObjects.traverse( (obj) => {
+			obj.updateMatrix();
+			obj.matrixAutoUpdate = false;
+		});
 	});
 };
 
