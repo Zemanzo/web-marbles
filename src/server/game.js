@@ -303,6 +303,9 @@ let game = function() {
 				// Check whether we have reached the maximum marble limit
 				|| _marbles.length >= config.marbles.rules.maxMarbleCount) return;
 
+			// Start physics simulation if this is the first marble
+			if(_marbles.length === 0) physics.world.startUpdateInterval();
+
 			let newMarble = new Marble(id, _marbles.length, name, color);
 			_marbles.push(newMarble);
 
@@ -378,8 +381,9 @@ let game = function() {
 				_firstMarbleHasFinished = false;
 				this.startTime = undefined;
 
-				// Close the gate
+				// Close the gates and stop simulating
 				physics.world.closeGates();
+				physics.world.stopUpdateInterval();
 
 				// Remove all marbles
 				for (let i = _marbles.length - 1; i >= 0; --i) {
