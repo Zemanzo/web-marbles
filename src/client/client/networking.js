@@ -102,6 +102,7 @@ let networking = function() {
 			_ws.binaryType = "arraybuffer";
 
 			_ws.addEventListener("open", () => {
+				game.resetGame(); // New session start
 				this.websocketOpen = true;
 			});
 

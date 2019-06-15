@@ -27,8 +27,7 @@ let game = function() {
 
 	let _roundTimerStartDate,
 		_roundTimerIsVisible = false,
-		_enterPeriodTimerInterval,
-		_startTimerIsRunning = false,
+		_enterCountdownTimer = null,
 
 		_initPromise = null,
 		_DOMElements = {},
@@ -62,28 +61,28 @@ let game = function() {
 	// Starts the "enter marbles now" visual timer. timeLeft in milliseconds
 	let _startEnterCountdown = function(timerValue) {
 		// Make sure it only runs once
-		if (!_startTimerIsRunning) {
-			_startTimerIsRunning = true;
-			_DOMElements.timer.innerText = Math.ceil(timerValue / 1000).toFixed(0);
+		if(_enterCountdownTimer !== null) clearInterval(_enterCountdownTimer);
 
-			// Wait to get back on whole seconds, so we can decrement the timer by 1 every second
-			setTimeout(() => {
-				let timeLeft = Math.floor(timerValue / 1000);
+		_DOMElements.timer.innerText = Math.ceil(timerValue / 1000).toFixed(0);
 
-				_enterPeriodTimerInterval = setInterval(() => {
-					if (timeLeft < 0) {
-						clearInterval(_enterPeriodTimerInterval);
-					} else {
-						_DOMElements.timer.innerText = timeLeft;
-					}
-					timeLeft--;
-				}, 1000);
+		// Wait to get back on whole seconds, so we can decrement the timer by 1 every second
+		_enterCountdownTimer = setTimeout(() => {
+			let timeLeft = Math.floor(timerValue / 1000);
 
-				_DOMElements.timer.innerText = timeLeft;
-
+			_enterCountdownTimer = setInterval(() => {
+				if (timeLeft < 0) {
+					clearInterval(_enterCountdownTimer);
+					_enterCountdownTimer = null;
+				} else {
+					_DOMElements.timer.innerText = timeLeft;
+				}
 				timeLeft--;
-			}, timerValue % 1000); // milliseconds only, i.e. 23941 becomes 941
-		}
+			}, 1000);
+
+			_DOMElements.timer.innerText = timeLeft;
+
+			timeLeft--;
+		}, timerValue % 1000); // milliseconds only, i.e. 23941 becomes 941
 	};
 
 	let _animateRoundTimer = function() {
@@ -122,6 +121,33 @@ let game = function() {
 			_serverData.finishPeriodLength = finishPeriod;
 		},
 
+		// Resets the game's state (not including the level) to their defaults
+		resetGame: function() {
+			// Reset/hide DOM elements
+			_DOMElements.gameInfo.className = "";
+			_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
+			_DOMElements.entries.innerText = "0";
+			_DOMElements.state.innerText = "...";
+			_DOMElements.timer.innerText = "...";
+			_DOMElements.resultsList.innerHTML = "";
+			_DOMElements.raceLeaderboard.className = "";
+
+			// Stop timers
+			clearInterval(_enterCountdownTimer);
+			_enterCountdownTimer = null;
+			_roundTimerIsVisible = false;
+
+			// Clear marble data
+			_enteredMarbleList = [];
+			_finishedMarbles = 0;
+			marbleManager.clearMarbles();
+			_marbleBeingTracked = null;
+			renderCore.trackingCamera.setTarget(null);
+			levelManager.activeLevel.closeGates();
+
+			_serverData.currentGameState = null;
+		},
+
 		setLevel: function(levelId) {
 			// Start loading the level asynchronously if not yet loaded
 			if(_serverData.currentLevelId !== levelId) {
@@ -140,7 +166,8 @@ let game = function() {
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
 				_DOMElements.gameInfo.className = "waiting";
-				_startTimerIsRunning = false;
+				clearInterval(_enterCountdownTimer);
+				_enterCountdownTimer = null;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
 				_finishedMarbles = 0;
@@ -167,7 +194,8 @@ let game = function() {
 				if (_serverData.currentGameState !== null) {
 					_audio.start.play();
 				}
-				clearInterval(_enterPeriodTimerInterval);
+				clearInterval(_enterCountdownTimer);
+				_enterCountdownTimer = null;
 				_DOMElements.state.innerText = "The race is starting...";
 				_DOMElements.timer.innerHTML = "&#129345;";
 				break;

@@ -140,7 +140,7 @@ let game = function() {
 		_netGameStatePayload = null;
 
 		// gameState
-		if(_netGameUpdate.g) {
+		if(_netGameUpdate.g !== undefined) {
 			_netGameState.g = _netGameUpdate.g;
 
 			// Remove all marbles if the state changed to finished
