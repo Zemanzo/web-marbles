@@ -431,13 +431,13 @@ let game = function() {
 					for(let i = 0; i < _marbles.length; i++) {
 						_marbles[i].ammoBody.activate();
 					}
-				}, _startDelay);
 
-				// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
-				this.gameplayMaxTimeout = _setTrackableTimeout(
-					this.end.bind(this),
-					_currentLevel.gameplay.roundLength * 1000
-				);
+					// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
+					this.gameplayMaxTimeout = _setTrackableTimeout(
+						this.end.bind(this),
+						_currentLevel.gameplay.roundLength * 1000
+					);
+				}, _startDelay);
 
 				return true;
 			} else {
