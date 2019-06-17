@@ -344,7 +344,8 @@ let game = function() {
 				_trackMarble(marble, true);
 			}, false);
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
-			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
+			listEntry.getElementsByClassName("color")[0].style.backgroundColor = marble.color;
+			listEntry.getElementsByClassName("color")[0].style.backgroundImage = `url("resources/skins/${marble.skinId}.png")`;
 			listEntry.getElementsByClassName("time")[0].innerText = "";
 			listEntry.getElementsByClassName("rank")[0].innerText = "";
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;

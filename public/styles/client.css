@@ -646,6 +646,8 @@ p {
 		margin-right: 4px;
 		border-radius: 100%;
 		display: inline-block;
+		background-blend-mode: darken;
+		background-size: 100% 200%;
 	}
 
 	.marbleListEntry .id {
