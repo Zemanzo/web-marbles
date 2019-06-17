@@ -1,11 +1,7 @@
 import * as THREE from "three";
-import "three/examples/js/loaders/LoaderSupport";
-import "three/examples/js/loaders/GLTFLoader";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
 import * as Cookies from "js-cookie";
-
-const _GLTFLoader = new THREE.GLTFLoader();
 
 let _userData = Cookies.getJSON("user_data");
 
@@ -27,21 +23,6 @@ let marbleManager = function() {
 
 			// Default marble model
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
-			try {
-				_GLTFLoader.load(
-					"resources/models/marble-default.gltf",
-					function(gltf) { // success
-						marbleManager.marbleGeometry = gltf.scene.children[0].geometry;
-					},
-					undefined,
-					function(error) { // error
-						throw new Error(error);
-					}
-				);
-			}
-			catch (error) {
-				console.warn("Unable to load default marble model, using fallback geometry", error);
-			}
 
 			// Default marble texture
 			this.marbleTexture = new THREE.TextureLoader().load(
