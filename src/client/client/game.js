@@ -42,6 +42,7 @@ let game = function() {
 			let mesh = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
+				renderCore.setCameraStyle(cameras.CAMERA_FREE);
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 			} else {
 				if (_marbleBeingTracked) {
