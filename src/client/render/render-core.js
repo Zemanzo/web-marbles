@@ -61,7 +61,6 @@ let renderCore = function() {
 		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
-		skins: null,
 
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.

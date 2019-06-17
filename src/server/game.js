@@ -8,13 +8,13 @@ const gameConstants = require("../game-constants");
 
 const anyColorAllowed = ["abstract", "marble", "default", "swirly", "squares"]; // Will (probably) be changed to a meta file later on, next to the skin file?
 
-function Marble(id, entryId, name, options = {}) {
+function Marble(id, entryId, name, attributes = {}) {
 	this.userId = id;
 	this.entryId = entryId;
-	this.skinId = options.skinId || "default";
-	if (options.color && anyColorAllowed.includes(this.skinId)) {
-		this.color = options.color;
-	} else if (typeof options.color === "undefined" && !anyColorAllowed.includes(this.skinId)) {
+	this.skinId = attributes.skinId || "default";
+	if (typeof attributes.color !== "undefined" && anyColorAllowed.includes(this.skinId)) {
+		this.color = attributes.color;
+	} else if (!anyColorAllowed.includes(this.skinId)) {
 		this.color = "#ffffff";
 	} else {
 		this.color = _randomHexColor();

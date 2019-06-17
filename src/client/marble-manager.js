@@ -7,13 +7,14 @@ let _userData = Cookies.getJSON("user_data");
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
-	let _marbles = []; // Array of marbles that currently exist in the scene
+	let _marbles = [], // Array of marbles that currently exist in the scene
+		_skins = {},
+		_fallbackSkin = null;
 
 	return {
 		marbleGroup: null, // Group containing marble instances
 		marbleNamesGroup: null, // Group containing name sprites
 		marbleGeometry: null,
-		skins: {},
 
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
@@ -26,8 +27,16 @@ let marbleManager = function() {
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
 
 			// Default marble texture
-			this.marbleTexture = new THREE.TextureLoader().load(
-				"resources/skins/default.png",
+			let canvas = document.createElement("canvas");
+			canvas.width = 32;
+			canvas.height = 32; // who needs pixels anyway
+
+			let context = canvas.getContext("2d");
+			context.fillStyle = "#ffffff";
+			context.fillRect(0, 0, 32, 32);
+
+			_fallbackSkin = new THREE.TextureLoader().load(
+				canvas.toDataURL(),
 				undefined,
 				undefined,
 				function(error) { // error
@@ -87,17 +96,18 @@ let marbleManager = function() {
 		},
 
 		getSkin: function(id) {
-			if (!this.skins[id]) {
-				this.skins[id] = new THREE.TextureLoader().load(
+			if (!_skins[id]) {
+				_skins[id] = new THREE.TextureLoader().load(
 					`resources/skins/${id}.png`,
 					undefined,
 					undefined,
 					function(error) { // error
 						console.warn(`Unable to load skin as texture (${id})`, error);
+						_skins[id] = _fallbackSkin;
 					}
 				);
 			}
-			return this.skins[id];
+			return _skins[id];
 		}
 	};
 }();
@@ -116,7 +126,7 @@ const MarbleMesh = function(marbleData) {
 		color: this.materialColor,
 		roughness: .9,
 		metalness: 0,
-		map: marbleManager.getSkin(this.skinId) || marbleManager.marbleTexture
+		map: marbleManager.getSkin(this.skinId)
 	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 
