@@ -20,6 +20,9 @@ try {
 // Fetch levels & build primary level
 const levels = require("./server/levels/manager");
 
+// Prepare marble skins
+const skins = require("./server/skins");
+
 // Set up physics world
 const physics = require("./physics/manager");
 physics.world.setTickRate(config.physics.steps);
@@ -30,7 +33,7 @@ const game = require("./server/game");
 
 // Set up gameplay socket
 const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, config, game, levels);
+const socketGameplay = sockets.setupGameplay(db, config, game);
 
 // Set game socketManager
 game.setSocketManager(socketGameplay);
@@ -178,9 +181,13 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-levels.currentLevelData.then(() => {
-	game.end();
-});
+Promise.all([skins.readyPromise, levels.currentLevelData])
+	.then(() => {
+		game.end();
+	})
+	.catch((error) => {
+		throw new Error(`Initialization failed during loading of assets: ${error}`);
+	});
 
 // Graceful shutdown
 process.on("exit", shutdown);
@@ -200,7 +207,7 @@ function shutdown() {
 			style: {
 				backgroundColor: "#d00"
 			}
-		}), "notification");
+		}));
 
 		// Create a list of promises that all have to resolve before we can consider being shut down
 		let promises = [];

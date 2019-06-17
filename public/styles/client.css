@@ -197,6 +197,58 @@ body > *:not(#sidebar) {
 		height: 2em;
 	}
 
+	#cameraControls {
+		position: absolute;
+		left: 4px;
+		top: 4px;
+		display: flex;
+		flex-direction: column;
+		font-family: "Share Tech Mono", monospace;
+		font-size: .8rem;
+		text-transform: uppercase;
+		-webkit-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+	}
+		#cameraControls .header {
+			font-weight: 600;
+			text-shadow: #11111166 1px 1px 2px;
+			margin-bottom: 2px;
+			display: flex;
+		}
+
+		#cameraControls .header i {
+			margin-right: 4px;
+		}
+
+		#cameraControls .options {
+			display: flex;
+		}
+
+		#cameraControls .options > * {
+			background: #00000066;
+			border-radius: var(--border-radius);
+			margin-right: 4px;
+			opacity: .3;
+			transition: opacity .4s;
+			text-align: center;
+			padding:2px;
+			cursor: pointer;
+		}
+
+		#cameraControls .options > *.selected {
+			opacity: .8;
+		}
+
+		#cameraControls .options > *:hover {
+			opacity: 1;
+		}
+
+		#cameraControls .options i {
+			font-size: 1.8rem;
+		}
+
 	#notifications {
 		align-self: flex-start;
 		margin-bottom: 20px;
@@ -594,6 +646,8 @@ p {
 		margin-right: 4px;
 		border-radius: 100%;
 		display: inline-block;
+		background-blend-mode: darken;
+		background-size: 100% 200%;
 	}
 
 	.marbleListEntry .id {

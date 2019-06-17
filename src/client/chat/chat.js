@@ -132,17 +132,17 @@ domReady.then(() => {
 	});
 
 	// On websocket close (disconnect), add warning message. Reconnecting happens automagically.
-	ws.addEventListener("close", function(event) {
+	ws.addEventListener("close", () => {
 		let clone = chatMessageTemplate.cloneNode(true);
 		clone.removeAttribute("id");
 		clone.getElementsByClassName("timestamp")[0].innerText = timestamp();
 		clone.getElementsByClassName("content")[0].removeChild(clone.getElementsByClassName("username")[0]);
 		clone.getElementsByClassName("content")[0].innerText =
-			`Lost connection... Attempt #${event.target._retryCount} to reconnect in ${
+			`Lost connection... Attempt #${ws._retryCount} to reconnect in ${
 				Math.min(Math.ceil(
-					event.target._options.minReconnectionDelay
-					* event.target._options.reconnectionDelayGrowFactor
-					** (event.target._retryCount - 1)
+					ws._options.minReconnectionDelay
+					* ws._options.reconnectionDelayGrowFactor
+					** (ws._retryCount - 1)
 					/ 1000
 				), 30)
 			} seconds`;

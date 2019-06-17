@@ -7,6 +7,8 @@ import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
 import { marbleManager } from "./marble-manager";
+import LevelLoaderWorker from "./level-loader.worker";
+import * as config from "./config";
 
 const _GLTFLoader = new THREE.GLTFLoader();
 
@@ -28,6 +30,13 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.water = new Water(this, this.sky.sunLight);
 	this.scene.add(this.water.waterObject);
 	this.sky.water = this.water;
+
+	// Level Data
+	this.levelName = null;
+	this.authorName = null;
+
+	// Load default level properties
+	this.loadLevel(new LevelData());
 }
 
 MarbleLevel.prototype.update = function(deltaTime) {
@@ -46,17 +55,49 @@ MarbleLevel.prototype.closeGates = function() {
 	}
 };
 
+// Fetches and loads the level asynchronously. Returns a Promise that resolves when loading is complete
+MarbleLevel.prototype.loadLevelFromUrl = function(url) {
+	let worker = new LevelLoaderWorker();
+
+	return new Promise( (resolve, reject) => {
+		worker.onmessage = function(result) {
+			if(result.data.success) {
+				let loadedLevel = result.data.payload;
+				Object.setPrototypeOf(loadedLevel, LevelData.prototype);
+				resolve(loadedLevel);
+			} else {
+				reject(result.data.payload);
+			}
+		};
+		worker.onerror = function(error) {
+			reject(error.message);
+		};
+		worker.postMessage({url});
+	}).then( (result) => {
+		return this.loadLevel(result);
+	}).catch( (error) => {
+		console.error(`Level loading failed: ${error}`);
+		return false;
+	});
+};
+
 // Parses the level data and returns a Promise that resolves once it is fully done loading
 MarbleLevel.prototype.loadLevel = function(data) {
 	// Reset loaded data if there is any
 	this.scene.remove(this.levelObjects);
 	this.startingGates = [];
 	this.levelObjects = new THREE.Scene();
+	this.levelObjects.matrixAutoUpdate = false;
+	this.levelObjects.autoUpdate = false;
 	this.scene.add(this.levelObjects);
 
 	// Load environmental variables
 	this.water.setHeight(data.world.waterLevel);
 	this.sky.recalculate({ inclination: data.world.sunInclination });
+
+	// Set level meta data
+	this.levelName = data.levelName;
+	this.authorName = data.authorName;
 
 	// Load textures
 	let textures = {};
@@ -108,7 +149,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			if (materials[childMeshes[childNumber].material] != null) {
 				obj.material = materials[childMeshes[childNumber].material];
 			}
-			obj.receiveShadow = true;
+			obj.castShadow = config.graphics.castShadow.level;
+			obj.receiveShadow = config.graphics.receiveShadow.level;
 			childNumber++;
 		}
 
@@ -176,13 +218,18 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
 			this.levelObjects.add(clone);
 
-			// Keep starting gates in a separate array for opening/closing
+			// Keep starting gate prefabObjects in a separate array for opening/closing
 			for(let i = 0; i < clone.children.length; i++) {
 				if(clone.children[i].userData.functionality === "startgate") {
 					this.startingGates.push(clone.children[i]);
 				}
 			}
 		}
+		// Disable matrix updates
+		this.levelObjects.traverse( (obj) => {
+			obj.updateMatrix();
+			obj.matrixAutoUpdate = false;
+		});
 	});
 };
 
@@ -305,6 +352,10 @@ let levelManager = function() {
 	return {
 		activeLevel: null,
 
+		initialize: function() {
+			this.setActiveLevel(new MarbleLevel());
+		},
+
 		// Set a new active level
 		setActiveLevel: function(marbleLevel) {
 			if (this.activeLevel) {
@@ -312,12 +363,6 @@ let levelManager = function() {
 			}
 			this.activeLevel = marbleLevel;
 			renderCore.mainScene.add(this.activeLevel.scene);
-		},
-
-		initialize: function() {
-			let level = new MarbleLevel();
-			level.loadLevel(new LevelData()); // Load default level properties
-			this.setActiveLevel(level);
 		}
 	};
 }();

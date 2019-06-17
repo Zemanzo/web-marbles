@@ -10,6 +10,7 @@ import { projectTab } from "./project";
 import * as levelIO from "../../level/level-io";
 import { setEditorLogElement } from "./log";
 import { renderCore } from "../render/render-core";
+import { cameras } from "../render/cameras";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 
@@ -237,7 +238,7 @@ let editor = function() {
 
 
 // Editor core initialization
-renderCore.initialize("FreeCamera");
+renderCore.initialize(cameras.CAMERA_FREE);
 levelManager.initialize();
 marbleManager.initialize();
 

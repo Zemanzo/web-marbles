@@ -3,44 +3,42 @@ import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 import { renderCore } from "../render/render-core";
-import * as levelIO from "../../level/level-io";
+import { cameras } from "../render/cameras";
+import * as gameConstants from "../../game-constants.json";
 
 let _userData = Cookies.getJSON("user_data");
 
 let game = function() {
 	let _audio = {
-			start: new Audio("resources/audio/start.mp3"),
-			end: new Audio("resources/audio/end.mp3")
-		},
+		start: new Audio("resources/audio/start.mp3"),
+		end: new Audio("resources/audio/end.mp3")
+	};
 
-		_enteredMarbleList = [],
+	let _enteredMarbleList = [];
+	let _finishedMarbles = 0;
 
-		_serverData = {
-			currentGameState: null,
-			roundStartTime: null,
-			maxRoundLength: null,
-			enterPeriodTimeRemaining: null,
-			enterPeriodLength: null,
+	const _serverData = {
+		enterPeriodLength: null,
+		finishPeriodLength: null,
 
-			levelId: null
-		},
+		currentGameState: null,
+		currentLevelId: null
+	};
 
-		_roundTimerStartDate,
+	let _roundTimerStartDate,
 		_roundTimerIsVisible = false,
-		_enterPeriodTimerInterval,
-		_startTimerIsRunning = false,
+		_enterCountdownTimer = null,
 
 		_initPromise = null,
-		_DOMReadyTimestamp,
 		_DOMElements = {},
 
-		_marbleBeingTracked = null,
+		_marbleBeingTracked = null;
 
-		_requestComplete,
-		_requestStart = Date.now();
-
-	let _toggleMarbleTracking = function(marble) {
-		if (renderCore.controls.type === "TrackingCamera") {
+	let _trackMarble = function(marble, forceTracking) {
+		if (forceTracking) {
+			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
+		}
+		if (renderCore.activeCamera.type === cameras.CAMERA_TRACKING) {
 			let mesh = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
@@ -55,37 +53,36 @@ let game = function() {
 			}
 
 			if (mesh !== undefined) {
-				renderCore.controls.setTarget(mesh);
+				renderCore.trackingCamera.setTarget(mesh);
 			}
 		}
 	};
 
-	let _startTimerInterval = function(s) {
+	// Starts the "enter marbles now" visual timer. timeLeft in milliseconds
+	let _startEnterCountdown = function(timerValue) {
 		// Make sure it only runs once
-		if (!_startTimerIsRunning) {
-			_startTimerIsRunning = true;
+		if(_enterCountdownTimer !== null) clearInterval(_enterCountdownTimer);
 
-			// Convert to milliseconds
-			let ms = Math.round(s * 1000);
+		_DOMElements.timer.innerText = Math.ceil(timerValue / 1000).toFixed(0);
 
-			// Wait to get back on whole seconds, so we can decrement the timer by 1 every second
-			setTimeout(() => {
-				let timeLeft = Math.floor(s);
+		// Wait to get back on whole seconds, so we can decrement the timer by 1 every second
+		_enterCountdownTimer = setTimeout(() => {
+			let timeLeft = Math.floor(timerValue / 1000);
 
-				_enterPeriodTimerInterval = setInterval(() => {
-					if (timeLeft < 0) {
-						clearInterval(_enterPeriodTimerInterval);
-					} else {
-						_DOMElements.timer.innerText = timeLeft;
-					}
-					timeLeft--;
-				}, 1000);
-
-				_DOMElements.timer.innerText = timeLeft;
-
+			_enterCountdownTimer = setInterval(() => {
+				if (timeLeft < 0) {
+					clearInterval(_enterCountdownTimer);
+					_enterCountdownTimer = null;
+				} else {
+					_DOMElements.timer.innerText = timeLeft;
+				}
 				timeLeft--;
-			}, ms % 1000); // milliseconds only, i.e. 23941 becomes 941
-		}
+			}, 1000);
+
+			_DOMElements.timer.innerText = timeLeft;
+
+			timeLeft--;
+		}, timerValue % 1000); // milliseconds only, i.e. 23941 becomes 941
 	};
 
 	let _animateRoundTimer = function() {
@@ -102,8 +99,6 @@ let game = function() {
 		initialize: function() {
 			if(!_initPromise) {
 				_initPromise = domReady.then( () => {
-					_DOMReadyTimestamp = (new Date()).getTime();
-
 					// Get element references
 					_DOMElements.timer = document.getElementById("timer");
 					_DOMElements.state = document.getElementById("state");
@@ -121,68 +116,95 @@ let game = function() {
 			return _initPromise;
 		},
 
-		setCurrentGameState: function(newStateData, isInitialState = false) {
-			let newState = newStateData.state;
+		setServerConstants: function(enterPeriod, finishPeriod) {
+			_serverData.enterPeriodLength = enterPeriod;
+			_serverData.finishPeriodLength = finishPeriod;
+		},
 
-			_serverData.currentGameState = newState;
-			_DOMElements.gameInfo.className = newState;
+		// Resets the game's state (not including the level) to their defaults
+		resetGame: function() {
+			// Reset/hide DOM elements
+			_DOMElements.gameInfo.className = "";
+			_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
+			_DOMElements.entries.innerText = "0";
+			_DOMElements.state.innerText = "...";
+			_DOMElements.timer.innerText = "...";
+			_DOMElements.resultsList.innerHTML = "";
+			_DOMElements.raceLeaderboard.className = "";
 
+			// Stop timers
+			clearInterval(_enterCountdownTimer);
+			_enterCountdownTimer = null;
+			_roundTimerIsVisible = false;
+
+			// Clear marble data
+			_enteredMarbleList = [];
+			_finishedMarbles = 0;
+			marbleManager.clearMarbles();
+			_marbleBeingTracked = null;
+			renderCore.trackingCamera.setTarget(null);
+			levelManager.activeLevel.closeGates();
+
+			_serverData.currentGameState = null;
+		},
+
+		setLevel: function(levelId) {
+			// Start loading the level asynchronously if not yet loaded
+			if(_serverData.currentLevelId !== levelId) {
+				console.log(`Loading level: ${levelId}`);
+				_serverData.currentLevelId = levelId;
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelId}.mmc`).then( () => {
+					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
+						levelManager.activeLevel.openGates();
+					}
+				});
+			}
+		},
+
+		setGameState: function(newState, additionalData) {
 			switch(newState) {
 			// Start of a new round
-			case "waiting":
-				_startTimerIsRunning = false;
+			case gameConstants.STATE_WAITING:
+				_DOMElements.gameInfo.className = "waiting";
+				clearInterval(_enterCountdownTimer);
+				_enterCountdownTimer = null;
 				_roundTimerIsVisible = false;
 				_enteredMarbleList = [];
+				_finishedMarbles = 0;
 				marbleManager.clearMarbles();
 				_marbleBeingTracked = null;
-				if (renderCore.controls.type === "TrackingCamera") {
-					renderCore.controls.setTarget(null);
-				}
+				renderCore.trackingCamera.setTarget(null);
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
 				break;
 
 			// First marble has been entered
-			case "enter":
-				if (isInitialState) {
-					// Remove document load time & request time
-					_serverData.enterPeriodTimeRemaining -= (
-						(_requestComplete - _requestStart) + (_requestComplete - _DOMReadyTimestamp)
-					);
-
-					// Set text (usually set in the previous state)
-					_DOMElements.state.innerText = "Enter marbles now!";
-				} else {
-					_serverData.enterPeriodTimeRemaining = _serverData.enterPeriodLength * 1000;
-				}
-
-				// Start timer interval
-				_startTimerInterval(_serverData.enterPeriodTimeRemaining / 1000);
-
-				// Show the timer
-				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodTimeRemaining / 1000).toFixed(0);
+			case gameConstants.STATE_ENTER:
+				_DOMElements.gameInfo.className = "enter";
+				// Set text (set in the previous state unless this is the initial state)
+				_DOMElements.state.innerText = "Enter marbles now!";
+				// Start enter period countdown. additionalData is time left in ms
+				_startEnterCountdown(additionalData); // TODO: Take ping & buffer into account
 				break;
 
 			// Marbles can no longer be entered
-			case "starting":
-				if (!isInitialState) {
+			case gameConstants.STATE_STARTING:
+				_DOMElements.gameInfo.className = "starting";
+				if (_serverData.currentGameState !== null) {
 					_audio.start.play();
 				}
-				clearInterval(_enterPeriodTimerInterval);
+				clearInterval(_enterCountdownTimer);
+				_enterCountdownTimer = null;
 				_DOMElements.state.innerText = "The race is starting...";
 				_DOMElements.timer.innerHTML = "&#129345;";
 				break;
 
 			// The race has started
-			case "started":
-				if (isInitialState) {
-					// The round has already started, so give the timer a head-start
-					_roundTimerStartDate = _serverData.roundStartTime;
-				} else {
-					// The round started just now, so use the current date
-					_roundTimerStartDate = Date.now();
-				}
+			case gameConstants.STATE_STARTED:
+				_DOMElements.gameInfo.className = "started";
+				// additionalData represents current race time here
+				_roundTimerStartDate = Date.now() - additionalData;
 				_roundTimerIsVisible = true;
 				_animateRoundTimer();
 				levelManager.activeLevel.openGates();
@@ -190,12 +212,11 @@ let game = function() {
 				break;
 
 			// The race has finished
-			case "finished":
-				if (!isInitialState) {
+			case gameConstants.STATE_FINISHED:
+				_DOMElements.gameInfo.className = "finished";
+				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
 					levelManager.activeLevel.closeGates();
-
-					_DOMElements.raceLeaderboard.className = "visible";
 
 					_enteredMarbleList.sort((a, b) => {
 						if (a.finished && b.finished) {
@@ -210,6 +231,18 @@ let game = function() {
 					});
 
 					_DOMElements.resultsList.innerHTML = "";
+
+					// Prepare additional data
+					let finishData = {};
+					if(additionalData) { // Can be empty in a bot-only round
+						for(let i = 0; i < additionalData.length; i += 4) {
+							finishData[additionalData[i]] = {
+								pointsEarned: additionalData[i + 1],
+								pointTotal: additionalData[i + 2],
+								record: additionalData[i + 3]
+							};
+						}
+					}
 
 					// Build leaderboard DOM
 					let resultsListFragment = new DocumentFragment();
@@ -240,17 +273,20 @@ let game = function() {
 
 						// In case our marble is human
 						if (marble.userId) {
-							// PBs
-							if (newStateData.data[marble.userId].record === "pb") {
+							// PBs and WRs
+							if (finishData[marble.userId].record === gameConstants.RECORD_PB) {
 								resultsEntry.getElementsByClassName("record")[0].innerText = "PB";
 								resultsEntry.getElementsByClassName("record")[0].className += " pb";
+							} else if(finishData[marble.userId].record === gameConstants.RECORD_WR) {
+								resultsEntry.getElementsByClassName("record")[0].innerText = "WR";
+								resultsEntry.getElementsByClassName("record")[0].className += " wr";
 							}
 
 							// Points earned this round
-							resultsEntry.getElementsByClassName("points")[0].innerText = `+${newStateData.data[marble.userId].pointsEarned}`;
+							resultsEntry.getElementsByClassName("points")[0].innerText = `+${finishData[marble.userId].pointsEarned}`;
 
 							// Points earned over time
-							resultsEntry.getElementsByClassName("pointstotal")[0].innerText = newStateData.data[marble.userId].pointsTotal;
+							resultsEntry.getElementsByClassName("pointstotal")[0].innerText = finishData[marble.userId].pointTotal;
 						} else {
 							// Points earned this round
 							resultsEntry.getElementsByClassName("points")[0].className += " none";
@@ -260,8 +296,9 @@ let game = function() {
 					}
 					_DOMElements.resultsList.appendChild(resultsListFragment);
 
-					_DOMElements.raceLeaderboardLevelName.innerText = newStateData.data.level.name;
-					_DOMElements.raceLeaderboardAuthorName.innerText = newStateData.data.level.author;
+					_DOMElements.raceLeaderboard.className = "visible";
+					_DOMElements.raceLeaderboardLevelName.innerText = levelManager.activeLevel.levelName;
+					_DOMElements.raceLeaderboardAuthorName.innerText = levelManager.activeLevel.authorName;
 
 					// Make we're scrolled all the way to the top
 					_DOMElements.resultsList.scrollTop = 0;
@@ -278,7 +315,11 @@ let game = function() {
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Race finished!";
 				break;
+			default:
+				console.warn(`Unknown new state ID "${newState}" in setState.`);
+				return;
 			}
+			_serverData.currentGameState = newState;
 		},
 
 		getCurrentGameState: function() {
@@ -286,6 +327,10 @@ let game = function() {
 		},
 
 		spawnMarble: function(marble) {
+			// Set defaults that aren't sent over from the server
+			marble.finished = false;
+			marble.rank = null;
+
 			// Add to list
 			_enteredMarbleList[marble.entryId] = marble;
 
@@ -296,20 +341,18 @@ let game = function() {
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
 			listEntry.removeAttribute("id");
 			listEntry.getElementsByClassName("camera")[0].addEventListener("click", function() {
-				_toggleMarbleTracking(marble);
+				_trackMarble(marble, true);
 			}, false);
-			if (marble.finished) listEntry.classList.add("finished");
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
-			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
-			listEntry.getElementsByClassName("color")[0].style.background = marble.color;
-			listEntry.getElementsByClassName("time")[0].innerText = marble.time ? `${(marble.time * .001).toFixed(2)}s` : "";
-			listEntry.getElementsByClassName("rank")[0].innerText = !isNaN(marble.rank) && marble.rank !== null ? `#${marble.rank + 1}` : "";
-			listEntry.style.order = marble.rank;
+			listEntry.getElementsByClassName("color")[0].style.backgroundColor = marble.color;
+			listEntry.getElementsByClassName("color")[0].style.backgroundImage = `url("resources/skins/${marble.skinId}.png")`;
+			listEntry.getElementsByClassName("time")[0].innerText = "";
+			listEntry.getElementsByClassName("rank")[0].innerText = "";
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
 			if (_userData && _userData.id === marble.userId) {
-				if (!renderCore.controls.target && renderCore.controls.type === "TrackingCamera") {
-					_toggleMarbleTracking(marble);
+				if (!renderCore.trackingCamera.target) {
+					_trackMarble(marble);
 				}
 				listEntry.classList.add("player");
 			}
@@ -319,44 +362,15 @@ let game = function() {
 		},
 
 		finishMarble: function(marble) {
-			_enteredMarbleList[marble.id].finished = true;
-			_enteredMarbleList[marble.id].rank = marble.rank;
-			_enteredMarbleList[marble.id].time = marble.time;
-			_enteredMarbleList[marble.id].points = marble.points;
+			let finishedMarble = _enteredMarbleList[marble.entryId];
+			finishedMarble.finished = true;
+			finishedMarble.rank = _finishedMarbles++;
+			finishedMarble.time = marble.time;
 
-			_enteredMarbleList[marble.id].listEntryElement.classList.add("finished");
-			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("rank")[0].innerText = `#${marble.rank + 1}`;
-			_enteredMarbleList[marble.id].listEntryElement.style.order = marble.rank;
-			_enteredMarbleList[marble.id].listEntryElement.getElementsByClassName("time")[0].innerText = `${(marble.time * .001).toFixed(2)}s`;
-		},
-
-		// Initialize game's state, marbles, and level based on server's initial_data
-		initializeGameState: function(gameState) {
-			_requestComplete = Date.now();
-			_serverData = gameState;
-			this.setCurrentGameState({state: _serverData.currentGameState}, true);
-
-			// Spawn marbles
-			for (let i = 0; i < gameState.initialMarbleData.length; i++) {
-				this.spawnMarble(gameState.initialMarbleData[i]);
-			}
-
-			// Start loading the level asynchronously
-			let levelName = gameState.levelId;
-			fetch(`/resources/maps/${levelName}.mmc`)
-				.then((response) => {
-					// Return as a buffer, since .text() tries to convert to UTF-8 which is undesirable for compressed data
-					return response.arrayBuffer();
-				})
-				.then((buffer) => {
-					let levelData = levelIO.load(buffer);
-					levelManager.activeLevel.loadLevel(levelData)
-						.then( () => {
-							if(this.getCurrentGameState() === "started") {
-								levelManager.activeLevel.openGates();
-							}
-						});
-				});
+			finishedMarble.listEntryElement.classList.add("finished");
+			finishedMarble.listEntryElement.getElementsByClassName("rank")[0].innerText = `#${finishedMarble.rank + 1}`;
+			finishedMarble.listEntryElement.getElementsByClassName("time")[0].innerText = `${(finishedMarble.time * .001).toFixed(2)}s`;
+			finishedMarble.listEntryElement.style.order = finishedMarble.rank;
 		}
 	};
 }();

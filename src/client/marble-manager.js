@@ -7,7 +7,10 @@ let _userData = Cookies.getJSON("user_data");
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
-	let _marbles = []; // Array of marbles that currently exist in the scene
+	let _marbles = [], // Array of marbles that currently exist in the scene
+		_skins = {},
+		_fallbackSkin = null;
+
 	return {
 		marbleGroup: null, // Group containing marble instances
 		marbleNamesGroup: null, // Group containing name sprites
@@ -20,7 +23,26 @@ let marbleManager = function() {
 			renderCore.mainScene.add(this.marbleGroup);
 			renderCore.mainScene.add(this.marbleNamesGroup);
 
+			// Default marble model
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+
+			// Default marble texture
+			let canvas = document.createElement("canvas");
+			canvas.width = 32;
+			canvas.height = 32; // who needs pixels anyway
+
+			let context = canvas.getContext("2d");
+			context.fillStyle = "#ffffff";
+			context.fillRect(0, 0, 32, 32);
+
+			_fallbackSkin = new THREE.TextureLoader().load(
+				canvas.toDataURL(),
+				undefined,
+				undefined,
+				function(error) { // error
+					console.warn("Unable to load default texture", error);
+				}
+			);
 		},
 
 		spawnMarble: function(marbleData) {
@@ -49,12 +71,12 @@ let marbleManager = function() {
 			_marbles = [];
 		},
 
-		interpolateMarbles: function(newPositions, newRotations, interval) {
+		setMarbleTransforms: function(newPositions, newRotations) {
 			for (let i = 0; i < _marbles.length; i++) {
 				// Positions
-				_marbles[i].mesh.position.x = THREE.Math.lerp(_marbles[i].mesh.position.x || 0, newPositions[i * 3 + 0], interval);
-				_marbles[i].mesh.position.y = THREE.Math.lerp(_marbles[i].mesh.position.y || 0, newPositions[i * 3 + 2], interval);
-				_marbles[i].mesh.position.z = THREE.Math.lerp(_marbles[i].mesh.position.z || 0, newPositions[i * 3 + 1], interval);
+				_marbles[i].mesh.position.x = newPositions[i * 3 + 0];
+				_marbles[i].mesh.position.y = newPositions[i * 3 + 2];
+				_marbles[i].mesh.position.z = newPositions[i * 3 + 1];
 
 				// Rotations
 				_marbles[i].mesh.quaternion.set(
@@ -66,11 +88,26 @@ let marbleManager = function() {
 
 				// Also update the nameSprite position
 				if (_marbles[i].nameSprite) {
-					_marbles[i].nameSprite.position.x = (_marbles[i].mesh.position.x || 0);
-					_marbles[i].nameSprite.position.y = (_marbles[i].mesh.position.y || 0) + _marbles[i].size - .1;
-					_marbles[i].nameSprite.position.z = (_marbles[i].mesh.position.z || 0);
+					_marbles[i].nameSprite.position.x = _marbles[i].mesh.position.x;
+					_marbles[i].nameSprite.position.y = _marbles[i].mesh.position.y + _marbles[i].size - .1;
+					_marbles[i].nameSprite.position.z = _marbles[i].mesh.position.z;
 				}
 			}
+		},
+
+		getSkin: function(id) {
+			if (!_skins[id]) {
+				_skins[id] = new THREE.TextureLoader().load(
+					`resources/skins/${id}.png`,
+					undefined,
+					undefined,
+					function(error) { // error
+						console.warn(`Unable to load skin as texture (${id})`, error);
+						_skins[id] = _fallbackSkin;
+					}
+				);
+			}
+			return _skins[id];
 		}
 	};
 }();
@@ -78,13 +115,19 @@ let marbleManager = function() {
 // Marbles
 const MarbleMesh = function(marbleData) {
 	this.size = marbleData.size;
-	this.color = marbleData.color;
 	this.name = marbleData.name;
 	this.entryId = marbleData.entryId;
+	this.color = marbleData.color;
+	this.skinId = marbleData.skinId;
 
 	this.geometry = marbleManager.marbleGeometry;
 	this.materialColor = new THREE.Color(this.color);
-	this.material = new THREE.MeshStandardMaterial({ color: this.materialColor });
+	this.material = new THREE.MeshStandardMaterial({
+		color: this.materialColor,
+		roughness: .9,
+		metalness: 0,
+		map: marbleManager.getSkin(this.skinId)
+	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 
 	// Set scale based on marble size
