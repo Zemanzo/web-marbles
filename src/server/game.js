@@ -11,14 +11,14 @@ const anyColorAllowed = ["abstract", "marble", "default", "swirly", "squares"]; 
 function Marble(id, entryId, name, options = {}) {
 	this.userId = id;
 	this.entryId = entryId;
-	if (options.color && anyColorAllowed.includes(options.skinId)) {
+	this.skinId = options.skinId || "default";
+	if (options.color && anyColorAllowed.includes(this.skinId)) {
 		this.color = options.color;
-	} else if (typeof options.color === "undefined" && !anyColorAllowed.includes(options.skinId)) {
+	} else if (typeof options.color === "undefined" && !anyColorAllowed.includes(this.skinId)) {
 		this.color = "#ffffff";
 	} else {
 		this.color = _randomHexColor();
 	}
-	this.skinId = options.skinId;
 	this.name = name || "Nightbot";
 	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
 	this.ammoBody = null;
