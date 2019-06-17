@@ -13,6 +13,7 @@ let marbleManager = function() {
 		marbleGroup: null, // Group containing marble instances
 		marbleNamesGroup: null, // Group containing name sprites
 		marbleGeometry: null,
+		skins: {},
 
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
@@ -83,6 +84,20 @@ let marbleManager = function() {
 					_marbles[i].nameSprite.position.z = _marbles[i].mesh.position.z;
 				}
 			}
+		},
+
+		getSkin: function(id) {
+			if (!this.skins[id]) {
+				this.skins[id] = new THREE.TextureLoader().load(
+					`resources/skins/${id}.png`,
+					undefined,
+					undefined,
+					function(error) { // error
+						console.warn(`Unable to load skin as texture (${id})`, error);
+					}
+				);
+			}
+			return this.skins[id];
 		}
 	};
 }();
@@ -101,7 +116,7 @@ const MarbleMesh = function(marbleData) {
 		color: this.materialColor,
 		roughness: .9,
 		metalness: 0,
-		map: renderCore.skins[this.skinId] || marbleManager.marbleTexture
+		map: marbleManager.getSkin(this.skinId) || marbleManager.marbleTexture
 	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
 

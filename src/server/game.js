@@ -263,7 +263,7 @@ let game = function() {
 		},
 
 		// Enters the player into the race if allowed
-		addPlayerEntry(id, name, options) {
+		addPlayerEntry(id, name, attributes) {
 			if (
 				// Only allow marbles during entering phase
 				( this.currentGameState === gameConstants.STATE_WAITING || this.currentGameState === gameConstants.STATE_ENTER )
@@ -286,7 +286,7 @@ let game = function() {
 				_round.pointsAwarded += config.marbles.scoring.pointsAwardedForEntering;
 
 				// Spawn a single marble using the player's data
-				this.spawnMarble(id, name, options);
+				this.spawnMarble(id, name, attributes);
 
 				// Wait for a human entering the round before starting it
 				if (_isWaitingForEntry) {
@@ -304,7 +304,7 @@ let game = function() {
 		},
 
 		// Spawns marble unless the maximum amount of marbles has been hit
-		spawnMarble(id, name, options) {
+		spawnMarble(id, name, attributes) {
 			if (
 				// Check whether the game state disallows new marbles
 				this.currentGameState === gameConstants.STATE_FINISHED
@@ -314,12 +314,12 @@ let game = function() {
 			// Start physics simulation if this is the first marble
 			if(_marbles.length === 0) physics.world.startUpdateInterval();
 
-			let newMarble = new Marble(id, _marbles.length, name, options);
+			let newMarble = new Marble(id, _marbles.length, name, attributes);
 			_marbles.push(newMarble);
 
 			// Add entry for network update
 			if(!_netGameUpdate.n) _netGameUpdate.n = [];
-			_netGameUpdate.n.push(newMarble.entryId, newMarble.userId, newMarble.name, newMarble.size, newMarble.color);
+			_netGameUpdate.n.push(newMarble.entryId, newMarble.userId, newMarble.name, newMarble.size, newMarble.color, newMarble.skinId);
 			_triggerNetworkUpdate();
 
 			// Check for player / marble limits
