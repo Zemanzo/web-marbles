@@ -56,13 +56,14 @@ let networking = function() {
 
 		// Add new marbles
 		if(thisUpdate.n !== undefined) {
-			for(let i = 0; i < thisUpdate.n.length; i += 5) {
+			for(let i = 0; i < thisUpdate.n.length; i += 6) {
 				let marble = {
 					entryId: thisUpdate.n[i],
 					userId: thisUpdate.n[i + 1],
 					name: thisUpdate.n[i + 2],
 					size: thisUpdate.n[i + 3],
-					color: thisUpdate.n[i + 4]
+					color: thisUpdate.n[i + 4],
+					skinId: thisUpdate.n[i + 5]
 				};
 				game.spawnMarble(marble);
 			}
