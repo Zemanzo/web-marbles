@@ -1,0 +1,56 @@
+body {
+	--theme-color: var(--skins-theme-color);
+	--theme-color-dark: var(--skins-theme-color-dark);
+	grid-template-areas: "title viewport" "sidebar viewport";
+	background: #191b11;
+}
+
+#viewport > button {
+	margin: 4px;
+}
+
+#sidebar {
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: 40px minmax(0, 1fr) 90px;
+	grid-template-areas: "mode" "menu" "log";
+}
+
+#mode {
+	grid-area: mode;
+	text-align: center;
+	font-size: 2em;
+	color: var(--theme-color-dark);
+}
+
+#previewOptions {
+	margin: 8px;
+	padding: 8px;
+	font-size: 1.2rem;
+	background-color: #2e331f;
+}
+
+.skinEntry {
+	display: flex;
+	margin-left:8px;
+	cursor: pointer;
+}
+
+	.skinEntry.selected {
+		background-color: #2e331f;
+	}
+
+	.skinEntry .color {
+		width: 1em;
+		height: 1em;
+		margin-top: 2px;
+		margin-right: 4px;
+		border-radius: 100%;
+		display: inline-block;
+		background-blend-mode: darken;
+		background-size: 200% 100%;
+		background-color: #ffffff;
+	}
+
+	.skinEntry .name {
+		flex: 1;
+	}
