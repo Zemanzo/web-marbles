@@ -1,12 +1,11 @@
 const fs = require("fs");
-const config = require("../config");
 const log = require("../../log");
 const levelIO = require("../../level/level-io");
 
 // Scan for levels
 function retrieveLevels() {
 	return new Promise((resolve, reject) => {
-		fs.readdir(config.levels.folderPath,
+		fs.readdir("public/resources/levels",
 			undefined,
 			function(error, files) {
 				if (files && Array.isArray(files)) {
@@ -32,7 +31,7 @@ function retrieveLevels() {
 
 function loadLevel(levelName) {
 	return new Promise((resolve, reject) => {
-		fs.readFile(`${config.levels.folderPath}/${levelName}.mms`, function(error, fileBuffer) {
+		fs.readFile(`public/resources/levels/${levelName}.mms`, function(error, fileBuffer) {
 			try {
 				let level = levelIO.load(fileBuffer);
 				if(!level) {

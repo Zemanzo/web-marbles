@@ -154,7 +154,7 @@ let game = function() {
 			if(_serverData.currentLevelId !== levelId) {
 				console.log(`Loading level: ${levelId}`);
 				_serverData.currentLevelId = levelId;
-				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelId}.mmc`).then( () => {
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then( () => {
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
