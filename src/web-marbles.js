@@ -157,6 +157,10 @@ app.get("/editor", function(req, res) {
 		res.render("editor-disabled", {});
 });
 
+app.get("/skins", function(req, res) {
+	res.render("skins", { version, skinIds: skins.idList });
+});
+
 app.get("/terms", function(req, res) {
 	res.render("terms-and-conditions", {});
 });
