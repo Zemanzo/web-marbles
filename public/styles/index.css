@@ -2,7 +2,7 @@ nav {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	grid-template-rows: 1fr 1fr 1fr;
-	grid-template-areas: "client client" "editor ." "source patreon";
+	grid-template-areas: "client client" "editor skins" "source patreon";
 	grid-gap:2px;
 	margin: 2em auto 0 auto;
 }
@@ -42,6 +42,17 @@ nav a:hover {
 
 #linkEditor:hover {
 	background: var(--editor-theme-color);
+}
+
+/* Skins */
+#linkSkins {grid-area: skins;}
+#linkSkins:not(:hover) {
+	background: var(--skins-theme-color-dark);
+	color: var(--skins-theme-color);
+}
+
+#linkSkins:hover {
+	background: var(--skins-theme-color);
 }
 
 /* Source */
