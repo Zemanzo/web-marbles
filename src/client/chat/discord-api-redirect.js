@@ -1,5 +1,6 @@
 import * as Cookies from "js-cookie";
 import domReady from "../dom-ready";
+import { network as config } from "../config";
 
 domReady.then(() => {
 	let response = document.getElementById("response").dataset.response;
@@ -13,7 +14,12 @@ domReady.then(() => {
 			let user_data = JSON.parse(response);
 
 			let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
-			Cookies.set("user_data", user_data, { expires: days });
+			Cookies.set("user_data", user_data, {
+				expires: days,
+				path: "/",
+				domain: window.location.hostname,
+				secure: config.ssl
+			});
 
 			window.opener.postMessage({
 				success: true,
