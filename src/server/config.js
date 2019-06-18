@@ -8,7 +8,6 @@ const config = {};
 
 /* Marbles */
 config.marbles = {};
-config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
 
 // Bots
 config.marbles.bots = {};
@@ -56,10 +55,6 @@ config.marbles.scoring.pointsAwardedForFinishing = 0;
 // G = 1.5; 1 / G = 0.667 = 66.7% of all entrants will receive more than one point for finishing.
 // G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
 config.marbles.scoring.pointScale = 1.5;
-
-/* Levels */
-config.levels = {};
-config.levels.folderPath = `${__dirname}/../../public/resources/maps`;
 
 /* Database */
 config.database = {};
