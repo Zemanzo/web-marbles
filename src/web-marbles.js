@@ -152,30 +152,30 @@ if (config.discord.enabled) {
 
 app.get("/editor", function(req, res) {
 	if (config.editor.enabled)
-		res.render("editor", {version});
+		res.render("editor", {rootUrl: config.network.rootUrl, version});
 	else
 		res.render("editor-disabled", {});
 });
 
 app.get("/skins", function(req, res) {
-	res.render("skins", { version, skinIds: skins.idList });
+	res.render("skins", { rootUrl: config.network.rootUrl, version, skinIds: skins.idList });
 });
 
 app.get("/terms", function(req, res) {
-	res.render("terms-and-conditions", {});
+	res.render("terms-and-conditions", { rootUrl: config.network.rootUrl });
 });
 
 app.get("/privacy", function(req, res) {
-	res.render("privacy", {});
+	res.render("privacy", { rootUrl: config.network.rootUrl });
 });
 
 app.get("/contact", function(req, res) {
-	res.render("contact", {});
+	res.render("contact", { rootUrl: config.network.rootUrl });
 });
 
 app.use(function(req, res) {
 	res.status(404)
-		.render("status/404", {});
+		.render("status/404", { rootUrl: config.network.rootUrl });
 });
 
 // Express listener
