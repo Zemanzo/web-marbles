@@ -70,7 +70,7 @@ app.use(bodyParser.urlencoded({ // to support URL-encoded bodies
 }));
 
 app.get("/", function(req, res) {
-	res.render("index");
+	res.render("index", { rootUrl: config.network.rootUrl });
 });
 
 // Git commit hash, optional dependency
@@ -89,7 +89,8 @@ app.get("/client", function(req, res) {
 		gitHash,
 		gitBranch,
 		version,
-		discordEnabled: config.discord.enabled
+		discordEnabled: config.discord.enabled,
+		rootUrl: config.network.rootUrl
 	});
 });
 
@@ -102,7 +103,7 @@ if (config.discord.enabled) {
 			// If we receive a code, the client is trying to authorize with Discord and we must handle this request.
 			discordManager.authorizeClient(req, res);
 		} else if (req.query && req.query.error) {
-			res.render("chat-redirect");
+			res.render("chat-redirect", { rootUrl: config.network.rootUrl });
 		} else {
 			// Otherwise, simply display the chat.
 			let discordData = {
@@ -112,7 +113,7 @@ if (config.discord.enabled) {
 				scope: scope
 			};
 
-			res.render("chat", discordData);
+			res.render("chat", Object.assign(discordData, { rootUrl: config.network.rootUrl }));
 		}
 	});
 
@@ -124,7 +125,7 @@ if (config.discord.enabled) {
 } else {
 	// Render chat, just for styling purposes
 	app.get("/chat", function(req, res) {
-		res.render("chat");
+		res.render("chat", { rootUrl: config.network.rootUrl });
 	});
 
 	// New alternative route for adding in marbles
