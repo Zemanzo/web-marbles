@@ -65,7 +65,12 @@ domReady.then(() => {
 					response.tokenBody.discriminator = cookieData.discriminator;
 					response.tokenBody.avatar = cookieData.avatar;
 					let days = (response.tokenBody.expires_in / 62400) - 0.1; // seconds to days minus some slack
-					Cookies.set("user_data", response.tokenBody, { expires: days });
+					Cookies.set("user_data", response.tokenBody, {
+						expires: days,
+						path: "/",
+						domain: window.location.hostname,
+						secure: config.ssl
+					});
 					cookieData = response.tokenBody;
 				}
 
@@ -188,7 +193,7 @@ domReady.then(() => {
 		if (confirm("Do you really wish to log out?")) {
 			Cookies.remove("user_data",
 				{
-					path: "",
+					path: "/",
 					domain: window.location.hostname
 				}
 			);
