@@ -80,6 +80,7 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
+				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(1, 1, 1, 1),
 					new THREE.MeshStandardMaterial({
