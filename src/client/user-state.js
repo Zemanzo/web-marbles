@@ -7,7 +7,6 @@ window.addEventListener("message", function(event) {
 	// If the authorization state has changed, update the user data
 	if (event.data === userState.AUTH_CHANGED) {
 		userState.data = Cookies.getJSON("user_data");
-		console.log("updated user_data", userState.data);
 	}
 }, false);
 
