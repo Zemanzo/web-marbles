@@ -1,9 +1,7 @@
 import * as THREE from "three";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
-import * as Cookies from "js-cookie";
-
-let _userData = Cookies.getJSON("user_data");
+import { userState } from "./user-state";
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
@@ -142,7 +140,7 @@ const MarbleMesh = function(marbleData) {
 
 	// Highlight own name
 	let nameSpriteOptions = {};
-	if (_userData && _userData.id === marbleData.userId) {
+	if (userState.data && userState.data.id === marbleData.userId) {
 		nameSpriteOptions.color = "#BA0069";
 		nameSpriteOptions.renderOrder = 9e9;
 	}

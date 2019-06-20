@@ -7,7 +7,7 @@ domReady.then(() => {
 
 	try {
 		let queryParameters = window.location.search.substr(1).split("&").map( el => el.split("=") );
-		if (queryParameters[0][0] === "error" && queryParameters[0][1] === "access_denied") {
+		if (queryParameters[0][0] === "error" && queryParameters[0][1] === "access_denied") { // User has cancelled the authorization, so we don't have to do anything.
 			window.close();
 		}
 		if (response) {
