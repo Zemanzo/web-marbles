@@ -1,7 +1,7 @@
 const log = require("../../log");
 
 module.exports = function(db) {
-	let _schemaVersion = 3;
+	let _schemaVersion = 4;
 
 	return {
 		_users: db.prepare(
@@ -15,6 +15,7 @@ module.exports = function(db) {
 				timestamp_refresh_last INTEGER,
 				time_refresh_expire INTEGER,
 				scope TEXT,
+				is_banned INTEGER,
 				stat_points_earned INTEGER,
 				stat_rounds_entered INTEGER,
 				stat_rounds_finished INTEGER,

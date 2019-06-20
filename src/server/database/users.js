@@ -6,12 +6,16 @@ module.exports = function(db, common) {
 			return !!this._idExists.get(id);
 		},
 
-		_idIsAuthenticated: db.prepare("SELECT access_token FROM users WHERE id = ?"),
+		_idIsAuthenticated: db.prepare("SELECT access_token, is_banned FROM users WHERE id = ?"),
 
 		idIsAuthenticated(id, access_token) {
 			if (this.idExists(id)) {
 				let row = this._idIsAuthenticated.get(id);
-				if (row && row.access_token == access_token) {
+				if (
+					row
+					&& row.access_token == access_token
+					&& row.is_banned != 1
+				) {
 					return true;
 				}
 			}
@@ -183,6 +187,24 @@ module.exports = function(db, common) {
 				0,
 				Date.now()
 			]);
+		},
+
+		// bans
+		_setBanState: db.prepare(
+			`UPDATE OR REPLACE users SET
+				is_banned = ?
+			WHERE
+				id = ?`
+		),
+
+		setBanState(banState, id) {
+			if (this.idExists(id)) {
+				banState = banState ? 1 : 0; // Convert to integer since SQLite3 does not support the boolean type.
+				this._setBanState.run([
+					banState,
+					id
+				]);
+			}
 		},
 
 		// stat_points

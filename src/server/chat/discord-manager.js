@@ -49,6 +49,16 @@ const discordManager = function() {
 			}, console.error);
 
 			this.client.on("error", console.error, console.error);
+
+			this.client.on("guildBanAdd", function(guild, user) {
+				db.user.setBanState(true, user.id);
+			}, console.error);
+
+			this.client.on("guildBanRemove", function(guild, user) {
+				db.user.setBanState(false, user.id);
+			}, console.error);
+
+
 			this.client.login(config.discord.botToken);
 
 			return socketChat;

@@ -87,23 +87,25 @@ const setupChat = function(db, chatWebhook) {
 			return;
 		}
 
-		let row = db.user.getUserDetailsById(message.id);
-		if (row && row.access_token == message.access_token) {
-			messages.parse(message.content, message.id, row.username);
+		if (db.user.idIsAuthenticated(message.id, message.access_token)) {
+			let row = db.user.getUserDetailsById(message.id);
+			if (row) {
+				messages.parse(message.content, message.id, row.username);
 
-			chatWebhook.send(message.content, {
-				username: row.username,
-				avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
-				disableEveryone: true
-			});
+				chatWebhook.send(message.content, {
+					username: row.username,
+					avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
+					disableEveryone: true
+				});
 
-			chatSocketManager.emit(JSON.stringify({
-				username: row.username,
-				discriminator: row.discriminator,
-				content: message.content
-			}));
-		} else {
-			log.warn("User ID and access token mismatch!", row);
+				chatSocketManager.emit(JSON.stringify({
+					username: row.username,
+					discriminator: row.discriminator,
+					content: message.content
+				}));
+			} else {
+				log.warn("User ID and access token mismatch!", row);
+			}
 		}
 	});
 
