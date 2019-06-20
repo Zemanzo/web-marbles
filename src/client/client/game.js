@@ -1,12 +1,10 @@
 import domReady from "../dom-ready";
-import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
+import { userState } from "../user-state";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
 import * as gameConstants from "../../game-constants.json";
-
-let _userData = Cookies.getJSON("user_data");
 
 let game = function() {
 	let _audio = {
@@ -254,7 +252,7 @@ let game = function() {
 						resultsEntry.removeAttribute("id");
 
 						// Highlight for current player
-						if (_userData && _userData.id === marble.userId) {
+						if (userState.data && userState.data.id === marble.userId) {
 							resultsEntry.className += " currentPlayer";
 						}
 
@@ -351,7 +349,7 @@ let game = function() {
 			listEntry.getElementsByClassName("rank")[0].innerText = "";
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
-			if (_userData && _userData.id === marble.userId) {
+			if (userState.data && userState.data.id === marble.userId) {
 				if (!renderCore.trackingCamera.target) {
 					_trackMarble(marble);
 				}

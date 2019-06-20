@@ -1,5 +1,6 @@
 import domReady from "../dom-ready";
 import { network as config } from "../config";
+import { userState } from "../user-state";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
@@ -197,6 +198,12 @@ domReady.then(() => {
 					domain: window.location.hostname
 				}
 			);
+
+			// Send to parent if applicable
+			if (inIframe()) {
+				window.top.postMessage(userState.AUTH_CHANGED, `${window.location.origin}/client`);
+			}
+
 			window.location.reload(true);
 		}
 	}, false);
@@ -220,6 +227,11 @@ function receiveMessage(event) {
 		onAuthorization(event.data.response);
 		cookieData = Cookies.getJSON("user_data");
 		authWindow.close();
+
+		// Send to parent if applicable
+		if (inIframe()) {
+			window.top.postMessage(userState.AUTH_CHANGED, `${window.location.origin}/client`);
+		}
 	}
 }
 

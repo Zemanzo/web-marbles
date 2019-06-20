@@ -19,13 +19,18 @@ const setupGameplay = function(db, config, game) {
 					let cookies = cookie.split("; ");
 					let user_data = cookies.find(element => { return element.startsWith("user_data"); });
 					if (user_data) {
-						user_data = decodeURIComponent(user_data);
-						user_data = user_data.substr(10);
-						user_data = JSON.parse(user_data);
-						if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
-							name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
-						} else {
-							name = " Hacker?!?".red;
+						try {
+							user_data = decodeURIComponent(user_data);
+							user_data = user_data.substr(10);
+							user_data = JSON.parse(user_data);
+							if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+								name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
+							} else {
+								name = " Hacker?!? (Authentication failed)".red;
+							}
+						}
+						catch (error) {
+							name = " Hacker?!? (Invalid cookie)".red;
 						}
 					}
 				}
