@@ -4,7 +4,7 @@ import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { levelManager } from "../level-manager";
 import { materialsTab } from "./materials";
-import "three/examples/js/QuickHull";
+import "three/examples/js/math/ConvexHull";
 import "three/examples/js/geometries/ConvexGeometry";
 
 // model object
