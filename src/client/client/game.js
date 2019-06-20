@@ -39,7 +39,7 @@ let game = function() {
 			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
 		}
 		if (renderCore.activeCamera.type === cameras.CAMERA_TRACKING) {
-			let mesh = null;
+			let target = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
 				renderCore.setCameraStyle(cameras.CAMERA_FREE);
@@ -49,12 +49,12 @@ let game = function() {
 					_marbleBeingTracked.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 				}
 				_marbleBeingTracked = marble;
-				mesh = marble.mesh;
+				target = marble.renderObject;
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.add("selected");
 			}
 
-			if (mesh !== undefined) {
-				renderCore.trackingCamera.setTarget(mesh);
+			if (target !== undefined) {
+				renderCore.trackingCamera.setTarget(target);
 			}
 		}
 	};
@@ -336,7 +336,7 @@ let game = function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			marbleManager.spawnMarble(marble);
+			marble.renderObject = marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);

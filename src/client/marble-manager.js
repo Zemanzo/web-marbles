@@ -7,21 +7,17 @@ let _userData = Cookies.getJSON("user_data");
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
-	let _marbles = [], // Array of marbles that currently exist in the scene
-		_skins = {},
+	let _skins = {},
 		_fallbackSkin = null;
 
 	return {
+		marbles: [], // Array of marbles that currently exist in the scene
 		marbleGroup: null, // Group containing marble instances
-		marbleNamesGroup: null, // Group containing name sprites
 		marbleGeometry: null,
 
 		initialize: function() {
 			this.marbleGroup = new THREE.Group();
-			this.marbleNamesGroup = new THREE.Group();
-			this.marbleNamesGroup.renderOrder = 1;
 			renderCore.mainScene.add(this.marbleGroup);
-			renderCore.mainScene.add(this.marbleNamesGroup);
 
 			// Default marble model
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
@@ -47,52 +43,26 @@ let marbleManager = function() {
 
 		spawnMarble: function(marbleData) {
 			let marbleMesh = new MarbleMesh(marbleData);
-			_marbles.push(marbleMesh);
-			this.marbleGroup.add(marbleMesh.mesh);
-			this.marbleNamesGroup.add(marbleMesh.nameSprite);
-			marbleData.mesh = marbleMesh.mesh;
+			this.marbles.push(marbleMesh);
+			this.marbleGroup.add(marbleMesh.marbleOrigin);
+			return marbleMesh.marbleOrigin;
 		},
 
 		removeMarble: function(entryId) {
-			for (let marble of _marbles) {
-				if(marble.entryId === entryId) {
-					this.marbleGroup.remove(marble.mesh);
-					this.marbleNamesGroup.remove(marble.nameSprite);
+			for(let i = 0; i < this.marbles.length; i++) {
+				if(this.marbles[i].entryId === entryId) {
+					this.marbleGroup.remove(this.marbles[i].marbleOrigin);
+					this.marbles.splice(i, 1);
 					return;
 				}
 			}
 		},
 
 		clearMarbles: function() {
-			for (let marble of _marbles) {
-				this.marbleGroup.remove(marble.mesh);
-				this.marbleNamesGroup.remove(marble.nameSprite);
+			for (let marble of this.marbles) {
+				this.marbleGroup.remove(marble.marbleOrigin);
 			}
-			_marbles = [];
-		},
-
-		setMarbleTransforms: function(newPositions, newRotations) {
-			for (let i = 0; i < _marbles.length; i++) {
-				// Positions
-				_marbles[i].mesh.position.x = newPositions[i * 3 + 0];
-				_marbles[i].mesh.position.y = newPositions[i * 3 + 2];
-				_marbles[i].mesh.position.z = newPositions[i * 3 + 1];
-
-				// Rotations
-				_marbles[i].mesh.quaternion.set(
-					newRotations[i * 4 + 0],
-					newRotations[i * 4 + 1],
-					newRotations[i * 4 + 2],
-					newRotations[i * 4 + 3]
-				);
-
-				// Also update the nameSprite position
-				if (_marbles[i].nameSprite) {
-					_marbles[i].nameSprite.position.x = _marbles[i].mesh.position.x;
-					_marbles[i].nameSprite.position.y = _marbles[i].mesh.position.y + _marbles[i].size - .1;
-					_marbles[i].nameSprite.position.z = _marbles[i].mesh.position.z;
-				}
-			}
+			this.marbles = [];
 		},
 
 		getSkin: function(id) {
@@ -120,6 +90,9 @@ const MarbleMesh = function(marbleData) {
 	this.color = marbleData.color;
 	this.skinId = marbleData.skinId;
 
+	// The marble's main object, has mesh and name sprite as child objects
+	this.marbleOrigin = new THREE.Group();
+
 	this.geometry = marbleManager.marbleGeometry;
 	this.materialColor = new THREE.Color(this.color);
 	this.material = new THREE.MeshStandardMaterial({
@@ -129,6 +102,7 @@ const MarbleMesh = function(marbleData) {
 		map: marbleManager.getSkin(this.skinId)
 	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
+	this.marbleOrigin.add(this.mesh);
 
 	// Set scale based on marble size
 	this.mesh.scale.x = this.mesh.scale.y = this.mesh.scale.z = this.size;
@@ -141,14 +115,18 @@ const MarbleMesh = function(marbleData) {
 	this.mesh.receiveShadow = config.graphics.receiveShadow.marbles;
 
 	// Highlight own name
-	let nameSpriteOptions = {};
+	let nameSpriteOptions = {
+		renderOrder: 1
+	};
 	if (_userData && _userData.id === marbleData.userId) {
 		nameSpriteOptions.color = "#BA0069";
 		nameSpriteOptions.renderOrder = 9e9;
 	}
 
-	// Add name sprite (we avoid parenting, because this will also cause it to inherit the rotation which we do not want)
+	// Add name sprite and set a height based on marble size
 	this.nameSprite = makeTextSprite(this.name, nameSpriteOptions);
+	this.nameSprite.position.y = this.size - 0.1;
+	this.marbleOrigin.add(this.nameSprite);
 };
 
 const makeTextSprite = function(message, options = {}) {
@@ -178,6 +156,8 @@ const makeTextSprite = function(message, options = {}) {
 
 	let sprite = new THREE.Sprite(spriteMaterial);
 	sprite.scale.set(0.3, 0.1, 1.0);
+	sprite.layers.disable(0);
+	sprite.layers.enable(renderCore.SPRITE_LAYER);
 	if (options.renderOrder) sprite.renderOrder = options.renderOrder;
 
 	return sprite;
