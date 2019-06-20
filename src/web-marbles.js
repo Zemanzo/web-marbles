@@ -106,14 +106,13 @@ if (config.discord.enabled) {
 			res.render("chat-redirect", { rootUrl: config.network.rootUrl });
 		} else {
 			// Otherwise, simply display the chat.
-			let discordData = {
+			res.render("chat", {
 				invitelink: config.discord.inviteLink,
 				client_id: config.discord.clientId,
 				redirect_uri: redirectUri,
-				scope: scope
-			};
-
-			res.render("chat", Object.assign(discordData, { rootUrl: config.network.rootUrl }));
+				scope: scope,
+				rootUrl: config.network.rootUrl
+			});
 		}
 	});
 
