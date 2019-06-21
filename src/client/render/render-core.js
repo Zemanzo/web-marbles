@@ -62,6 +62,9 @@ let renderCore = function() {
 		freeCamera: null,
 		trackingCamera: null,
 
+		// Camera layer definitions
+		SPRITE_LAYER: 1,
+
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {

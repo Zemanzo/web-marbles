@@ -532,23 +532,22 @@ let game = function() {
 
 			let transform = new physics.ammo.btTransform();
 			let _pos = new Float32Array(_marbles.length * 3);
-			let _rot = new Float32Array(_marbles.length * 4);
+			let _rot = new Float32Array(_marbles.length * 3);
 
 			for (let i = 0; i < _marbles.length; i++) {
 				let ms = _marbles[i].ammoBody.getMotionState();
 				if (ms) {
 					ms.getWorldTransform( transform );
 					let p = transform.getOrigin();
-					let q = transform.getRotation();
+					let r = _marbles[i].ammoBody.getAngularVelocity();
 
 					_pos[i * 3 + 0] = p.x();
-					_pos[i * 3 + 1] = p.z();
-					_pos[i * 3 + 2] = p.y();
+					_pos[i * 3 + 1] = p.y();
+					_pos[i * 3 + 2] = p.z();
 
-					_rot[i * 4 + 0] = q.x();
-					_rot[i * 4 + 1] = q.y();
-					_rot[i * 4 + 2] = q.z();
-					_rot[i * 4 + 3] = q.w();
+					_rot[i * 3 + 0] = r.x();
+					_rot[i * 3 + 1] = r.y();
+					_rot[i * 3 + 2] = r.z();
 				}
 			}
 
