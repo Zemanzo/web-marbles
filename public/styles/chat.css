@@ -137,11 +137,6 @@ header {
 		flex: 1;
 	}
 
-	#chatInputContainer.authorized > div {
-		display: flex;
-	}
-
-	/* Reversed visibility for unauthenticated */
 	#chatInputContainer > #unauthenticated {
 		display: flex;
 		justify-content: space-around;
@@ -181,14 +176,19 @@ header {
 			cursor: not-allowed;
 		}
 
-		#chatInputContainer.authorized > #unauthenticated {
+		#chatInputContainer.authorized > #unauthenticated,
+		#chatInputContainer.banned > #unauthenticated {
 			display: none;
 		}
 
 	#authenticated {
-		display: flex;
+		display: none;
 		flex-direction: column;
 	}
+		#chatInputContainer.authorized > #authenticated {
+			display: flex;
+		}
+
 		#chatUserAndInputContainer {
 			display: flex;
 			margin: 2px 10px;
@@ -269,7 +269,8 @@ header {
 				margin-right: 4px;
 			}
 
-			#chatButtons > *.minimal {
+			#chatButtons > *.minimal,
+			button.minimal {
 				margin-left: 0;
 				color: #999;
 				font-size:.9em;
@@ -281,6 +282,31 @@ header {
 				color: #eee;
 				text-decoration: none;
 			}
+
+	#banned {
+		display: none;
+		text-align: center;
+		flex-direction: column;
+		background: #06060699;
+	}
+		#banned a,
+		#banned a:visited {
+			color: #09f;
+		}
+
+		#banned a:hover {
+			color: #3df;
+		}
+
+		#chatInputContainer.banned > #banned {
+			display: flex;
+		}
+
+		#banTitle {
+			padding-top: 4px;
+			font-size: 2em;
+			color: #e44;
+		}
 
 	input[type=number] {
 		max-width: 50px;

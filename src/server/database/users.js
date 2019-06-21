@@ -6,12 +6,28 @@ module.exports = function(db, common) {
 			return !!this._idExists.get(id);
 		},
 
-		_idIsAuthenticated: db.prepare("SELECT access_token FROM users WHERE id = ?"),
+		_idIsAuthenticated: db.prepare("SELECT access_token, is_banned FROM users WHERE id = ?"),
 
 		idIsAuthenticated(id, access_token) {
 			if (this.idExists(id)) {
 				let row = this._idIsAuthenticated.get(id);
-				if (row && row.access_token == access_token) {
+				if (
+					row
+					&& row.access_token == access_token
+					&& row.is_banned !== 1
+				) {
+					return true;
+				}
+			}
+			return false;
+		},
+
+		_idIsBanned: db.prepare("SELECT is_banned FROM users WHERE id = ?"),
+
+		idIsBanned(id) {
+			if (this.idExists(id)) {
+				let row = this._idIsBanned.get(id);
+				if (row && row.is_banned === 1) {
 					return true;
 				}
 			}
@@ -113,6 +129,7 @@ module.exports = function(db, common) {
 				timestamp_refresh_last,
 				time_refresh_expire,
 				scope,
+				is_banned,
 				stat_points_earned,
 				stat_rounds_entered,
 				stat_rounds_finished,
@@ -122,7 +139,7 @@ module.exports = function(db, common) {
 				stat_marbles_not_finished,
 				stat_unique_levels_played,
 				timestamp_first_login
-			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
 
 		insertNewUserEmbed(token_body, user_body, scope) {
@@ -144,6 +161,7 @@ module.exports = function(db, common) {
 				0,
 				0,
 				0,
+				0,
 				Date.now()
 			]);
 		},
@@ -155,6 +173,7 @@ module.exports = function(db, common) {
 				username,
 				discriminator,
 				avatar,
+				is_banned,
 				stat_points_earned,
 				stat_rounds_entered,
 				stat_rounds_finished,
@@ -164,7 +183,7 @@ module.exports = function(db, common) {
 				stat_marbles_not_finished,
 				stat_unique_levels_played,
 				timestamp_first_login
-			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
 
 		insertNewUserDiscord(user) {
@@ -181,8 +200,27 @@ module.exports = function(db, common) {
 				0,
 				0,
 				0,
+				0,
 				Date.now()
 			]);
+		},
+
+		// bans
+		_setBanState: db.prepare(
+			`UPDATE OR REPLACE users SET
+				is_banned = ?
+			WHERE
+				id = ?`
+		),
+
+		setBanState(banState, id) {
+			if (this.idExists(id)) {
+				banState = banState ? 1 : 0; // Convert to integer since SQLite3 does not support the boolean type.
+				this._setBanState.run([
+					banState,
+					id
+				]);
+			}
 		},
 
 		// stat_points
