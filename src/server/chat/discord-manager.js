@@ -51,10 +51,12 @@ const discordManager = function() {
 			this.client.on("error", console.error, console.error);
 
 			this.client.on("guildBanAdd", function(guild, user) {
+				log.info(`DISCORD: ${"Banned user".red} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(true, user.id);
 			}, console.error);
 
 			this.client.on("guildBanRemove", function(guild, user) {
+				log.info(`DISCORD: ${"Unbanned user".green} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(false, user.id);
 			}, console.error);
 
@@ -161,21 +163,25 @@ const discordManager = function() {
 						let response = {
 							authorized: true,
 							refreshed: true,
+							banned: false,
 							tokenBody
 						};
 
 						res.send(response);
 					},
 					() => {
-						res.status(400).send({ authorized: false, refreshed: false });
+						res.status(400).send({ authorized: false, refreshed: false, banned: false });
 					});
 				} else if (this.db.user.idIsAuthenticated(req.body.id, req.body.access_token)) {
-					res.send({ authorized: true, refreshed: false });
+					res.send({ authorized: true, refreshed: false, banned: false });
+					return;
+				} else if (this.db.user.idIsBanned(req.body.id)) {
+					res.send({ authorized: false, refreshed: false, banned: true });
 					return;
 				}
 			}
 
-			res.status(400).send({ authorized: false, refreshed: false });
+			res.status(400).send({ authorized: false, refreshed: false, banned: false });
 		}
 	};
 }();

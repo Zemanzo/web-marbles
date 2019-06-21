@@ -14,8 +14,20 @@ module.exports = function(db, common) {
 				if (
 					row
 					&& row.access_token == access_token
-					&& row.is_banned != 1
+					&& row.is_banned !== 1
 				) {
+					return true;
+				}
+			}
+			return false;
+		},
+
+		_idIsBanned: db.prepare("SELECT is_banned FROM users WHERE id = ?"),
+
+		idIsBanned(id) {
+			if (this.idExists(id)) {
+				let row = this._idIsBanned.get(id);
+				if (row && row.is_banned === 1) {
 					return true;
 				}
 			}
@@ -117,6 +129,7 @@ module.exports = function(db, common) {
 				timestamp_refresh_last,
 				time_refresh_expire,
 				scope,
+				is_banned,
 				stat_points_earned,
 				stat_rounds_entered,
 				stat_rounds_finished,
@@ -126,7 +139,7 @@ module.exports = function(db, common) {
 				stat_marbles_not_finished,
 				stat_unique_levels_played,
 				timestamp_first_login
-			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
 
 		insertNewUserEmbed(token_body, user_body, scope) {
@@ -148,6 +161,7 @@ module.exports = function(db, common) {
 				0,
 				0,
 				0,
+				0,
 				Date.now()
 			]);
 		},
@@ -159,6 +173,7 @@ module.exports = function(db, common) {
 				username,
 				discriminator,
 				avatar,
+				is_banned,
 				stat_points_earned,
 				stat_rounds_entered,
 				stat_rounds_finished,
@@ -168,7 +183,7 @@ module.exports = function(db, common) {
 				stat_marbles_not_finished,
 				stat_unique_levels_played,
 				timestamp_first_login
-			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+			) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 		),
 
 		insertNewUserDiscord(user) {
@@ -177,6 +192,7 @@ module.exports = function(db, common) {
 				user.username,
 				user.discriminator,
 				user.avatar,
+				0,
 				0,
 				0,
 				0,
