@@ -115,9 +115,7 @@ const MarbleMesh = function(marbleData) {
 	this.mesh.receiveShadow = config.graphics.receiveShadow.marbles;
 
 	// Highlight own name
-	let nameSpriteOptions = {
-		renderOrder: 1
-	};
+	let nameSpriteOptions = {};
 	if (_userData && _userData.id === marbleData.userId) {
 		nameSpriteOptions.color = "#BA0069";
 		nameSpriteOptions.renderOrder = 9e9;
@@ -158,7 +156,11 @@ const makeTextSprite = function(message, options = {}) {
 	sprite.scale.set(0.3, 0.1, 1.0);
 	sprite.layers.disable(0);
 	sprite.layers.enable(renderCore.SPRITE_LAYER);
-	if (options.renderOrder) sprite.renderOrder = options.renderOrder;
+	if (options.renderOrder !== undefined) {
+		sprite.renderOrder = options.renderOrder;
+	} else {
+		sprite.renderOrder = 1; // Defaults to 1 to resolve a render order issue with the water
+	}
 
 	return sprite;
 };
