@@ -6,6 +6,12 @@
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 		<title>Chat - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+		<meta name="theme-color" content="#ba0069">
+		{{>partials/metaBasics}}
+		<meta property="og:title" content="Chat - Manzo's Marbles" />
+		<meta property="og:description" content="A place to converse about and enter your marbles." />
+		<meta property="og:type" content="game:multiplayer" />
+		{{>partials/metaImage}}
 
 		<!-- Stylesheets -->
 		<link href="fontello/css/fontello.css" rel="stylesheet">
@@ -58,11 +64,16 @@
 					<i class="icon-right-big" id="buttonSend"></i>
 				</div>
 				<div id="chatButtons">
-					<button id="buttonLogOut" class="minimal"><i class="icon-logout"></i> log out</button>
+					<button class="buttonLogOut minimal"><i class="icon-logout"></i> log out</button>
 					{{#invitelink}}<a href="{{invitelink}}" target="_blank" class="minimal"><i class="icon-link-ext"></i> join server</a>{{/invitelink}}
 					<div class="flexSpacer">&nbsp;</div>
 					<button id="buttonMarble">!marble</button>
 				</div>
+			</div>
+			<div id="banned">
+				<div id="banTitle">You are banned</div>
+				<p>If you wish to appeal this decision, <a href="/contact">contact us</a>.</p>
+				<button class="buttonLogOut minimal"><i class="icon-logout"></i> log out</button>
 			</div>
 		</div>
 	</body>

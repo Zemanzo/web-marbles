@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<!-- Meta -->
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+		<title>Skins - Manzo's Marbles</title>
+		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
+		<meta name="theme-color" content="#8a9a5b">
+		{{>partials/metaBasics}}
+		<meta property="og:title" content="Skins - Manzo's Marbles" />
+		<meta property="og:description" content="A page that lists all the skins available in the game." />
+		<meta property="og:type" content="game:multiplayer" />
+		{{>partials/metaImage}}
+
+		<!-- Stylesheets -->
+			<!-- Icons -->
+			<link href="fontello/css/fontello.css" rel="stylesheet">
+
+			<link href="styles/common.css" rel="stylesheet" type="text/css">
+			<link href="styles/client.css" rel="stylesheet" type="text/css">
+			<link href="styles/skins.css" rel="stylesheet" type="text/css">
+
+		<!-- Scripts -->
+		<script src="dist/skins.js"></script>
+	</head>
+	<body>
+		<!-- Actual document stuff -->
+		<a href="/" id="title"><h1>Manzo's Marbles</h1></a>
+		<section id="viewport">
+		</section>
+		<section id="sidebar">
+			<div id="mode">
+				<span>SKINS PREVIEW MODE</span>
+			</div>
+			<div id="skins">
+				<div id="previewOptions">
+					<input type="checkbox" id="toggleRotate"/> <label for="toggleRotate">Rotate</label>
+				</div>
+
+				{{#skinIds}}
+				<div class="skinEntry" data-skin-id="{{.}}">
+					<span class="color">&nbsp;</span>
+					<span class="name">{{.}}</span>
+				</div>
+				{{/skinIds}}
+			</div>
+		</section>
+	</body>
+</html>

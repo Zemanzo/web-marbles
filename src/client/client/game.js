@@ -1,12 +1,10 @@
 import domReady from "../dom-ready";
-import * as Cookies from "js-cookie";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
+import { userState } from "../user-state";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
 import * as gameConstants from "../../game-constants.json";
-
-let _userData = Cookies.getJSON("user_data");
 
 let game = function() {
 	let _audio = {
@@ -39,21 +37,22 @@ let game = function() {
 			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
 		}
 		if (renderCore.activeCamera.type === cameras.CAMERA_TRACKING) {
-			let mesh = null;
+			let target = null;
 			if (_marbleBeingTracked === marble) {
 				_marbleBeingTracked = null;
+				renderCore.setCameraStyle(cameras.CAMERA_FREE);
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 			} else {
 				if (_marbleBeingTracked) {
 					_marbleBeingTracked.listEntryElement.getElementsByClassName("camera")[0].classList.remove("selected");
 				}
 				_marbleBeingTracked = marble;
-				mesh = marble.mesh;
+				target = marble.renderObject;
 				marble.listEntryElement.getElementsByClassName("camera")[0].classList.add("selected");
 			}
 
-			if (mesh !== undefined) {
-				renderCore.trackingCamera.setTarget(mesh);
+			if (target !== undefined) {
+				renderCore.trackingCamera.setTarget(target);
 			}
 		}
 	};
@@ -153,7 +152,7 @@ let game = function() {
 			if(_serverData.currentLevelId !== levelId) {
 				console.log(`Loading level: ${levelId}`);
 				_serverData.currentLevelId = levelId;
-				levelManager.activeLevel.loadLevelFromUrl(`/resources/maps/${levelId}.mmc`).then( () => {
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then( () => {
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
@@ -253,7 +252,7 @@ let game = function() {
 						resultsEntry.removeAttribute("id");
 
 						// Highlight for current player
-						if (_userData && _userData.id === marble.userId) {
+						if (userState.data && userState.data.id === marble.userId) {
 							resultsEntry.className += " currentPlayer";
 						}
 
@@ -335,7 +334,7 @@ let game = function() {
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
-			marbleManager.spawnMarble(marble);
+			marble.renderObject = marbleManager.spawnMarble(marble);
 
 			// Add UI stuff
 			let listEntry = _DOMElements.marbleListTemplate.cloneNode(true);
@@ -350,7 +349,7 @@ let game = function() {
 			listEntry.getElementsByClassName("rank")[0].innerText = "";
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;
 
-			if (_userData && _userData.id === marble.userId) {
+			if (userState.data && userState.data.id === marble.userId) {
 				if (!renderCore.trackingCamera.target) {
 					_trackMarble(marble);
 				}

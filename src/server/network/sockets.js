@@ -19,13 +19,18 @@ const setupGameplay = function(db, config, game) {
 					let cookies = cookie.split("; ");
 					let user_data = cookies.find(element => { return element.startsWith("user_data"); });
 					if (user_data) {
-						user_data = decodeURIComponent(user_data);
-						user_data = user_data.substr(10);
-						user_data = JSON.parse(user_data);
-						if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
-							name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
-						} else {
-							name = " Hacker?!?".red;
+						try {
+							user_data = decodeURIComponent(user_data);
+							user_data = user_data.substr(10);
+							user_data = JSON.parse(user_data);
+							if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+								name = (` (${db.user.getUsernameById(user_data.id)})`).yellow;
+							} else {
+								name = " Hacker?!? (Authentication failed)".red;
+							}
+						}
+						catch (error) {
+							name = " Hacker?!? (Invalid cookie)".red;
 						}
 					}
 				}
@@ -82,23 +87,25 @@ const setupChat = function(db, chatWebhook) {
 			return;
 		}
 
-		let row = db.user.getUserDetailsById(message.id);
-		if (row && row.access_token == message.access_token) {
-			messages.parse(message.content, message.id, row.username);
+		if (db.user.idIsAuthenticated(message.id, message.access_token)) {
+			let row = db.user.getUserDetailsById(message.id);
+			if (row) {
+				messages.parse(message.content, message.id, row.username);
 
-			chatWebhook.send(message.content, {
-				username: row.username,
-				avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
-				disableEveryone: true
-			});
+				chatWebhook.send(message.content, {
+					username: row.username,
+					avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
+					disableEveryone: true
+				});
 
-			chatSocketManager.emit(JSON.stringify({
-				username: row.username,
-				discriminator: row.discriminator,
-				content: message.content
-			}));
-		} else {
-			log.warn("User ID and access token mismatch!", row);
+				chatSocketManager.emit(JSON.stringify({
+					username: row.username,
+					discriminator: row.discriminator,
+					content: message.content
+				}));
+			} else {
+				log.warn("User ID and access token mismatch!", row);
+			}
 		}
 	});
 

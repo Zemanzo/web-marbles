@@ -1,5 +1,6 @@
 import domReady from "../dom-ready";
 import { network as config } from "../config";
+import { userState } from "../user-state";
 import * as Cookies from "js-cookie";
 import ReconnectingWebSocket from "reconnecting-websocket";
 
@@ -45,46 +46,7 @@ domReady.then(() => {
 
 	// Check for former authentication
 	cookieData = Cookies.getJSON("user_data");
-
-	if (
-		// If there is former data, check if it is not outdated.
-		cookieData
-
-		// See if current date is later than origin date + expiration period
-		&& Date.now() < cookieData.access_granted + cookieData.expires_in * 1000
-	) {
-		// Request a fresh token
-		var xhr = new XMLHttpRequest();
-		xhr.onreadystatechange = function() {
-			if (this.readyState === 4 && this.status === 200) {
-				let response = JSON.parse(xhr.responseText);
-
-				if (response.authorized && response.refreshed && response.tokenBody) {
-					response.tokenBody.id = cookieData.id;
-					response.tokenBody.username = cookieData.username;
-					response.tokenBody.discriminator = cookieData.discriminator;
-					response.tokenBody.avatar = cookieData.avatar;
-					let days = (response.tokenBody.expires_in / 62400) - 0.1; // seconds to days minus some slack
-					Cookies.set("user_data", response.tokenBody, { expires: days });
-					cookieData = response.tokenBody;
-				}
-
-				// Redundant check as non-authorized requests are returned as a 400
-				if (response.authorized) {
-					onAuthorization(cookieData);
-				}
-			}
-		};
-		xhr.open("POST", "/chat", true);
-		xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-		xhr.send(
-			JSON.stringify({
-				"type": "refresh_token",
-				"id": cookieData.id,
-				"access_token": cookieData.access_token
-			})
-		);
-	}
+	checkAuthentication();
 
 	let lastMessageSent = Date.now();
 	let sendMessage = function(message) {
@@ -183,18 +145,25 @@ domReady.then(() => {
 	}, false);
 
 	// Make log out button functional
-	let chatButtonLogOut = document.getElementById("buttonLogOut");
-	chatButtonLogOut.addEventListener("click", function() {
-		if (confirm("Do you really wish to log out?")) {
-			Cookies.remove("user_data",
-				{
-					path: "",
-					domain: window.location.hostname
+	for (let chatButtonLogOut of document.getElementsByClassName("buttonLogOut")) {
+		chatButtonLogOut.addEventListener("click", function() {
+			if (confirm("Do you really wish to log out?")) {
+				Cookies.remove("user_data",
+					{
+						path: "/",
+						domain: window.location.hostname
+					}
+				);
+
+				// Send to parent if applicable
+				if (inIframe()) {
+					window.top.postMessage(userState.AUTH_CHANGED, `${window.location.origin}/client`);
 				}
-			);
-			window.location.reload(true);
-		}
-	}, false);
+
+				window.location.reload(true);
+			}
+		}, false);
+	}
 });
 
 let authWindow;
@@ -212,9 +181,14 @@ function authenticationWindow() {
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
 	if (event.data && event.data.success && event.origin === window.location.origin) {
-		onAuthorization(event.data.response);
 		cookieData = Cookies.getJSON("user_data");
 		authWindow.close();
+		checkAuthentication();
+
+		// Send to parent if applicable
+		if (inIframe()) {
+			window.top.postMessage(userState.AUTH_CHANGED, `${window.location.origin}/client`);
+		}
 	}
 }
 
@@ -222,4 +196,56 @@ function onAuthorization(data) {
 	document.getElementById("userAvatar").src = `https://cdn.discordapp.com/avatars/${data.id}/${data.avatar}.jpg`;
 	document.getElementById("userName").innerText = `${data.username}#${data.discriminator}`;
 	document.getElementById("chatInputContainer").className = "authorized";
+}
+
+function onBanned() {
+	document.getElementById("chatInputContainer").className = "banned";
+}
+
+function checkAuthentication() {
+	if (
+		// If there is former data, check if it is not outdated.
+		cookieData
+
+		// See if current date is later than origin date + expiration period
+		&& Date.now() < cookieData.access_granted + cookieData.expires_in * 1000
+	) {
+		// Request a fresh token
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState === 4 && this.status === 200) {
+				let response = JSON.parse(xhr.responseText);
+
+				if (response.authorized && response.refreshed && response.tokenBody) {
+					response.tokenBody.id = cookieData.id;
+					response.tokenBody.username = cookieData.username;
+					response.tokenBody.discriminator = cookieData.discriminator;
+					response.tokenBody.avatar = cookieData.avatar;
+					let days = (response.tokenBody.expires_in / 62400) - 0.1; // seconds to days minus some slack
+					Cookies.set("user_data", response.tokenBody, {
+						expires: days,
+						path: "/",
+						domain: window.location.hostname,
+						secure: config.ssl
+					});
+					cookieData = response.tokenBody;
+				}
+
+				if (response.authorized) {
+					onAuthorization(cookieData);
+				} else if (response.banned) {
+					onBanned();
+				}
+			}
+		};
+		xhr.open("POST", "/chat", true);
+		xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+		xhr.send(
+			JSON.stringify({
+				"type": "refresh_token",
+				"id": cookieData.id,
+				"access_token": cookieData.access_token
+			})
+		);
+	}
 }

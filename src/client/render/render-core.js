@@ -62,6 +62,9 @@ let renderCore = function() {
 		freeCamera: null,
 		trackingCamera: null,
 
+		// Camera layer definitions
+		SPRITE_LAYER: 1,
+
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {
@@ -80,6 +83,7 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
+				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(1, 1, 1, 1),
 					new THREE.MeshStandardMaterial({

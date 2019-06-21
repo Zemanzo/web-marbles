@@ -1,11 +1,13 @@
 ---
 name: Feature
-about: Planned feature that will be added in the future (Dev only)
+about: Planned feature that will be added in the future (dev only)
 title: ''
-labels: feature
+labels: ''
 assignees: ''
 
 ---
+
+-- Add the feature label! --
 
 **Description**
 A brief description of the feature.

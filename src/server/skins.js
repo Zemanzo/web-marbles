@@ -1,5 +1,4 @@
 const fs = require("fs");
-const config = require("./config");
 const log = require("../log");
 
 const skins = function() {
@@ -7,7 +6,7 @@ const skins = function() {
 		idList: null,
 
 		readyPromise: new Promise((resolve, reject) => {
-			fs.readdir(`${config.marbles.resources}skins`,
+			fs.readdir("public/resources/skins",
 				undefined,
 				function(error, files) {
 					if (error) {
@@ -34,6 +33,4 @@ const skins = function() {
 	};
 }();
 
-
 module.exports = skins;
-

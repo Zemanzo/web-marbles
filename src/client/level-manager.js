@@ -262,13 +262,13 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
 		if(!renderCore.waterReflectsLevel()) parent.levelObjects.visible = false;
 		if(!renderCore.waterReflectsMarbles()) marbleManager.marbleGroup.visible = false;
-		marbleManager.marbleNamesGroup.visible = false;
+		camera.layers.disable(renderCore.SPRITE_LAYER);
 
 		originalOnBeforeRender(renderer, scene, camera);
 
 		parent.levelObjects.visible = true;
 		marbleManager.marbleGroup.visible = true;
-		marbleManager.marbleNamesGroup.visible = true;
+		camera.layers.enable(renderCore.SPRITE_LAYER);
 	};
 }
 

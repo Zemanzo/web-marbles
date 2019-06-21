@@ -8,7 +8,6 @@ const config = {};
 
 /* Marbles */
 config.marbles = {};
-config.marbles.resources = "public/resources/"; // Be sure to add trailing slash
 
 // Bots
 config.marbles.bots = {};
@@ -57,10 +56,6 @@ config.marbles.scoring.pointsAwardedForFinishing = 0;
 // G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
 config.marbles.scoring.pointScale = 1.5;
 
-/* Levels */
-config.levels = {};
-config.levels.folderPath = `${__dirname}/../../public/resources/maps`;
-
 /* Database */
 config.database = {};
 config.database.path = "web-marbles.db3";
@@ -68,6 +63,12 @@ config.database.path = "web-marbles.db3";
 /* Editor */
 config.editor = {};
 config.editor.enabled = true;
+
+/* Network */
+config.network = {};
+config.network.ssl = clientConfig.network.ssl;
+config.network.tickRate = 10; // Max amount of times game data should be sent to clients per second.
+config.network.rootUrl = "http://localhost:3004/"; // Be sure to add trailing slash
 
 /* Discord integration */
 config.discord = {};
@@ -77,7 +78,7 @@ config.discord.clientId = "<USE CONFIG.USER.JS OVERRIDE>";
 config.discord.clientSecret = "<USE CONFIG.USER.JS OVERRIDE>";
 
 config.discord.botToken = "<USE CONFIG.USER.JS OVERRIDE>";
-config.discord.redirectUriRoot = "http://localhost:3004/"; // Be sure to add trailing slash
+config.discord.redirectUriRoot = config.network.rootUrl; // Be sure to add trailing slash
 config.discord.scope = "connections identify"; // Space separated
 config.discord.useOAuth2State = false; // More secure, but not implemented yet...
 
@@ -104,11 +105,6 @@ config.uwebsockets.port = clientConfig.network.websockets.port;
 config.uwebsockets.keyFileName = "misc/key.pem";
 config.uwebsockets.certFileName = "misc/cert.pem";
 config.uwebsockets.passphrase = "1234";
-
-/* Network */
-config.network = {};
-config.network.ssl = clientConfig.network.ssl;
-config.network.tickRate = 10; // Max amount of times game data should be sent to clients per second.
 
 /* Override any user properties set in config.user.js */
 for(let key in userConfig) {

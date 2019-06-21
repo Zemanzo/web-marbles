@@ -647,7 +647,7 @@ p {
 		border-radius: 100%;
 		display: inline-block;
 		background-blend-mode: darken;
-		background-size: 100% 200%;
+		background-size: 200% 100%;
 	}
 
 	.marbleListEntry .id {
