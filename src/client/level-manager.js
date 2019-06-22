@@ -35,6 +35,9 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.levelName = null;
 	this.authorName = null;
 
+	// Loader thread handle
+	this.loader = null;
+
 	// Load default level properties
 	this.loadLevel(new LevelData());
 }
@@ -57,10 +60,14 @@ MarbleLevel.prototype.closeGates = function() {
 
 // Fetches and loads the level asynchronously. Returns a Promise that resolves when loading is complete
 MarbleLevel.prototype.loadLevelFromUrl = function(url) {
-	let worker = new LevelLoaderWorker();
+	if(this.loader) {
+		console.warn(`Can't load ${url} because this MarbleLevel is already loading a level.`);
+		return Promise.resolve();
+	}
+	this.loader = new LevelLoaderWorker();
 
 	return new Promise( (resolve, reject) => {
-		worker.onmessage = function(result) {
+		this.loader.onmessage = function(result) {
 			if(result.data.success) {
 				let loadedLevel = result.data.payload;
 				Object.setPrototypeOf(loadedLevel, LevelData.prototype);
@@ -69,13 +76,17 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 				reject(result.data.payload);
 			}
 		};
-		worker.onerror = function(error) {
+		this.loader.onerror = function(error) {
 			reject(error.message);
 		};
-		worker.postMessage({url});
+		this.loader.postMessage({url});
 	}).then( (result) => {
+		this.loader.terminate();
+		this.loader = null;
 		return this.loadLevel(result);
 	}).catch( (error) => {
+		this.loader.terminate();
+		this.loader = null;
 		console.error(`Level loading failed: ${error}`);
 		return false;
 	});
