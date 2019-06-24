@@ -8,7 +8,6 @@ import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
 import { marbleManager } from "./marble-manager";
 import LevelLoaderWorker from "./level-loader.worker";
-import { HUDNotification } from "./client/hud-notification";
 import * as config from "./config";
 
 const _GLTFLoader = new THREE.GLTFLoader();
@@ -66,9 +65,6 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 		return Promise.resolve();
 	}
 	this.loader = new LevelLoaderWorker();
-
-	let loadingNotification;
-
 	return new Promise( (resolve, reject) => {
 		this.loader.onmessage = function(result) {
 			if(result.data.success) {
@@ -82,19 +78,14 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 		this.loader.onerror = function(error) {
 			reject(error.message);
 		};
-		loadingNotification = new HUDNotification("Loading level...", undefined, { background: "#4286f4" });
 		this.loader.postMessage({url});
 	}).then( (result) => {
 		this.loader.terminate();
 		this.loader = null;
-		loadingNotification.remove();
-		new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
 		return this.loadLevel(result);
 	}).catch( (error) => {
 		this.loader.terminate();
 		this.loader = null;
-		loadingNotification.remove();
-		new HUDNotification("Level loading failed... Try refreshing the page?", 10, { background: "#db1111" });
 		console.error(`Level loading failed: ${error}`);
 		return false;
 	});

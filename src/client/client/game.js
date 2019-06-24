@@ -4,6 +4,7 @@ import { marbleManager } from "../marble-manager";
 import { userState } from "../user-state";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
+import { HUDNotification } from "./hud-notification";
 import * as gameConstants from "../../game-constants.json";
 
 let game = function() {
@@ -151,11 +152,17 @@ let game = function() {
 			// Start loading the level asynchronously if not yet loaded
 			if(_serverData.currentLevelId !== levelId) {
 				console.log(`Loading level: ${levelId}`);
+				let loadingNotification = new HUDNotification("Loading level...", undefined, { background: "#4286f4" });
 				_serverData.currentLevelId = levelId;
-				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then( () => {
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then(() => {
+					loadingNotification.remove();
+					new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
+				}).catch(() => {
+					loadingNotification.remove();
+					new HUDNotification("Level loading failed... Try refreshing the page?", 10, { background: "#db1111" });
 				});
 			}
 		},
