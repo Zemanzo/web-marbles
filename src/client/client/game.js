@@ -154,15 +154,19 @@ let game = function() {
 				console.log(`Loading level: ${levelId}`);
 				let loadingNotification = new HUDNotification("Loading level...", undefined, { background: "#4286f4" });
 				_serverData.currentLevelId = levelId;
-				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then(() => {
+				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then((result) => {
 					loadingNotification.remove();
-					new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
+					if(result === "failed") {
+						new HUDNotification("Level loading failed... Try refreshing the page?", 10, { background: "#db1111" });
+					} else if(result !== 0) {
+						new HUDNotification("Level loading incomplete... If this happens often, contact the server admin.", 5, { background: "#f29307" });
+					} else {
+						new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
+					}
+
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
-				}).catch(() => {
-					loadingNotification.remove();
-					new HUDNotification("Level loading failed... Try refreshing the page?", 10, { background: "#db1111" });
 				});
 			}
 		},

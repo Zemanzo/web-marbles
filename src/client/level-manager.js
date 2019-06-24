@@ -87,7 +87,7 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 		this.loader.terminate();
 		this.loader = null;
 		console.error(`Level loading failed: ${error}`);
-		return false;
+		return "failed";
 	});
 };
 
@@ -195,7 +195,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				}
 			}).catch((error) => {
 				console.warn(`Unable to load model (${modelName}), using fallback model instead`, error);
-				models[modelName] = renderCore.getDefaultModel();
+				models[modelName] = null;
 			})
 		);
 	}
@@ -203,14 +203,22 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load prefabs
 	let prefabs = {};
 	return Promise.all(modelPromises).then(() => {
+		let warnings = 0;
 		for (let prefabUuid in data.prefabs) {
 			let group = new THREE.Group();
 
 			for (let entity of Object.values(data.prefabs[prefabUuid].entities)) {
 				if (entity.type === "object" && entity.model) {
-					let clone = models[entity.model].clone();
-					clone.userData.functionality = entity.functionality;
+					let clone;
+					if(!models[entity.model]) {
+						clone = renderCore.getDefaultModel().clone();
+						warnings++;
+					}
+					else {
+						clone = models[entity.model].clone();
+					}
 
+					clone.userData.functionality = entity.functionality;
 					clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
 					clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
 					clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
@@ -240,6 +248,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			obj.updateMatrix();
 			obj.matrixAutoUpdate = false;
 		});
+		return warnings;
 	});
 };
 
