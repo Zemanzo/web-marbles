@@ -24,14 +24,17 @@ function HUDNotification(content, duration = 5, styles) {
 		elements.notifications.appendChild(this.node);
 	});
 
-	setTimeout(() => {
-		this.remove();
-	}, Math.floor(duration * 1000));
+	if (!isNaN(duration)) {
+		this.removalTimeout = setTimeout(() => {
+			this.remove();
+		}, Math.floor(duration * 1000));
+	}
 
 	notifications.push(this);
 }
 
 HUDNotification.prototype.remove = function() {
+	clearTimeout(this.removalTimeout);
 	domNodes.then((elements) => {
 		// Fade out
 		this.node.style.opacity = 0;
