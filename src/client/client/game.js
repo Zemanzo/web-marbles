@@ -163,7 +163,6 @@ let game = function() {
 					} else {
 						new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
 					}
-
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();
 					}
