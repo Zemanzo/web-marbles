@@ -31,6 +31,10 @@ body {
 	max-height: 900px;
 }
 
+.semiTransparent {
+  background: #06060688;
+}
+
 header {
 	display: flex;
 	font-size: .9rem;
@@ -90,6 +94,7 @@ header {
 	.message {
 		display: flex;
 		align-items: baseline;
+		word-break: break-word;
 		max-width: 100%;
 		overflow: hidden;
 		padding: 0 8px;
@@ -348,4 +353,21 @@ header {
 #failure {
 	text-align: center;
 	display: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2b2929;
+}
+ 
+::-webkit-scrollbar-thumb {
+    background: var(--theme-color); 
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-color-dark); 
 }
