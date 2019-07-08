@@ -354,20 +354,3 @@ header {
 	text-align: center;
 	display: none;
 }
-
-/* Scrollbar */
-::-webkit-scrollbar {
-    width: 10px;
-}
-
-::-webkit-scrollbar-track {
-    background: #2b2929;
-}
- 
-::-webkit-scrollbar-thumb {
-    background: var(--theme-color); 
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: var(--theme-color-dark); 
-}
