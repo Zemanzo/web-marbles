@@ -34,7 +34,7 @@ domReady.then(() => {
 	};
 
 	if (inIframe()) {
-		document.body.style.background = "#06060666";
+		document.body.classList.add("semiTransparent");
 	}
 
 	// Add discord link open as new window
