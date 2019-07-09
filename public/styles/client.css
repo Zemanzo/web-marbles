@@ -296,8 +296,11 @@ body > *:not(#sidebar) {
 
 
 #chat {
-	left: 0px;
-	bottom: 0px;
+	position: relative;
+	left: 4px;
+	bottom: 4px;
+	border-radius: var(--border-radius);
+	overflow: hidden;
 	width: 100%;
 	font-size: 13px;
 	max-width: 60ch;
