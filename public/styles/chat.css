@@ -94,7 +94,6 @@ header {
 	.message {
 		display: flex;
 		align-items: baseline;
-		word-break: break-word;
 		max-width: 100%;
 		overflow: hidden;
 		padding: 0 8px;
@@ -129,6 +128,15 @@ header {
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
+			}
+			
+		.content {
+			white-space: nowrap;
+		}
+
+			.text {
+				word-break: break-word;
+				white-space: normal;
 			}
 
 #chatInputContainer {
