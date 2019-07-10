@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "post-receive: web-marbles automated deployment triggered"
+
+cd /opt/web-marbles/live
+
+echo "post-receive: git check out..."
+
+git --git-dir=/home/git/web-marbles.git --work-tree=/opt/web-marbles/live checkout master -f
+
+echo "post-receive: yarn install and build..."
+
+NODE_ENV="development"
+
+yarn --frozen-lockfile --non-interactive
+
+NODE_ENV="production"
+
+yarn run build
+
+(pm2 delete "live" || true)
+
+pm2 start /opt/web-marbles/live
+
+echo "post-receive: → done."

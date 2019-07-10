@@ -1,0 +1,46 @@
+server {
+    listen 80;
+
+    server_name playmarbl.es  *.playmarbl.es;
+
+    return 301 https://playmarbl.es$request_uri;
+}
+
+server {
+    listen 443 ssl;
+
+    ssl on;
+    ssl_certificate     *********.pem;
+    ssl_certificate_key *********.pem;
+    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers         HIGH:!aNULL:!MD5;
+
+    client_max_body_size 64M;
+    server_name playmarbl.es  *.playmarbl.es;
+    access_log /var/log/nginx/web-marbles.access.log;
+
+    error_page 502 /502.html;
+
+    location /502.html {
+        root /opt/web-marbles;
+    }
+
+    location /ws {
+        proxy_pass https://127.0.0.1:3014;
+        proxy_read_timeout 3600s;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:3004;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
