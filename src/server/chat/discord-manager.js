@@ -15,14 +15,14 @@ const discordManager = function() {
 			this.chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 
 			// Set up chat socket
-			let socket = this.socket = socketChat(this.chatWebhook);
+			this.socket = socketChat(this.chatWebhook);
 
-			this.client.on("ready", function() {
+			this.client.on("ready", () => {
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
 				self.client.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 			}, console.error);
 
-			this.client.on("message", function(message) {
+			this.client.on("message", (message) => {
 				if (message.channel.id == config.discord.gameplayChannelId) {
 					if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
 						if (!db.user.idExists(message.author.id)) {
@@ -31,7 +31,7 @@ const discordManager = function() {
 						}
 
 						// Send it to the client chat
-						socket.emit(
+						this.socket.emit(
 							JSON.stringify({
 								username: message.author.username,
 								discriminator: message.author.discriminator,
@@ -50,12 +50,12 @@ const discordManager = function() {
 
 			this.client.on("error", console.error, console.error);
 
-			this.client.on("guildBanAdd", function(guild, user) {
+			this.client.on("guildBanAdd", (guild, user) => {
 				log.info(`DISCORD: ${"Banned user".red} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(true, user.id);
 			}, console.error);
 
-			this.client.on("guildBanRemove", function(guild, user) {
+			this.client.on("guildBanRemove", (guild, user) => {
 				log.info(`DISCORD: ${"Unbanned user".green} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(false, user.id);
 			}, console.error);
