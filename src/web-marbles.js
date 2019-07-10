@@ -31,19 +31,11 @@ physics.world.setGravity(config.physics.gravity);
 // Set up game logic
 const game = require("./server/game");
 
-// Set up gameplay socket
-const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, config, game);
-
-// Set game socketManager
-game.setSocketManager(socketGameplay);
-
 // Set up chat
-let discordManager = null,
-	socketChat;
+let discordManager = null;
 if (config.discord.enabled) {
 	discordManager = require("./server/chat/discord-manager");
-	socketChat = discordManager.initialize(db);
+	discordManager.initialize(db);
 }
 
 // Express connections
@@ -206,7 +198,7 @@ function shutdown() {
 		log.warn("Termination signal received. Shutting down web-marbles...".yellow);
 
 		// Inform any connected clients
-		socketGameplay.emit(JSON.stringify({
+		game.socket.emit(JSON.stringify({
 			content: "The server is shutting down.",
 			style: {
 				backgroundColor: "#d00"
@@ -244,9 +236,9 @@ function shutdown() {
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets
-		if (socketChat) socketChat.close();
-		socketGameplay.close();
-		sockets.close();
+		if (discordManager) discordManager.socket.close();
+		game.socket.close();
+		require("./server/network/sockets-helper").stopListening();
 		log.warn("µWS server closed");
 
 		// Once promises resolve, we should be done

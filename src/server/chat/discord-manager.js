@@ -3,6 +3,7 @@ const log = require("../../log");
 const messages = require("./messages");
 const discord = require("discord.js");
 const request = require("request-promise-native");
+const socketChat = require("../network/socket-chat");
 
 const discordManager = function() {
 	return {
@@ -14,8 +15,7 @@ const discordManager = function() {
 			this.chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 
 			// Set up chat socket
-			const sockets = require("../network/sockets");
-			const socketChat = sockets.setupChat(db, this.chatWebhook);
+			let socket = this.socket = socketChat(this.chatWebhook);
 
 			this.client.on("ready", function() {
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
@@ -31,7 +31,7 @@ const discordManager = function() {
 						}
 
 						// Send it to the client chat
-						socketChat.emit(
+						socket.emit(
 							JSON.stringify({
 								username: message.author.username,
 								discriminator: message.author.discriminator,
@@ -62,8 +62,6 @@ const discordManager = function() {
 
 
 			this.client.login(config.discord.botToken);
-
-			return socketChat;
 		},
 
 		stop: function() {

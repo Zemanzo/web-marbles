@@ -1,64 +1,70 @@
 const game = require("../game");
 const skins = require("../skins");
 
-const colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
+const messages = function() {
+	const _colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
 
-const createAttributesObject = function(messageContent) {
-	let messageSections = messageContent.split(" ");
-	let color, skinId;
+	const _createAttributesObject = function(messageContent) {
+		let messageSections = messageContent.split(" ");
+		let color, skinId;
 
-	for (let i = 1; i < Math.min(messageSections.length, 3); i++) {
-		if (!color) {
-			let match = messageSections[i].match(colorRegEx);
-			color = (match === null ? undefined : match[0]);
-			if (typeof color !== "undefined") continue;
+		for (let i = 1; i < Math.min(messageSections.length, 3); i++) {
+			if (!color) {
+				let match = messageSections[i].match(_colorRegEx);
+				color = (match === null ? undefined : match[0]);
+				if (typeof color !== "undefined") continue;
+			}
+
+			if (!skinId) {
+				skinId = skins.idList.includes(messageSections[i]) ? messageSections[i] : undefined;
+				if (typeof skinId !== "undefined") continue;
+			}
 		}
 
-		if (!skinId) {
-			skinId = skins.idList.includes(messageSections[i]) ? messageSections[i] : undefined;
-			if (typeof skinId !== "undefined") continue;
-		}
-	}
+		return {
+			color,
+			skinId
+		};
+	};
 
 	return {
-		color,
-		skinId
-	};
-};
+		parse: function(messageContent, id, username, member) {
+			// Check for developer permissions
+			let isDeveloper = false;
+			if (member) {
+				isDeveloper = member.roles.some(role => role.name === "Developers");
+			} else {
+				isDeveloper = id == "112621040487702528" || id == "133988602530103298";
+			}
 
-const parse = function(messageContent, id, username, member) {
-	let isDeveloper = false;
+			// Check for marble entries
+			if (messageContent.startsWith("!marble")) {
+				game.addPlayerEntry(
+					id,
+					username,
+					_createAttributesObject(messageContent)
+				);
+			}
 
-	if (member) {
-		isDeveloper = member.roles.some(role => role.name === "Developers");
-	} else {
-		isDeveloper = id == "112621040487702528" || id == "133988602530103298";
-	}
+			// -- Developer commands
+			// End the race
+			else if (messageContent.startsWith("!end") && isDeveloper) {
+				game.end();
+			}
 
-	if (messageContent.startsWith("!marble")) {
-		game.addPlayerEntry(
-			id,
-			username,
-			createAttributesObject(messageContent)
-		);
-	}
-
-	else if (messageContent.startsWith("!end") && isDeveloper) {
-		game.end();
-	}
-
-	else if (messageContent.startsWith("!lotsofbots") && isDeveloper) {
-		let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
-		for (let i = 0; i < amount; i++) {
-			game.spawnMarble(
-				undefined,
-				undefined,
-				createAttributesObject(messageContent)
-			);
+			// Add bots to the race
+			else if (messageContent.startsWith("!lotsofbots") && isDeveloper) {
+				let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
+				for (let i = 0; i < amount; i++) {
+					game.spawnMarble(
+						undefined,
+						undefined,
+						_createAttributesObject(messageContent)
+					);
+				}
+			}
 		}
-	}
-};
+	};
+}();
 
-module.exports = {
-	parse
-};
+module.exports = messages;
