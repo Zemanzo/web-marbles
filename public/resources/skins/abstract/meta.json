@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"abstract"
+	],
+	"allowCustomColor": true,
+	"roughness": 0.95,
+	"metalness": 0
+}

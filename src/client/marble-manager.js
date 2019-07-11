@@ -6,7 +6,29 @@ import { userState } from "./user-state";
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
 	let _skins = {},
-		_fallbackSkin = null;
+		_fallbackDiffuse = null;
+
+	let _shaderUniforms = {
+		"time": { value: 1.0 }
+	};
+
+	const _applySkin = function(marbleData) {
+		let skinMeta = _skins[marbleData.skinId];
+		if (skinMeta.customShader) {
+			marbleData.mesh.material = skinMeta.material;
+			console.log(marbleData.mesh.material);
+		} else {
+			if (skinMeta.diffuse) {
+				marbleData.material.map = skinMeta.diffuse;
+			}
+			if (skinMeta.normal) {
+				marbleData.material.normalMap = skinMeta.normal;
+			}
+		}
+
+		marbleData.material.needsUpdate = true;
+		console.log(marbleData.mesh);
+	};
 
 	return {
 		marbles: [], // Array of marbles that currently exist in the scene
@@ -29,7 +51,7 @@ let marbleManager = function() {
 			context.fillStyle = "#ffffff";
 			context.fillRect(0, 0, 32, 32);
 
-			_fallbackSkin = new THREE.TextureLoader().load(
+			_fallbackDiffuse = new THREE.TextureLoader().load(
 				canvas.toDataURL(),
 				undefined,
 				undefined,
@@ -63,19 +85,108 @@ let marbleManager = function() {
 			this.marbles = [];
 		},
 
-		getSkin: function(id) {
-			if (!_skins[id]) {
-				_skins[id] = new THREE.TextureLoader().load(
-					`resources/skins/${id}.png`,
-					undefined,
-					undefined,
-					function(error) { // error
-						console.warn(`Unable to load skin as texture (${id})`, error);
-						_skins[id] = _fallbackSkin;
-					}
-				);
+		getSkin: function(marbleData) {
+			let skinId = marbleData.skinId;
+			if (!_skins[skinId]) {
+				// Fetch skin meta. It will attempt to download the meta file that belongs to the skin ID.
+				// It will then parse to form the final material.
+				fetch(`resources/skins/${skinId}/meta.json`)
+					.then((response) => {
+						if (response.ok) {
+							return response.json();
+						}
+
+						return Promise.reject();
+					})
+					// Parse meta file
+					.then((skinMeta) => {
+						_skins[skinId] = skinMeta;
+						console.log(skinMeta);
+
+						if (skinMeta.customShader) {
+							// Load shader files. This tries to load all shader file types. If loading fails (because
+							// it doesn't exist), it will simply ignore that shader file type.
+							let files = ["fragment.glsl", "vertex.glsl", "uniforms.json"];
+							let shaderFilePromises = [];
+
+							for (let file of files) {
+								shaderFilePromises.push(
+									fetch(`resources/skins/${skinId}/${file}`)
+										.then((response) => {
+											if (response.ok) {
+												return (file === "uniforms.json" ? response.json() : response.text());
+											}
+
+											return undefined;
+										})
+								);
+							}
+
+							return Promise.all(shaderFilePromises)
+								.then((values) => {
+									// TODO: parse potential constants (like vec3) in uniforms json.
+
+									// Copy new uniforms into live-updating object.
+									// if (values[2]) {
+									// 	Object.assign(renderCore.shaderSkinUniforms, values[2]);
+									// }
+
+									// Create the material
+									_skins[skinId].material = new THREE.ShaderMaterial({
+										fragmentShader: values[0],
+										vertexShader: values[1],
+										uniforms: _shaderUniforms
+									});
+
+									renderCore.shaderMaterials.push(_skins[skinId].material);
+
+									return _skins[skinId].material;
+								})
+								.then(() => {
+									_applySkin(marbleData);
+								});
+						} else {
+							// Load various maps. This tries to load all map types. If loading fails (because
+							// it doesn't exist), it will simply ignore that map type.
+							let mapTypes = ["diffuse", "normal"];
+							let mapTexturePromises = [];
+
+							// Load every map type as a texture. The texture loader has been promisified.
+							for (let map of mapTypes) {
+								mapTexturePromises.push(
+									new Promise((resolve) => {
+										// Load texture
+										new THREE.TextureLoader().load(
+											`resources/skins/${skinId}/${map}.png`,
+											(texture) => {
+												_skins[skinId][map] = texture;
+												resolve(texture);
+											},
+											undefined,
+											() => {
+												resolve(map === "diffuse" ? _fallbackDiffuse : undefined);
+											}
+										);
+									})
+								);
+								console.log(marbleData.material[map]);
+							}
+
+							// After all texture maps are loaded, apply the skin
+							return Promise.all(mapTexturePromises)
+								.then(() =>{
+									_applySkin(marbleData);
+								});
+						}
+					})
+					.catch(() => {
+						// Skin failed to load, so remove it from the skins list
+						delete _skins[skinId];
+					});
+			} else {
+				// Skin meta has already been retrieved before, so we only have to apply it.
+				_applySkin(marbleData);
 			}
-			return _skins[id];
 		}
 	};
 }();
@@ -96,10 +207,10 @@ const MarbleMesh = function(marbleData) {
 	this.material = new THREE.MeshStandardMaterial({
 		color: this.materialColor,
 		roughness: .9,
-		metalness: 0,
-		map: marbleManager.getSkin(this.skinId)
+		metalness: 0
 	});
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
+	marbleManager.getSkin(this);
 	this.marbleOrigin.add(this.mesh);
 
 	// Set scale based on marble size

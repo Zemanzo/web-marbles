@@ -22,6 +22,7 @@ const levels = require("./server/levels/manager");
 
 // Prepare marble skins
 const skins = require("./server/skins");
+skins.updateIdList();
 
 // Set up physics world
 const physics = require("./physics/manager");

@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"marble"
+	],
+	"allowCustomColor": true,
+	"roughness": 0.5,
+	"metalness": 0
+}

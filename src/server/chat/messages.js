@@ -15,7 +15,7 @@ const createAttributesObject = function(messageContent) {
 		}
 
 		if (!skinId) {
-			skinId = skins.idList.includes(messageSections[i]) ? messageSections[i] : undefined;
+			skinId = skins.idList[messageSections[i] ? messageSections[i] : undefined];
 			if (typeof skinId !== "undefined") continue;
 		}
 	}

@@ -1,0 +1,11 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"groovy"
+	],
+	"allowCustomColor": false,
+	"customShader": true,
+	"roughness": 0.95,
+	"metalness": 0
+}
