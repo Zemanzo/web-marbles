@@ -7,10 +7,10 @@ module.exports = {
 	entry: {
 		client: "./src/client/client/client.js",
 		editor: "./src/client/editor/editor.js",
-		skins: "./src/client/skins.js",
+		skins: "./src/client/skins/skins.js",
 		chat: "./src/client/chat/chat.js",
 		discordApiRedirect: "./src/client/chat/discord-api-redirect.js",
-		contact: "./src/client/contact.js",
+		contact: "./src/client/contact/contact.js",
 		debug: "./src/client/client/debug.js"
 	},
 	output: {

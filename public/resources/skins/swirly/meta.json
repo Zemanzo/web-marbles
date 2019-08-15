@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"swirly"
+	],
+	"allowCustomColor": true,
+	"roughness": 0.95,
+	"metalness": 0
+}

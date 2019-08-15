@@ -1,9 +1,9 @@
 import * as THREE from "three";
-import { renderCore } from "./render/render-core";
-import { levelManager } from "./level-manager";
-import { marbleManager } from "./marble-manager";
-import { cameras } from "./render/cameras";
-import domReady from "./dom-ready";
+import { renderCore } from "../render/render-core";
+import { levelManager } from "../level-manager";
+import { marbleManager } from "../marble-manager";
+import { cameras } from "../render/cameras";
+import domReady from "../dom-ready";
 
 // Set up core (rendering, level & marble management)
 renderCore.initialize(cameras.CAMERA_FREE);
