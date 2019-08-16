@@ -57,14 +57,13 @@ const MarbleMesh = function(marbleData) {
 	this.marbleOrigin = new THREE.Group();
 
 	this.geometry = marbleManager.marbleGeometry;
-	this.materialColor = new THREE.Color(this.color);
-	this.material = new THREE.MeshStandardMaterial({
-		color: this.materialColor,
-		roughness: .9,
-		metalness: 0
-	});
+	this.material = marbleSkins.placeholderMaterial;
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
-	marbleSkins.getSkin(this);
+	marbleSkins.loadSkin(this.skinId, this.color)
+		.then((skinMaterial) => {
+			this.material = this.mesh.material = skinMaterial;
+		});
+
 	this.marbleOrigin.add(this.mesh);
 
 	// Set scale based on marble size

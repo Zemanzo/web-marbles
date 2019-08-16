@@ -28,30 +28,39 @@ let marbleSkins = function() {
 	);
 
 	return {
-		applySkin: function(marbleData) {
-			let skinMeta = _skins[marbleData.skinId];
-			if (skinMeta.customShader) {
-				marbleData.mesh.material = skinMeta.material;
-				console.log(marbleData.mesh.material);
-			} else {
-				if (skinMeta.diffuse) {
-					marbleData.material.map = skinMeta.diffuse;
-				}
-				if (skinMeta.normal) {
-					marbleData.material.normalMap = skinMeta.normal;
-				}
-			}
+		placeholderMaterial: new THREE.MeshStandardMaterial({
+			color: new THREE.Color("#000000"),
+			roughness: .9,
+			metalness: 0
+		}),
 
-			marbleData.material.needsUpdate = true;
-			console.log(marbleData.mesh);
+
+		/**
+		 * Opposed to loadSkin(), this will return the requested skin immediately.
+		 *
+		 * @param {String} skinId The ID for the skin that needs to be loaded.
+		 *
+		 * Return value
+		 * @returns {THREE.Material} The skin material, or undefined if the skin has not been loaded yet.
+		 */
+		getSkin: function(skinId) {
+			return _skins[skinId].material;
 		},
 
-		getSkin: function(marbleData) {
-			let skinId = marbleData.skinId;
+		/**
+		 * This function will load a skin from the server and parse it to a material.
+		 *
+		 * @param {String} skinId The ID for the skin that needs to be loaded.
+		 * @param {String} color Optionally, the base color of the material. Will default to "#ffffff".
+		 *
+		 * Return value
+		 * @returns {Promise} The corresponding material.
+		 */
+		loadSkin: function(skinId, color) {
 			if (!_skins[skinId]) {
 				// Fetch skin meta. It will attempt to download the meta file that belongs to the skin ID.
 				// It will then parse to form the final material.
-				fetch(`resources/skins/${skinId}/meta.json`)
+				return fetch(`resources/skins/${skinId}/meta.json`)
 					.then((response) => {
 						if (response.ok) {
 							return response.json();
@@ -62,7 +71,6 @@ let marbleSkins = function() {
 					// Parse meta file
 					.then((skinMeta) => {
 						_skins[skinId] = skinMeta;
-						console.log(skinMeta);
 
 						if (skinMeta.customShader) {
 							// Load shader files. This tries to load all shader file types. If loading fails (because
@@ -105,9 +113,6 @@ let marbleSkins = function() {
 									renderCore.shaderMaterials.push(_skins[skinId].material);
 
 									return _skins[skinId].material;
-								})
-								.then(() => {
-									this.applySkin(marbleData);
 								});
 						} else {
 							// Load various maps. This tries to load all map types. If loading fails (because
@@ -133,13 +138,21 @@ let marbleSkins = function() {
 										);
 									})
 								);
-								console.log(marbleData.material[map]);
 							}
 
-							// After all texture maps are loaded, apply the skin
+							// After all texture maps are loaded, create the material
 							return Promise.all(mapTexturePromises)
 								.then(() => {
-									this.applySkin(marbleData);
+									let materialValues = {};
+									materialValues.color = new THREE.Color(color || "#ffffff");
+									materialValues.roughness = !isNaN(skinMeta.roughness) ? skinMeta.roughness : .9;
+									materialValues.metalness = !isNaN(skinMeta.metalness) ? skinMeta.metalness : 0;
+									materialValues.map = _skins[skinId].diffuse;
+									if (_skins[skinId].normal) {
+										materialValues.normalMap = _skins[skinId].normal;
+									}
+
+									return _skins[skinId].material = new THREE.MeshStandardMaterial(materialValues);
 								});
 						}
 					})
@@ -148,8 +161,10 @@ let marbleSkins = function() {
 						delete _skins[skinId];
 					});
 			} else {
-				// Skin meta has already been retrieved before, so we only have to apply it.
-				this.applySkin(marbleData);
+				// Skin meta has already been retrieved before, so we only have to return it. Since the
+				// return value is always expected to be a promise, we will return a promise that
+				// immediately resolves to the already loaded material.
+				return Promise.resolve(_skins[skinId].material);
 			}
 		}
 	};

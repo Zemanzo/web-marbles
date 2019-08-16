@@ -5,6 +5,6 @@
 		"eyeball"
 	],
 	"allowCustomColor": false,
-	"roughness": 0.95,
+	"roughness": 0.4,
 	"metalness": 0
 }

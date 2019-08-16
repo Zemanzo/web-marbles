@@ -1,11 +1,9 @@
 {
 	"enabled": true,
-	"premium": false,
+	"premium": true,
 	"aliases": [
 		"slowrainbow"
 	],
 	"allowCustomColor": false,
-	"customShader": true,
-	"roughness": 0.95,
-	"metalness": 0
+	"customShader": true
 }

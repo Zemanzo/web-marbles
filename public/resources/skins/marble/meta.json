@@ -5,6 +5,6 @@
 		"marble"
 	],
 	"allowCustomColor": true,
-	"roughness": 0.5,
+	"roughness": 0.3,
 	"metalness": 0
 }

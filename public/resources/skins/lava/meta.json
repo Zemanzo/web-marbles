@@ -1,6 +1,6 @@
 {
 	"enabled": true,
-	"premium": false,
+	"premium": true,
 	"aliases": [
 		"lava"
 	],

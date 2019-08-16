@@ -1,8 +1,8 @@
 {
-	"enabled": true,
+	"enabled": false,
 	"premium": true,
 	"aliases": [
-		"groovy"
+		"blobiscope"
 	],
 	"allowCustomColor": false,
 	"customShader": true
