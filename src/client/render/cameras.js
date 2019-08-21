@@ -336,16 +336,31 @@ function TrackingCamera(
 	this.camera.rotation.order = "YXZ";
 	this.camera.layers.enable(renderCore.SPRITE_LAYER);
 	this.target = null;
+	this.distanceMultiplier = 1;
+
+	let _listeners = [];
+	let self = this;
 
 	/**
 	 * Enables the controls
 	 */
 	this.enable = function() {
+		let func;
+
 		this.enabled = true;
 
 		this.update = function() {
 			update.bind(this)();
 		};
+
+		// Using the scrolling wheel allows a user to zoom the camera (closer or further away from the marble that is being tracked)
+		func = function(event) {
+			let newMultiplier = self.distanceMultiplier + .05 * event.deltaY;
+			if (self.enabled === true && newMultiplier > .1 && newMultiplier < 5) {
+				self.distanceMultiplier = newMultiplier;
+			}
+		};
+		_listeners.push(addRegisteredEventListener(window, "wheel", func, false));
 	};
 
 	/**
@@ -356,6 +371,11 @@ function TrackingCamera(
 
 		// null update function
 		this.update = () => void 0;
+
+		// remove listeners
+		_listeners.forEach((el) => {
+			el();
+		});
 	};
 
 	this.setTarget = function(target) {
@@ -385,16 +405,23 @@ function TrackingCamera(
 	let targetQuaternion;
 	let update = function() {
 		if (this.target) {
-			if (Math.abs(this.camera.position.x - this.target.position.x) > 2) {
-				this.camera.position.x = ThreeMath.lerp(this.camera.position.x, this.target.position.x, .01);
+			let lerp = .01 * (1 / this.distanceMultiplier);
+
+			// X position
+			if (Math.abs(this.camera.position.x - this.target.position.x) > 2 * this.distanceMultiplier) {
+				this.camera.position.x = ThreeMath.lerp(this.camera.position.x, this.target.position.x, lerp);
 			}
 
-			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, this.target.position.y + 7, .01) || this.camera.position.y;
+			// Y position
+			let heightModifier = this.distanceMultiplier < 1 ? this.distanceMultiplier ** 2 : this.distanceMultiplier;
+			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, this.target.position.y + 7 * heightModifier, lerp) || this.camera.position.y;
 
-			if (Math.abs(this.camera.position.z - this.target.position.z) > 2) {
-				this.camera.position.z = ThreeMath.lerp(this.camera.position.z, this.target.position.z, .01);
+			// Z position
+			if (Math.abs(this.camera.position.z - this.target.position.z) > 2 * this.distanceMultiplier) {
+				this.camera.position.z = ThreeMath.lerp(this.camera.position.z, this.target.position.z, lerp);
 			}
 
+			// Rotation
 			if (isNaN(this.camera.rotation._x) || isNaN(this.camera.rotation._y) || isNaN(this.camera.rotation._z)) {
 				this.camera.setRotationFromEuler(new Euler());
 			} else {
