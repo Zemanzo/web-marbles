@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"pool11"
+	],
+	"allowCustomColor": true,
+	"roughness": 0.3,
+	"metalness": 0
+}

@@ -54,7 +54,7 @@ const skins = function() {
 
 					for (let meta of metaFiles) {
 						// Check for potential null, due to failed loading / parsing of the meta file.
-						if (meta) {
+						if (meta && meta.enabled) {
 							for (let alias of meta.aliases) {
 								this.idList[alias] = meta.id;
 								this.skinList[meta.id] = meta;
