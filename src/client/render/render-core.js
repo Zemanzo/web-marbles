@@ -29,10 +29,8 @@ let renderCore = function() {
 		// Make updates
 		renderCore.updateCallback(deltaTime);
 
-		// Update shaders
-		for (let shaderMaterial of renderCore.shaderMaterials) {
-			shaderMaterial.uniforms["time"].value += deltaTime;
-		}
+		// Update shader uniforms
+		renderCore.shaderUniforms["time"].value += deltaTime;
 
 		if (renderCore.activeCamera.enabled === true) {
 			renderCore.activeCamera.update(deltaTime);
@@ -66,7 +64,9 @@ let renderCore = function() {
 		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
-		shaderMaterials: [],
+		shaderUniforms: {
+			"time": { value: 1.0 }
+		},
 
 		// Camera layer definitions
 		SPRITE_LAYER: 1,
@@ -89,7 +89,7 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new THREE.Scene();
 				_renderer = new THREE.WebGLRenderer();
-				_renderer.debug.checkShaderErrors = true;
+				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new THREE.Mesh(
 					new THREE.BoxBufferGeometry(1, 1, 1, 1),
 					new THREE.MeshStandardMaterial({

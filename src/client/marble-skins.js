@@ -4,9 +4,6 @@ import { renderCore } from "./render/render-core";
 let marbleSkins = function() {
 	let _skins = {},
 		_fallbackDiffuse = null,
-		_shaderUniforms = {
-			"time": { value: 1.0 }
-		},
 		_textureLoader = new THREE.TextureLoader();
 
 	// Default marble texture
@@ -43,8 +40,15 @@ let marbleSkins = function() {
 		 * Return value
 		 * @returns {THREE.Material} The skin material, or undefined if the skin has not been loaded yet.
 		 */
-		getSkin: function(skinId) {
-			return _skins[skinId].material;
+		getSkin: function(skinId, color) {
+			let skin = _skins[skinId];
+			if (skin.allowCustomColor) {
+				let clonedMaterial = _skins[skinId].material.clone();
+				clonedMaterial.color = new THREE.Color(color);
+				return clonedMaterial;
+			} else {
+				return skin.material;
+			}
 		},
 
 		/**
@@ -100,17 +104,15 @@ let marbleSkins = function() {
 											newUniforms[key] = { value: _textureLoader.load(`resources/skins/${skinId}/${skinMeta.textures[key]}`) };
 											newUniforms[key].value.wrapS = newUniforms[key].value.wrapT = THREE.RepeatWrapping;
 										}
-										Object.assign(_shaderUniforms, newUniforms);
+										Object.assign(renderCore.shaderUniforms, newUniforms);
 									}
 
 									// Create the material
 									_skins[skinId].material = new THREE.ShaderMaterial({
 										fragmentShader: values[0],
 										vertexShader: values[1],
-										uniforms: _shaderUniforms
+										uniforms: renderCore.shaderUniforms
 									});
-
-									renderCore.shaderMaterials.push(_skins[skinId].material);
 
 									return _skins[skinId].material;
 								});
@@ -164,7 +166,7 @@ let marbleSkins = function() {
 				// Skin meta has already been retrieved before, so we only have to return it. Since the
 				// return value is always expected to be a promise, we will return a promise that
 				// immediately resolves to the already loaded material.
-				return Promise.resolve(_skins[skinId].material);
+				return Promise.resolve( this.getSkin(skinId, color) );
 			}
 		}
 	};

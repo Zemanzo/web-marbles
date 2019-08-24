@@ -5,8 +5,8 @@ varying vec2 vUv;
 void main(void){
 	vec2 position=-1.+2.*vUv;
 	vec4 noise=texture2D(texture1,vUv);
-	vec2 T1=vUv+vec2(1.5,-1.5)*time*.02;
-	vec2 T2=vUv+vec2(-.5,2.)*time*.01;
+	vec2 T1=vUv+vec2(1.5,-1.5)*time*.06;
+	vec2 T2=vUv+vec2(-.5,2.)*time*.03;
 	T1.x+=noise.x*2.;
 	T1.y+=noise.y*2.;
 	T2.x-=noise.y*.2;
