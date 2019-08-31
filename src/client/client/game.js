@@ -340,7 +340,7 @@ let game = function() {
 			marble.finished = false;
 			marble.rank = null;
 
-			// Add to list
+			// Add to array of marble entries
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh

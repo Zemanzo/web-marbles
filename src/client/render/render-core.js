@@ -65,7 +65,7 @@ let renderCore = function() {
 		freeCamera: null,
 		trackingCamera: null,
 		shaderUniforms: {
-			"time": { value: 1.0 }
+			"time": { value: 0 }
 		},
 
 		// Camera layer definitions

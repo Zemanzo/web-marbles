@@ -62,8 +62,10 @@ domReady.then(() => {
 					if (selected) selected.classList.remove("selected");
 					skinEntry.classList.add("selected");
 
-					let material = marbleSkins.getSkin(id);
-					_marbleLeft.children[0].material = _marbleRight.children[0].material = material;
+					marbleSkins.loadSkin(id)
+						.then((material) => {
+							_marbleLeft.children[0].material = _marbleRight.children[0].material = material;
+						});
 				}, false);
 			});
 

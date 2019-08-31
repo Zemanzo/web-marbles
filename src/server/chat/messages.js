@@ -16,7 +16,8 @@ const createAttributesObject = function(messageContent) {
 		}
 
 		if (!skinId) {
-			skinId = messageSections[i] ? skins.idList[messageSections[i]] : undefined;
+			// Get the skinId that corresponds to the provided message. Non-existing skins will set `skinId` to undefined.
+			skinId = skins.idList[messageSections[i]];
 			if (typeof skinId !== "undefined") continue;
 		}
 	}

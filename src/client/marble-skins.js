@@ -31,26 +31,6 @@ let marbleSkins = function() {
 			metalness: 0
 		}),
 
-
-		/**
-		 * Opposed to loadSkin(), this will return the requested skin immediately.
-		 *
-		 * @param {String} skinId The ID for the skin that needs to be loaded.
-		 *
-		 * Return value
-		 * @returns {THREE.Material} The skin material, or undefined if the skin has not been loaded yet.
-		 */
-		getSkin: function(skinId, color) {
-			let skin = _skins[skinId];
-			if (skin.allowCustomColor) {
-				let clonedMaterial = _skins[skinId].material.clone();
-				clonedMaterial.color = new THREE.Color(color);
-				return clonedMaterial;
-			} else {
-				return skin.material;
-			}
-		},
-
 		/**
 		 * This function will load a skin from the server and parse it to a material.
 		 *
@@ -58,13 +38,15 @@ let marbleSkins = function() {
 		 * @param {String} color Optionally, the base color of the material. Will default to "#ffffff".
 		 *
 		 * Return value
-		 * @returns {Promise} The corresponding material.
+		 * @returns {Promise} A promise that resolves to the corresponding material.
 		 */
 		loadSkin: function(skinId, color) {
 			if (!_skins[skinId]) {
+				_skins[skinId] = {};
+
 				// Fetch skin meta. It will attempt to download the meta file that belongs to the skin ID.
 				// It will then parse to form the final material.
-				return fetch(`resources/skins/${skinId}/meta.json`)
+				_skins[skinId].promise = fetch(`resources/skins/${skinId}/meta.json`)
 					.then((response) => {
 						if (response.ok) {
 							return response.json();
@@ -74,7 +56,7 @@ let marbleSkins = function() {
 					})
 					// Parse meta file
 					.then((skinMeta) => {
-						_skins[skinId] = skinMeta;
+						Object.assign(_skins[skinId], skinMeta);
 
 						if (skinMeta.customShader) {
 							// Load shader files. This tries to load all shader file types. If loading fails (because
@@ -162,11 +144,21 @@ let marbleSkins = function() {
 						// Skin failed to load, so remove it from the skins list
 						delete _skins[skinId];
 					});
+
+				return _skins[skinId].promise;
 			} else {
 				// Skin meta has already been retrieved before, so we only have to return it. Since the
 				// return value is always expected to be a promise, we will return a promise that
 				// immediately resolves to the already loaded material.
-				return Promise.resolve( this.getSkin(skinId, color) );
+				return _skins[skinId].promise.then((material) => {
+					if (_skins[skinId].allowCustomColor) {
+						let clonedMaterial = material.clone();
+						clonedMaterial.color = new THREE.Color(color);
+						return clonedMaterial;
+					} else {
+						return material;
+					}
+				});
 			}
 		}
 	};
