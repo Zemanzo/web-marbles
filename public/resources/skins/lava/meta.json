@@ -1,0 +1,13 @@
+{
+	"enabled": true,
+	"premium": true,
+	"aliases": [
+		"lava"
+	],
+	"allowCustomColor": false,
+	"customShader": true,
+	"textures": {
+		"texture1": "cloud.png",
+		"texture2": "lavatile.jpg"
+	}
+}

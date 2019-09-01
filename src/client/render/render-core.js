@@ -29,6 +29,9 @@ let renderCore = function() {
 		// Make updates
 		renderCore.updateCallback(deltaTime);
 
+		// Update shader uniforms
+		renderCore.shaderUniforms["time"].value += deltaTime;
+
 		if (renderCore.activeCamera.enabled === true) {
 			renderCore.activeCamera.update(deltaTime);
 		}
@@ -61,6 +64,9 @@ let renderCore = function() {
 		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
+		shaderUniforms: {
+			"time": { value: 0 }
+		},
 
 		// Camera layer definitions
 		SPRITE_LAYER: 1,

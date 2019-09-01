@@ -1,0 +1,9 @@
+{
+	"enabled": false,
+	"premium": true,
+	"aliases": [
+		"blobiscope"
+	],
+	"allowCustomColor": false,
+	"customShader": true
+}

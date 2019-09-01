@@ -38,12 +38,18 @@
 					<input type="checkbox" id="toggleRotate"/> <label for="toggleRotate">Rotate</label>
 				</div>
 
-				{{#skinIds}}
-				<div class="skinEntry" data-skin-id="{{.}}">
+				{{#skinList}}
+				<div class="skinEntry" data-skin-id="{{id}}">
 					<span class="color">&nbsp;</span>
-					<span class="name">{{.}}</span>
+					<span class="name">{{id}}</span>
+					{{#customShader}}
+						<span class="customShader" title="Custom shader"><i class="icon-file-code"></i></span>
+					{{/customShader}}
+					{{#premium}}
+						<span class="premium" title="Patron only"><i class="icon-diamond"></i></span>
+					{{/premium}}
 				</div>
-				{{/skinIds}}
+				{{/skinList}}
 			</div>
 		</section>
 	</body>

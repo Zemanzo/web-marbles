@@ -22,6 +22,7 @@ const levels = require("./server/levels/manager");
 
 // Prepare marble skins
 const skins = require("./server/skins");
+skins.updateIdList();
 
 // Set up physics world
 const physics = require("./physics/manager");
@@ -158,7 +159,7 @@ app.get("/editor", function(req, res) {
 });
 
 app.get("/skins", function(req, res) {
-	res.render("skins", { rootUrl: config.network.rootUrl, version, skinIds: skins.idList });
+	res.render("skins", { rootUrl: config.network.rootUrl, version, skinList: Object.values(skins.skinList) });
 });
 
 app.get("/terms", function(req, res) {

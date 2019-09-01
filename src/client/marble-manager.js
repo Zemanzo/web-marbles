@@ -1,13 +1,11 @@
 import * as THREE from "three";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
+import { marbleSkins } from "./marble-skins";
 import { userState } from "./user-state";
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
-	let _skins = {},
-		_fallbackSkin = null;
-
 	return {
 		marbles: [], // Array of marbles that currently exist in the scene
 		marbleGroup: null, // Group containing marble instances
@@ -19,24 +17,6 @@ let marbleManager = function() {
 
 			// Default marble model
 			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
-
-			// Default marble texture
-			let canvas = document.createElement("canvas");
-			canvas.width = 32;
-			canvas.height = 32; // who needs pixels anyway
-
-			let context = canvas.getContext("2d");
-			context.fillStyle = "#ffffff";
-			context.fillRect(0, 0, 32, 32);
-
-			_fallbackSkin = new THREE.TextureLoader().load(
-				canvas.toDataURL(),
-				undefined,
-				undefined,
-				function(error) { // error
-					console.warn("Unable to load default texture", error);
-				}
-			);
 		},
 
 		spawnMarble: function(marbleData) {
@@ -61,21 +41,6 @@ let marbleManager = function() {
 				this.marbleGroup.remove(marble.marbleOrigin);
 			}
 			this.marbles = [];
-		},
-
-		getSkin: function(id) {
-			if (!_skins[id]) {
-				_skins[id] = new THREE.TextureLoader().load(
-					`resources/skins/${id}.png`,
-					undefined,
-					undefined,
-					function(error) { // error
-						console.warn(`Unable to load skin as texture (${id})`, error);
-						_skins[id] = _fallbackSkin;
-					}
-				);
-			}
-			return _skins[id];
 		}
 	};
 }();
@@ -92,14 +57,13 @@ const MarbleMesh = function(marbleData) {
 	this.marbleOrigin = new THREE.Group();
 
 	this.geometry = marbleManager.marbleGeometry;
-	this.materialColor = new THREE.Color(this.color);
-	this.material = new THREE.MeshStandardMaterial({
-		color: this.materialColor,
-		roughness: .9,
-		metalness: 0,
-		map: marbleManager.getSkin(this.skinId)
-	});
+	this.material = marbleSkins.placeholderMaterial;
 	this.mesh = new THREE.Mesh(this.geometry, this.material);
+	marbleSkins.loadSkin(this.skinId, this.color)
+		.then((skinMaterial) => {
+			this.material = this.mesh.material = skinMaterial;
+		});
+
 	this.marbleOrigin.add(this.mesh);
 
 	// Set scale based on marble size

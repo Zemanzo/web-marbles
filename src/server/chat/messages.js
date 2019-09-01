@@ -7,7 +7,8 @@ const createAttributesObject = function(messageContent) {
 	let messageSections = messageContent.split(" ");
 	let color, skinId;
 
-	for (let i = 1; i < Math.min(messageSections.length, 3); i++) {
+	// At most, check only the first three words. The first occurrence of an attribute will be used, the rest will be ignored.
+	for (let i = 1; i < Math.min(messageSections.length, 4); i++) {
 		if (!color) {
 			let match = messageSections[i].match(colorRegEx);
 			color = (match === null ? undefined : match[0]);
@@ -15,7 +16,8 @@ const createAttributesObject = function(messageContent) {
 		}
 
 		if (!skinId) {
-			skinId = skins.idList.includes(messageSections[i]) ? messageSections[i] : undefined;
+			// Get the skinId that corresponds to the provided message. Non-existing skins will set `skinId` to undefined.
+			skinId = skins.idList[messageSections[i]];
 			if (typeof skinId !== "undefined") continue;
 		}
 	}
