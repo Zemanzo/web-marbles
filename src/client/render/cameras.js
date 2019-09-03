@@ -1,9 +1,8 @@
-import "three/examples/js/controls/PointerLockControls";
+import { PointerLockControls } from "three/examples/jsm/controls/PointerLockControls";
 import {
 	Vector3,
 	Matrix4,
 	PerspectiveCamera,
-	PointerLockControls,
 	Math as ThreeMath,
 	Euler,
 	Quaternion

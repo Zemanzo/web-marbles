@@ -1,6 +1,4 @@
 const path = require("path");
-const webpack = require("webpack");
-const IgnoreNotFoundExportPlugin = require("./src/pipelines/ignore-not-found-export-plugin.js");
 
 module.exports = {
 	mode: process.env.NODE_ENV !== "production" ? "development" : "production",
@@ -20,12 +18,6 @@ module.exports = {
 		publicPath: "dist/"
 	},
 	devtool: "source-map",
-	plugins: [
-		new webpack.ProvidePlugin({
-			THREE: "three"
-		}),
-		new IgnoreNotFoundExportPlugin(["three"])
-	],
 	module: {
 		rules: [
 			{

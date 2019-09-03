@@ -1,8 +1,7 @@
 import * as THREE from "three";
-import "three/examples/js/objects/Water";
-import "three/examples/js/objects/Sky";
-import "three/examples/js/loaders/LoaderSupport";
-import "three/examples/js/loaders/GLTFLoader";
+import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
+import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
@@ -10,7 +9,7 @@ import { marbleManager } from "./marble-manager";
 import LevelLoaderWorker from "./level-loader.worker";
 import * as config from "./config";
 
-const _GLTFLoader = new THREE.GLTFLoader();
+const _GLTFLoader = new GLTFLoader();
 
 function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
 	this.scene = new THREE.Scene();
@@ -257,7 +256,7 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.parent = parent; // The owning MarbleLevel
 	let geometry = this.geometry = new THREE.PlaneBufferGeometry(10000, 10000);
 
-	this.waterObject = new THREE.Water(
+	this.waterObject = new ThreeWater(
 		geometry,
 		{
 			textureWidth: 512,
@@ -303,7 +302,7 @@ Water.prototype.update = function(deltaTime) {
 function Sky(parameters = {}) {
 	// Wrapper group for all entities related to the sky
 	this.group = new THREE.Group();
-	this.skyObject = new THREE.Sky();
+	this.skyObject = new ThreeSky();
 	this.skyObject.scale.setScalar(10000);
 	this.group.add(this.skyObject);
 

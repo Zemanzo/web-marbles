@@ -1,5 +1,20 @@
-import * as THREE from "three";
-import "three/examples/js/nodes/THREE.Nodes";
+import {
+	TextureLoader,
+	Math as ThreeMath,
+	FrontSide as ThreeFrontSide,
+	BackSide as ThreeBackSide,
+	DoubleSide as ThreeDoubleSide
+} from "three";
+import {
+	ColorNode,
+	StandardNodeMaterial,
+	FloatNode,
+	TextureNode,
+	UVTransformNode,
+	SwitchNode,
+	NormalMapNode,
+	MathNode
+} from "three/examples/jsm/nodes/Nodes";
 
 let _createFlatColorTexture = function(color) {
 	let canvas = document.createElement("canvas");
@@ -10,7 +25,7 @@ let _createFlatColorTexture = function(color) {
 	context.fillStyle = color || "#ffffff";
 	context.fillRect(0, 0, 128, 128);
 
-	return new THREE.TextureLoader().load(
+	return new TextureLoader().load(
 		canvas.toDataURL(),
 		undefined,
 		undefined,
@@ -21,19 +36,19 @@ let _createFlatColorTexture = function(color) {
 };
 
 function DefaultMaterial() {
-	let material = new THREE.StandardNodeMaterial();
-	material.color = new THREE.ColorNode(0xff00ff);
+	let material = new StandardNodeMaterial();
+	material.color = new ColorNode(0xff00ff);
 	material.build();
 	return material;
 }
 
 function CustomMaterial(properties) {
 	// Create new material
-	this.material = new THREE.StandardNodeMaterial();
+	this.material = new StandardNodeMaterial();
 
 	// Set roughness and metalness values if supplied (these already have default values)
-	if (!isNaN(properties.roughness)) this.material.roughness = new THREE.FloatNode(properties.roughness);
-	if (!isNaN(properties.metalness)) this.material.metalness = new THREE.FloatNode(properties.metalness);
+	if (!isNaN(properties.roughness)) this.material.roughness = new FloatNode(properties.roughness);
+	if (!isNaN(properties.metalness)) this.material.metalness = new FloatNode(properties.metalness);
 
 	function setUvTransformWithObject(uv, obj) {
 		uv.setUvTransform(
@@ -41,13 +56,13 @@ function CustomMaterial(properties) {
 			obj.offsetY || 0,
 			obj.scaleX || 1,
 			obj.scaleY || 1,
-			THREE.Math.degToRad(obj.rotation || 0)
+			ThreeMath.degToRad(obj.rotation || 0)
 		);
 	}
 
 	function createFallbackTextureNode() {
-		let fallbackNode = new THREE.TextureNode( _createFlatColorTexture("#ffffff") );
-		fallbackNode.uv = new THREE.UVTransformNode();
+		let fallbackNode = new TextureNode( _createFlatColorTexture("#ffffff") );
+		fallbackNode.uv = new UVTransformNode();
 		setUvTransformWithObject(fallbackNode.uv, {});
 		return fallbackNode;
 	}
@@ -60,8 +75,8 @@ function CustomMaterial(properties) {
 
 	// Basic diffuse texture, use fallback if none is set
 	if (properties.diffuseA) {
-		diffuseNodeA = new THREE.TextureNode(properties.diffuseA.texture);
-		diffuseNodeA.uv = new THREE.UVTransformNode();
+		diffuseNodeA = new TextureNode(properties.diffuseA.texture);
+		diffuseNodeA.uv = new UVTransformNode();
 		setUvTransformWithObject(diffuseNodeA.uv, properties.diffuseA);
 	} else {
 		diffuseNodeA = createFallbackTextureNode();
@@ -70,27 +85,27 @@ function CustomMaterial(properties) {
 	// Create a mask node
 	let maskAlphaChannel;
 	if (properties.mask) {
-		maskNode = new THREE.TextureNode(properties.mask.texture);
-		maskNode.uv = new THREE.UVTransformNode();
+		maskNode = new TextureNode(properties.mask.texture);
+		maskNode.uv = new UVTransformNode();
 		setUvTransformWithObject(maskNode.uv, properties.mask);
-		maskAlphaChannel = new THREE.SwitchNode(maskNode, "w");
+		maskAlphaChannel = new SwitchNode(maskNode, "w");
 	}
 
 	// If a second diffuse texture and a mask are available, use them for blending and create a new blended texture
 	if (properties.mask) {
 		if (properties.diffuseB) {
-			diffuseNodeB = new THREE.TextureNode(properties.diffuseB.texture);
-			diffuseNodeB.uv = new THREE.UVTransformNode();
+			diffuseNodeB = new TextureNode(properties.diffuseB.texture);
+			diffuseNodeB.uv = new UVTransformNode();
 			setUvTransformWithObject(diffuseNodeB.uv, properties.diffuseB);
 		} else {
 			diffuseNodeB = createFallbackTextureNode();
 		}
 
-		let diffuseBlend = new THREE.Math3Node(
+		let diffuseBlend = new MathNode(
 			diffuseNodeA,
 			diffuseNodeB,
 			maskAlphaChannel,
-			THREE.Math3Node.MIX
+			MathNode.MIX
 		);
 
 		this.material.color = diffuseBlend;
@@ -100,49 +115,49 @@ function CustomMaterial(properties) {
 
 	// Normals
 	if (properties.normalA) {
-		normalNodeA = new THREE.TextureNode(properties.normalA.texture);
-		normalNodeA.uv = new THREE.UVTransformNode();
+		normalNodeA = new TextureNode(properties.normalA.texture);
+		normalNodeA.uv = new UVTransformNode();
 		setUvTransformWithObject(normalNodeA.uv, properties.normalA);
 	} else {
-		normalNodeA = new THREE.TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
-		normalNodeA.uv = new THREE.UVTransformNode();
+		normalNodeA = new TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
+		normalNodeA.uv = new UVTransformNode();
 		setUvTransformWithObject(normalNodeA.uv, {});
 	}
 
 	if (properties.mask) {
 		if (properties.normalB) {
-			normalNodeB = new THREE.TextureNode(properties.normalB.texture);
-			normalNodeB.uv = new THREE.UVTransformNode();
+			normalNodeB = new TextureNode(properties.normalB.texture);
+			normalNodeB.uv = new UVTransformNode();
 			setUvTransformWithObject(normalNodeB.uv, properties.normalB);
 		} else {
-			normalNodeB = new THREE.TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
-			normalNodeB.uv = new THREE.UVTransformNode();
+			normalNodeB = new TextureNode( _createFlatColorTexture("#7f7fff") ); // Default normal map color
+			normalNodeB.uv = new UVTransformNode();
 			setUvTransformWithObject(normalNodeB.uv, {});
 		}
 
-		let normalBlend = new THREE.Math3Node(
+		let normalBlend = new MathNode(
 			normalNodeA,
 			normalNodeB,
 			maskAlphaChannel,
-			THREE.Math3Node.MIX
+			MathNode.MIX
 		);
 
-		this.material.normal = new THREE.NormalMapNode(normalBlend);
+		this.material.normal = new NormalMapNode(normalBlend);
 	} else if (properties.normalA) {
-		this.material.normal = new THREE.NormalMapNode(normalNodeA);
+		this.material.normal = new NormalMapNode(normalNodeA);
 	}
 
 	if (properties.side) {
 		switch(properties.side) {
 		case "DoubleSide":
-			this.material.side = THREE.DoubleSide;
+			this.material.side = ThreeDoubleSide;
 			break;
 		case "BackSide":
-			this.material.side = THREE.BackSide;
+			this.material.side = ThreeBackSide;
 			break;
 		case "FrontSide":
 		default:
-			this.material.side = THREE.FrontSide;
+			this.material.side = ThreeFrontSide;
 		}
 	}
 }

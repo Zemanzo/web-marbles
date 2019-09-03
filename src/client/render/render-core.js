@@ -1,12 +1,11 @@
 import * as THREE from "three";
-import "three/examples/js/loaders/LoaderSupport";
-import "three/examples/js/loaders/GLTFLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
 import { cameras, FreeCamera, TrackingCamera } from "./cameras";
 import domReady from "../dom-ready";
 
-const _GLTFLoader = new THREE.GLTFLoader();
+const _GLTFLoader = new GLTFLoader();
 
 let renderCore = function() {
 	let _renderer = null,
