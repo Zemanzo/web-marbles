@@ -342,8 +342,11 @@ function TrackingCamera(
 	let _listeners = [];
 	let _self = this;
 
-	let XZOffset = 3;
-	let YOffset = 7;
+	// Some default camera values. Could be added as an option later?
+	let _XZOffset = 3;
+	let _YOffset = 7;
+	let _minZoom = .2;
+	let _maxZoom = 3;
 
 	/**
 	 * Enables the controls
@@ -360,7 +363,7 @@ function TrackingCamera(
 		// Using the scrolling wheel allows a user to zoom the camera (closer or further away from the marble that is being tracked)
 		func = function(event) {
 			let newMultiplier = _self.distanceMultiplier + .05 * event.deltaY;
-			if (_self.enabled === true && newMultiplier > .2 && newMultiplier < 3) {
+			if (_self.enabled === true && newMultiplier > _minZoom && newMultiplier < _maxZoom) {
 				_self.distanceMultiplier = newMultiplier;
 			}
 		};
@@ -424,7 +427,7 @@ function TrackingCamera(
 				.sub(cameraXZ)
 				.normalize()
 				.negate()
-				.multiplyScalar(XZOffset * this.distanceMultiplier);
+				.multiplyScalar(_XZOffset * this.distanceMultiplier);
 			targetXZ.add(newTarget);
 
 			this.camera.position.x = ThreeMath.lerp(
@@ -443,7 +446,7 @@ function TrackingCamera(
 			let heightModifier = this.distanceMultiplier < 1 ? this.distanceMultiplier ** 2 : this.distanceMultiplier;
 			this.camera.position.y = ThreeMath.lerp(
 				this.camera.position.y,
-				this.target.position.y + YOffset * heightModifier,
+				this.target.position.y + _YOffset * heightModifier,
 				.005 + lerp * .5
 			) || this.camera.position.y;
 
