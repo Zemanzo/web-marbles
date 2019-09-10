@@ -294,6 +294,7 @@ function FreeCamera(
 	@param {Object} options.defaultRotation Sets the camera rotation to this value (in radians, YXZ) ({x: Number, y: Number, z: Number})
 	@param {THREE.Camera} options.camera THREE camera to use for applying controls to. Will generate new camera by default.
 	@param {Boolean} options.enabledByDefault Whether the controls are enabled by default. true by default.
+	@param {HTMLElement} options.controlsElement Element that events will be bound to. Renderer viewport by default.
 
 	Methods:
 	@method enable Enables the controls.
@@ -306,8 +307,8 @@ function TrackingCamera(
 	renderer,
 	options = {}
 ) {
-	if (!options.pointerLockElement)
-		options.pointerLockElement = renderer.domElement;
+	if (!options.controlsElement)
+		options.controlsElement = renderer.domElement;
 
 	if (!options.camera)
 		options.camera = new PerspectiveCamera(
@@ -367,7 +368,7 @@ function TrackingCamera(
 				_self.distanceMultiplier = newMultiplier;
 			}
 		};
-		_listeners.push(addRegisteredEventListener(window, "wheel", func, false));
+		_listeners.push(addRegisteredEventListener(options.controlsElement, "wheel", func, false));
 	};
 
 	/**
