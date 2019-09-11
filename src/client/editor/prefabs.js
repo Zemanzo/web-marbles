@@ -1,4 +1,13 @@
-import * as THREE from "three";
+import {
+	Group,
+	Vector3,
+	Mesh,
+	Geometry,
+	BoxBufferGeometry,
+	SphereBufferGeometry,
+	CylinderBufferGeometry,
+	ConeBufferGeometry
+} from "three";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 import { hslToHex } from "../hsl-to-hex";
 import { inspector } from "./inspector";
@@ -15,7 +24,7 @@ import { editorLog } from "./log";
 function Prefab(uuid, projectData) {
 	this.uuid = uuid;
 	this.projectData = projectData; // Project reference for this prefab
-	this.group = new THREE.Group();
+	this.group = new Group();
 	this.entities = {};
 	this.worldInstances = {};
 	this.changed = false;
@@ -170,7 +179,7 @@ Prefab.prototype.updateInstances = function() {
 		clone.position.copy(old.position);
 
 		if (containsStart) {
-			clone.rotation.setFromVector3( new THREE.Vector3(0, 0, 0) );
+			clone.rotation.setFromVector3( new Vector3(0, 0, 0) );
 		} else {
 			clone.rotation.copy(old.rotation);
 		}
@@ -351,8 +360,8 @@ function PrefabCollider(uuid, parent) {
 		height: 1,
 		depth: 1
 	};
-	let geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
-	this.sceneObject = new THREE.Mesh(geometry, materials.physicsMaterial );
+	let geometry = new BoxBufferGeometry( 1, 1, 1 );
+	this.sceneObject = new Mesh(geometry, materials.physicsMaterial );
 	this.sceneObject.rotation.order = "YXZ";
 	this.updateTransformFromProject();
 	if(this.projectData.scale) delete this.projectData.scale;
@@ -433,14 +442,14 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			height: 1,
 			depth: 1
 		};
-		this.sceneObject.geometry = new THREE.BoxBufferGeometry( 1, 1, 1 );
+		this.sceneObject.geometry = new BoxBufferGeometry( 1, 1, 1 );
 		break;
 	case "sphere":
 		this.colliderData = {
 			shape: shapeType,
 			radius: 1
 		};
-		this.sceneObject.geometry = new THREE.SphereBufferGeometry( 1, 12, 10 );
+		this.sceneObject.geometry = new SphereBufferGeometry( 1, 12, 10 );
 		break;
 	case "cylinder":
 		this.colliderData = {
@@ -448,7 +457,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
-		this.sceneObject.geometry = new THREE.CylinderBufferGeometry( 1, 1, 1, 12 );
+		this.sceneObject.geometry = new CylinderBufferGeometry( 1, 1, 1, 12 );
 		break;
 	case "cone":
 		this.colliderData = {
@@ -456,7 +465,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			radius: 1,
 			height: 1
 		};
-		this.sceneObject.geometry = new THREE.ConeBufferGeometry( 1, 1, 12 );
+		this.sceneObject.geometry = new ConeBufferGeometry( 1, 1, 12 );
 		break;
 	case "mesh":
 		this.colliderData = {
@@ -464,7 +473,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			model: null,
 			convex: true
 		};
-		this.sceneObject.geometry = new THREE.Geometry();
+		this.sceneObject.geometry = new Geometry();
 		break;
 	default:
 		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
@@ -515,7 +524,7 @@ PrefabCollider.prototype.setModel = function(modelName) {
 	// Remove from references
 	if(this.colliderData.model) {
 		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
-		this.sceneObject.geometry = new THREE.Geometry();
+		this.sceneObject.geometry = new Geometry();
 		this.colliderData.model = null;
 		this.colliderData.convex = true;
 	}
@@ -552,7 +561,7 @@ PrefabCollider.prototype.setConvex = function(isConvex) {
 		editorLog(`Failed to switch collider to ${isConvex ? "convex" : "concave"}.`, "error");
 		// Reset collider data so it stays valid
 		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
-		this.sceneObject.geometry = new THREE.Geometry();
+		this.sceneObject.geometry = new Geometry();
 		this.colliderData.model = null;
 		this.colliderData.convex = true;
 	}
@@ -573,7 +582,7 @@ let prefabsTab = function() {
 		initialize: function() {
 			this.elements.modelList = document.getElementById("inspectorModelList");
 			this.elements.colliderList = document.getElementById("inspectorColliderList");
-			this.group = new THREE.Group();
+			this.group = new Group();
 			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 

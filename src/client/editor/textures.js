@@ -1,4 +1,7 @@
-import * as THREE from "three";
+import {
+	TextureLoader,
+	RepeatWrapping as THREE_REPEAT_WRAPPING
+} from "three";
 import { materialsTab } from "./materials";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
@@ -10,7 +13,7 @@ function Texture(uuid, projectData) {
 	let self = this;
 	this.uuid = uuid;
 	this.name = projectData.name;
-	this.map = new THREE.TextureLoader().load(
+	this.map = new TextureLoader().load(
 		projectData.file,
 		function() { // success
 			editorLog(`Loaded texture: ${self.name}`, "info");
@@ -22,7 +25,7 @@ function Texture(uuid, projectData) {
 			self.delete();
 		}
 	);
-	this.map.wrapS = this.map.wrapT = THREE.RepeatWrapping;
+	this.map.wrapS = this.map.wrapT = THREE_REPEAT_WRAPPING;
 	this.projectData = projectData; // Project reference for this texture
 	this.element = null;
 	this.optionElements = [];

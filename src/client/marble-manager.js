@@ -1,4 +1,11 @@
-import * as THREE from "three";
+import {
+	Group,
+	SphereBufferGeometry,
+	Mesh,
+	Texture,
+	Sprite,
+	SpriteMaterial
+} from "three";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
 import { marbleSkins } from "./marble-skins";
@@ -12,11 +19,11 @@ let marbleManager = function() {
 		marbleGeometry: null,
 
 		initialize: function() {
-			this.marbleGroup = new THREE.Group();
+			this.marbleGroup = new Group();
 			renderCore.mainScene.add(this.marbleGroup);
 
 			// Default marble model
-			this.marbleGeometry = new THREE.SphereBufferGeometry(1, 32, 32);
+			this.marbleGeometry = new SphereBufferGeometry(1, 32, 32);
 		},
 
 		spawnMarble: function(marbleData) {
@@ -54,11 +61,11 @@ const MarbleMesh = function(marbleData) {
 	this.skinId = marbleData.skinId;
 
 	// The marble's main object, has mesh and name sprite as child objects
-	this.marbleOrigin = new THREE.Group();
+	this.marbleOrigin = new Group();
 
 	this.geometry = marbleManager.marbleGeometry;
 	this.material = marbleSkins.placeholderMaterial;
-	this.mesh = new THREE.Mesh(this.geometry, this.material);
+	this.mesh = new Mesh(this.geometry, this.material);
 	marbleSkins.loadSkin(this.skinId, this.color)
 		.then((skinMaterial) => {
 			this.material = this.mesh.material = skinMaterial;
@@ -104,17 +111,17 @@ const makeTextSprite = function(message, options = {}) {
 	context.fillText(message, 256, fontSize);
 
 	// Canvas contents will be used for a texture
-	let texture = new THREE.Texture(canvas);
+	let texture = new Texture(canvas);
 	texture.needsUpdate = true;
 
-	let spriteMaterial = new THREE.SpriteMaterial({
+	let spriteMaterial = new SpriteMaterial({
 		map: texture,
 		sizeAttenuation: false,
 		depthWrite: false,
 		depthTest: false
 	});
 
-	let sprite = new THREE.Sprite(spriteMaterial);
+	let sprite = new Sprite(spriteMaterial);
 	sprite.scale.set(0.3, 0.1, 1.0);
 	sprite.layers.disable(0);
 	sprite.layers.enable(renderCore.SPRITE_LAYER);

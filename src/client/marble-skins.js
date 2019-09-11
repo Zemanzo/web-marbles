@@ -1,10 +1,16 @@
-import * as THREE from "three";
+import {
+	TextureLoader,
+	MeshStandardMaterial,
+	ShaderMaterial,
+	Color,
+	RepeatWrapping as THREE_REPEAT_WRAPPING
+} from "three";
 import { renderCore } from "./render/render-core";
 
 let marbleSkins = function() {
 	let _skins = {},
 		_fallbackDiffuse = null,
-		_textureLoader = new THREE.TextureLoader();
+		_textureLoader = new TextureLoader();
 
 	// Default marble texture
 	let canvas = document.createElement("canvas");
@@ -25,8 +31,8 @@ let marbleSkins = function() {
 	);
 
 	return {
-		placeholderMaterial: new THREE.MeshStandardMaterial({
-			color: new THREE.Color("#000000"),
+		placeholderMaterial: new MeshStandardMaterial({
+			color: new Color("#000000"),
 			roughness: .9,
 			metalness: 0
 		}),
@@ -84,13 +90,13 @@ let marbleSkins = function() {
 										let newUniforms = {};
 										for (let key in skinMeta.textures) {
 											newUniforms[key] = { value: _textureLoader.load(`resources/skins/${skinId}/${skinMeta.textures[key]}`) };
-											newUniforms[key].value.wrapS = newUniforms[key].value.wrapT = THREE.RepeatWrapping;
+											newUniforms[key].value.wrapS = newUniforms[key].value.wrapT = THREE_REPEAT_WRAPPING;
 										}
 										Object.assign(renderCore.shaderUniforms, newUniforms);
 									}
 
 									// Create the material
-									_skins[skinId].material = new THREE.ShaderMaterial({
+									_skins[skinId].material = new ShaderMaterial({
 										fragmentShader: values[0],
 										vertexShader: values[1],
 										uniforms: renderCore.shaderUniforms
@@ -128,7 +134,7 @@ let marbleSkins = function() {
 							return Promise.all(mapTexturePromises)
 								.then(() => {
 									let materialValues = {};
-									materialValues.color = new THREE.Color(color || "#ffffff");
+									materialValues.color = new Color(color || "#ffffff");
 									materialValues.roughness = !isNaN(skinMeta.roughness) ? skinMeta.roughness : .9;
 									materialValues.metalness = !isNaN(skinMeta.metalness) ? skinMeta.metalness : 0;
 									materialValues.map = _skins[skinId].diffuse;
@@ -136,7 +142,7 @@ let marbleSkins = function() {
 										materialValues.normalMap = _skins[skinId].normal;
 									}
 
-									return _skins[skinId].material = new THREE.MeshStandardMaterial(materialValues);
+									return _skins[skinId].material = new MeshStandardMaterial(materialValues);
 								});
 						}
 					})
@@ -153,7 +159,7 @@ let marbleSkins = function() {
 				return _skins[skinId].promise.then((material) => {
 					if (_skins[skinId].allowCustomColor) {
 						let clonedMaterial = material.clone();
-						clonedMaterial.color = new THREE.Color(color);
+						clonedMaterial.color = new Color(color);
 						return clonedMaterial;
 					} else {
 						return material;

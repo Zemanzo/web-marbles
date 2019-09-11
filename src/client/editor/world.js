@@ -1,4 +1,4 @@
-import * as THREE from "three";
+import { Group } from "three";
 import { levelManager } from "../level-manager";
 import { generateTinyUUID } from "../generate-tiny-uuid";
 import { EditorObject } from "./editor";
@@ -73,7 +73,7 @@ let worldTab = function() {
 
 		initialize: function() {
 			this.elements.prefabList = document.getElementById("worldPrefabList");
-			this.group = new THREE.Group();
+			this.group = new Group();
 			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 
