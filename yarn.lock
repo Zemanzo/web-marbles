@@ -3339,10 +3339,10 @@ rechoir@^0.6.2:
   dependencies:
     resolve "^1.1.6"
 
-reconnecting-websocket@4.1.9:
-  version "4.1.9"
-  resolved "https://registry.yarnpkg.com/reconnecting-websocket/-/reconnecting-websocket-4.1.9.tgz#85f7c602af93ce22707cb49d84c81355f24a468b"
-  integrity sha512-UVJ8FGO9FKyEhMmSc0LJ38+W0UxYH5+AGpOzOsPVu61u/RO1/KgqyMzOiqkYEj4YuKmdSoz+Y2+DWSZhjqEJSg==
+reconnecting-websocket@~4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/reconnecting-websocket/-/reconnecting-websocket-4.2.0.tgz#2395f84b5d0acee439ff5df34c3fd0853d11be7c"
+  integrity sha512-HMD8A0sv40xhkHf/T4qxktyOvHx7K3d2A9i1QG2wRIYdMecxQJMhTIBH4aQ8KfQLfQW4UOqNSfxTgv0C+MbPIA==
 
 referrer-policy@1.2.0:
   version "1.2.0"
