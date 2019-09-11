@@ -1,5 +1,6 @@
 import "three/examples/js/controls/PointerLockControls";
 import {
+	Vector2,
 	Vector3,
 	Matrix4,
 	PerspectiveCamera,
@@ -293,6 +294,7 @@ function FreeCamera(
 	@param {Object} options.defaultRotation Sets the camera rotation to this value (in radians, YXZ) ({x: Number, y: Number, z: Number})
 	@param {THREE.Camera} options.camera THREE camera to use for applying controls to. Will generate new camera by default.
 	@param {Boolean} options.enabledByDefault Whether the controls are enabled by default. true by default.
+	@param {HTMLElement} options.controlsElement Element that events will be bound to. Renderer viewport by default.
 
 	Methods:
 	@method enable Enables the controls.
@@ -305,8 +307,8 @@ function TrackingCamera(
 	renderer,
 	options = {}
 ) {
-	if (!options.pointerLockElement)
-		options.pointerLockElement = renderer.domElement;
+	if (!options.controlsElement)
+		options.controlsElement = renderer.domElement;
 
 	if (!options.camera)
 		options.camera = new PerspectiveCamera(
@@ -336,16 +338,37 @@ function TrackingCamera(
 	this.camera.rotation.order = "YXZ";
 	this.camera.layers.enable(renderCore.SPRITE_LAYER);
 	this.target = null;
+	this.distanceMultiplier = 1;
+
+	let _listeners = [];
+	let _self = this;
+
+	// Some default camera values. Could be added as an option later?
+	let _XZOffset = 3;
+	let _YOffset = 7;
+	let _minZoom = .2;
+	let _maxZoom = 3;
 
 	/**
 	 * Enables the controls
 	 */
 	this.enable = function() {
+		let func;
+
 		this.enabled = true;
 
 		this.update = function() {
 			update.bind(this)();
 		};
+
+		// Using the scrolling wheel allows a user to zoom the camera (closer or further away from the marble that is being tracked)
+		func = function(event) {
+			let newMultiplier = _self.distanceMultiplier + .05 * event.deltaY;
+			if (_self.enabled === true && newMultiplier > _minZoom && newMultiplier < _maxZoom) {
+				_self.distanceMultiplier = newMultiplier;
+			}
+		};
+		_listeners.push(addRegisteredEventListener(options.controlsElement, "wheel", func, false));
 	};
 
 	/**
@@ -356,6 +379,11 @@ function TrackingCamera(
 
 		// null update function
 		this.update = () => void 0;
+
+		// remove listeners
+		_listeners.forEach((el) => {
+			el();
+		});
 	};
 
 	this.setTarget = function(target) {
@@ -382,26 +410,56 @@ function TrackingCamera(
 	scene.add(this.camera);
 
 	// Call this function in the update loop to update the controls.
-	let targetQuaternion;
+	let _targetQuaternion;
 	let update = function() {
 		if (this.target) {
-			if (Math.abs(this.camera.position.x - this.target.position.x) > 2) {
-				this.camera.position.x = ThreeMath.lerp(this.camera.position.x, this.target.position.x, .01);
-			}
+			/**
+			 * The general idea of this algorithm is to slowly move towards the currently tracked marble's position, at
+			 * an offset. The offset is determined by the zoom level (distanceMultiplier). The farther away the camera
+			 * gets from the target, the faster it will try to move back, closer to the target.
+			 * The camera will always rotate in such a way that it is pointed towards the marble.
+			 */
+			let lerp = .01 * (1 / this.distanceMultiplier);
 
-			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, this.target.position.y + 7, .01) || this.camera.position.y;
+			// X & Z position
+			let cameraXZ = new Vector2(this.camera.position.x, this.camera.position.z);
+			let targetXZ = new Vector2(this.target.position.x, this.target.position.z);
+			let newTarget = targetXZ.clone()
+				.sub(cameraXZ)
+				.normalize()
+				.negate()
+				.multiplyScalar(_XZOffset * this.distanceMultiplier);
+			targetXZ.add(newTarget);
 
-			if (Math.abs(this.camera.position.z - this.target.position.z) > 2) {
-				this.camera.position.z = ThreeMath.lerp(this.camera.position.z, this.target.position.z, .01);
-			}
+			this.camera.position.x = ThreeMath.lerp(
+				this.camera.position.x,
+				targetXZ.x,
+				lerp
+			);
 
+			this.camera.position.z = ThreeMath.lerp(
+				this.camera.position.z,
+				targetXZ.y, // Y because it's a Vector2
+				lerp
+			);
+
+			// Y position
+			let heightModifier = this.distanceMultiplier < 1 ? this.distanceMultiplier ** 2 : this.distanceMultiplier;
+			this.camera.position.y = ThreeMath.lerp(
+				this.camera.position.y,
+				this.target.position.y + _YOffset * heightModifier,
+				.005 + lerp * .5
+			) || this.camera.position.y;
+
+			// Rotation
 			if (isNaN(this.camera.rotation._x) || isNaN(this.camera.rotation._y) || isNaN(this.camera.rotation._z)) {
 				this.camera.setRotationFromEuler(new Euler());
 			} else {
-				targetQuaternion = _lookAtWithReturn(this.camera, this.target);
-				this.camera.quaternion.slerp(targetQuaternion, .1);
+				_targetQuaternion = _lookAtWithReturn(this.camera, this.target);
+				this.camera.quaternion.slerp(_targetQuaternion, .1);
 			}
 		} else {
+			// If there is no target, move back to the default position.
 			this.camera.position.x = ThreeMath.lerp(this.camera.position.x, options.defaultPosition.x, .01);
 			this.camera.position.y = ThreeMath.lerp(this.camera.position.y, options.defaultPosition.y, .01);
 			this.camera.position.z = ThreeMath.lerp(this.camera.position.z, options.defaultPosition.z, .01);
@@ -421,7 +479,7 @@ function TrackingCamera(
 	}
 }
 
-// Because the .lookAt function of three.js does not return a value but applies it immediately.
+// The .lookAt function of three.js does not return a value but applies it immediately, thus we use our own variant here.
 const _lookAtWithReturn = function() {
 	let q1 = new Quaternion();
 	let q2 = new Quaternion();
