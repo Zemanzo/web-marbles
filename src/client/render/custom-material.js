@@ -1,9 +1,9 @@
 import {
 	TextureLoader,
 	Math as ThreeMath,
-	FrontSide as ThreeFrontSide,
-	BackSide as ThreeBackSide,
-	DoubleSide as ThreeDoubleSide
+	FrontSide as THREE_FRONT_SIDE,
+	BackSide as THREE_BACK_SIDE,
+	DoubleSide as THREE_DOUBLE_SIDE
 } from "three";
 import {
 	ColorNode,
@@ -150,14 +150,14 @@ function CustomMaterial(properties) {
 	if (properties.side) {
 		switch(properties.side) {
 		case "DoubleSide":
-			this.material.side = ThreeDoubleSide;
+			this.material.side = THREE_DOUBLE_SIDE;
 			break;
 		case "BackSide":
-			this.material.side = ThreeBackSide;
+			this.material.side = THREE_BACK_SIDE;
 			break;
 		case "FrontSide":
 		default:
-			this.material.side = ThreeFrontSide;
+			this.material.side = THREE_FRONT_SIDE;
 		}
 	}
 }
