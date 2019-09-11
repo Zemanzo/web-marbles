@@ -44,12 +44,12 @@
     "msgpack-lite": "^0.1.26",
     "mustache-express": "^1.2.5",
     "pako": "^1.0.10",
-    "reconnecting-websocket": "4.1.9",
+    "reconnecting-websocket": "~4.2.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "semver": "^6.0.0",
     "stats-js": "^1.0.0",
-    "three": "^0.105.0",
+    "three": "^0.108.0",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v15.11.0"
   },
   "optionalDependencies": {

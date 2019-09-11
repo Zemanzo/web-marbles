@@ -1,11 +1,10 @@
 import * as THREE from "three";
-import "three/examples/js/loaders/GLTFLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { levelManager } from "../level-manager";
 import { materialsTab } from "./materials";
-import "three/examples/js/math/ConvexHull";
-import "three/examples/js/geometries/ConvexGeometry";
+import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 
 // model object
 function Model(name, sceneObject, projectData) {
@@ -152,7 +151,7 @@ Model.prototype.getConvexHull = function() {
 	if(this.convexHull === null) {
 		try {
 			let vertexArray = _getVertices(this.sceneObject);
-			this.convexHull = new THREE.ConvexGeometry(vertexArray); // Could throw an error if input is not valid
+			this.convexHull = new ConvexGeometry(vertexArray); // Could throw an error if input is not valid
 			if(this.convexHull) {
 				this.projectData.convexData = [];
 				for(let i = 0; i < this.convexHull.vertices.length; i++) {
@@ -315,7 +314,7 @@ let modelsTab = function() {
 		group: null,
 
 		initialize: function() {
-			_GLTFLoader = new THREE.GLTFLoader();
+			_GLTFLoader = new GLTFLoader();
 			this.group = new THREE.Group();
 			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
