@@ -1,4 +1,11 @@
-import * as THREE from "three";
+import {
+	Scene,
+	WebGLRenderer,
+	Mesh,
+	BoxBufferGeometry,
+	MeshStandardMaterial,
+	PCFSoftShadowMap as THREE_PCF_SOFT_SHADOW_MAP
+} from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
@@ -86,12 +93,12 @@ let renderCore = function() {
 					_viewport.appendChild(warning);
 				});
 			} else { // Initialize
-				this.mainScene = new THREE.Scene();
-				_renderer = new THREE.WebGLRenderer();
+				this.mainScene = new Scene();
+				_renderer = new WebGLRenderer();
 				_renderer.debug.checkShaderErrors = false;
-				_defaultModel = new THREE.Mesh(
-					new THREE.BoxBufferGeometry(1, 1, 1, 1),
-					new THREE.MeshStandardMaterial({
+				_defaultModel = new Mesh(
+					new BoxBufferGeometry(1, 1, 1, 1),
+					new MeshStandardMaterial({
 						color: 0x000000,
 						emissive: 0xff00ff,
 						wireframe: true
@@ -121,7 +128,7 @@ let renderCore = function() {
 
 				// Renderer defaults
 				_renderer.shadowMap.enabled = true;
-				_renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+				_renderer.shadowMap.type = THREE_PCF_SOFT_SHADOW_MAP; // default is THREE.PCFShadowMap
 
 				// Stats
 				_stats = new Stats();

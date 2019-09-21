@@ -1,4 +1,9 @@
-import * as THREE from "three";
+import {
+	Vector3,
+	Quaternion,
+	GridHelper,
+	AxesHelper
+} from "three";
 import domReady from "../dom-ready";
 import { inspector } from "./inspector";
 import { texturesTab } from "./textures";
@@ -29,7 +34,7 @@ function EditorObject(type, uuid, projectData) {
 // This should be called after a sceneObject has been created
 EditorObject.prototype.updateTransformFromProject = function() {
 	if(this.projectData.position) {
-		this.setPosition( new THREE.Vector3(
+		this.setPosition( new Vector3(
 			typeof this.projectData.position.x === "number" ? this.projectData.position.x : 0,
 			typeof this.projectData.position.y === "number" ? this.projectData.position.y : 0,
 			typeof this.projectData.position.z === "number" ? this.projectData.position.z : 0) );
@@ -41,12 +46,12 @@ EditorObject.prototype.updateTransformFromProject = function() {
 		&& typeof this.projectData.rotation.y === "number"
 		&& typeof this.projectData.rotation.z === "number"
 		&& typeof this.projectData.rotation.w === "number") {
-		this.sceneObject.quaternion.copy(new THREE.Quaternion(this.projectData.rotation.x, this.projectData.rotation.y, this.projectData.rotation.z, this.projectData.rotation.w));
+		this.sceneObject.quaternion.copy(new Quaternion(this.projectData.rotation.x, this.projectData.rotation.y, this.projectData.rotation.z, this.projectData.rotation.w));
 	} else {
 		this.projectData.rotation = {x: 0, y: 0, z: 0, w: 1};
 	}
 	if(this.projectData.scale) {
-		this.setScale( new THREE.Vector3(
+		this.setScale( new Vector3(
 			typeof this.projectData.scale.x === "number" ? this.projectData.scale.x : 1,
 			typeof this.projectData.scale.y === "number" ? this.projectData.scale.y : 1,
 			typeof this.projectData.scale.z === "number" ? this.projectData.scale.z : 1) );
@@ -243,10 +248,10 @@ levelManager.initialize();
 marbleManager.initialize();
 
 // Add visual helpers to level
-let gridHelper = new THREE.GridHelper(20, 20);
+let gridHelper = new GridHelper(20, 20);
 levelManager.activeLevel.scene.add(gridHelper);
 gridHelper.position.y = -.01;
-let axesHelper = new THREE.AxesHelper(3);
+let axesHelper = new AxesHelper(3);
 levelManager.activeLevel.scene.add(axesHelper);
 
 // Initialize DOM elements and tabs
