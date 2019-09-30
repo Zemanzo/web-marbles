@@ -3,15 +3,33 @@ const config = require("./config");
 const physics = require("../physics/manager");
 const levels = require("./levels/manager");
 const db = require("./database/manager");
-const msgPack = require("msgpack-lite");
 const gameConstants = require("../game-constants");
+const permissions = require("./chat/permissions");
+const skins = require("./skins");
+const msgPack = require("msgpack-lite");
 
 const anyColorAllowed = ["abstract", "marble", "default", "swirly", "squares"]; // Will (probably) be changed to a meta file later on, next to the skin file?
 
 function Marble(id, entryId, name, attributes = {}) {
 	this.userId = id;
 	this.entryId = entryId;
-	this.skinId = attributes.skinId || "default";
+
+	// Check for premium permissions
+	if (
+		config.discord.enabled
+		&& skins.skinList[attributes.skinId]
+		&& skins.skinList[attributes.skinId].premium
+	) {
+		if (permissions.memberHasPermission(id, "PREMIUM_SKINS")) {
+			this.skinId = attributes.skinId;
+		} else {
+			this.skinId = "default";
+		}
+	} else {
+		this.skinId = attributes.skinId || "default";
+	}
+
+	// Check if skin supports a custom color
 	if (typeof attributes.color !== "undefined" && anyColorAllowed.includes(this.skinId)) {
 		this.color = attributes.color;
 	} else if (!anyColorAllowed.includes(this.skinId)) {
@@ -19,6 +37,7 @@ function Marble(id, entryId, name, attributes = {}) {
 	} else {
 		this.color = _randomHexColor();
 	}
+
 	this.name = name || "Nightbot";
 	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
 	this.ammoBody = null;
@@ -339,10 +358,10 @@ let game = function() {
 			}
 		},
 
-		end() {
+		end(saveRoundResults = true) {
 			if (this.currentGameState === gameConstants.STATE_STARTED) {
 				// Set the last few round parameters and store it in the database
-				if (_round) {
+				if (_round && saveRoundResults) {
 					_round.end = Date.now();
 					_round.playersEntered = _playersEnteredList.length;
 					_round.playersFinished = _playersEnteredList.filter(playerEntry => playerEntry.finished).length;
@@ -378,7 +397,9 @@ let game = function() {
 					}
 				}
 
-				this.setCurrentGameState(gameConstants.STATE_FINISHED);
+				if (saveRoundResults === true) {
+					this.setCurrentGameState(gameConstants.STATE_FINISHED);
+				}
 
 				// Clear any remaining timeouts
 				clearTimeout(this.gameplayMaxTimeout);
@@ -417,7 +438,7 @@ let game = function() {
 						// Set state and inform the client
 						this.setCurrentGameState(gameConstants.STATE_WAITING);
 					},
-					config.marbles.rules.finishPeriod * 1000
+					saveRoundResults ? config.marbles.rules.finishPeriod * 1000 : 0
 				);
 
 				return true;

@@ -188,7 +188,7 @@ let server = http.listen(config.express.port, function() {
 // Start the game loop
 Promise.all([skins.readyPromise, levels.currentLevelData])
 	.then(() => {
-		game.end();
+		game.end(false);
 	})
 	.catch((error) => {
 		throw new Error(`Initialization failed during loading of assets: ${error}`);

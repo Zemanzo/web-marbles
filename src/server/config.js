@@ -85,9 +85,17 @@ config.discord.useOAuth2State = false; // More secure, but not implemented yet..
 // Server variables
 config.discord.inviteLink = "https://discord.gg/1234567";
 config.discord.gameplayChannelId = "<USE CONFIG.USER.JS OVERRIDE>";
+config.discord.ignoreChannelIds = []; // Array of channel IDs that should be ignored. Should only be necessary during development.
 
 config.discord.webhookId = "<USE CONFIG.USER.JS OVERRIDE>"; // Create a default webhook to your gameplay channel
 config.discord.webhookToken = "<USE CONFIG.USER.JS OVERRIDE>";
+
+// Permissions
+// Constants are dependent on proper naming conventions! They are filtered out with regex to build a lookup table.
+config.discord.permissions = {};
+config.discord.permissions.guildId = "<USE CONFIG.USER.JS OVERRIDE>"; // What guild to use when determining permissions / roles for users
+config.discord.permissions.PREMIUM_SKINS = ["USE CONFIG.USER.JS OVERRIDE"]; // Array of role IDs that have permission to use premium marble skins
+config.discord.permissions.DEVELOPER_COMMANDS = ["USE CONFIG.USER.JS OVERRIDE"]; // Array of role IDs that have permission to use developer commands, such as spawning bots and stopping races
 
 /* Physics */
 config.physics = {};
@@ -114,7 +122,7 @@ for(let key in userConfig) {
 	key.split(".").forEach( function(val) {
 		if(obj) {
 			if(typeof obj[val] !== "undefined") {
-				if(typeof obj[val] === "object") {
+				if(typeof obj[val] === "object" && !(obj[val] instanceof Array)) {
 					obj = obj[val]; // change to child object
 				} else {
 					property = val; // obj[property] is the property to set

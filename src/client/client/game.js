@@ -186,6 +186,11 @@ let game = function() {
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
+
+				// In some cases, STATE_FINISHED can be skipped, which causes problems.
+				// The commands below make sure to avoid the problems mentioned.
+				levelManager.activeLevel.closeGates();
+				_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
 				break;
 
 			// First marble has been entered
