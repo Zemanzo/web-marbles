@@ -5,9 +5,11 @@ onmessage = function(message) {
 };
 
 let loadLevelData = function(url) {
+	postMessage({ event: "downloadStart" });
 	fetch(`${url}`)
 		.then((response) => {
 			if(response.ok) {
+				postMessage({ event: "downloadComplete" });
 				return response.arrayBuffer();
 			} else {
 				loadingFinished(false, `Unable to retrieve ${url} from server: ${response.status} - ${response.statusText}`);

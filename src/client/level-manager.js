@@ -45,6 +45,17 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.levelName = null;
 	this.authorName = null;
 
+	// Loading events
+	this.eventTarget = new EventTarget(); // TODO: Make this a proper class, so we can use `MarbleLevel extends EventTarget`?
+	this.events = {
+		loadStart: new Event("loadStart"),
+		downloadStart: new Event("downloadStart"),
+		downloadComplete: new Event("downloadComplete"),
+		loadModelsComplete: new Event("loadModelsComplete"),
+		loadComplete: new Event("loadComplete"),
+		error: new Event("error")
+	};
+
 	// Loader thread handle
 	this.loader = null;
 
@@ -76,8 +87,10 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 	}
 	this.loader = new LevelLoaderWorker();
 	return new Promise( (resolve, reject) => {
-		this.loader.onmessage = function(result) {
-			if(result.data.success) {
+		this.loader.onmessage = (result) => {
+			if (result.data.event) {
+				this.eventTarget.dispatchEvent(this.events[result.data.event]);
+			} else if (result.data.success) {
 				let loadedLevel = result.data.payload;
 				Object.setPrototypeOf(loadedLevel, LevelData.prototype);
 				resolve(loadedLevel);
@@ -85,17 +98,19 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 				reject(result.data.payload);
 			}
 		};
-		this.loader.onerror = function(error) {
+		this.loader.onerror = (error) => {
 			reject(error.message);
 		};
 		this.loader.postMessage({url});
 	}).then( (result) => {
 		this.loader.terminate();
 		this.loader = null;
+		this.eventTarget.dispatchEvent(this.events.loadComplete);
 		return this.loadLevel(result);
 	}).catch( (error) => {
 		this.loader.terminate();
 		this.loader = null;
+		this.eventTarget.dispatchEvent(this.events.error);
 		console.error(`Level loading failed: ${error}`);
 		return "failed";
 	});
@@ -213,6 +228,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load prefabs
 	let prefabs = {};
 	return Promise.all(modelPromises).then(() => {
+		this.eventTarget.dispatchEvent(this.events.loadModelsComplete);
 		let warnings = 0;
 		for (let prefabUuid in data.prefabs) {
 			let group = new Group();

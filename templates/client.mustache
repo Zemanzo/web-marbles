@@ -30,8 +30,20 @@
 				{{#gitHash}}<div id="releaseHash">{{gitHash}}</div>{{/gitHash}}
 			</div>
 			<nav id="externalLinks">
-				<a href="https://github.com/Zemanzo/web-marbles" id="github" title="Contribute to the source!"><i class="icon-github-circled"></i></a>
-				<a href="https://www.patreon.com/webmarbles" id="patreon" title="Support us on patreon!"><img src="images/patreon.svg" alt="Patreon"></a>
+				{{#invitelink}}
+				<a href="{{invitelink}}" id="discord">
+					<img src="images/wumpus_white.svg" alt="Wumpus">
+					<span>Join the Discord!</span>
+				</a>
+				{{/invitelink}}
+				<a href="https://www.patreon.com/webmarbles" id="patreon">
+					<img src="images/patreon.svg" alt="Patreon">
+					<span>Support the devs!</span>
+				</a>
+				<a href="https://github.com/Zemanzo/web-marbles" id="github">
+					<img src="images/github.svg" alt="GitHub">
+					<span>View the source!</span>
+				</a>
 			</nav>
 		</header>
 		<section id="viewport">
@@ -82,7 +94,14 @@
 
 				<div id="notifications">
 					<div id="notification-template" class="notification">
-						<div class="notification-content">The maximum amount of marbles has been reached! No more marbles can be entered.</div>
+						<div class="notification-status exclamation"><i class="icon-attention-alt"></i></div>
+						<div class="notification-status wait"><i class="icon-hourglass"></i></div>
+						<div class="notification-status check"><i class="icon-ok"></i></div>
+						<div class="notification-status cross"><i class="icon-cancel"></i></div>
+						<div class="notification-content">The maximum amount of marbles has been reached! <br/>No more marbles can be entered.</div>
+						<div class="notification-progress">
+							<div class="notification-progress-step">&#10004;</div>
+						</div>
 					</div>
 				</div>
 			</div>
