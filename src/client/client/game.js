@@ -154,6 +154,7 @@ let game = function() {
 				console.log(`Loading level: ${levelId}`);
 				let loadingNotification = new HUDNotification({
 					content: "Downloading...",
+					lifetime: 0,
 					classNames: "blue wait",
 					progressTarget: 3
 				});
