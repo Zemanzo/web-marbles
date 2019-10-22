@@ -31,6 +31,10 @@ body {
 	max-height: 900px;
 }
 
+.semiTransparent {
+  background: #06060688;
+}
+
 header {
 	display: flex;
 	font-size: .9rem;
@@ -98,7 +102,7 @@ header {
 	.message:nth-child(odd) {
 		background-color: #0C0C0C66;
 	}
-		.message > .timestamp {
+		.message .timestamp {
 			font-size: .8em;
 			font-family: "Droid Sans Mono", sans-serif;
 			color: #999;
@@ -109,12 +113,13 @@ header {
 			text-align: center;
 		}
 
-		.message > .content {
+		.message .content {
 			flex: 1;
 			margin-left: 1ch;
+			white-space: nowrap;
 		}
 
-			.message > .content > .username {
+			.message .content .username {
 				float: left;
 				margin-left: -1ch;
 				margin-right: 4px;
@@ -124,6 +129,11 @@ header {
 				white-space: nowrap;
 				overflow: hidden;
 				text-overflow: ellipsis;
+			}
+
+			.message .content .text {
+				word-break: break-word;
+				white-space: normal;
 			}
 
 #chatInputContainer {

@@ -1,5 +1,5 @@
 const socketManager = require("./websocket-manager");
-const messages = require("../chat/messages");
+const commandsManager = require("../chat/commands-manager");
 const log = require("../../log");
 
 const setupGameplay = function(db, config, game) {
@@ -90,7 +90,7 @@ const setupChat = function(db, chatWebhook) {
 		if (db.user.idIsAuthenticated(message.id, message.access_token)) {
 			let row = db.user.getUserDetailsById(message.id);
 			if (row) {
-				messages.parse(message.content, message.id, row.username);
+				commandsManager.parse(message.content, message.id, row.username);
 
 				chatWebhook.send(message.content, {
 					username: row.username,

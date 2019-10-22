@@ -1,0 +1,9 @@
+{
+	"enabled": true,
+	"premium": true,
+	"aliases": [
+		"groovy"
+	],
+	"allowCustomColor": false,
+	"customShader": true
+}

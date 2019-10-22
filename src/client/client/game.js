@@ -186,6 +186,11 @@ let game = function() {
 				_DOMElements.entries.innerText = "0";
 				_DOMElements.state.innerText = "Enter marbles now!";
 				_DOMElements.timer.innerText = Math.ceil(_serverData.enterPeriodLength);
+
+				// In some cases, STATE_FINISHED can be skipped, which causes problems.
+				// The commands below make sure to avoid the problems mentioned.
+				levelManager.activeLevel.closeGates();
+				_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
 				break;
 
 			// First marble has been entered
@@ -340,7 +345,7 @@ let game = function() {
 			marble.finished = false;
 			marble.rank = null;
 
-			// Add to list
+			// Add to array of marble entries
 			_enteredMarbleList[marble.entryId] = marble;
 
 			// Add mesh
@@ -354,7 +359,7 @@ let game = function() {
 			}, false);
 			listEntry.getElementsByClassName("name")[0].innerText = marble.name;
 			listEntry.getElementsByClassName("color")[0].style.backgroundColor = marble.color;
-			listEntry.getElementsByClassName("color")[0].style.backgroundImage = `url("resources/skins/${marble.skinId}.png")`;
+			listEntry.getElementsByClassName("color")[0].style.backgroundImage = `url("resources/skins/${marble.skinId}/diffuse.png")`;
 			listEntry.getElementsByClassName("time")[0].innerText = "";
 			listEntry.getElementsByClassName("rank")[0].innerText = "";
 			_enteredMarbleList[marble.entryId].listEntryElement = listEntry;

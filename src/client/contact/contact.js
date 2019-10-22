@@ -1,5 +1,5 @@
-import domReady from "./dom-ready";
-import * as config from "./config";
+import domReady from "../dom-ready";
+import * as config from "../config";
 
 domReady.then(() => {
 	document.getElementById("reveal").addEventListener("click", function() {

@@ -1,11 +1,16 @@
-import * as THREE from "three";
-import "three/examples/js/loaders/GLTFLoader";
+import {
+	Vector3,
+	Matrix4,
+	Geometry,
+	BufferGeometry,
+	Group
+} from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { levelManager } from "../level-manager";
 import { materialsTab } from "./materials";
-import "three/examples/js/math/ConvexHull";
-import "three/examples/js/geometries/ConvexGeometry";
+import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 
 // model object
 function Model(name, sceneObject, projectData) {
@@ -118,14 +123,14 @@ function _getVertices(obj) {
 	let vertexArray = [];
 
 	// obj.matrix isn't guaranteed to be up-to-date
-	let matrix = new THREE.Matrix4();
+	let matrix = new Matrix4();
 	matrix = matrix.compose(obj.position, obj.quaternion, obj.scale);
 
 	// Add own vertices if they exist
 	if(obj.type === "Mesh") {
 		let vertexData = obj.geometry.attributes.position;
 		for(let i = 0; i < vertexData.count; i++) {
-			let point = new THREE.Vector3(
+			let point = new Vector3(
 				vertexData.array[i * 3],
 				vertexData.array[i * 3 + 1],
 				vertexData.array[i * 3 + 2]);
@@ -152,7 +157,7 @@ Model.prototype.getConvexHull = function() {
 	if(this.convexHull === null) {
 		try {
 			let vertexArray = _getVertices(this.sceneObject);
-			this.convexHull = new THREE.ConvexGeometry(vertexArray); // Could throw an error if input is not valid
+			this.convexHull = new ConvexGeometry(vertexArray); // Could throw an error if input is not valid
 			if(this.convexHull) {
 				this.projectData.convexData = [];
 				for(let i = 0; i < this.convexHull.vertices.length; i++) {
@@ -160,7 +165,7 @@ Model.prototype.getConvexHull = function() {
 					this.projectData.convexData.push(this.convexHull.vertices[i].y);
 					this.projectData.convexData.push(this.convexHull.vertices[i].z);
 				}
-				this.convexHull = new THREE.BufferGeometry().fromGeometry(this.convexHull);
+				this.convexHull = new BufferGeometry().fromGeometry(this.convexHull);
 			} else {
 				this.convexHull = false;
 			}
@@ -174,17 +179,17 @@ Model.prototype.getConvexHull = function() {
 
 // Recursive function: Returns one Geometry object of all combined geometries within the passed object
 function _combineGeometry(obj) {
-	let geo = new THREE.Geometry();
+	let geo = new Geometry();
 
 	// obj.matrix isn't guaranteed to be up-to-date
-	let matrix = new THREE.Matrix4().identity();
+	let matrix = new Matrix4().identity();
 	matrix = matrix.compose(obj.position, obj.quaternion, obj.scale);
 
 	if(obj.type === "Mesh") {
 		let objGeo = obj.geometry;
 		// BufferGeometry needs to be converted before merging
 		if(objGeo.type === "BufferGeometry") {
-			objGeo = new THREE.Geometry().fromBufferGeometry(objGeo);
+			objGeo = new Geometry().fromBufferGeometry(objGeo);
 		}
 		objGeo.mergeVertices(); // Never hurts, right?
 		geo.merge(objGeo, matrix);
@@ -218,7 +223,7 @@ Model.prototype.getConcaveGeometry = function() {
 				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].b);
 				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].c);
 			}
-			this.concaveGeo = new THREE.BufferGeometry().fromGeometry(this.concaveGeo);
+			this.concaveGeo = new BufferGeometry().fromGeometry(this.concaveGeo);
 		} else {
 			this.concaveGeo = false;
 		}
@@ -315,8 +320,8 @@ let modelsTab = function() {
 		group: null,
 
 		initialize: function() {
-			_GLTFLoader = new THREE.GLTFLoader();
-			this.group = new THREE.Group();
+			_GLTFLoader = new GLTFLoader();
+			this.group = new Group();
 			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
 

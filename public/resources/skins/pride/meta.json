@@ -1,0 +1,11 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"pride",
+		"rainbow"
+	],
+	"allowCustomColor": false,
+	"roughness": 0.95,
+	"metalness": 0
+}

@@ -1,12 +1,18 @@
-import * as THREE from "three";
-import "three/examples/js/loaders/LoaderSupport";
-import "three/examples/js/loaders/GLTFLoader";
+import {
+	Scene,
+	WebGLRenderer,
+	Mesh,
+	BoxBufferGeometry,
+	MeshStandardMaterial,
+	PCFSoftShadowMap as THREE_PCF_SOFT_SHADOW_MAP
+} from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
 import { cameras, FreeCamera, TrackingCamera } from "./cameras";
 import domReady from "../dom-ready";
 
-const _GLTFLoader = new THREE.GLTFLoader();
+const _GLTFLoader = new GLTFLoader();
 
 let renderCore = function() {
 	let _renderer = null,
@@ -28,6 +34,9 @@ let renderCore = function() {
 
 		// Make updates
 		renderCore.updateCallback(deltaTime);
+
+		// Update shader uniforms
+		renderCore.shaderUniforms["time"].value += deltaTime;
 
 		if (renderCore.activeCamera.enabled === true) {
 			renderCore.activeCamera.update(deltaTime);
@@ -61,6 +70,9 @@ let renderCore = function() {
 		activeCamera: null,
 		freeCamera: null,
 		trackingCamera: null,
+		shaderUniforms: {
+			"time": { value: 0 }
+		},
 
 		// Camera layer definitions
 		SPRITE_LAYER: 1,
@@ -81,12 +93,12 @@ let renderCore = function() {
 					_viewport.appendChild(warning);
 				});
 			} else { // Initialize
-				this.mainScene = new THREE.Scene();
-				_renderer = new THREE.WebGLRenderer();
+				this.mainScene = new Scene();
+				_renderer = new WebGLRenderer();
 				_renderer.debug.checkShaderErrors = false;
-				_defaultModel = new THREE.Mesh(
-					new THREE.BoxBufferGeometry(1, 1, 1, 1),
-					new THREE.MeshStandardMaterial({
+				_defaultModel = new Mesh(
+					new BoxBufferGeometry(1, 1, 1, 1),
+					new MeshStandardMaterial({
 						color: 0x000000,
 						emissive: 0xff00ff,
 						wireframe: true
@@ -116,7 +128,7 @@ let renderCore = function() {
 
 				// Renderer defaults
 				_renderer.shadowMap.enabled = true;
-				_renderer.shadowMap.type = THREE.PCFSoftShadowMap; // default THREE.PCFShadowMap
+				_renderer.shadowMap.type = THREE_PCF_SOFT_SHADOW_MAP; // default is THREE.PCFShadowMap
 
 				// Stats
 				_stats = new Stats();

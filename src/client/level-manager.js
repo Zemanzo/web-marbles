@@ -1,8 +1,18 @@
-import * as THREE from "three";
-import "three/examples/js/objects/Water";
-import "three/examples/js/objects/Sky";
-import "three/examples/js/loaders/LoaderSupport";
-import "three/examples/js/loaders/GLTFLoader";
+import {
+	Scene,
+	AmbientLight,
+	TextureLoader,
+	RepeatWrapping as THREE_REPEAT_WRAPPING,
+	Vector3,
+	Quaternion,
+	Group,
+	PlaneBufferGeometry,
+	DirectionalLight,
+	CameraHelper
+} from "three";
+import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
+import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
@@ -10,16 +20,16 @@ import { marbleManager } from "./marble-manager";
 import LevelLoaderWorker from "./level-loader.worker";
 import * as config from "./config";
 
-const _GLTFLoader = new THREE.GLTFLoader();
+const _GLTFLoader = new GLTFLoader();
 
 function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
-	this.scene = new THREE.Scene();
-	this.levelObjects = new THREE.Scene(); // Scene for all loaded level objects
+	this.scene = new Scene();
+	this.levelObjects = new Scene(); // Scene for all loaded level objects
 	this.scene.add(this.levelObjects);
 	this.startingGates = [];
 
 	// Ambient light
-	let ambientLight = new THREE.AmbientLight(0x746070);
+	let ambientLight = new AmbientLight(0x746070);
 	this.scene.add(ambientLight);
 
 	// Sky + Sunlight
@@ -96,7 +106,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Reset loaded data if there is any
 	this.scene.remove(this.levelObjects);
 	this.startingGates = [];
-	this.levelObjects = new THREE.Scene();
+	this.levelObjects = new Scene();
 	this.levelObjects.matrixAutoUpdate = false;
 	this.levelObjects.autoUpdate = false;
 	this.scene.add(this.levelObjects);
@@ -112,8 +122,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load textures
 	let textures = {};
 	for (let textureUuid in data.textures) {
-		textures[textureUuid] = new THREE.TextureLoader().load(data.textures[textureUuid].file);
-		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE.RepeatWrapping;
+		textures[textureUuid] = new TextureLoader().load(data.textures[textureUuid].file);
+		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE_REPEAT_WRAPPING;
 	}
 
 	// Load materials
@@ -205,7 +215,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	return Promise.all(modelPromises).then(() => {
 		let warnings = 0;
 		for (let prefabUuid in data.prefabs) {
-			let group = new THREE.Group();
+			let group = new Group();
 
 			for (let entity of Object.values(data.prefabs[prefabUuid].entities)) {
 				if (entity.type === "object" && entity.model) {
@@ -219,9 +229,9 @@ MarbleLevel.prototype.loadLevel = function(data) {
 					}
 
 					clone.userData.functionality = entity.functionality;
-					clone.position.copy(new THREE.Vector3(entity.position.x, entity.position.y, entity.position.z));
-					clone.setRotationFromQuaternion(new THREE.Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
-					clone.scale.copy(new THREE.Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
+					clone.position.copy(new Vector3(entity.position.x, entity.position.y, entity.position.z));
+					clone.setRotationFromQuaternion(new Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
+					clone.scale.copy(new Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
 					group.add(clone);
 				}
 			}
@@ -232,8 +242,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		// World objects
 		for (let object of Object.values(data.worldObjects)) {
 			let clone = prefabs[object.prefab].clone();
-			clone.position.copy(new THREE.Vector3(object.position.x, object.position.y, object.position.z));
-			clone.setRotationFromQuaternion(new THREE.Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
+			clone.position.copy(new Vector3(object.position.x, object.position.y, object.position.z));
+			clone.setRotationFromQuaternion(new Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
 			this.levelObjects.add(clone);
 
 			// Keep starting gate prefabObjects in a separate array for opening/closing
@@ -255,15 +265,15 @@ MarbleLevel.prototype.loadLevel = function(data) {
 // Water
 function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.parent = parent; // The owning MarbleLevel
-	let geometry = this.geometry = new THREE.PlaneBufferGeometry(10000, 10000);
+	let geometry = this.geometry = new PlaneBufferGeometry(10000, 10000);
 
-	this.waterObject = new THREE.Water(
+	this.waterObject = new ThreeWater(
 		geometry,
 		{
 			textureWidth: 512,
 			textureHeight: 512,
-			waterNormals: new THREE.TextureLoader().load("resources/textures/waternormals.jpg", function(texture) {
-				texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+			waterNormals: new TextureLoader().load("resources/textures/waternormals.jpg", function(texture) {
+				texture.wrapS = texture.wrapT = THREE_REPEAT_WRAPPING;
 			}),
 			alpha: 1.0,
 			sunDirection: sunLight.position.clone().normalize(),
@@ -302,13 +312,13 @@ Water.prototype.update = function(deltaTime) {
 // Skybox
 function Sky(parameters = {}) {
 	// Wrapper group for all entities related to the sky
-	this.group = new THREE.Group();
-	this.skyObject = new THREE.Sky();
+	this.group = new Group();
+	this.skyObject = new ThreeSky();
 	this.skyObject.scale.setScalar(10000);
 	this.group.add(this.skyObject);
 
 	// Light
-	let sunLight = this.sunLight = new THREE.DirectionalLight(0xf5d0d0, 1.5);
+	let sunLight = this.sunLight = new DirectionalLight(0xf5d0d0, 1.5);
 	sunLight.castShadow = true;
 
 	this.group.add(sunLight);
@@ -358,7 +368,7 @@ Sky.prototype.recalculate = function(parameters) {
 };
 
 Sky.prototype.toggleDebugHelper = function(state) {
-	if (!this.shadowHelper && state) this.shadowHelper = new THREE.CameraHelper(this.sunLight.shadow.camera);
+	if (!this.shadowHelper && state) this.shadowHelper = new CameraHelper(this.sunLight.shadow.camera);
 	if (state) {
 		this.group.add(this.shadowHelper);
 	} else if (this.shadowHelper) {

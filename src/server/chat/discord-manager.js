@@ -1,6 +1,7 @@
 const config = require("../config");
 const log = require("../../log");
-const messages = require("./messages");
+const commandsManager = require("./commands-manager");
+const permissions = require("./permissions");
 const discord = require("discord.js");
 const request = require("request-promise-native");
 
@@ -17,20 +18,41 @@ const discordManager = function() {
 			const sockets = require("../network/sockets");
 			const socketChat = sockets.setupChat(db, this.chatWebhook);
 
-			this.client.on("ready", function() {
+			this.client.on("ready", () => {
+				// Get role permissions
+				permissions.initialize(this.client.guilds);
+
+				// Set default commands reply channel, which is the gameplay channel
+				commandsManager.setDefaultChannel(
+					this.client
+						.guilds.get(config.discord.permissions.guildId)
+						.channels.get(config.discord.gameplayChannelId)
+				);
+
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
 				self.client.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 			}, console.error);
 
-			this.client.on("message", function(message) {
-				if (message.channel.id == config.discord.gameplayChannelId) {
-					if (message.author.id != config.discord.webhookId) { // Make sure we're not listening to our own blabber
-						if (!db.user.idExists(message.author.id)) {
-							// This is a new user!
-							db.user.insertNewUserDiscord(message.author);
-						}
+			// Log warnings and errors
+			this.client.on("error", console.error, console.error);
+			this.client.on("warn", console.warn, console.warn);
+			this.client.on("rateLimit", (rateLimitInfo) => {
+				log.info(`DISCORD: ${"Hit API ratelimit!".red} ${rateLimitInfo}`);
+			}, console.error);
 
-						// Send it to the client chat
+			// All messages sent in #gameplay channel
+			this.client.on("message", (message) => {
+				if (
+					!config.discord.ignoreChannelIds.includes(message.channel.id)
+					&& message.author.id != config.discord.webhookId // Make sure we're not listening to our own blabber
+				) {
+					if (!db.user.idExists(message.author.id)) {
+						// This is a new user!
+						db.user.insertNewUserDiscord(message.author);
+					}
+
+					// Send it to the client chat
+					if (message.channel.id === config.discord.gameplayChannelId) {
 						socketChat.emit(
 							JSON.stringify({
 								username: message.author.username,
@@ -38,29 +60,25 @@ const discordManager = function() {
 								content: message.content
 							})
 						);
-
-						messages.parse(message.content, message.author.id, message.author.username, message.member);
-
-						if (message.content === "!doot") {
-							message.reply("🎺");
-						}
 					}
+
+					// Parse commands
+					commandsManager.parse(message.content, message.author.id, message.author.username, message.channel);
 				}
 			}, console.error);
 
-			this.client.on("error", console.error, console.error);
-
-			this.client.on("guildBanAdd", function(guild, user) {
+			// Bans
+			this.client.on("guildBanAdd", (guild, user) => {
 				log.info(`DISCORD: ${"Banned user".red} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(true, user.id);
 			}, console.error);
 
-			this.client.on("guildBanRemove", function(guild, user) {
+			this.client.on("guildBanRemove", (guild, user) => {
 				log.info(`DISCORD: ${"Unbanned user".green} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(false, user.id);
 			}, console.error);
 
-
+			// Everything has been set up, log the bot into the discord channel
 			this.client.login(config.discord.botToken);
 
 			return socketChat;
