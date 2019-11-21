@@ -93,16 +93,7 @@
 				{{/discordEnabled}}
 
 				<div id="notifications">
-					<div id="notification-template" class="notification">
-						<div class="notification-status exclamation"><i class="icon-attention-alt"></i></div>
-						<div class="notification-status wait"><i class="icon-hourglass"></i></div>
-						<div class="notification-status check"><i class="icon-ok"></i></div>
-						<div class="notification-status cross"><i class="icon-cancel"></i></div>
-						<div class="notification-content">The maximum amount of marbles has been reached! <br/>No more marbles can be entered.</div>
-						<div class="notification-progress">
-							<div class="notification-progress-step">&#10004;</div>
-						</div>
-					</div>
+					{{>partials/notificationTemplate}}
 				</div>
 			</div>
 		</section>

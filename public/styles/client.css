@@ -317,7 +317,6 @@ body {
 			animation-iteration-count: 1;
 			transition: opacity 1s, margin-top 1s;
 			overflow: hidden;
-			padding: 4px 16px 4px 4px;
 			background-color: #0009;
 			text-align: center;
 			color: #eee;
@@ -341,6 +340,7 @@ body {
 				width: 2.5ch;
 				font-weight: 600;
 				display: none;
+				margin: 2px 0px;
 			}
 
 				#notifications .notification.exclamation .notification-status.exclamation,
@@ -348,6 +348,8 @@ body {
 				#notifications .notification.check .notification-status.check,
 				#notifications .notification.cross .notification-status.cross {
 					display: flex;
+					justify-content: center;
+					align-items: center;
 				}
 
 			#notifications .notification-content {
@@ -356,31 +358,51 @@ body {
 				text-shadow: 1px 1px 0px #1119;
 			}
 
-			#notifications .notification-progress {
+			#notifications div.notification-progress {
 				display: flex;
 				align-items: center;
 				justify-content: space-around;
+				background: #2b292999;
+				margin: 0;
+				padding: 4px 16px;
 			}
 
 				#notifications .notification-progress-step {
-					width: 1.4em;
-					height: 1.4em;
-					border-radius: 50%;
-					margin: .6em;
+					width: 1em;
+					height: 1em;
+					border-radius: 2px;
+					margin: 0 .2em;
 					color: transparent;
 					font-size: .5em;
+					background-color: #0009;
+					transition: height .3s;
+				}
+
+				#notifications .notification-progress-step.pending {
+					background-color: #0009;
+				}
+
+				@keyframes notification-progress-step-loading {
+					0% { background-color: #f90f; }
+					100% { background-color: #f903; }
+				}
+
+				#notifications .notification-progress-step.loading {
+					animation-name: notification-progress-step-loading;
+					animation-duration: 1s;
+					animation-direction: alternate;
+					animation-iteration-count: infinite;
+					animation-timing-function: ease-in-out;
+					height: 2em;
 				}
 
 				#notifications .notification-progress-step.completed {
-					color: #fff;
+					background-color: #9f99;
 				}
 
 			/* Notification class variants */
 			#notifications .notification.red {
 				background-color: #ce291499;
-			}
-			#notifications .notification.red .notification-progress-step {
-				background-color: #8d1606;
 			}
 			#notifications .notification.red .notification-status {
 				color: #8d1606;
@@ -389,18 +411,12 @@ body {
 			#notifications .notification.green {
 				background-color: #00aa0099;
 			}
-			#notifications .notification.green .notification-progress-step {
-				background-color: #064b06;
-			}
 			#notifications .notification.green .notification-status {
 				color: #064b06;
 			}
 
 			#notifications .notification.blue {
 				background-color: #4286f499;
-			}
-			#notifications .notification.blue .notification-progress-step {
-				background-color: #0e4db3;
 			}
 			#notifications .notification.blue .notification-status {
 				color: #0e4db3;

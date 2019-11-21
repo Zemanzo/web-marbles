@@ -51,7 +51,6 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 		loadStart: new Event("loadStart"),
 		downloadStart: new Event("downloadStart"),
 		downloadComplete: new Event("downloadComplete"),
-		loadModelsComplete: new Event("loadModelsComplete"),
 		loadComplete: new Event("loadComplete"),
 		error: new Event("error")
 	};
@@ -228,7 +227,6 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	// Load prefabs
 	let prefabs = {};
 	return Promise.all(modelPromises).then(() => {
-		this.eventTarget.dispatchEvent(this.events.loadModelsComplete);
 		let warnings = 0;
 		for (let prefabUuid in data.prefabs) {
 			let group = new Group();

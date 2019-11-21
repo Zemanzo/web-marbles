@@ -156,7 +156,7 @@ let game = function() {
 					content: "Downloading...",
 					lifetime: 0,
 					classNames: "blue wait",
-					progressTarget: 3
+					progressTarget: 2
 				});
 				_serverData.currentLevelId = levelId;
 

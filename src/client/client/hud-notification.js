@@ -54,6 +54,9 @@ function HUDNotification(notificationOptions) {
 		if (this.progressTarget > 0) {
 			for (let i = 1; i < this.progressTarget; i++) {
 				let cloneNode = this.progressNode.children[0].cloneNode(true);
+				// The cloned node is also used (as the first step), and has a "loading" class by default.
+				cloneNode.classList.remove("loading");
+				cloneNode.classList.add("pending");
 				this.progressNode.appendChild(cloneNode);
 			}
 		} else {
@@ -91,7 +94,15 @@ HUDNotification.prototype.changeClassNames = function(newClassNames) {
 HUDNotification.prototype.incrementProgress = function(newContent) {
 	if (this.progressNode) {
 		this.changeContent(newContent);
+		this.progressNode.children[this.currentProgress].classList.remove("loading");
 		this.progressNode.children[this.currentProgress].classList.add("completed");
+
+		if (this.currentProgress < this.progressTarget - 1) {
+			this.progressNode.children[this.currentProgress + 1].classList.remove("pending");
+			this.progressNode.children[this.currentProgress + 1].classList.add("loading");
+		}
+
+		// Increment the progress value
 		this.currentProgress++;
 		if (this.currentProgress >= this.progressTarget && this.hideProgressWhenDone) {
 			this.progressNode.style.display = "none";
