@@ -1,51 +1,49 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const log = require("../../log");
 const levelIO = require("../../level/level-io");
 
 // Scan for levels
 function retrieveLevels() {
-	return new Promise((resolve, reject) => {
-		fs.readdir("public/resources/levels",
-			undefined,
-			function(error, files) {
-				if (files && Array.isArray(files)) {
-					// Only read files that have the correct extension
-					let levelFiles = files.filter(file => file.endsWith(".mms"));
+	return fs.readdir("public/resources/levels")
+		.then((files) => {
+			if (files && Array.isArray(files)) {
+				// Only read files that have the correct extension
+				let levelFiles = files.filter(file => file.endsWith(".mms"));
 
-					// Remove file extensions
-					// Server and client add their extensions on load
-					for(let i = 0; i < levelFiles.length; i++) {
-						levelFiles[i] = levelFiles[i].slice(0, levelFiles[i].length - 4);
-					}
-					if (levelFiles.length > 0) {
-						return resolve(levelFiles);
-					}
+				// Remove file extensions
+				// Server and client add their extensions on load
+				for(let i = 0; i < levelFiles.length; i++) {
+					levelFiles[i] = levelFiles[i].slice(0, levelFiles[i].length - 4);
 				}
 
-				log.error("No files found");
-				reject("No files found");
+				if (levelFiles.length > 0) {
+					return levelFiles;
+				}
+				return Promise.reject("No files found");
 			}
-		);
-	});
+		})
+		.catch((error) => {
+			log.error(error);
+		});
 }
 
 function loadLevel(levelName) {
-	return new Promise((resolve, reject) => {
-		fs.readFile(`public/resources/levels/${levelName}.mms`, function(error, fileBuffer) {
+	return fs.readFile(`public/resources/levels/${levelName}.mms`)
+		.then((fileBuffer) => {
 			try {
 				let level = levelIO.load(fileBuffer);
 				if(!level) {
-					console.log(`Unable to load ${levelName}.mms`);
-					reject(level);
+					return Promise.reject();
 				}
-				resolve(level);
+				return level;
 			}
 			catch (error) {
-				log.error("Failed to parse level file", error);
-				reject(error);
+				return Promise.reject(error);
 			}
+		})
+		.catch((error) => {
+			log.error(`Failed to parse level file (${levelName})`, error);
 		});
-	});
 }
 
 let loadedLevels = retrieveLevels()
