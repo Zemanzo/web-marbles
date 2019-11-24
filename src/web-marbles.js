@@ -86,6 +86,7 @@ app.get("/client", function(req, res) {
 		gitBranch,
 		version,
 		discordEnabled: config.discord.enabled,
+		invitelink: config.discord.inviteLink,
 		rootUrl: config.network.rootUrl
 	});
 });
@@ -204,9 +205,7 @@ function shutdown() {
 		// Inform any connected clients
 		socketGameplay.emit(JSON.stringify({
 			content: "The server is shutting down.",
-			style: {
-				backgroundColor: "#d00"
-			}
+			classNames: "red exclamation"
 		}));
 
 		// Create a list of promises that all have to resolve before we can consider being shut down

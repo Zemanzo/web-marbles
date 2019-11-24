@@ -30,8 +30,20 @@
 				{{#gitHash}}<div id="releaseHash">{{gitHash}}</div>{{/gitHash}}
 			</div>
 			<nav id="externalLinks">
-				<a href="https://github.com/Zemanzo/web-marbles" id="github" title="Contribute to the source!"><i class="icon-github-circled"></i></a>
-				<a href="https://www.patreon.com/webmarbles" id="patreon" title="Support us on patreon!"><img src="images/patreon.svg" alt="Patreon"></a>
+				{{#invitelink}}
+				<a href="{{invitelink}}" id="discord">
+					<img src="images/wumpus_white.svg" alt="Wumpus">
+					<span>Join the Discord!</span>
+				</a>
+				{{/invitelink}}
+				<a href="https://www.patreon.com/webmarbles" id="patreon">
+					<img src="images/patreon.svg" alt="Patreon">
+					<span>Support the devs!</span>
+				</a>
+				<a href="https://github.com/Zemanzo/web-marbles" id="github">
+					<img src="images/github.svg" alt="GitHub">
+					<span>View the source!</span>
+				</a>
 			</nav>
 		</header>
 		<section id="viewport">
@@ -81,9 +93,7 @@
 				{{/discordEnabled}}
 
 				<div id="notifications">
-					<div id="notification-template" class="notification">
-						<div class="notification-content">The maximum amount of marbles has been reached! No more marbles can be entered.</div>
-					</div>
+					{{>partials/notificationTemplate}}
 				</div>
 			</div>
 		</section>
