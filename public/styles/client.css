@@ -90,9 +90,10 @@ body {
 	}
 
 #header {
+	--header-height: 50px;
 	grid-area: header;
 	width: 100%;
-	max-height: 50px;
+	max-height: var(--header-height);
 	display: flex;
 	justify-content: space-between;
 }
@@ -124,6 +125,7 @@ body {
 			align-items: center;
 			max-height: 100%;
 			height: 100%;
+			min-width: var(--header-height);
 			border-radius: var(--border-radius);
 			padding: 8px;
 			text-decoration: none;
@@ -139,13 +141,31 @@ body {
 			#externalLinks img {
 				height: 1.8em;
 				width: 1.8em;
-				margin-right:8px;
+				margin-right:0px;
+				transition: margin-right .4s;
 			}
 
 			#externalLinks span {
 				display: inline-block;
 				text-align: center;
+				max-height: 110%;
 				width: 4.2em;
+				margin-left: -4.2em;
+				opacity: 0;
+				overflow: hidden;
+				clip-path: polygon(100% 0px, 100% 0px, 100% 100%, 100% 100%);
+				transition: margin-left .4s, clip-path .4s, opacity .3s;
+			}
+
+			#externalLinks a:hover span {
+				clip-path: polygon(0px 0px, 100% 0px, 100% 100%, 0px 100%);
+				opacity: 1;
+				margin-left: 0;
+				transform: scaleX(1);
+			}
+
+			#externalLinks a:hover img {
+				margin-right:8px;
 			}
 
 		#discord {
@@ -398,6 +418,10 @@ body {
 
 				#notifications .notification-progress-step.completed {
 					background-color: #9f99;
+				}
+
+				#notifications .notification-progress-step.failed {
+					background-color: #f999;
 				}
 
 			/* Notification class variants */
