@@ -110,6 +110,15 @@ HUDNotification.prototype.incrementProgress = function(newContent) {
 	}
 };
 
+// Set the current progress indicator to failed, and optionally change the text
+HUDNotification.prototype.failProgress = function(newContent) {
+	if (this.progressNode) {
+		this.changeContent(newContent);
+		this.progressNode.children[this.currentProgress].classList.remove("loading");
+		this.progressNode.children[this.currentProgress].classList.add("failed");
+	}
+};
+
 HUDNotification.prototype.remove = function(delay = 0) {
 	// Clear possibly already existing timeout
 	clearTimeout(this.removalTimeout);

@@ -93,7 +93,6 @@ let game = function() {
 	};
 
 	return {
-
 		// Returns a Promise that resolves once initialization is complete
 		// Can be called multiple times but will initialize only once
 		initialize: function() {
@@ -164,21 +163,24 @@ let game = function() {
 				levelManager.activeLevel.eventTarget.addEventListener("downloadComplete", () => {
 					loadingNotification.incrementProgress("Loading models...");
 				}, false);
+
 				levelManager.activeLevel.eventTarget.addEventListener("loadModelsComplete", () => {
 					loadingNotification.incrementProgress("Building world...");
 				}, false);
 
 				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then((result) => {
-					loadingNotification.incrementProgress();
-					if(result === "failed") {
+					if (result === "failed") {
+						loadingNotification.failProgress();
 						loadingNotification.changeContent("Level loading failed... Try refreshing the page?");
 						loadingNotification.changeClassNames("red cross");
 						loadingNotification.remove(10);
 					} else if (result !== 0) {
+						loadingNotification.failProgress();
 						loadingNotification.changeContent("Level loading incomplete... If this happens often, contact the server admin.");
 						loadingNotification.changeClassNames("red cross");
 						loadingNotification.remove(5);
 					} else {
+						loadingNotification.incrementProgress();
 						loadingNotification.changeContent("Level successfully loaded!");
 						loadingNotification.changeClassNames("green check");
 						loadingNotification.remove(5);
