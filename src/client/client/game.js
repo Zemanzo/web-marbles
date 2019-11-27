@@ -93,7 +93,6 @@ let game = function() {
 	};
 
 	return {
-
 		// Returns a Promise that resolves once initialization is complete
 		// Can be called multiple times but will initialize only once
 		initialize: function() {
@@ -152,16 +151,39 @@ let game = function() {
 			// Start loading the level asynchronously if not yet loaded
 			if(_serverData.currentLevelId !== levelId) {
 				console.log(`Loading level: ${levelId}`);
-				let loadingNotification = new HUDNotification("Loading level...", undefined, { background: "#4286f4" });
+				let loadingNotification = new HUDNotification({
+					content: "Downloading...",
+					lifetime: 0,
+					classNames: "blue wait",
+					progressTarget: 2
+				});
 				_serverData.currentLevelId = levelId;
+
+				// Add loading event listeners
+				levelManager.activeLevel.eventTarget.addEventListener("downloadComplete", () => {
+					loadingNotification.incrementProgress("Loading models...");
+				}, false);
+
+				levelManager.activeLevel.eventTarget.addEventListener("loadModelsComplete", () => {
+					loadingNotification.incrementProgress("Building world...");
+				}, false);
+
 				levelManager.activeLevel.loadLevelFromUrl(`/resources/levels/${levelId}.mmc`).then((result) => {
-					loadingNotification.remove();
-					if(result === "failed") {
-						new HUDNotification("Level loading failed... Try refreshing the page?", 10, { background: "#db1111" });
-					} else if(result !== 0) {
-						new HUDNotification("Level loading incomplete... If this happens often, contact the server admin.", 5, { background: "#f29307" });
+					if (result === "failed") {
+						loadingNotification.failProgress();
+						loadingNotification.changeContent("Level loading failed... Try refreshing the page?");
+						loadingNotification.changeClassNames("red cross");
+						loadingNotification.remove(10);
+					} else if (result !== 0) {
+						loadingNotification.failProgress();
+						loadingNotification.changeContent("Level loading incomplete... If this happens often, contact the server admin.");
+						loadingNotification.changeClassNames("red cross");
+						loadingNotification.remove(5);
 					} else {
-						new HUDNotification("Level successfully loaded!", 5, { background: "#42f44e" });
+						loadingNotification.incrementProgress();
+						loadingNotification.changeContent("Level successfully loaded!");
+						loadingNotification.changeClassNames("green check");
+						loadingNotification.remove(5);
 					}
 					if(this.getCurrentGameState() === gameConstants.STATE_STARTED) {
 						levelManager.activeLevel.openGates();

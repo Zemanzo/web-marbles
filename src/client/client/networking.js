@@ -20,7 +20,13 @@ let networking = function() {
 		if(typeof event.data === "string") {
 			// This should only be a HUD Notification
 			let message = JSON.parse(event.data);
-			new HUDNotification(message.content, message.duration, message.style);
+			new HUDNotification({
+				content: message.content,
+				lifetime: message.lifetime,
+				styles: message.styles,
+				classNames: message.classNames
+				// progress is not supported for server-side messages
+			});
 		} else {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);

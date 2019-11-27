@@ -1,7 +1,7 @@
 const log = require("../log");
 const config = require("./config");
 const physics = require("../physics/manager");
-const levels = require("./levels/manager");
+const levelManager = require("./levels/manager");
 const db = require("./database/manager");
 const gameConstants = require("../game-constants");
 const permissions = require("./chat/permissions");
@@ -88,11 +88,11 @@ let game = function() {
 	let _netGameUpdate = {};
 	let _netGameStatePayload = null;
 
-	levels.currentLevelData.then((level) => {
+	levelManager.currentLevelData.then((level) => {
 		_currentLevel = level;
 	});
 
-	levels.currentLevelName.then((name) => {
+	levelManager.currentLevelName.then((name) => {
 		_netGameUpdate.l = name;
 	});
 
@@ -351,7 +351,8 @@ let game = function() {
 			) {
 				this.limitReached = true;
 				_socketManager.emit(JSON.stringify({
-					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round."
+					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
+					classNames: "red exclamation"
 				}));
 				this.start();
 				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);

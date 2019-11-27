@@ -9,7 +9,6 @@ server {
 server {
     listen 443 ssl http2;
 
-    ssl on;
     ssl_certificate     *********.pem;
     ssl_certificate_key *********.pem;
     ssl_protocols       TLSv1.2 TLSv1.3;

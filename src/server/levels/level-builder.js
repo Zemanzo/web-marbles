@@ -1,7 +1,9 @@
 const physics = require("../../physics/manager");
-const levels = require("./manager");
 
-module.exports = function() {
+/**
+ * Module that parses level data and loads it as their appropriate physics colliders
+ */
+const levelBuilder = function() {
 	let _transformFromEntity = function(entity) {
 		let transform = new physics.ammo.btTransform();
 		transform.setIdentity();
@@ -24,9 +26,9 @@ module.exports = function() {
 		return transform;
 	};
 
-	levels.currentLevelData.then((level) => {
-		for(let key in level.models) {
-			let model = level.models[key];
+	return function(levelData) {
+		for(let key in levelData.models) {
+			let model = levelData.models[key];
 			if(model.convexData) {
 				physics.createConvexShape(key, model.convexData);
 			}
@@ -35,11 +37,11 @@ module.exports = function() {
 			}
 		}
 
-		physics.world.setGravity(level.gameplay.gravity);
+		physics.world.setGravity(levelData.gameplay.gravity);
 
-		for (let worldObjectUuid in level.worldObjects) {
-			let worldEntity = level.worldObjects[worldObjectUuid];
-			let prefab = level.prefabs[level.worldObjects[worldObjectUuid].prefab];
+		for (let worldObjectUuid in levelData.worldObjects) {
+			let worldEntity = levelData.worldObjects[worldObjectUuid];
+			let prefab = levelData.prefabs[levelData.worldObjects[worldObjectUuid].prefab];
 
 			for (let prefabEntityUuid in prefab.entities) {
 				let prefabEntity = prefab.entities[prefabEntityUuid];
@@ -60,5 +62,7 @@ module.exports = function() {
 				physics.world.createCollider(prefabEntity, transform);
 			}
 		}
-	});
+	};
 }();
+
+module.exports = levelBuilder;

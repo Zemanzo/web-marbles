@@ -1,73 +1,88 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 const log = require("../../log");
 const levelIO = require("../../level/level-io");
+const levelBuilder = require("./level-builder");
 
-// Scan for levels
-function retrieveLevels() {
-	return new Promise((resolve, reject) => {
-		fs.readdir("public/resources/levels",
-			undefined,
-			function(error, files) {
-				if (files && Array.isArray(files)) {
-					// Only read files that have the correct extension
-					let levelFiles = files.filter(file => file.endsWith(".mms"));
+const levelManager = function() {
+	return {
+		loadedLevels: null,
+		currentLevelName: null,
+		currentLevelData: null,
 
-					// Remove file extensions
-					// Server and client add their extensions on load
-					for(let i = 0; i < levelFiles.length; i++) {
-						levelFiles[i] = levelFiles[i].slice(0, levelFiles[i].length - 4);
+		/**
+		 * Scan for available levels in the resource folder
+		 */
+		retrieveLevels() {
+			return fs.readdir(`${__dirname}/../../../public/resources/levels`)
+				.then((files) => {
+					if (files && Array.isArray(files)) {
+						// Only read files that have the correct extension
+						let levelFiles = files.filter(file => file.endsWith(".mms"));
+
+						// Remove file extensions
+						// Server and client add their extensions on load
+						for(let i = 0; i < levelFiles.length; i++) {
+							levelFiles[i] = levelFiles[i].slice(0, levelFiles[i].length - 4);
+						}
+
+						if (levelFiles.length > 0) {
+							return levelFiles;
+						}
+						return Promise.reject("No files found");
 					}
-					if (levelFiles.length > 0) {
-						return resolve(levelFiles);
+				})
+				.catch((error) => {
+					log.error(error);
+				});
+		},
+
+		/**
+		 * Read the level file based on name
+		 */
+		loadLevel(levelName) {
+			return fs.readFile(`${__dirname}/../../../public/resources/levels/${levelName}.mms`)
+				.then((fileBuffer) => {
+					try {
+						let level = levelIO.load(fileBuffer);
+						if(!level) {
+							return Promise.reject();
+						}
+						return level;
 					}
-				}
+					catch (error) {
+						return Promise.reject(error);
+					}
+				})
+				.catch((error) => {
+					log.error(`Failed to parse level file (${levelName})`, error);
+				});
+		},
 
-				log.error("No files found");
-				reject("No files found");
-			}
-		);
-	});
-}
+		/**
+		 * Currently retrieves all levels, and loads the first one it finds
+		 * TODO: Think if loading the first match is desired, and how this will fit in with level rotation.
+		 */
+		initialize() {
+			this.loadedLevels = this.retrieveLevels()
+				.then((levels) => {
+					return levels;
+				});
 
-function loadLevel(levelName) {
-	return new Promise((resolve, reject) => {
-		fs.readFile(`public/resources/levels/${levelName}.mms`, function(error, fileBuffer) {
-			try {
-				let level = levelIO.load(fileBuffer);
-				if(!level) {
-					console.log(`Unable to load ${levelName}.mms`);
-					reject(level);
-				}
-				resolve(level);
-			}
-			catch (error) {
-				log.error("Failed to parse level file", error);
-				reject(error);
-			}
-		});
-	});
-}
+			this.currentLevelName = this.loadedLevels
+				.then((levels) => {
+					return levels[0];
+				});
 
-let loadedLevels = retrieveLevels()
-	.then((levels) => {
-		return levels;
-	});
+			this.currentLevelData = this.loadedLevels
+				.then((levels) => {
+					let firstLevel = this.loadLevel(levels[0]);
+					firstLevel.then((levelData) => {
+						levelBuilder(levelData);
+					});
+					return firstLevel;
+				});
+		}
+	};
+}();
 
-let currentLevelName = loadedLevels
-	.then((levels) => {
-		return levels[0];
-	});
-
-let currentLevelData = loadedLevels
-	.then((levels) => {
-		return loadLevel(levels[0]);
-	});
-
-module.exports = {
-	loadedLevels,
-	currentLevelName,
-	currentLevelData
-};
-
-// Not-module initialization that has no business happening here
-require("./level-builder");
+module.exports = levelManager;

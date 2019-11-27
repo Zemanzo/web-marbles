@@ -18,6 +18,16 @@
 		url("../fonts/share-tech-mono/share-tech-mono-v8-latin-regular.woff2") format("woff2");
 }
 
+/* Quicksand - latin */
+@font-face {
+	font-family: "Quicksand";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Quicksand"),
+		local("Quicksand-Regular"),
+		url("../fonts/quicksand/quicksand-latin-regular.woff2") format("woff2");
+}
+
 * {
 	margin: 0;
 	box-sizing: border-box;
@@ -53,7 +63,8 @@ body {
 	border-top: 2px solid var(--theme-color);
 }
 
-body > *:not(#sidebar) {
+#title,
+#viewport {
 	background-color: #2b2929;
 	border-radius: var(--border-radius);
 }
@@ -70,7 +81,7 @@ body > *:not(#sidebar) {
 }
 
 	#title:hover {
-		filter: brightness(120%);
+		text-decoration: underline;
 	}
 
 	#title img {
@@ -79,22 +90,25 @@ body > *:not(#sidebar) {
 	}
 
 #header {
+	--header-height: 50px;
 	grid-area: header;
 	width: 100%;
-	max-height: 50px;
+	max-height: var(--header-height);
 	display: flex;
 	justify-content: space-between;
 }
 
 	#releaseMeta {
+		background-color: #2b2929;
+		border-radius: var(--border-radius);
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		margin: 2px 4px;
-		padding: 0 4px;
+		padding: 0 8px;
 		font-family: "Share Tech Mono";
 		color: #bbb;
 		font-weight: 300;
+		flex: 1;
 	}
 
 		#releaseHash {
@@ -109,26 +123,61 @@ body > *:not(#sidebar) {
 			display: flex;
 			justify-content: center;
 			align-items: center;
-			max-height: 42px;
-			max-width: 42px;
-			border-radius: 4px;
-			margin: 4px;
+			max-height: 100%;
+			height: 100%;
+			min-width: var(--header-height);
+			border-radius: var(--border-radius);
 			padding: 8px;
-			font-size: 2.4em;
+			text-decoration: none;
+			margin-left: 2px;
+			color: #fff;
+			text-shadow: #0009 0px 1px 2px
+		}
+
+			#externalLinks a:hover {
+				text-decoration: underline;
+			}
+
+			#externalLinks img {
+				height: 1.8em;
+				width: 1.8em;
+				margin-right:0px;
+				transition: margin-right .4s;
+			}
+
+			#externalLinks span {
+				display: inline-block;
+				text-align: center;
+				max-height: 110%;
+				width: 4.2em;
+				margin-left: -4.2em;
+				opacity: 0;
+				overflow: hidden;
+				clip-path: polygon(100% 0px, 100% 0px, 100% 100%, 100% 100%);
+				transition: margin-left .4s, clip-path .4s, opacity .3s;
+			}
+
+			#externalLinks a:hover span {
+				clip-path: polygon(0px 0px, 100% 0px, 100% 100%, 0px 100%);
+				opacity: 1;
+				margin-left: 0;
+				transform: scaleX(1);
+			}
+
+			#externalLinks a:hover img {
+				margin-right:8px;
+			}
+
+		#discord {
+			background-color: #7289DA;
 		}
 
 		#patreon {
 			background-color: #f86754;
 		}
 
-			#patreon img {
-				height:100%;
-			}
-
-		#externalLinks #github {
-			padding-top:10px;
-			background-color: #090909;
-			color:#eee;
+		#github {
+			background-color: #24292e;
 		}
 
 #viewport {
@@ -189,7 +238,9 @@ body > *:not(#sidebar) {
 		}
 	}
 
-	#viewport .overlay > * {
+	#chat,
+	#raceLeaderboard,
+	#cameraControls {
 		pointer-events: all;
 	}
 
@@ -255,44 +306,145 @@ body > *:not(#sidebar) {
 		text-align: center;
 		width: 100%;
 		position: absolute;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		padding: 4px;
+		box-sizing: border-box;
+		font-family: "Quicksand", sans-serif;
 	}
 
 		@keyframes notification-appear {
-			0%		{
+			0% {
 				display: inline-block;
-				max-width: 0ch;
 				max-height: 0em;
 			}
-			100% 	{
-				max-width: 80ch;
+			100% {
 				max-height: 5em;
 			}
 		}
 
-		#notification-template {
+		#notifications #notification-template {
 			display: none;
 		}
 
 		#notifications .notification {
+			pointer-events: all;
 			font-size: 1.5em;
 			animation-name: notification-appear;
 			animation-duration: .7s;
 			animation-fill-mode: forwards;
 			animation-iteration-count: 1;
-			margin: 8px auto 0 auto;
-			transition: opacity 1s;
-		}
-
-		#notifications .notification-content {
+			transition: opacity 1s, margin-top 1s;
 			overflow: hidden;
-			padding: 4px 16px;
-			background-color: var(--theme-color);
+			background-color: #0009;
 			text-align: center;
 			color: #eee;
-			border-radius: 15px;
-			text-shadow: 1px 1px 0px #111;
-			box-shadow: 0px 3px 5px #111;
+			border-radius: var(--border-radius);
+			box-shadow: 0px 3px 3px #1119;
+			width: 64ch;
+			display: flex;
+			margin-bottom: 4px;
 		}
+
+			#notifications .notification div {
+				align-items: center;
+				justify-content: center;
+			}
+
+			#notifications .notification-status {
+				font-family: "Share Tech Mono", monospace;
+				font-size: 1.5em;
+				color: #222;
+				height: 100%;
+				width: 2.5ch;
+				font-weight: 600;
+				display: none;
+				margin: 2px 0px;
+			}
+
+				#notifications .notification.exclamation .notification-status.exclamation,
+				#notifications .notification.wait .notification-status.wait,
+				#notifications .notification.check .notification-status.check,
+				#notifications .notification.cross .notification-status.cross {
+					display: flex;
+					justify-content: center;
+					align-items: center;
+				}
+
+			#notifications .notification-content {
+				display: flex;
+				flex: 1;
+				text-shadow: 1px 1px 0px #1119;
+			}
+
+			#notifications div.notification-progress {
+				display: flex;
+				align-items: center;
+				justify-content: space-around;
+				background: #2b292999;
+				margin: 0;
+				padding: 4px 16px;
+			}
+
+				#notifications .notification-progress-step {
+					width: 1em;
+					height: 1em;
+					border-radius: 2px;
+					margin: 0 .2em;
+					color: transparent;
+					font-size: .5em;
+					background-color: #0009;
+					transition: height .3s;
+				}
+
+				#notifications .notification-progress-step.pending {
+					background-color: #0009;
+				}
+
+				@keyframes notification-progress-step-loading {
+					0% { background-color: #f90f; }
+					100% { background-color: #f903; }
+				}
+
+				#notifications .notification-progress-step.loading {
+					animation-name: notification-progress-step-loading;
+					animation-duration: 1s;
+					animation-direction: alternate;
+					animation-iteration-count: infinite;
+					animation-timing-function: ease-in-out;
+					height: 2em;
+				}
+
+				#notifications .notification-progress-step.completed {
+					background-color: #9f99;
+				}
+
+				#notifications .notification-progress-step.failed {
+					background-color: #f999;
+				}
+
+			/* Notification class variants */
+			#notifications .notification.red {
+				background-color: #ce291499;
+			}
+			#notifications .notification.red .notification-status {
+				color: #8d1606;
+			}
+
+			#notifications .notification.green {
+				background-color: #00aa0099;
+			}
+			#notifications .notification.green .notification-status {
+				color: #064b06;
+			}
+
+			#notifications .notification.blue {
+				background-color: #4286f499;
+			}
+			#notifications .notification.blue .notification-status {
+				color: #0e4db3;
+			}
 
 
 #chat {

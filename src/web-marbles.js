@@ -9,16 +9,11 @@ console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 
 // Database
 const db = require("./server/database/manager");
-try {
-	db.setCurrentDatabase(
-		require("better-sqlite3")(config.database.path)
-	);
-} catch(error) {
-	throw new Error(`Could not initialize the database. It might be unreadable or corrupted. Check the read/write permissions, or remove the database file and try again.\n${error}`);
-}
+db.setCurrentDatabase(config.database.path);
 
 // Fetch levels & build primary level
-const levels = require("./server/levels/manager");
+const levelManager = require("./server/levels/manager");
+levelManager.initialize();
 
 // Prepare marble skins
 const skins = require("./server/skins");
@@ -91,6 +86,7 @@ app.get("/client", function(req, res) {
 		gitBranch,
 		version,
 		discordEnabled: config.discord.enabled,
+		invitelink: config.discord.inviteLink,
 		rootUrl: config.network.rootUrl
 	});
 });
@@ -186,7 +182,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-Promise.all([skins.readyPromise, levels.currentLevelData])
+Promise.all([skins.readyPromise, levelManager.currentLevelData])
 	.then(() => {
 		game.end(false);
 	})
@@ -209,9 +205,7 @@ function shutdown() {
 		// Inform any connected clients
 		socketGameplay.emit(JSON.stringify({
 			content: "The server is shutting down.",
-			style: {
-				backgroundColor: "#d00"
-			}
+			classNames: "red exclamation"
 		}));
 
 		// Create a list of promises that all have to resolve before we can consider being shut down
