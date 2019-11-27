@@ -74,8 +74,12 @@
 .icon-pencil:before { content: '\e848'; } /* '' */
 .icon-list-alt:before { content: '\e849'; } /* '' */
 .icon-target:before { content: '\e84a'; } /* '' */
+.icon-ok-circled2:before { content: '\e84c'; } /* '' */
+.icon-ok-circled:before { content: '\e84d'; } /* '' */
+.icon-bookmark:before { content: '\e84e'; } /* '' */
 .icon-link-ext:before { content: '\f08e'; } /* '' */
 .icon-check-empty:before { content: '\f096'; } /* '' */
+.icon-bookmark-empty:before { content: '\f097'; } /* '' */
 .icon-github-circled:before { content: '\f09b'; } /* '' */
 .icon-filter:before { content: '\f0b0'; } /* '' */
 .icon-resize-full-alt:before { content: '\f0b2'; } /* '' */
@@ -104,6 +108,7 @@
 .icon-direction:before { content: '\f124'; } /* '' */
 .icon-fork:before { content: '\f126'; } /* '' */
 .icon-unlink:before { content: '\f127'; } /* '' */
+.icon-help:before { content: '\f128'; } /* '' */
 .icon-info:before { content: '\f129'; } /* '' */
 .icon-attention-alt:before { content: '\f12a'; } /* '' */
 .icon-shield:before { content: '\f132'; } /* '' */
@@ -136,4 +141,5 @@
 .icon-user-secret:before { content: '\f21b'; } /* '' */
 .icon-user-plus:before { content: '\f234'; } /* '' */
 .icon-user-times:before { content: '\f235'; } /* '' */
+.icon-hourglass:before { content: '\f254'; } /* '' */
 .icon-github-squared:before { content: '\f300'; } /* '' */
