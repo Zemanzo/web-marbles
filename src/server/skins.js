@@ -9,7 +9,7 @@ const skins = function() {
 		updateIdList: function() {
 			// Get list of folders in the skin directory
 			return fsPromises.readdir(
-				"public/resources/skins"
+				`${__dirname}/../../public/resources/skins`
 			)
 				.then((folders) => {
 					if (folders && Array.isArray(folders)) {
@@ -25,7 +25,7 @@ const skins = function() {
 					for (let folder of folders) {
 						skinMetaFilePromises.push(
 							fsPromises.readFile(
-								`public/resources/skins/${folder}/meta.json`,
+								`${__dirname}/../../public/resources/skins/${folder}/meta.json`,
 								"utf8"
 							)
 								.then((file) => {

@@ -13,7 +13,7 @@ const levelManager = function() {
 		 * Scan for available levels in the resource folder
 		 */
 		retrieveLevels() {
-			return fs.readdir("public/resources/levels")
+			return fs.readdir(`${__dirname}/../../../public/resources/levels`)
 				.then((files) => {
 					if (files && Array.isArray(files)) {
 						// Only read files that have the correct extension
@@ -40,7 +40,7 @@ const levelManager = function() {
 		 * Read the level file based on name
 		 */
 		loadLevel(levelName) {
-			return fs.readFile(`public/resources/levels/${levelName}.mms`)
+			return fs.readFile(`${__dirname}/../../../public/resources/levels/${levelName}.mms`)
 				.then((fileBuffer) => {
 					try {
 						let level = levelIO.load(fileBuffer);
