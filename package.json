@@ -40,6 +40,7 @@
     "express": "^4.16.3",
     "helmet": "^3.16.0",
     "js-cookie": "^2.2.0",
+    "md5": "^2.2.1",
     "msgpack-lite": "^0.1.26",
     "mustache-express": "^1.2.5",
     "pako": "^1.0.10",

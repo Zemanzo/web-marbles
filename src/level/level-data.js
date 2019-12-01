@@ -1,7 +1,7 @@
 function LevelData() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.3.0";
+	this.version = "0.3.1";
 	this.type = "project";
 	this.exportDate = 0;
 
@@ -13,6 +13,7 @@ function LevelData() {
 	this.textures = {};
 	this.materials = {};
 	this.models = {};
+	this.modelBuffers = {};
 	this.prefabs = {};
 	this.worldObjects = {};
 

@@ -2,6 +2,7 @@ const LevelData = require("./level-data");
 const pako = require("pako");
 const msgPack = require("msgpack-lite");
 const semver = require("semver");
+const md5 = require("md5");
 
 module.exports = function() {
 	return {
@@ -226,6 +227,31 @@ module.exports = function() {
 					if (!usedTextures.includes(uuid)) {
 						delete project.textures[uuid];
 					}
+				}
+
+				// Compare and remove duplicate textures in models
+				project.modelBuffers = {};
+				for (let uuid in project.models) {
+					let model = project.models[uuid],
+						bufferStartIndex = 0,
+						bufferEndIndex;
+					while (bufferStartIndex !== -1) {
+						// Using string methods because it is faster than regex or parsing the whole file as JSON.
+						bufferStartIndex = model.file.indexOf("\"uri\" : \"data:", bufferStartIndex);
+						if (bufferStartIndex !== -1) {
+							bufferStartIndex += 9; // Set it to the actual start of the buffer string
+							bufferEndIndex = model.file.indexOf("\"", bufferStartIndex);
+							let buffer = model.file.slice(bufferStartIndex, bufferEndIndex);
+							let hash = md5(buffer);
+							// Add unknown buffers to table.
+							if (project.modelBuffers[hash] === undefined) {
+								project.modelBuffers[hash] = buffer;
+							}
+							let replacement = `data:hash/md5;${hash}`;
+							model.file = `${model.file.slice(0, bufferStartIndex)}${replacement}${model.file.slice(bufferEndIndex)}`;
+						}
+					}
+					project.models[uuid].file = model.file;
 				}
 			}
 
