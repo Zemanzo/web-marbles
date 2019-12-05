@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "babel-eslint": "10",
+    "copy-webpack-plugin": "^5.0.5",
     "eslint": "5.x",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.3.5",
