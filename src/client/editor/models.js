@@ -8,7 +8,6 @@ import {
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
-import { GLBfromGLTF } from "makeglb";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { levelManager } from "../level-manager";
@@ -352,20 +351,9 @@ let modelsTab = function() {
 
 					file.reader = new FileReader();
 					file.reader.onload = async function() {
-						// Check the first 4 bytes for the .glb magic. If not, convert gltf to glb
-						let GLB_MAGIC = 0x46546C67,
-							conversionBuffer;
-						if (new Int32Array(file.reader.result, 0, 1)[0] !== GLB_MAGIC) {
-							conversionBuffer = await GLBfromGLTF(file.reader.result);
-							editorLog(
-								`Automatically converted .gtlf to .glb (${((conversionBuffer.byteLength / file.reader.result.byteLength) * 100).toFixed(1)}% of original size)`
-								, "warn");
-						}
-						let fileData = conversionBuffer || file.reader.result;
-
 						// Attempt to load model and add it to the project
-						let projectData = projectTab.activeProject.addModel(file.name, fileData);
-						modelsTab.loadModel(file.name, fileData, projectData);
+						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
+						modelsTab.loadModel(file.name, file.reader.result, projectData);
 					};
 
 					file.reader.onerror = function() {
