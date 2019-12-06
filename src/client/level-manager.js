@@ -13,6 +13,7 @@ import {
 import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { renderCore } from "./render/render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
@@ -21,6 +22,9 @@ import LevelLoaderWorker from "./level-loader.worker";
 import * as config from "./config";
 
 const _GLTFLoader = new GLTFLoader();
+const _DRACOLoader = new DRACOLoader();
+_DRACOLoader.setDecoderPath("dist/libs/draco/");
+_GLTFLoader.setDRACOLoader(_DRACOLoader);
 
 function MarbleLevel() { // "Map" is taken. This comment is left here in memory of "MarbleMap"
 	this.scene = new Scene();

@@ -6,11 +6,12 @@ import {
 	Group
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
+import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 import { editorLog } from "./log";
 import { projectTab } from "./project";
 import { levelManager } from "../level-manager";
 import { materialsTab } from "./materials";
-import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
 
 // model object
 function Model(name, sceneObject, projectData) {
@@ -313,6 +314,7 @@ function _getChildMeshes(obj) {
 
 let modelsTab = function() {
 	let _GLTFLoader = null;
+	let _DRACOLoader = null;
 	let _selectedModel = null;
 
 	return {
@@ -321,6 +323,10 @@ let modelsTab = function() {
 
 		initialize: function() {
 			_GLTFLoader = new GLTFLoader();
+			_DRACOLoader = new DRACOLoader();
+			_DRACOLoader.setDecoderPath("dist/libs/draco/");
+			_GLTFLoader.setDRACOLoader(_DRACOLoader);
+
 			this.group = new Group();
 			levelManager.activeLevel.levelObjects.add(this.group);
 			this.group.visible = false;
@@ -344,7 +350,7 @@ let modelsTab = function() {
 					}
 
 					file.reader = new FileReader();
-					file.reader.onload = function() {
+					file.reader.onload = async function() {
 						// Attempt to load model and add it to the project
 						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
 						modelsTab.loadModel(file.name, file.reader.result, projectData);
@@ -355,7 +361,7 @@ let modelsTab = function() {
 						file.reader.abort();
 					};
 
-					file.reader.readAsText(file, "utf-8");
+					file.reader.readAsArrayBuffer(file);
 				});
 			}, false);
 		},

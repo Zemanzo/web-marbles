@@ -1,7 +1,7 @@
 function LevelData() {
 	this.levelName = "New level";
 	this.authorName = "Unknown";
-	this.version = "0.3.0";
+	this.version = "0.3.1";
 	this.type = "project";
 	this.exportDate = 0;
 
@@ -168,7 +168,7 @@ LevelData.prototype.validateLevel = function() {
 		for(let modelName in this.models) {
 			let model = this.models[modelName];
 			if(this.type !== "levelServer") {
-				if(typeof model.file !== "string") {
+				if (!(typeof model.file === "string" || model.file instanceof ArrayBuffer)) {
 					console.error(`Level validation failed: ${modelName}'s file data type is incorrect.`);
 					return false;
 				}

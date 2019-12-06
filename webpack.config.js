@@ -1,4 +1,5 @@
 const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
 	mode: process.env.NODE_ENV !== "production" ? "development" : "production",
@@ -25,5 +26,13 @@ module.exports = {
 				use: { loader: "worker-loader" }
 			}
 		]
-	}
+	},
+	plugins: [
+		new CopyPlugin([
+			{
+				from: path.resolve(__dirname, "node_modules/three/examples/js/libs/draco/gltf"),
+				to: path.resolve(__dirname, "public/dist/libs/draco")
+			}
+		])
+	]
 };
