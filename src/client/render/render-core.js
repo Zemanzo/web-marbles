@@ -4,7 +4,7 @@ import {
 	Mesh,
 	BoxBufferGeometry,
 	MeshStandardMaterial,
-	PCFSoftShadowMap as THREE_PCF_SOFT_SHADOW_MAP
+	PCFShadowMap as THREE_PCF_SHADOW_MAP
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as config from "../config";
@@ -131,7 +131,7 @@ let renderCore = function() {
 
 				// Renderer defaults
 				_renderer.shadowMap.enabled = true;
-				_renderer.shadowMap.type = THREE_PCF_SOFT_SHADOW_MAP; // default is THREE.PCFShadowMap
+				_renderer.shadowMap.type = THREE_PCF_SHADOW_MAP; // default is THREE.PCFShadowMap
 
 				// Stats
 				_stats = new Stats();

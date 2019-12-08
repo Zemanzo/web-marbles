@@ -391,6 +391,7 @@ Sky.prototype.recalculate = function(parameters) {
 	this.skyObject.material.uniforms.sunPosition.value = this.sunLight.position.copy(this.sunLight.position);
 	this.sunLight.shadow.mapSize.width = 2048; // default
 	this.sunLight.shadow.mapSize.height = 2048; // default
+	this.sunLight.shadow.bias = -0.00005;
 	this.sunLight.shadow.camera.near = 3500;
 	this.sunLight.shadow.camera.far = 4200;
 	this.sunLight.shadow.camera.left = -69;
