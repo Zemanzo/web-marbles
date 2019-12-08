@@ -95,6 +95,9 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new Scene();
 				_renderer = new WebGLRenderer();
+				_renderer.gammaInput = true;
+				_renderer.gammaOutput = true;
+				_renderer.gammaFactor = 2.2;
 				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new Mesh(
 					new BoxBufferGeometry(1, 1, 1, 1),
@@ -215,6 +218,15 @@ let renderCore = function() {
 
 		updateCallback: function() {
 			// Overridable function for the client and editor to attach their update functions to.
+		},
+
+		updateShadowMap: function() {
+			_renderer.shadowMap.needsUpdate = true;
+		},
+
+		autoUpdateShadowMap: function(autoUpdate = true) {
+			_renderer.shadowMap.autoUpdate = autoUpdate;
+			this.updateShadowMap();
 		},
 
 		waterReflectsLevel: function() {
