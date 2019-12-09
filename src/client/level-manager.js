@@ -3,12 +3,14 @@ import {
 	AmbientLight,
 	TextureLoader,
 	RepeatWrapping as THREE_REPEAT_WRAPPING,
+	RGBADepthPacking as THREE_RGBA_DEPTH_PACKING,
 	Vector3,
 	Quaternion,
 	Group,
 	PlaneBufferGeometry,
 	DirectionalLight,
-	CameraHelper
+	CameraHelper,
+	MeshDepthMaterial
 } from "three";
 import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
@@ -33,7 +35,7 @@ function MarbleLevel() { // "Map" is taken. This comment is left here in memory 
 	this.startingGates = [];
 
 	// Ambient light
-	let ambientLight = new AmbientLight(0x746070);
+	let ambientLight = new AmbientLight(0x746070, 1);
 	this.scene.add(ambientLight);
 
 	// Sky + Sunlight
@@ -262,6 +264,17 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			let clone = prefabs[object.prefab].clone();
 			clone.position.copy(new Vector3(object.position.x, object.position.y, object.position.z));
 			clone.setRotationFromQuaternion(new Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
+			clone.traverse((obj) => {
+				if (obj.material && obj.material.map) {
+					obj.customDepthMaterial = new MeshDepthMaterial({
+						map: obj.material.map,
+						depthPacking: THREE_RGBA_DEPTH_PACKING,
+						alphaTest: .5
+					});
+					obj.castShadow = true;
+					obj.receiveShadow = true;
+				}
+			});
 			this.levelObjects.add(clone);
 
 			// Keep starting gate prefabObjects in a separate array for opening/closing
@@ -271,11 +284,16 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				}
 			}
 		}
+
 		// Disable matrix updates
 		this.levelObjects.traverse( (obj) => {
 			obj.updateMatrix();
 			obj.matrixAutoUpdate = false;
 		});
+
+		// Update shadow map
+		renderCore.updateShadowMap();
+
 		return warnings;
 	});
 };
@@ -336,7 +354,7 @@ function Sky(parameters = {}) {
 	this.group.add(this.skyObject);
 
 	// Light
-	let sunLight = this.sunLight = new DirectionalLight(0xf5d0d0, 1.5);
+	let sunLight = this.sunLight = new DirectionalLight(0xf5d0d0, 2.5);
 	sunLight.castShadow = true;
 
 	this.group.add(sunLight);
@@ -373,11 +391,12 @@ Sky.prototype.recalculate = function(parameters) {
 	this.skyObject.material.uniforms.sunPosition.value = this.sunLight.position.copy(this.sunLight.position);
 	this.sunLight.shadow.mapSize.width = 2048; // default
 	this.sunLight.shadow.mapSize.height = 2048; // default
+	this.sunLight.shadow.bias = -0.00005;
 	this.sunLight.shadow.camera.near = 3500;
 	this.sunLight.shadow.camera.far = 4200;
 	this.sunLight.shadow.camera.left = -69;
 	this.sunLight.shadow.camera.right = 60;
-	this.sunLight.shadow.camera.top = 50;
+	this.sunLight.shadow.camera.top = 60;
 	this.sunLight.shadow.camera.bottom = -30;
 
 	if (this.water) {

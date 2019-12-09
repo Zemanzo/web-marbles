@@ -196,6 +196,7 @@ let game = function() {
 			switch(newState) {
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
+				renderCore.autoUpdateShadowMap(false);
 				_DOMElements.gameInfo.className = "waiting";
 				clearInterval(_enterCountdownTimer);
 				_enterCountdownTimer = null;
@@ -249,6 +250,7 @@ let game = function() {
 
 			// The race has finished
 			case gameConstants.STATE_FINISHED:
+				renderCore.autoUpdateShadowMap(false);
 				_DOMElements.gameInfo.className = "finished";
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
@@ -395,6 +397,9 @@ let game = function() {
 
 			_DOMElements.marbleList.appendChild(listEntry);
 			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
+
+			// Make sure shadows updates are enabled
+			renderCore.autoUpdateShadowMap(true);
 		},
 
 		finishMarble: function(marble) {
