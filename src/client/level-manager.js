@@ -10,7 +10,10 @@ import {
 	PlaneBufferGeometry,
 	DirectionalLight,
 	CameraHelper,
-	MeshDepthMaterial
+	MeshDepthMaterial,
+	InstancedMesh,
+	Matrix4,
+	AxesHelper
 } from "three";
 import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
@@ -123,12 +126,24 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 
 // Parses the level data and returns a Promise that resolves once it is fully done loading
 MarbleLevel.prototype.loadLevel = function(data) {
+	// Count amount of uses per model, to use when creating an instanced mesh
+	let modelUses = {};
+	for (let worldObject of Object.values(data.worldObjects)) {
+		for (let entity of Object.values(data.prefabs[worldObject.prefab].entities)) {
+			if (modelUses[entity.model] === undefined) {
+				modelUses[entity.model] = {current: 0, total: 1};
+			} else {
+				modelUses[entity.model].total += 3;
+			}
+		}
+	}
+
 	// Reset loaded data if there is any
 	this.scene.remove(this.levelObjects);
 	this.startingGates = [];
 	this.levelObjects = new Scene();
-	this.levelObjects.matrixAutoUpdate = false;
-	this.levelObjects.autoUpdate = false;
+	// this.levelObjects.matrixAutoUpdate = false;
+	// this.levelObjects.autoUpdate = false;
 	this.scene.add(this.levelObjects);
 
 	// Load environmental variables
@@ -182,7 +197,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 
 	// Load models & childMeshes, apply custom materials where appropriate
 	let childNumber = null;
-	function setChildMeshMaterials(obj, childMeshes) {
+	let traverseChildMeshes = (obj, childMeshes, modelName) => {
 		let children = [];
 
 		if (obj.type === "Mesh") {
@@ -191,14 +206,34 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			}
 			obj.castShadow = config.graphics.castShadow.level;
 			obj.receiveShadow = config.graphics.receiveShadow.level;
+
+			// Instance
+			let instancedMesh = new InstancedMesh(
+				obj.geometry,
+				obj.material,
+				modelUses[modelName].total
+			);
+			if (obj.material && obj.material.map) {
+				instancedMesh.customDepthMaterial = new MeshDepthMaterial({
+					map: obj.material.map,
+					depthPacking: THREE_RGBA_DEPTH_PACKING,
+					alphaTest: .5
+				});
+			}
+			instancedMesh.frustumCulled = false;
+			instancedMesh.castShadow = true;
+			instancedMesh.receiveShadow = true;
+			this.levelObjects.add(instancedMesh);
+			models[modelName].push(instancedMesh);
+
 			childNumber++;
 		}
 
 		for (let c = 0; c < obj.children.length; c++) {
-			children = children.concat(setChildMeshMaterials(obj.children[c], childMeshes));
+			children = children.concat(traverseChildMeshes(obj.children[c], childMeshes, modelName));
 		}
 		return children;
-	}
+	};
 
 	let modelPromises = [];
 	let models = {};
@@ -207,13 +242,8 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			new Promise((resolve, reject) => {
 				try {
 					_GLTFLoader.parse(data.models[modelName].file, null,
-						function(model) {
-							if (data.models[modelName].childMeshes.length > 0) {
-								childNumber = 0;
-								setChildMeshMaterials(model.scene, data.models[modelName].childMeshes);
-							}
-							models[modelName] = model.scene;
-							resolve();
+						(model) => {
+							resolve(model);
 						}, function(error) {
 							reject(error);
 						}
@@ -223,6 +253,13 @@ MarbleLevel.prototype.loadLevel = function(data) {
 					// Invalid JSON/GLTF files may end up here
 					reject(error);
 				}
+			}).then((model) => {
+				if (data.models[modelName].childMeshes.length > 0) {
+					childNumber = 0;
+					models[modelName] = [];
+					traverseChildMeshes(model.scene, data.models[modelName].childMeshes, modelName);
+				}
+				return;
 			}).catch((error) => {
 				console.warn(`Unable to load model (${modelName}), using fallback model instead`, error);
 				models[modelName] = null;
@@ -230,62 +267,38 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		);
 	}
 
-	// Load prefabs
-	let prefabs = {};
 	return Promise.all(modelPromises).then(() => {
 		let warnings = 0;
-		for (let prefabUuid in data.prefabs) {
-			let group = new Group();
-
-			for (let entity of Object.values(data.prefabs[prefabUuid].entities)) {
-				if (entity.type === "object" && entity.model) {
-					let clone;
-					if(!models[entity.model]) {
-						clone = renderCore.getDefaultModel().clone();
-						warnings++;
-					}
-					else {
-						clone = models[entity.model].clone();
-					}
-
-					clone.userData.functionality = entity.functionality;
-					clone.position.copy(new Vector3(entity.position.x, entity.position.y, entity.position.z));
-					clone.setRotationFromQuaternion(new Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w));
-					clone.scale.copy(new Vector3(entity.scale.x, entity.scale.y, entity.scale.z));
-					group.add(clone);
-				}
-			}
-
-			prefabs[prefabUuid] = group;
-		}
 
 		// World objects
 		for (let object of Object.values(data.worldObjects)) {
-			let clone = prefabs[object.prefab].clone();
-			clone.position.copy(new Vector3(object.position.x, object.position.y, object.position.z));
-			clone.setRotationFromQuaternion(new Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w));
-			clone.traverse((obj) => {
-				if (obj.material && obj.material.map) {
-					obj.customDepthMaterial = new MeshDepthMaterial({
-						map: obj.material.map,
-						depthPacking: THREE_RGBA_DEPTH_PACKING,
-						alphaTest: .5
-					});
-					obj.castShadow = true;
-					obj.receiveShadow = true;
-				}
-			});
-			this.levelObjects.add(clone);
+			let objectMatrix = new Matrix4();
+			objectMatrix.compose(
+				new Vector3(object.position.x, object.position.y, object.position.z),
+				new Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w),
+				new Vector3(1, 1, 1)
+			);
+			for (let entity of Object.values(data.prefabs[object.prefab].entities)) {
+				let entityMatrix = new Matrix4();
+				entityMatrix.compose(
+					new Vector3(entity.position.x, entity.position.y, entity.position.z),
+					new Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w),
+					new Vector3(entity.scale.x, entity.scale.y, entity.scale.z)
+				);
 
-			// Keep starting gate prefabObjects in a separate array for opening/closing
-			for(let i = 0; i < clone.children.length; i++) {
-				if(clone.children[i].userData.functionality === "startgate") {
-					this.startingGates.push(clone.children[i]);
+				let finalMatrix = new Matrix4();
+				finalMatrix.multiplyMatrices(objectMatrix, entityMatrix);
+
+				for (let childMesh of models[entity.model]) {
+					childMesh.setMatrixAt(modelUses[entity.model].current++, finalMatrix);
+					console.log(modelUses[entity.model].current, modelUses[entity.model].total);
 				}
 			}
 		}
 
-		// Disable matrix updates
+		this.levelObjects.add(new AxesHelper(3));
+
+		//Disable matrix updates
 		this.levelObjects.traverse( (obj) => {
 			obj.updateMatrix();
 			obj.matrixAutoUpdate = false;
