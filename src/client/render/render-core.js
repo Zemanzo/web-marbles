@@ -226,7 +226,6 @@ let renderCore = function() {
 
 		autoUpdateShadowMap: function(autoUpdate = true) {
 			_renderer.shadowMap.autoUpdate = autoUpdate;
-			this.updateShadowMap();
 		},
 
 		waterReflectsLevel: function() {

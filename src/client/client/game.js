@@ -218,7 +218,6 @@ let game = function() {
 
 			// First marble has been entered
 			case gameConstants.STATE_ENTER:
-				renderCore.autoUpdateShadowMap(true);
 				_DOMElements.gameInfo.className = "enter";
 				// Set text (set in the previous state unless this is the initial state)
 				_DOMElements.state.innerText = "Enter marbles now!";
@@ -398,6 +397,9 @@ let game = function() {
 
 			_DOMElements.marbleList.appendChild(listEntry);
 			_DOMElements.entries.innerHTML = _enteredMarbleList.length;
+
+			// Make sure shadows updates are enabled
+			renderCore.autoUpdateShadowMap(true);
 		},
 
 		finishMarble: function(marble) {
