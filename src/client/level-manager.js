@@ -12,8 +12,7 @@ import {
 	CameraHelper,
 	MeshDepthMaterial,
 	InstancedMesh,
-	Matrix4,
-	AxesHelper
+	Matrix4
 } from "three";
 import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
@@ -126,17 +125,8 @@ MarbleLevel.prototype.loadLevelFromUrl = function(url) {
 
 // Parses the level data and returns a Promise that resolves once it is fully done loading
 MarbleLevel.prototype.loadLevel = function(data) {
-	// Count amount of uses per model, to use when creating an instanced mesh
-	let modelUses = {};
-	for (let worldObject of Object.values(data.worldObjects)) {
-		for (let entity of Object.values(data.prefabs[worldObject.prefab].entities)) {
-			if (modelUses[entity.model] === undefined) {
-				modelUses[entity.model] = {current: 0, total: 1};
-			} else {
-				modelUses[entity.model].total += 3;
-			}
-		}
-	}
+	// Exit early if there is no data to be parsed
+	if (!data) return;
 
 	// Reset loaded data if there is any
 	this.scene.remove(this.levelObjects);
@@ -195,14 +185,54 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		}
 	}
 
-	// Load models & childMeshes, apply custom materials where appropriate
-	let childNumber = null;
-	let traverseChildMeshes = (obj, childMeshes, modelName) => {
+	// Prepare lookup table for models
+	let levelObjects = {};
+
+	// Helper function
+	let matrixFromTransform = (
+		position = {x: 0, y: 0, z: 0},
+		rotation = {x: 0, y: 0, z: 0, w: 1},
+		scale = {x: 1, y: 1, z: 1 }
+	) => {
+		let matrix = new Matrix4();
+		matrix.compose(
+			new Vector3(position.x, position.y, position.z),
+			new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w),
+			new Vector3(scale.x, scale.y, scale.z)
+		);
+		return matrix;
+	};
+
+	for (let object of Object.values(data.worldObjects)) {
+		let objectMatrix = matrixFromTransform(object.position, object.rotation, undefined);
+		for (let entity of Object.values(data.prefabs[object.prefab].entities)) {
+			let entityMatrix = matrixFromTransform(entity.position, entity.rotation, entity.scale);
+			let finalMatrix = new Matrix4();
+			finalMatrix.multiplyMatrices(objectMatrix, entityMatrix);
+			if (levelObjects[entity.model] === undefined) {
+				levelObjects[entity.model] = {
+					matrices: [],
+					instancedChildMeshes: []
+				};
+			}
+			levelObjects[entity.model].matrices.push(finalMatrix);
+		}
+	}
+
+	// for (let childMesh of models[entity.model]) {
+	// 	childMesh.setMatrixAt(modelUses[entity.model].current++, finalMatrix);
+	// 	//console.log(modelUses[entity.model].current, modelUses[entity.model].total);
+	// }
+
+	// Load models
+	// apply custom materials where appropriate
+	// create instanced mesh for every childMesh
+	let traverseChildMeshes = (obj, childMeshes, modelName, index = 0) => {
 		let children = [];
 
 		if (obj.type === "Mesh") {
-			if (materials[childMeshes[childNumber].material] != null) {
-				obj.material = materials[childMeshes[childNumber].material];
+			if (materials[childMeshes[index].material] != null) {
+				obj.material = materials[childMeshes[index].material];
 			}
 			obj.castShadow = config.graphics.castShadow.level;
 			obj.receiveShadow = config.graphics.receiveShadow.level;
@@ -211,8 +241,9 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			let instancedMesh = new InstancedMesh(
 				obj.geometry,
 				obj.material,
-				modelUses[modelName].total
+				levelObjects[modelName].matrices.length
 			);
+
 			if (obj.material && obj.material.map) {
 				instancedMesh.customDepthMaterial = new MeshDepthMaterial({
 					map: obj.material.map,
@@ -224,90 +255,66 @@ MarbleLevel.prototype.loadLevel = function(data) {
 			instancedMesh.castShadow = true;
 			instancedMesh.receiveShadow = true;
 			this.levelObjects.add(instancedMesh);
-			models[modelName].push(instancedMesh);
+			levelObjects[modelName].instancedChildMeshes.push(instancedMesh);
 
-			childNumber++;
+			index++;
 		}
 
 		for (let c = 0; c < obj.children.length; c++) {
-			children = children.concat(traverseChildMeshes(obj.children[c], childMeshes, modelName));
+			children = children.concat(
+				traverseChildMeshes(obj.children[c], childMeshes, modelName, index)
+			);
 		}
 		return children;
 	};
 
 	let modelPromises = [];
-	let models = {};
 	for (let modelName in data.models) {
-		modelPromises.push(
-			new Promise((resolve, reject) => {
-				try {
-					_GLTFLoader.parse(data.models[modelName].file, null,
-						(model) => {
-							resolve(model);
-						}, function(error) {
-							reject(error);
-						}
-					);
-				}
-				catch (error) {
-					// Invalid JSON/GLTF files may end up here
-					reject(error);
-				}
-			}).then((model) => {
-				if (data.models[modelName].childMeshes.length > 0) {
-					childNumber = 0;
-					models[modelName] = [];
-					traverseChildMeshes(model.scene, data.models[modelName].childMeshes, modelName);
-				}
-				return;
-			}).catch((error) => {
-				console.warn(`Unable to load model (${modelName}), using fallback model instead`, error);
-				models[modelName] = null;
-			})
-		);
-	}
-
-	return Promise.all(modelPromises).then(() => {
-		let warnings = 0;
-
-		// World objects
-		for (let object of Object.values(data.worldObjects)) {
-			let objectMatrix = new Matrix4();
-			objectMatrix.compose(
-				new Vector3(object.position.x, object.position.y, object.position.z),
-				new Quaternion(object.rotation.x, object.rotation.y, object.rotation.z, object.rotation.w),
-				new Vector3(1, 1, 1)
-			);
-			for (let entity of Object.values(data.prefabs[object.prefab].entities)) {
-				let entityMatrix = new Matrix4();
-				entityMatrix.compose(
-					new Vector3(entity.position.x, entity.position.y, entity.position.z),
-					new Quaternion(entity.rotation.x, entity.rotation.y, entity.rotation.z, entity.rotation.w),
-					new Vector3(entity.scale.x, entity.scale.y, entity.scale.z)
+		let modelPromise = new Promise((resolve, reject) => {
+			try {
+				// Parse model data
+				_GLTFLoader.parse(data.models[modelName].file, null,
+					(model) => {
+						resolve(model);
+					}, function(error) {
+						reject(error);
+					}
 				);
+			}
+			catch (error) {
+				// Invalid JSON/GLTF files end up here
+				reject(error);
+			}
+		}).then((model) => {
+			if (data.models[modelName].childMeshes.length > 0) {
+				traverseChildMeshes(model.scene, data.models[modelName].childMeshes, modelName);
+			} else {
+				return Promise.reject("Model doesn't have any childMeshes?");
+			}
 
-				let finalMatrix = new Matrix4();
-				finalMatrix.multiplyMatrices(objectMatrix, entityMatrix);
-
-				for (let childMesh of models[entity.model]) {
-					childMesh.setMatrixAt(modelUses[entity.model].current++, finalMatrix);
-					console.log(modelUses[entity.model].current, modelUses[entity.model].total);
+			for (let i = 0; i < levelObjects[modelName].matrices.length; i++) {
+				for (let childMesh of levelObjects[modelName].instancedChildMeshes) {
+					childMesh.setMatrixAt(i, levelObjects[modelName].matrices[i]);
+					childMesh.updateMatrix();
+					childMesh.matrixAutoUpdate = false;
 				}
 			}
-		}
-
-		this.levelObjects.add(new AxesHelper(3));
-
-		//Disable matrix updates
-		this.levelObjects.traverse( (obj) => {
-			obj.updateMatrix();
-			obj.matrixAutoUpdate = false;
+		}).catch((error) => {
+			console.warn(`Unable to load model (${modelName}), using fallback model instead`, error);
 		});
 
+		modelPromises.push(modelPromise);
+	}
+
+	// When everything is done
+	return Promise.all(modelPromises).then(() => {
 		// Update shadow map
 		renderCore.updateShadowMap();
 
-		return warnings;
+		return 0;
+	}).catch((error) => {
+		console.error(error);
+		return 1;
 	});
 };
 
