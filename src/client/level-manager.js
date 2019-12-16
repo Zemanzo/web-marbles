@@ -251,6 +251,12 @@ MarbleLevel.prototype.loadLevel = function(data) {
 					alphaTest: .5
 				});
 			}
+			// Additional property to multiply the mesh instances by.
+			// We don't set the instancedMesh's transform, unless we want to move ALL the instances by that matrix. Which we don't.
+			instancedMesh.localTransform = matrixFromTransform(obj.position, obj.quaternion, obj.scale);
+
+			instancedMesh.updateMatrix();
+			instancedMesh.matrixAutoUpdate = false;
 			instancedMesh.frustumCulled = false;
 			instancedMesh.castShadow = true;
 			instancedMesh.receiveShadow = true;
@@ -294,9 +300,9 @@ MarbleLevel.prototype.loadLevel = function(data) {
 
 			for (let i = 0; i < levelObjects[modelName].matrices.length; i++) {
 				for (let childMesh of levelObjects[modelName].instancedChildMeshes) {
-					childMesh.setMatrixAt(i, levelObjects[modelName].matrices[i]);
-					childMesh.updateMatrix();
-					childMesh.matrixAutoUpdate = false;
+					let finalMatrix = new Matrix4();
+					finalMatrix.multiplyMatrices(levelObjects[modelName].matrices[i], childMesh.localTransform);
+					childMesh.setMatrixAt(i, finalMatrix);
 				}
 			}
 		}).catch((error) => {
