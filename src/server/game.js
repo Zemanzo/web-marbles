@@ -1,5 +1,6 @@
 const log = require("../log");
 const config = require("./config");
+const socketGameplay = require("./network/socket-gameplay");
 const physics = require("../physics/manager");
 const levelManager = require("./levels/manager");
 const db = require("./database/manager");
@@ -65,7 +66,6 @@ Marble.prototype.destroyMarble = function() {
 
 let game = function() {
 	let _startDelay = 2825, // length in ms of audio
-		_socketManager = null,
 
 		_marbles = [],
 		_playersEnteredList = [],
@@ -162,7 +162,7 @@ let game = function() {
 
 		// Here, emit for gameUpdate happens
 		let payload = msgPack.encode(_netGameUpdate);
-		_socketManager.emit(payload);
+		game.socket.emit(payload);
 
 		// After, _netGameState is updated based on _netGameUpdate
 		_netGameStatePayload = null;
@@ -246,11 +246,20 @@ let game = function() {
 		}
 	};
 
+	let getInitialDataPayload = function() {
+		// Encode initial data payload once. Resets if the initial data changes
+		if(!_netGameStatePayload) {
+			_netGameStatePayload = msgPack.encode(_netGameState);
+		}
+		return _netGameStatePayload;
+	};
+
 	return {
 		currentGameState: gameConstants.STATE_STARTED,
 		startTime: null,
 		limitReached: false,
 		enterTimeout: null,
+		socket: socketGameplay(getInitialDataPayload),
 
 		// Sets currentGameState and informs all connected clients about the state change
 		setCurrentGameState(newState) {
@@ -350,7 +359,7 @@ let game = function() {
 				&& !this.limitReached
 			) {
 				this.limitReached = true;
-				_socketManager.emit(JSON.stringify({
+				this.socket.emit(JSON.stringify({
 					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
 					classNames: "red exclamation"
 				}));
@@ -533,17 +542,7 @@ let game = function() {
 			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
 		},
 
-		setSocketManager(socketManager) {
-			_socketManager = socketManager;
-		},
-
-		getInitialDataPayload() {
-			// Encode initial data payload once. Resets if the initial data changes
-			if(!_netGameStatePayload) {
-				_netGameStatePayload = msgPack.encode(_netGameState);
-			}
-			return _netGameStatePayload;
-		},
+		getInitialDataPayload,
 
 		getMarbles() {
 			return _marbles;

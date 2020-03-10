@@ -4,6 +4,7 @@ const commandsManager = require("./commands-manager");
 const permissions = require("./permissions");
 const discord = require("discord.js");
 const request = require("request-promise-native");
+const socketChat = require("../network/socket-chat");
 
 const discordManager = function() {
 	return {
@@ -15,8 +16,7 @@ const discordManager = function() {
 			this.chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 
 			// Set up chat socket
-			const sockets = require("../network/sockets");
-			const socketChat = sockets.setupChat(db, this.chatWebhook);
+			this.socket = socketChat(this.chatWebhook);
 
 			this.client.on("ready", () => {
 				// Get role permissions
@@ -53,7 +53,7 @@ const discordManager = function() {
 
 					// Send it to the client chat
 					if (message.channel.id === config.discord.gameplayChannelId) {
-						socketChat.emit(
+						this.socket.emit(
 							JSON.stringify({
 								username: message.author.username,
 								discriminator: message.author.discriminator,
@@ -80,8 +80,6 @@ const discordManager = function() {
 
 			// Everything has been set up, log the bot into the discord channel
 			this.client.login(config.discord.botToken);
-
-			return socketChat;
 		},
 
 		stop: function() {
