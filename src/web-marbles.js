@@ -231,9 +231,9 @@ function shutdown() {
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets
-		if(discordManager)
-			discordManager.socket.close();
-		game.socket.close();
+		//if(discordManager)
+		//	discordManager.socket.close(); // Now done in discordManager.stop()
+		//game.socket.close(); // TODO!
 		require("./server/network/sockets-helper").stopListening();
 		log.warn("µWS server closed");
 

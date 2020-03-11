@@ -4,44 +4,120 @@ const commandsManager = require("./commands-manager");
 const permissions = require("./permissions");
 const discord = require("discord.js");
 const request = require("request-promise-native");
-const socketChat = require("../network/socket-chat");
+const socketsHelper = require("../network/sockets-helper");
 
 const discordManager = function() {
+	let _db = null;
+	let _discordClient = null;
+	let _chatWebhook = null; // Discord chat webhook
+	let _chatClientSocket = null;
+
+	let _onClientChatConnected = function(ws, req) {
+		// Get user if there is one
+		// Note: this might be pretty unsafe code. Remove or improve.
+		let name = "[Guest]";
+		let cookie = req.getHeader("cookie");
+		if (cookie) {
+			let cookies = cookie.split("; ");
+			let user_data = cookies.find(element => { return element.startsWith("user_data"); });
+			if (user_data) {
+				try {
+					user_data = decodeURIComponent(user_data);
+					user_data = user_data.substr(10);
+					user_data = JSON.parse(user_data);
+					if (_db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+						name = (`(${_db.user.getUsernameById(user_data.id)})`).yellow;
+					} else {
+						name = "Hacker?!? (Authentication failed)".red;
+					}
+				}
+				catch (error) {
+					name = "Hacker?!? (Invalid cookie)".red;
+				}
+			}
+		}
+
+		log.info("A user connected (chat)! ".green + name);
+		ws.meta = { name };
+	};
+
+	let _onClientChatDisconnected = function(ws) {
+		log.info("A user disconnected... ".red + ws.meta.name);
+	};
+
+	let _onClientChatMessage = function(ws, message) {
+		try {
+			message = JSON.parse(message);
+		}
+		catch (e) {
+			ws.send("Invalid JSON");
+			return;
+		}
+
+		if (_db.user.idIsAuthenticated(message.id, message.access_token)) {
+			let row = _db.user.getUserDetailsById(message.id);
+			if (row) {
+				commandsManager.parse(message.content, message.id, row.username);
+
+				_chatWebhook.send(message.content, {
+					username: row.username,
+					avatarURL: `https://cdn.discordapp.com/avatars/${message.id}/${row.avatar}.png`,
+					disableEveryone: true
+				});
+
+				_chatClientSocket.emit(JSON.stringify({
+					username: row.username,
+					discriminator: row.discriminator,
+					content: message.content
+				}));
+			} else {
+				log.warn("User ID and access token mismatch!", row);
+			}
+		}
+	};
+
 	return {
 		initialize: function(db) {
-			const self = this;
-			// Set up clients
+			_db = db; // TODO: Probably just don't pass it as function argument and get it directly instead
 			this.db = db;
-			this.client = new discord.Client();
-			this.chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
+			_discordClient = new discord.Client();
+			_chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 
 			// Set up chat socket
-			this.socket = socketChat(this.chatWebhook);
+			_chatClientSocket = new socketsHelper.Socket("/chat", {
+				compression: 1,
+				maxPayloadLength: 128 * 1024,
+				idleTimeout: 3600
+			});
 
-			this.client.on("ready", () => {
+			_chatClientSocket.eventEmitter.on("open", _onClientChatConnected);
+			_chatClientSocket.eventEmitter.on("close", _onClientChatDisconnected);
+			_chatClientSocket.eventEmitter.on("message", _onClientChatMessage);
+
+			_discordClient.on("ready", () => {
 				// Get role permissions
-				permissions.initialize(this.client.guilds);
+				permissions.initialize(_discordClient.guilds);
 
 				// Set default commands reply channel, which is the gameplay channel
 				commandsManager.setDefaultChannel(
-					this.client
+					_discordClient
 						.guilds.get(config.discord.permissions.guildId)
 						.channels.get(config.discord.gameplayChannelId)
 				);
 
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
-				self.client.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
+				_discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 			}, console.error);
 
 			// Log warnings and errors
-			this.client.on("error", console.error, console.error);
-			this.client.on("warn", console.warn, console.warn);
-			this.client.on("rateLimit", (rateLimitInfo) => {
+			_discordClient.on("error", console.error, console.error);
+			_discordClient.on("warn", console.warn, console.warn);
+			_discordClient.on("rateLimit", (rateLimitInfo) => {
 				log.info(`DISCORD: ${"Hit API ratelimit!".red} ${rateLimitInfo}`);
 			}, console.error);
 
 			// All messages sent in #gameplay channel
-			this.client.on("message", (message) => {
+			_discordClient.on("message", (message) => {
 				if (
 					!config.discord.ignoreChannelIds.includes(message.channel.id)
 					&& message.author.id != config.discord.webhookId // Make sure we're not listening to our own blabber
@@ -53,7 +129,7 @@ const discordManager = function() {
 
 					// Send it to the client chat
 					if (message.channel.id === config.discord.gameplayChannelId) {
-						this.socket.emit(
+						_chatClientSocket.emit(
 							JSON.stringify({
 								username: message.author.username,
 								discriminator: message.author.discriminator,
@@ -68,23 +144,24 @@ const discordManager = function() {
 			}, console.error);
 
 			// Bans
-			this.client.on("guildBanAdd", (guild, user) => {
+			_discordClient.on("guildBanAdd", (guild, user) => {
 				log.info(`DISCORD: ${"Banned user".red} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(true, user.id);
 			}, console.error);
 
-			this.client.on("guildBanRemove", (guild, user) => {
+			_discordClient.on("guildBanRemove", (guild, user) => {
 				log.info(`DISCORD: ${"Unbanned user".green} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(false, user.id);
 			}, console.error);
 
 			// Everything has been set up, log the bot into the discord channel
-			this.client.login(config.discord.botToken);
+			_discordClient.login(config.discord.botToken);
 		},
 
 		stop: function() {
-			this.chatWebhook.destroy();
-			return this.client.destroy();
+			_chatClientSocket.closeAll();
+			_chatWebhook.destroy();
+			return _discordClient.destroy();
 		},
 
 		authorizeClient: function(req, res) {
