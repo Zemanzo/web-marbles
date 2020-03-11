@@ -1,5 +1,6 @@
 const config = require("../config");
 const log = require("../../log");
+const db = require("../database/manager");
 const commandsManager = require("./commands-manager");
 const permissions = require("./permissions");
 const discord = require("discord.js");
@@ -7,7 +8,6 @@ const request = require("request-promise-native");
 const socketsHelper = require("../network/sockets-helper");
 
 const discordManager = function() {
-	let _db = null;
 	let _discordClient = null;
 	let _chatWebhook = null; // Discord chat webhook
 	let _chatClientSocket = null;
@@ -25,8 +25,8 @@ const discordManager = function() {
 					user_data = decodeURIComponent(user_data);
 					user_data = user_data.substr(10);
 					user_data = JSON.parse(user_data);
-					if (_db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
-						name = (`(${_db.user.getUsernameById(user_data.id)})`).yellow;
+					if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
+						name = (`(${db.user.getUsernameById(user_data.id)})`).yellow;
 					} else {
 						name = "Hacker?!? (Authentication failed)".red;
 					}
@@ -37,7 +37,7 @@ const discordManager = function() {
 			}
 		}
 
-		log.info("A user connected (chat)! ".green + name);
+		log.info("A user connected! ".green + name);
 		ws.meta = { name };
 	};
 
@@ -54,8 +54,8 @@ const discordManager = function() {
 			return;
 		}
 
-		if (_db.user.idIsAuthenticated(message.id, message.access_token)) {
-			let row = _db.user.getUserDetailsById(message.id);
+		if (db.user.idIsAuthenticated(message.id, message.access_token)) {
+			let row = db.user.getUserDetailsById(message.id);
 			if (row) {
 				commandsManager.parse(message.content, message.id, row.username);
 
@@ -77,9 +77,7 @@ const discordManager = function() {
 	};
 
 	return {
-		initialize: function(db) {
-			_db = db; // TODO: Probably just don't pass it as function argument and get it directly instead
-			this.db = db;
+		initialize: function() {
 			_discordClient = new discord.Client();
 			_chatWebhook = new discord.WebhookClient(config.discord.webhookId, config.discord.webhookToken);
 
@@ -204,13 +202,13 @@ const discordManager = function() {
 				(user_body) => {
 					userBody = JSON.parse(user_body);
 
-					let exists = this.db.user.idExists(userBody.id);
+					let exists = db.user.idExists(userBody.id);
 					tokenBody.access_granted = Date.now();
 
 					if (exists) {
-						this.db.user.updateTokenById(tokenBody, userBody.id);
+						db.user.updateTokenById(tokenBody, userBody.id);
 					} else {
-						this.db.user.insertNewUserEmbed(tokenBody, userBody, config.discord.scope);
+						db.user.insertNewUserEmbed(tokenBody, userBody, config.discord.scope);
 					}
 
 					let user_data = JSON.stringify({
@@ -232,8 +230,8 @@ const discordManager = function() {
 		refreshClient: function(req, res) {
 			// Request new access_token
 			if (req.body.id && req.body.access_token) {
-				if (this.db.user.idIsAllowedRefresh(req.body.id, req.body.access_token)) {
-					let row = this.db.user.getTokenById(req.body.id),
+				if (db.user.idIsAllowedRefresh(req.body.id, req.body.access_token)) {
+					let row = db.user.getTokenById(req.body.id),
 						options = {
 							url: "https://discordapp.com/api/oauth2/token",
 							form: {
@@ -251,7 +249,7 @@ const discordManager = function() {
 						tokenBody = JSON.parse(token_body);
 						tokenBody.access_granted = Date.now();
 
-						this.db.user.updateTokenById(tokenBody, req.body.id);
+						db.user.updateTokenById(tokenBody, req.body.id);
 
 						let response = {
 							authorized: true,
@@ -265,10 +263,10 @@ const discordManager = function() {
 					() => {
 						res.status(400).send({ authorized: false, refreshed: false, banned: false });
 					});
-				} else if (this.db.user.idIsAuthenticated(req.body.id, req.body.access_token)) {
+				} else if (db.user.idIsAuthenticated(req.body.id, req.body.access_token)) {
 					res.send({ authorized: true, refreshed: false, banned: false });
 					return;
-				} else if (this.db.user.idIsBanned(req.body.id)) {
+				} else if (db.user.idIsBanned(req.body.id)) {
 					res.send({ authorized: false, refreshed: false, banned: true });
 					return;
 				}

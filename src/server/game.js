@@ -255,24 +255,51 @@ let game = function() {
 		return _netGameStatePayload;
 	};
 
-	// Socket initialisation
-	_gameplaySocket = new socketsHelper.Socket("/gameplay", {
-		compression: 0,
-		maxPayloadLength: 1024 ** 2,
-		idleTimeout: 3600
-	});
-
-	// Send full game data to new clients
-	_gameplaySocket.eventEmitter.on("open", (ws) => {
-		ws.send(_getInitialDataPayload(), true);
-	});
-
 	return {
 		currentGameState: gameConstants.STATE_STARTED,
 		startTime: null,
 		limitReached: false,
 		enterTimeout: null,
-		socket: _gameplaySocket,
+
+		initialize() {
+			// Socket initialisation
+			_gameplaySocket = new socketsHelper.Socket("/gameplay", {
+				compression: 0,
+				maxPayloadLength: 1024 ** 2,
+				idleTimeout: 3600
+			});
+
+			// Send full game data to new clients
+			_gameplaySocket.eventEmitter.on("open", (ws) => {
+				ws.send(_getInitialDataPayload(), true);
+			});
+
+			// Start the game loop. Still needs refactoring
+			this.end(false);
+		},
+
+		stop() {
+			// Inform any connected clients
+			_gameplaySocket.emit(JSON.stringify({
+				content: "The server is shutting down.",
+				classNames: "red exclamation"
+			}));
+
+			_gameplaySocket.closeAll();
+
+			// Stop any ongoing race
+			this.end(false);
+
+			// Clear remaining timeouts
+			// This isn't even all timers but that's for another day in this jolly refactor land
+			clearTimeout(this.gameplayMaxTimeout);
+			clearTimeout(this.gameplayFinishTimeout);
+			clearTimeout(this.finishedTimeout);
+			clearTimeout(this.enterTimeout);
+			clearTimeout(_netUpdateHandle);
+
+			log.warn("Game loop stopped");
+		},
 
 		// Sets currentGameState and informs all connected clients about the state change
 		setCurrentGameState(newState) {
