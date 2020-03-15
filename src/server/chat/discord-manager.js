@@ -12,7 +12,7 @@ const discordManager = function() {
 	let _chatWebhook = null; // Discord chat webhook
 	let _chatClientSocket = null;
 
-	let _onClientChatConnected = function(ws, req) {
+	let _onChatClientConnected = function(ws, req) {
 		// Get user if there is one
 		// Note: this might be pretty unsafe code. Remove or improve.
 		let name = "[Guest]";
@@ -41,11 +41,11 @@ const discordManager = function() {
 		ws.meta = { name };
 	};
 
-	let _onClientChatDisconnected = function(ws) {
+	let _onChatClientDisconnected = function(ws) {
 		log.info("A user disconnected... ".red + ws.meta.name);
 	};
 
-	let _onClientChatMessage = function(ws, message) {
+	let _onChatClientMessage = function(ws, message) {
 		try {
 			message = JSON.parse(message);
 		}
@@ -88,9 +88,9 @@ const discordManager = function() {
 				idleTimeout: 3600
 			});
 
-			_chatClientSocket.eventEmitter.on("open", _onClientChatConnected);
-			_chatClientSocket.eventEmitter.on("close", _onClientChatDisconnected);
-			_chatClientSocket.eventEmitter.on("message", _onClientChatMessage);
+			_chatClientSocket.eventEmitter.on("open", _onChatClientConnected);
+			_chatClientSocket.eventEmitter.on("close", _onChatClientDisconnected);
+			_chatClientSocket.eventEmitter.on("message", _onChatClientMessage);
 
 			_discordClient.on("ready", () => {
 				// Get role permissions
