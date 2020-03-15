@@ -1,5 +1,6 @@
 const log = require("../log");
 const config = require("./config");
+const socketsHelper = require("./network/sockets-helper");
 const physics = require("../physics/manager");
 const levelManager = require("./levels/manager");
 const db = require("./database/manager");
@@ -65,7 +66,6 @@ Marble.prototype.destroyMarble = function() {
 
 let game = function() {
 	let _startDelay = 2825, // length in ms of audio
-		_socketManager = null,
 
 		_marbles = [],
 		_playersEnteredList = [],
@@ -77,6 +77,7 @@ let game = function() {
 
 		_round = null;
 
+	let _gameplaySocket = null;
 	let _netUpdateHandle = null; // Handle to setTimeout
 	let _netInterval = isNaN(config.network.tickRate) ? 100 : 1000 / config.network.tickRate;
 	let _netGameState = {
@@ -162,7 +163,7 @@ let game = function() {
 
 		// Here, emit for gameUpdate happens
 		let payload = msgPack.encode(_netGameUpdate);
-		_socketManager.emit(payload);
+		_gameplaySocket.emit(payload);
 
 		// After, _netGameState is updated based on _netGameUpdate
 		_netGameStatePayload = null;
@@ -246,11 +247,59 @@ let game = function() {
 		}
 	};
 
+	let _getInitialDataPayload = function() {
+		// Encode initial data payload once. Resets if the initial data changes
+		if(!_netGameStatePayload) {
+			_netGameStatePayload = msgPack.encode(_netGameState);
+		}
+		return _netGameStatePayload;
+	};
+
 	return {
 		currentGameState: gameConstants.STATE_STARTED,
 		startTime: null,
 		limitReached: false,
 		enterTimeout: null,
+
+		initialize() {
+			// Socket initialisation
+			_gameplaySocket = new socketsHelper.Socket("/gameplay", {
+				compression: 0,
+				maxPayloadLength: 1024 ** 2,
+				idleTimeout: 3600
+			});
+
+			// Send full game data to new clients
+			_gameplaySocket.eventEmitter.on("open", (ws) => {
+				ws.send(_getInitialDataPayload(), true);
+			});
+
+			// Start the game loop. Still needs refactoring
+			this.end(false);
+		},
+
+		stop() {
+			// Inform any connected clients
+			_gameplaySocket.emit(JSON.stringify({
+				content: "The server is shutting down.",
+				classNames: "red exclamation"
+			}));
+
+			_gameplaySocket.closeAll();
+
+			// Stop any ongoing race
+			this.end(false);
+
+			// Clear remaining timeouts
+			// This isn't even all timers but that's for another day in this jolly refactor land
+			clearTimeout(this.gameplayMaxTimeout);
+			clearTimeout(this.gameplayFinishTimeout);
+			clearTimeout(this.finishedTimeout);
+			clearTimeout(this.enterTimeout);
+			clearTimeout(_netUpdateHandle);
+
+			log.warn("Game loop stopped");
+		},
 
 		// Sets currentGameState and informs all connected clients about the state change
 		setCurrentGameState(newState) {
@@ -350,7 +399,7 @@ let game = function() {
 				&& !this.limitReached
 			) {
 				this.limitReached = true;
-				_socketManager.emit(JSON.stringify({
+				_gameplaySocket.emit(JSON.stringify({
 					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
 					classNames: "red exclamation"
 				}));
@@ -531,18 +580,6 @@ let game = function() {
 
 		getEnterPeriodTimeRemaining() {
 			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
-		},
-
-		setSocketManager(socketManager) {
-			_socketManager = socketManager;
-		},
-
-		getInitialDataPayload() {
-			// Encode initial data payload once. Resets if the initial data changes
-			if(!_netGameStatePayload) {
-				_netGameStatePayload = msgPack.encode(_netGameState);
-			}
-			return _netGameStatePayload;
 		},
 
 		getMarbles() {

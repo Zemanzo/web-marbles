@@ -27,19 +27,11 @@ physics.world.setGravity(config.physics.gravity);
 // Set up game logic
 const game = require("./server/game");
 
-// Set up gameplay socket
-const sockets = require("./server/network/sockets");
-const socketGameplay = sockets.setupGameplay(db, config, game);
-
-// Set game socketManager
-game.setSocketManager(socketGameplay);
-
 // Set up chat
-let discordManager = null,
-	socketChat;
+let discordManager = null;
 if (config.discord.enabled) {
 	discordManager = require("./server/chat/discord-manager");
-	socketChat = discordManager.initialize(db);
+	discordManager.initialize();
 }
 
 // Express connections
@@ -184,7 +176,7 @@ let server = http.listen(config.express.port, function() {
 // Start the game loop
 Promise.all([skins.readyPromise, levelManager.currentLevelData])
 	.then(() => {
-		game.end(false);
+		game.initialize();
 	})
 	.catch((error) => {
 		throw new Error(`Initialization failed during loading of assets: ${error}`);
@@ -202,11 +194,7 @@ function shutdown() {
 
 		log.warn("Termination signal received. Shutting down web-marbles...".yellow);
 
-		// Inform any connected clients
-		socketGameplay.emit(JSON.stringify({
-			content: "The server is shutting down.",
-			classNames: "red exclamation"
-		}));
+		game.stop();
 
 		// Create a list of promises that all have to resolve before we can consider being shut down
 		let promises = [];
@@ -239,9 +227,7 @@ function shutdown() {
 		log.warn("PHYSICS stopped");
 
 		// µWebSockets
-		if (socketChat) socketChat.close();
-		socketGameplay.close();
-		sockets.close();
+		require("./server/network/sockets-helper").stopListening();
 		log.warn("µWS server closed");
 
 		// Once promises resolve, we should be done
