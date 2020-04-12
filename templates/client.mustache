@@ -25,6 +25,20 @@
 		<!-- Actual document stuff -->
 		<a href="/" id="title"><img src="images/logo.svg"><h1>Manzo's Marbles</h1></a>
 		<header id="header">
+			<nav id="internalLinks">
+				<a href="/skins" id="skins">
+					<i class="icon-adjust"></i>
+					<span>Skins</span>
+				</a>
+				<a href="/leaderboards" id="leaderboards">
+					<i class="icon-award"></i>
+					<span>Leaderboards</span>
+				</a>
+				<a href="/statistics" id="statistics">
+					<i class="icon-chart-line"></i>
+					<span>Statistics</span>
+				</a>
+			</nav>
 			<div id="releaseMeta">
 				<div id="releaseState">ALPHA ({{version}})</div>
 				{{#gitHash}}<div id="releaseHash">{{gitHash}}</div>{{/gitHash}}
@@ -105,11 +119,15 @@
 				...
 			</div>
 			<div id="menu">
-				<div id="menuOptions">
+				<div class="menuOptions top">
+					<div><i class="icon-chat"></i></div>
 					<div class="selected"><i class="icon-users"></i></div>
-					<!--<div><i class="icon-cog"></i></div>--> <!-- To be added... -->
+					<div><i class="icon-music"></i></div>
+					<div><i class="icon-award"></i></div>
+					<div><i class="icon-sliders"></i></div>
+					<div><i class="icon-user"></i></div>
 				</div>
-				<div id="menuContent">
+				<div class="menuContent top">
 					<div id="gameInfo" class="hidden">
 						<div>
 							<h2>
@@ -131,7 +149,21 @@
 						</div>
 					</div>
 				</div>
+				<div class="menuContent bottom">
+
+				</div>
+				<div class="menuOptions bottom">
+					<div><i class="icon-chat"></i></div>
+					<div><i class="icon-users"></i></div>
+					<div><i class="icon-music"></i></div>
+					<div><i class="icon-award"></i></div>
+					<div class="selected"><i class="icon-sliders"></i></div>
+					<div><i class="icon-user"></i></div>
+				</div>
 			</div>
+			<footer>
+				<a href="/terms">Terms & Conditions</a> - <a href="/privacy">Privacy Policy</a> - <a href="/contact">Contact</a>
+			</footer>
 		</section>
 	</body>
 </html>

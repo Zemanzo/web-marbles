@@ -49,7 +49,10 @@ a:hover {
 
 body {
 	font-family: "Do Hyeon", sans-serif;
-	background: #160909;
+	background-color: #120909;
+	background-image: url("../images/noise.png");
+	background-repeat: repeat;
+	image-rendering: pixelated;
 	height: 100vh;
 	overflow: hidden;
 	display: grid;
@@ -61,11 +64,12 @@ body {
 	box-sizing: border-box;
 	color: #eee;
 	border-top: 2px solid var(--theme-color);
+	--background-color: #2e2929;
 }
 
 #title,
 #viewport {
-	background-color: #2b2929;
+	background-color: var(--background-color);
 	border-radius: var(--border-radius);
 }
 
@@ -99,7 +103,7 @@ body {
 }
 
 	#releaseMeta {
-		background-color: #2b2929;
+		background-color: var(--background-color);
 		border-radius: var(--border-radius);
 		display: flex;
 		flex-direction: column;
@@ -114,6 +118,68 @@ body {
 		#releaseHash {
 		color: #666;
 		}
+
+	#internalLinks {
+		display: flex;
+	}
+
+		#internalLinks a {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			max-height: 100%;
+			height: 100%;
+			min-width: var(--header-height);
+			border-radius: var(--border-radius);
+			padding: 8px;
+			text-decoration: none;
+			margin-right: 2px;
+			color: #fff;
+			text-shadow: #0009 0px 1px 2px;
+			background-color: var(--theme-color-dark);
+			transition: background-color .2s;
+		}
+
+		#internalLinks a:hover {
+			background-color: var(--theme-color);
+		}
+
+		#internalLinks i {
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			max-height: 100%;
+			height: 1.8em;
+			width: 1.8em;
+			font-size: 1.5em;
+			margin-left:0px;
+			transition: margin-left .4s;
+		}
+
+		#internalLinks span {
+			display: inline-block;
+			text-align: center;
+			max-height: 110%;
+			width: 4.2em;
+			margin-left: -4.2em;
+			opacity: 0;
+			overflow: hidden;
+			clip-path: polygon(100% 0px, 100% 0px, 100% 100%, 100% 100%);
+			transition: margin-left .4s, clip-path .4s, opacity .3s;
+		}
+
+		#internalLinks a:hover span {
+			text-decoration: underline;
+			clip-path: polygon(0px 0px, 100% 0px, 100% 100%, 0px 100%);
+			opacity: 1;
+			margin-left: 0;
+			transform: scaleX(1);
+		}
+
+		#internalLinks a:hover i {
+			margin-left:-8px;
+		}
+
 
 	#externalLinks {
 		display: flex;
@@ -619,8 +685,8 @@ body {
 	grid-area: sidebar;
 	display: grid;
 	grid-template-columns: 1fr 80px;
-	grid-template-rows: 50px 1fr;
-	grid-template-areas: "gamestate timer" "menu menu";
+	grid-template-rows: 50px 1fr auto;
+	grid-template-areas: "gamestate timer" "menu menu" "footer footer";
 	grid-gap: 2px;
 	box-sizing: border-box;
 	color: #eee;
@@ -636,7 +702,7 @@ body {
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		background-color: #2b2929;
+		background-color: var(--background-color);
 		border-radius: var(--border-radius);
 	}
 		#state {
@@ -655,7 +721,7 @@ body {
 		font-size: 2em;
 		letter-spacing: -3px;
 		padding-right:3px;
-		background-color: #2b2929;
+		background-color: var(--background-color);
 		border-radius: var(--border-radius);
 	}
 
@@ -667,39 +733,52 @@ body {
 		overflow: hidden;
 	}
 
-		#menuOptions {
+		.menuOptions {
 			display: flex;
 		}
 
-			#menuOptions > div {
+			.menuOptions > div {
 				font-size: 1.8em;
 				padding: .2em .1em 0 .1em;
 				background-color: #1c1a1a;
-				border-radius: var(--border-radius) var(--border-radius) 0 0;
 				margin-right:2px;
 			}
 
-			#menuOptions > div:not(.selected) {
+				.menuOptions.bottom > div {
+					border-radius: 0 0 var(--border-radius) var(--border-radius);
+				}
+				.menuOptions.top > div {
+					border-radius: var(--border-radius) var(--border-radius) 0 0;
+				}
+
+			.menuOptions > div:not(.selected) {
 				cursor: pointer;
 				color: #999;
 			}
 
-			#menuOptions > div:not(.selected):hover {
+			.menuOptions > div:not(.selected):hover {
 				color: #fff;
 			}
 
-			#menuOptions > div.selected {
-				background-color: #2b2929;
+			.menuOptions > div.selected {
+				background-color: var(--background-color);
 			}
 
-		#menuContent {
-			background-color: #2b2929;
-			border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+		.menuContent {
+			background-color: var(--background-color);
 			flex:1;
 			overflow: hidden;
 			display: flex;
 			flex-direction: column;
 		}
+
+			.menuContent.top {
+				border-radius: 0 var(--border-radius) var(--border-radius) var(--border-radius);
+				margin-bottom: 2px;
+			}
+			.menuContent.bottom {
+				border-radius: var(--border-radius) var(--border-radius) var(--border-radius) 0;
+			}
 
 	#gameInfo {
 		display: flex;
@@ -840,4 +919,19 @@ p {
 		min-width: 4em;
 		text-align: right;
 		color:#999;
+	}
+
+footer {
+	grid-area: footer;
+	font-family: "Share Tech Mono", monospace;
+	font-weight: normal;
+	font-size: .8em;
+	letter-spacing: -1px;
+	text-align: center;
+	width:100%;
+	padding:2px;
+}
+
+	footer > a {
+		color: #999;
 	}
