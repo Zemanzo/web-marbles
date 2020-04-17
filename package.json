@@ -36,7 +36,7 @@
     "body-parser": "^1.18.2",
     "colors": "^1.2.1",
     "compression": "^1.7.2",
-    "discord.js": "^11.5.1",
+    "discord.js": "^12.2.0",
     "express": "^4.16.3",
     "helmet": "^3.16.0",
     "js-cookie": "^2.2.0",

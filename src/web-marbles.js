@@ -211,11 +211,8 @@ function shutdown() {
 
 		// Discord
 		if (config.discord.enabled) {
-			promises.push(
-				discordManager.stop().then(() => {
-					log.warn("DISCORD client & webhook(s) stopped");
-				})
-			);
+			discordManager.stop();
+			log.warn("DISCORD client & webhook(s) stopped");
 		}
 
 		// Database

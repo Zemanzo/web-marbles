@@ -12,7 +12,7 @@ const config = require("../config");
 const permissions = function() {
 	const _constantKeyRegex = /^[0-9A-Z_]+$/;
 	const _getDiscordMemberById = function(id) {
-		return permissions.guild.members.get(id);
+		return permissions.guild.members.cache.get(id);
 	};
 
 	return {
@@ -21,7 +21,7 @@ const permissions = function() {
 
 		initialize: function(guilds) {
 			// Get reference to guild that is used for fetching the roles / matching the permissions.
-			this.guild = guilds.get(config.discord.permissions.guildId);
+			this.guild = guilds.cache.get(config.discord.permissions.guildId);
 
 			// Create a reverse lookup table for all permission identifiers
 			for (let key in config.discord.permissions) {
@@ -43,9 +43,9 @@ const permissions = function() {
 			// Find the role that has a matching permission
 			if (
 				member
-				&& Array.from(member.roles.keys()).find(roleId => (
-					this.roleIdentifiers[roleId]
-					&& this.roleIdentifiers[roleId].includes(permissionId)
+				&& member.roles.cache.array().find(role => (
+					this.roleIdentifiers[role.id]
+					&& this.roleIdentifiers[role.id].includes(permissionId)
 				))
 				// I long for the day that Node.js supports optional chaining
 				// (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Optional_chaining)
