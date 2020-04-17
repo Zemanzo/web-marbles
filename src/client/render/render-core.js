@@ -7,6 +7,7 @@ import {
 	PCFShadowMap as THREE_PCF_SHADOW_MAP
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as ThreeConstants from "three/src/constants.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
 import { cameras, FreeCamera, TrackingCamera } from "./cameras";
@@ -95,8 +96,7 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new Scene();
 				_renderer = new WebGLRenderer();
-				_renderer.gammaInput = true;
-				_renderer.gammaOutput = true;
+				_renderer.outputEncoding = ThreeConstants.GammaEncoding;
 				_renderer.gammaFactor = 2.2;
 				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new Mesh(
