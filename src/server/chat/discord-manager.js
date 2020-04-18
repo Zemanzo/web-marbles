@@ -99,8 +99,8 @@ const discordManager = function() {
 				// Set default commands reply channel, which is the gameplay channel
 				commandsManager.setDefaultChannel(
 					_discordClient
-						.guilds.get(config.discord.permissions.guildId)
-						.channels.get(config.discord.gameplayChannelId)
+						.guilds.cache.get(config.discord.permissions.guildId)
+						.channels.cache.get(config.discord.gameplayChannelId)
 				);
 
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
@@ -159,7 +159,7 @@ const discordManager = function() {
 		stop: function() {
 			_chatClientSocket.closeAll();
 			_chatWebhook.destroy();
-			return _discordClient.destroy();
+			_discordClient.destroy();
 		},
 
 		authorizeClient: function(req, res) {
