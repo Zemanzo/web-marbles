@@ -3,11 +3,10 @@ import {
 	WebGLRenderer,
 	Mesh,
 	BoxBufferGeometry,
-	MeshStandardMaterial,
-	PCFShadowMap as THREE_PCF_SHADOW_MAP
+	MeshStandardMaterial
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import * as ThreeConstants from "three/src/constants.js";
+import * as THREE_CONSTANTS from "three/src/constants.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
 import { cameras, FreeCamera, TrackingCamera } from "./cameras";
@@ -96,7 +95,7 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new Scene();
 				_renderer = new WebGLRenderer();
-				_renderer.outputEncoding = ThreeConstants.GammaEncoding;
+				_renderer.outputEncoding = THREE_CONSTANTS.GammaEncoding;
 				_renderer.gammaFactor = 2.2;
 				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new Mesh(
@@ -131,7 +130,7 @@ let renderCore = function() {
 
 				// Renderer defaults
 				_renderer.shadowMap.enabled = true;
-				_renderer.shadowMap.type = THREE_PCF_SHADOW_MAP; // default is THREE.PCFShadowMap
+				_renderer.shadowMap.type = THREE_CONSTANTS.PCFShadowMap; // default is THREE.PCFShadowMap
 
 				// Stats
 				_stats = new Stats();

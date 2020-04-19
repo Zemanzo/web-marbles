@@ -29,6 +29,10 @@ body {
 	background-color: #2e331f;
 }
 
+#skins {
+	overflow: auto;
+}
+
 .skinEntry {
 	display: flex;
 	margin-left:8px;

@@ -2,8 +2,6 @@ import {
 	Scene,
 	AmbientLight,
 	TextureLoader,
-	RepeatWrapping as THREE_REPEAT_WRAPPING,
-	RGBADepthPacking as THREE_RGBA_DEPTH_PACKING,
 	Vector3,
 	Quaternion,
 	Group,
@@ -12,6 +10,7 @@ import {
 	CameraHelper,
 	MeshDepthMaterial
 } from "three";
+import * as THREE_CONSTANTS from "three/src/constants.js";
 import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
@@ -143,7 +142,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 	let textures = {};
 	for (let textureUuid in data.textures) {
 		textures[textureUuid] = new TextureLoader().load(data.textures[textureUuid].file);
-		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE_REPEAT_WRAPPING;
+		textures[textureUuid].wrapS = textures[textureUuid].wrapT = THREE_CONSTANTS.RepeatWrapping;
 	}
 
 	// Load materials
@@ -268,7 +267,7 @@ MarbleLevel.prototype.loadLevel = function(data) {
 				if (obj.material && obj.material.map) {
 					obj.customDepthMaterial = new MeshDepthMaterial({
 						map: obj.material.map,
-						depthPacking: THREE_RGBA_DEPTH_PACKING,
+						depthPacking: THREE_CONSTANTS.RGBADepthPacking,
 						alphaTest: .5
 					});
 					obj.castShadow = true;
@@ -309,7 +308,7 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 			textureWidth: 512,
 			textureHeight: 512,
 			waterNormals: new TextureLoader().load("resources/textures/waternormals.jpg", function(texture) {
-				texture.wrapS = texture.wrapT = THREE_REPEAT_WRAPPING;
+				texture.wrapS = texture.wrapT = THREE_CONSTANTS.RepeatWrapping;
 			}),
 			alpha: 1.0,
 			sunDirection: sunLight.position.clone().normalize(),

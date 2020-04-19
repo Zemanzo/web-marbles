@@ -1,0 +1,10 @@
+{
+	"enabled": true,
+	"premium": false,
+	"aliases": [
+		"galaxy"
+	],
+	"allowCustomColor": false,
+	"roughness": 0.9,
+	"metalness": 0.2
+}
