@@ -255,7 +255,6 @@ let game = function() {
 				_DOMElements.gameInfo.className = "finished";
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
-					levelManager.activeLevel.closeGates();
 
 					_enteredMarbleList.sort((a, b) => {
 						if (a.finished && b.finished) {
