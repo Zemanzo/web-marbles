@@ -1,10 +1,8 @@
 import {
 	TextureLoader,
-	Math as ThreeMath,
-	FrontSide as THREE_FRONT_SIDE,
-	BackSide as THREE_BACK_SIDE,
-	DoubleSide as THREE_DOUBLE_SIDE
+	Math as ThreeMath
 } from "three";
+import * as THREE_CONSTANTS from "three/src/constants.js";
 import {
 	ColorNode,
 	StandardNodeMaterial,
@@ -150,14 +148,14 @@ function CustomMaterial(properties) {
 	if (properties.side) {
 		switch(properties.side) {
 		case "DoubleSide":
-			this.material.side = THREE_DOUBLE_SIDE;
+			this.material.side = THREE_CONSTANTS.DoubleSide;
 			break;
 		case "BackSide":
-			this.material.side = THREE_BACK_SIDE;
+			this.material.side = THREE_CONSTANTS.BackSide;
 			break;
 		case "FrontSide":
 		default:
-			this.material.side = THREE_FRONT_SIDE;
+			this.material.side = THREE_CONSTANTS.FrontSide;
 		}
 	}
 }

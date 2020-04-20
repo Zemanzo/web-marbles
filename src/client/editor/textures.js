@@ -1,7 +1,7 @@
 import {
-	TextureLoader,
-	RepeatWrapping as THREE_REPEAT_WRAPPING
+	TextureLoader
 } from "three";
+import * as THREE_CONSTANTS from "three/src/constants.js";
 import { materialsTab } from "./materials";
 import { modelsTab } from "./models";
 import { projectTab } from "./project";
@@ -25,7 +25,7 @@ function Texture(uuid, projectData) {
 			self.delete();
 		}
 	);
-	this.map.wrapS = this.map.wrapT = THREE_REPEAT_WRAPPING;
+	this.map.wrapS = this.map.wrapT = THREE_CONSTANTS.RepeatWrapping;
 	this.projectData = projectData; // Project reference for this texture
 	this.element = null;
 	this.optionElements = [];

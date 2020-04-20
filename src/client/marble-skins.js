@@ -2,9 +2,9 @@ import {
 	TextureLoader,
 	MeshStandardMaterial,
 	ShaderMaterial,
-	Color,
-	RepeatWrapping as THREE_REPEAT_WRAPPING
+	Color
 } from "three";
+import * as THREE_CONSTANTS from "three/src/constants.js";
 import { renderCore } from "./render/render-core";
 
 let marbleSkins = function() {
@@ -90,7 +90,7 @@ let marbleSkins = function() {
 										let newUniforms = {};
 										for (let key in skinMeta.textures) {
 											newUniforms[key] = { value: _textureLoader.load(`resources/skins/${skinId}/${skinMeta.textures[key]}`) };
-											newUniforms[key].value.wrapS = newUniforms[key].value.wrapT = THREE_REPEAT_WRAPPING;
+											newUniforms[key].value.wrapS = newUniforms[key].value.wrapT = THREE_CONSTANTS.RepeatWrapping;
 										}
 										Object.assign(renderCore.shaderUniforms, newUniforms);
 									}
@@ -118,6 +118,7 @@ let marbleSkins = function() {
 										_textureLoader.load(
 											`resources/skins/${skinId}/${map}.png`,
 											(texture) => {
+												texture.encoding = THREE_CONSTANTS.GammaEncoding;
 												_skins[skinId][map] = texture;
 												resolve(texture);
 											},

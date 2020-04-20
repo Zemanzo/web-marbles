@@ -1,8 +1,10 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+const isProduction = process.env.NODE_ENV === "production";
 
 module.exports = {
-	mode: process.env.NODE_ENV !== "production" ? "development" : "production",
+	mode: isProduction ? "development" : "production",
 	entry: {
 		client: "./src/client/client/client.js",
 		editor: "./src/client/editor/editor.js",
@@ -17,6 +19,10 @@ module.exports = {
 		chunkFilename: "[name].bundle.js",
 		path: path.resolve(__dirname, "public/dist"),
 		publicPath: "dist/"
+	},
+	optimization: {
+		minimize: isProduction,
+		minimizer: [new TerserPlugin()]
 	},
 	devtool: "source-map",
 	module: {
