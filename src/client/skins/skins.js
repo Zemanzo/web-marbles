@@ -39,14 +39,12 @@ let _marbleRight = marbleManager.spawnMarble(_marbleData);
 _marbleLeft.position.x = renderCore.activeCamera.camera.position.x - 1.3;
 _marbleLeft.position.y = renderCore.activeCamera.camera.position.y - 1;
 _marbleLeft.position.z = renderCore.activeCamera.camera.position.z - 3;
-renderCore.mainScene.add(_marbleLeft);
 
 // Right mesh
 _marbleRight.position.x = renderCore.activeCamera.camera.position.x + 1.3;
 _marbleRight.position.y = renderCore.activeCamera.camera.position.y - 1;
 _marbleRight.position.z = renderCore.activeCamera.camera.position.z - 3;
 _marbleRight.rotation.y = Math.PI;
-renderCore.mainScene.add(_marbleRight);
 
 domReady.then(() => {
 	for (let skinEntry of document.getElementsByClassName("skinEntry")) {

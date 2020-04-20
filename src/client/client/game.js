@@ -197,6 +197,7 @@ let game = function() {
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
 				renderCore.autoUpdateShadowMap(false);
+				renderCore.updateShadowMap(); // Update the shadows once for when last round's marbles disappear
 				_DOMElements.gameInfo.className = "waiting";
 				clearInterval(_enterCountdownTimer);
 				_enterCountdownTimer = null;
