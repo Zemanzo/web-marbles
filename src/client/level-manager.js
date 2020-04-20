@@ -322,6 +322,12 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
+
+	// Sets the water's render target output to the same encoding type as the renderer's, fixing the shader recompile issue
+	// NOTE: What we mean to modify here is renderTarget.texture, which we don't have access to
+	// But luckily we can get to the texture through the material's uniforms :D
+	this.waterObject.material.uniforms[ "mirrorSampler" ].value.encoding = THREE_CONSTANTS.GammaEncoding;
+
 	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
 		if(!renderCore.waterReflectsLevel()) parent.levelObjects.visible = false;
