@@ -254,8 +254,6 @@ let game = function() {
 		return _netGameStatePayload;
 	};
 
-	//
-
 	// Sets currentGameState and informs all connected clients about the state change
 	let _setCurrentGameState = function(newState) {
 		_currentGameState = newState;
@@ -391,7 +389,6 @@ let game = function() {
 
 
 	return {
-		enterTimeout: null,
 
 		initialize() {
 			// Socket initialisation

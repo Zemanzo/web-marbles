@@ -55,6 +55,14 @@ const commands = function() {
 
 		// Developer commands
 		{
+			// Starts the race early, in case you gotta go fast but the countdown is being a bully
+			commandString: "start",
+			permission: "DEVELOPER_COMMANDS",
+			action: function() {
+				game.start();
+			}
+		},
+		{
 			// End the race early, and store the results
 			commandString: "end",
 			permission: "DEVELOPER_COMMANDS",

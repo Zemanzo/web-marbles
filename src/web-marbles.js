@@ -17,7 +17,7 @@ levelManager.initialize();
 
 // Prepare marble skins
 const skins = require("./server/skins");
-skins.updateIdList();
+let skinsReady = skins.updateIdList();
 
 // Set up physics world
 const physics = require("./physics/manager");
@@ -62,11 +62,10 @@ app.get("/", function(req, res) {
 });
 
 // Git commit hash, optional dependency
-let git, gitHash, gitBranch;
+let gitHash;
 try {
-	git = require("git-rev-sync");
+	let git = require("git-rev-sync");
 	gitHash = git.long();
-	gitBranch = git.branch();
 } catch (error) {
 	log.warn("git-rev-sync is not installed, no git information will be displayed");
 }
@@ -75,7 +74,6 @@ const version = require("../package.json").version;
 app.get("/client", function(req, res) {
 	res.render("client", {
 		gitHash,
-		gitBranch,
 		version,
 		discordEnabled: config.discord.enabled,
 		invitelink: config.discord.inviteLink,
@@ -174,7 +172,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-Promise.all([skins.readyPromise, levelManager.currentLevelData])
+Promise.all([skinsReady, levelManager.currentLevelData])
 	.then(() => {
 		game.initialize();
 	})
