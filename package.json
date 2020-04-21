@@ -48,7 +48,7 @@
     "request-promise-native": "^1.0.7",
     "semver": "^7.1.0",
     "stats-js": "^1.0.0",
-    "three": "^0.115.0",
+    "three": "^0.114.0",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v17.3.0"
   },
   "optionalDependencies": {

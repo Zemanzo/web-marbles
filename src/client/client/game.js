@@ -197,6 +197,7 @@ let game = function() {
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
 				renderCore.autoUpdateShadowMap(false);
+				renderCore.updateShadowMap(); // Update the shadows once for when last round's marbles disappear
 				_DOMElements.gameInfo.className = "waiting";
 				clearInterval(_enterCountdownTimer);
 				_enterCountdownTimer = null;
@@ -254,7 +255,6 @@ let game = function() {
 				_DOMElements.gameInfo.className = "finished";
 				if (_serverData.currentGameState !== null) {
 					_audio.end.play();
-					levelManager.activeLevel.closeGates();
 
 					_enteredMarbleList.sort((a, b) => {
 						if (a.finished && b.finished) {
