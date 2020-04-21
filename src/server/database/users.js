@@ -44,6 +44,19 @@ module.exports = function(db, common) {
 			return false;
 		},
 
+		_updateUsernameById: db.prepare(
+			`UPDATE OR REPLACE users SET
+				username = ?
+			WHERE
+				id = ?`
+		),
+
+		updateUsernameById(newName, id) {
+			if (typeof newName === "string") {
+				this._updateUsernameById.run([newName, id]);
+			}
+		},
+
 		_getTokenById: db.prepare("SELECT access_token, refresh_token, id, scope FROM users WHERE id = ?"),
 
 		getTokenById(id) {
@@ -189,7 +202,7 @@ module.exports = function(db, common) {
 		insertNewUserDiscord(user) {
 			this._insertNewUserDiscord.run([
 				user.id,
-				user.username,
+				user.nickname || user.username,
 				user.discriminator,
 				user.avatar,
 				0,
