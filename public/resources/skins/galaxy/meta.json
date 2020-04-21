@@ -5,6 +5,6 @@
 		"galaxy"
 	],
 	"allowCustomColor": false,
-	"roughness": 0.9,
-	"metalness": 0.2
+	"roughness": 0.2,
+	"metalness": 0.5
 }
