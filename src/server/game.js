@@ -9,8 +9,6 @@ const permissions = require("./chat/permissions");
 const skins = require("./skins");
 const msgPack = require("msgpack-lite");
 
-const anyColorAllowed = ["abstract", "marble", "default", "swirly", "squares"]; // Will (probably) be changed to a meta file later on, next to the skin file?
-
 function Marble(id, entryId, name, attributes = {}) {
 	this.userId = id;
 	this.entryId = entryId;
@@ -31,12 +29,10 @@ function Marble(id, entryId, name, attributes = {}) {
 	}
 
 	// Check if skin supports a custom color
-	if (typeof attributes.color !== "undefined" && anyColorAllowed.includes(this.skinId)) {
-		this.color = attributes.color;
-	} else if (!anyColorAllowed.includes(this.skinId)) {
-		this.color = "#ffffff";
+	if(skins.skinList[this.skinId].allowCustomColor) {
+		this.color = attributes.color || _randomHexColor();
 	} else {
-		this.color = _randomHexColor();
+		this.color = "#ffffff";
 	}
 
 	this.name = name || "Nightbot";
