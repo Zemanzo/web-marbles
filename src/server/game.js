@@ -410,7 +410,12 @@ let game = function() {
 			});
 
 			if(levelManager.availableLevels.length > 0) {
-				this.changeLevel(levelManager.availableLevels[0]);
+				if(levelManager.availableLevels.includes(config.marbles.levels.defaultLevel)) {
+					this.changeLevel(config.marbles.levels.defaultLevel);
+				} else {
+					log.info("No default level set or found. The first available level will be loaded instead.");
+					this.changeLevel(levelManager.availableLevels[0]);
+				}
 			} else {
 				throw new Error("Game is unable to start: No levels available to load!");
 			}
