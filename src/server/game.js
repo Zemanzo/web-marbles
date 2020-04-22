@@ -397,6 +397,8 @@ let game = function() {
 	return {
 
 		initialize() {
+			physics.world.setTickRate(config.physics.steps);
+
 			// Socket initialisation
 			_gameplaySocket = new socketsHelper.Socket("/gameplay", {
 				compression: 0,
@@ -438,6 +440,9 @@ let game = function() {
 			clearTimeout(_netUpdateHandle);
 
 			log.warn("Game loop stopped");
+
+			physics.world.stopUpdateInterval();
+			log.warn("PHYSICS stopped");
 		},
 
 		// Enters the player into the race if allowed

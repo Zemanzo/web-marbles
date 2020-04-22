@@ -11,18 +11,13 @@ console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 const db = require("./server/database/manager");
 db.setCurrentDatabase(config.database.path);
 
-// Fetch levels & build primary level
+// Fetch and validate levels
 const levelManager = require("./server/levels/manager");
 let levelManagerReady = levelManager.retrieveLevels();
 
 // Prepare marble skins
 const skins = require("./server/skins");
 let skinsReady = skins.updateIdList();
-
-// Set up physics world
-const physics = require("./physics/manager");
-physics.world.setTickRate(config.physics.steps);
-physics.world.setGravity(config.physics.gravity);
 
 // Set up game logic
 const game = require("./server/game");
@@ -216,10 +211,6 @@ function shutdown() {
 		// Database
 		db.close();
 		log.warn("DATABASE connection closed");
-
-		// Stopped physics simulation
-		physics.world.stopUpdateInterval();
-		log.warn("PHYSICS stopped");
 
 		// µWebSockets
 		require("./server/network/sockets-helper").stopListening();

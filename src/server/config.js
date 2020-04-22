@@ -103,7 +103,6 @@ config.discord.permissions.DEVELOPER_COMMANDS = ["USE CONFIG.USER.JS OVERRIDE"];
 
 /* Physics */
 config.physics = {};
-config.physics.gravity = -10;
 config.physics.steps = 120; // Amount of physics steps to calculate per second.
 
 /* Express */
