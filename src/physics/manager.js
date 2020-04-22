@@ -2,9 +2,8 @@ module.exports = function() {
 	return {
 		ammo: require("ammo.js")(),
 		world: null,
-		shapes: { // Container for collision shape re-usage
-			defaultMarble: null
-		},
+		shapes: {}, // Container for level collision shape re-usage
+		defaultMarble: null,
 
 		// Creates a convex shape using the given vertexData as float array
 		createConvexShape(name, vertexData) {
@@ -68,10 +67,15 @@ module.exports = function() {
 		// Destroys the shape data for the given name
 		destroyShape(name) {
 			delete this.shapes[name];
+		},
+
+		// Destroys all collision shapes
+		clearShapes() {
+			this.shapes = {};
 		}
 	};
 }();
 
 // Module initialization
-module.exports.shapes.defaultMarble = new module.exports.ammo.btSphereShape(0.2);
+module.exports.defaultMarble = new module.exports.ammo.btSphereShape(0.2);
 module.exports.world = require("./world");

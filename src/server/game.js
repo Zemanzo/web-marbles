@@ -532,7 +532,7 @@ let game = function() {
 			_netGameUpdate.l = levelName;
 			_triggerNetworkUpdate();
 
-			levelManager.loadLevel(levelManager.availableLevels[0]).then( (levelData) => {
+			levelManager.loadLevel(levelName).then( (levelData) => {
 				_currentLevel = levelData;
 				if(!levelData) {
 					// Well this is awkward
@@ -541,7 +541,6 @@ let game = function() {
 					return; // Should probably skip state-changing?
 				}
 				_setCurrentGameState(gameConstants.STATE_WAITING);
-				console.log(_netGameState);
 			});
 		},
 

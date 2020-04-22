@@ -148,7 +148,7 @@ module.exports = function() {
 
 		createMarble(marble) {
 			// Create physics body
-			let sphereShape = physics.shapes.defaultMarble;
+			let sphereShape = physics.defaultMarble;
 			if(0.2 !== marble.size) { // TODO: Magic number
 				sphereShape = new physics.ammo.btSphereShape(marble.size); // Create new collision shape if the radius does not match
 			}
