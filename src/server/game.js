@@ -88,14 +88,6 @@ let game = function() {
 	let _netGameUpdate = {};
 	let _netGameStatePayload = null;
 
-	// levelManager.currentLevelData.then((level) => {
-	// 	_currentLevel = level;
-	// });
-
-	// levelManager.currentLevelName.then((name) => {
-	// 	_netGameUpdate.l = name;
-	// });
-
 	let _generateNewRoundData = function() {
 		return {
 			start: null,
