@@ -125,11 +125,13 @@ const discordManager = function() {
 						db.user.insertNewUserDiscord(message.author);
 					}
 
+					const nickname = message.member.nickname || message.author.username;
+
 					// Send it to the client chat
 					if (message.channel.id === config.discord.gameplayChannelId) {
 						_chatClientSocket.emit(
 							JSON.stringify({
-								username: message.author.username,
+								username: nickname,
 								discriminator: message.author.discriminator,
 								content: message.content
 							})
@@ -137,7 +139,7 @@ const discordManager = function() {
 					}
 
 					// Parse commands
-					commandsManager.parse(message.content, message.author.id, message.author.username, message.channel);
+					commandsManager.parse(message.content, message.author.id, nickname, message.channel);
 				}
 			}, console.error);
 
@@ -150,6 +152,15 @@ const discordManager = function() {
 			_discordClient.on("guildBanRemove", (guild, user) => {
 				log.info(`DISCORD: ${"Unbanned user".green} ${user.username}#${user.discriminator} (${user.id})`);
 				db.user.setBanState(false, user.id);
+			}, console.error);
+
+			_discordClient.on("guildMemberUpdate", (oldGuildMember, newGuildMember) => {
+				if (oldGuildMember.nickname !== newGuildMember.nickname) {
+					db.user.updateUsernameById(
+						newGuildMember.nickname || newGuildMember.user.username,
+						newGuildMember.id
+					);
+				}
 			}, console.error);
 
 			// Everything has been set up, log the bot into the discord channel
