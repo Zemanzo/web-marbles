@@ -61,7 +61,7 @@ Marble.prototype.destroyMarble = function() {
 
 
 let game = function() {
-	let _currentGameState = gameConstants.STATE_FINISHED;
+	let _currentGameState = gameConstants.STATE_WAITING; //BOOO!
 	let _marbleLimitReached = false;
 	let _gameStateTimeout = null; // Main setTimeout handle for when one game state should switch to another
 
@@ -88,13 +88,13 @@ let game = function() {
 	let _netGameUpdate = {};
 	let _netGameStatePayload = null;
 
-	levelManager.currentLevelData.then((level) => {
-		_currentLevel = level;
-	});
+	// levelManager.currentLevelData.then((level) => {
+	// 	_currentLevel = level;
+	// });
 
-	levelManager.currentLevelName.then((name) => {
-		_netGameUpdate.l = name;
-	});
+	// levelManager.currentLevelName.then((name) => {
+	// 	_netGameUpdate.l = name;
+	// });
 
 	let _generateNewRoundData = function() {
 		return {
@@ -403,7 +403,12 @@ let game = function() {
 				ws.send(_getInitialDataPayload(), true);
 			});
 
-			_setCurrentGameState(gameConstants.STATE_WAITING);
+			console.log("Game::Init");
+			if(levelManager.availableLevels.length > 0) {
+				this.changeLevel(levelManager.availableLevels[0]);
+			} else {
+				log.error("Game is unable to start: No levels available to load!");
+			}
 		},
 
 		stop() {
@@ -507,6 +512,37 @@ let game = function() {
 			if (_currentGameState === gameConstants.STATE_ENTER || _currentGameState === gameConstants.STATE_WAITING) {
 				_setCurrentGameState(gameConstants.STATE_STARTING);
 			}
+		},
+
+		// Hi!
+		changeLevel(levelName) {
+			if(_currentGameState !== gameConstants.STATE_WAITING) {
+				// Only allowing level changing in the waiting state for now?
+				// Actually that breaks when dropping bots in first
+				return;
+			}
+			console.log(`Game::loadLevel - ${levelName}`);
+			if(!levelManager.availableLevels.includes(levelName)) {
+				log.warn(`Attempted to change level to "${levelName}", but no such level is available.`);
+				return;
+			}
+			//this.end(false); // Abort race?
+
+			// Update clients on the change
+			_netGameUpdate.l = levelName;
+			_triggerNetworkUpdate();
+
+			levelManager.loadLevel(levelManager.availableLevels[0]).then( (levelData) => {
+				_currentLevel = levelData;
+				if(!levelData) {
+					// Well this is awkward
+					_netGameUpdate.l = undefined;
+					_triggerNetworkUpdate();
+					return; // Should probably skip state-changing?
+				}
+				_setCurrentGameState(gameConstants.STATE_WAITING);
+				console.log(_netGameState);
+			});
 		},
 
 		marbleFinished(marble) {

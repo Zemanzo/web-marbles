@@ -13,7 +13,7 @@ db.setCurrentDatabase(config.database.path);
 
 // Fetch levels & build primary level
 const levelManager = require("./server/levels/manager");
-levelManager.initialize();
+let levelManagerReady = levelManager.retrieveLevels();
 
 // Prepare marble skins
 const skins = require("./server/skins");
@@ -172,7 +172,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-Promise.all([skinsReady, levelManager.currentLevelData])
+Promise.all([skinsReady, levelManagerReady])
 	.then(() => {
 		game.initialize();
 	})
