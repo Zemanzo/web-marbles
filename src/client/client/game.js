@@ -194,6 +194,23 @@ let game = function() {
 
 		setGameState: function(newState, additionalData) {
 			switch(newState) {
+			// Server is loading a level
+			case gameConstants.STATE_LOADING:
+				_DOMElements.gameInfo.className = "waiting";
+				clearInterval(_enterCountdownTimer);
+				_enterCountdownTimer = null;
+				_roundTimerIsVisible = false;
+				_enteredMarbleList = [];
+				_finishedMarbles = 0;
+				marbleManager.clearMarbles();
+				_marbleBeingTracked = null;
+				renderCore.trackingCamera.setTarget(null);
+				_DOMElements.entries.innerText = "0";
+				_DOMElements.state.innerText = "Warming up...";
+				_DOMElements.timer.innerText = "...";
+				_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
+				break;
+
 			// Start of a new round
 			case gameConstants.STATE_WAITING:
 				renderCore.autoUpdateShadowMap(false);

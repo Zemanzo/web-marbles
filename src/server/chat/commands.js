@@ -92,6 +92,14 @@ const commands = function() {
 					);
 				}
 			}
+		},
+		{
+			// Changes the level
+			commandString: "level",
+			permission: "DEVELOPER_COMMANDS",
+			action: function(messageContent) {
+				game.changeLevel(messageContent.substr(7));
+			}
 		}
 	];
 }();

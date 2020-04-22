@@ -61,7 +61,7 @@ Marble.prototype.destroyMarble = function() {
 
 
 let game = function() {
-	let _currentGameState = gameConstants.STATE_WAITING; //BOOO!
+	let _currentGameState = gameConstants.STATE_WAITING;
 	let _marbleLimitReached = false;
 	let _gameStateTimeout = null; // Main setTimeout handle for when one game state should switch to another
 
@@ -170,15 +170,6 @@ let game = function() {
 		// gameState
 		if(_netGameUpdate.g !== undefined) {
 			_netGameState.g = _netGameUpdate.g;
-
-			// Remove all marbles if the state changed to finished
-			if(_netGameUpdate.g === gameConstants.STATE_FINISHED) {
-				delete _netGameState.n;
-				delete _netGameState.f; // Clients that join after a race don't have access to marble data
-				delete _netGameState.p;
-				delete _netGameState.r;
-				delete _netGameUpdate.t; // Timestamp no longer necessary, and won't be copied over
-			}
 		}
 
 		// currentGameTime
@@ -263,6 +254,10 @@ let game = function() {
 
 		let stateName;
 		switch(newState) {
+		case gameConstants.STATE_LOADING:
+			stateName = "STATE_LOADING";
+			_onStateLoading();
+			break;
 		case gameConstants.STATE_WAITING:
 			stateName = "STATE_WAITING";
 			_onStateWaiting();
@@ -290,6 +285,10 @@ let game = function() {
 		// Print the state change only once (e.g. aborted races technically "finish" and go to the waiting state right away)
 		if(newState == _currentGameState)
 			log.info("Current state: ".magenta, stateName);
+	};
+
+	let _onStateLoading = function() {
+		_round = null;
 	};
 
 	let _onStateWaiting = function() {
@@ -379,6 +378,13 @@ let game = function() {
 		_marbleLimitReached = false;
 		_enterPeriodStart = null;
 
+		// Remove all marble data in the network game state
+		delete _netGameState.n;
+		delete _netGameState.f; // Clients that join after a race don't have access to marble data
+		delete _netGameState.p;
+		delete _netGameState.r;
+		delete _netGameUpdate.t; // Timestamp no longer necessary, and won't be copied over
+
 		// Wait a bit until starting the next round, so the client can view leaderboards n stuff
 		if(_round) {
 			_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_WAITING); }, config.marbles.rules.finishPeriod * 1000);
@@ -403,11 +409,10 @@ let game = function() {
 				ws.send(_getInitialDataPayload(), true);
 			});
 
-			console.log("Game::Init");
 			if(levelManager.availableLevels.length > 0) {
 				this.changeLevel(levelManager.availableLevels[0]);
 			} else {
-				log.error("Game is unable to start: No levels available to load!");
+				throw new Error("Game is unable to start: No levels available to load!");
 			}
 		},
 
@@ -464,7 +469,7 @@ let game = function() {
 
 		// Spawns marble unless the maximum amount of marbles has been hit
 		spawnMarble(id, name, attributes) {
-			if (_currentGameState === gameConstants.STATE_FINISHED || _marbleLimitReached)
+			if (_currentGameState === gameConstants.STATE_FINISHED || _currentGameState === gameConstants.STATE_LOADING || _marbleLimitReached)
 				return;
 
 			// Start physics simulation if this is the first marble
@@ -514,31 +519,35 @@ let game = function() {
 			}
 		},
 
-		// Hi!
+		// Loads a new level
 		changeLevel(levelName) {
+			if(_currentLevel && _currentLevel.levelName === levelName)
+				return;
+
+			// Only allowing level changing in the waiting state for now
 			if(_currentGameState !== gameConstants.STATE_WAITING) {
-				// Only allowing level changing in the waiting state for now?
-				// Actually that breaks when dropping bots in first
 				return;
 			}
-			console.log(`Game::loadLevel - ${levelName}`);
+
 			if(!levelManager.availableLevels.includes(levelName)) {
 				log.warn(`Attempted to change level to "${levelName}", but no such level is available.`);
 				return;
 			}
-			//this.end(false); // Abort race?
+
+			// Explicitly abort the race is there's marbles in this state (e.g. bots)
+			if(_marbles.length > 0)
+				this.end(false);
 
 			// Update clients on the change
 			_netGameUpdate.l = levelName;
-			_triggerNetworkUpdate();
+			_setCurrentGameState(gameConstants.STATE_LOADING);
 
 			levelManager.loadLevel(levelName).then( (levelData) => {
 				_currentLevel = levelData;
 				if(!levelData) {
 					// Well this is awkward
-					_netGameUpdate.l = undefined;
-					_triggerNetworkUpdate();
-					return; // Should probably skip state-changing?
+					// This really shouldn't happen if all levels were validated earlier, so we're probably in booboo town already
+					throw new Error(`Game.changeLevel: Failed to load level "${levelName}"`);
 				}
 				_setCurrentGameState(gameConstants.STATE_WAITING);
 			});

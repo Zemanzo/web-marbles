@@ -71,7 +71,7 @@ const levelManager = function() {
 	};
 
 	return {
-		availableLevels: null,
+		availableLevels: [],
 		currentLevel: null,
 
 		/**
