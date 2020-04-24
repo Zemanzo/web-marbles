@@ -9,7 +9,7 @@ import {
 	ConeBufferGeometry
 } from "three";
 import { generateTinyUUID } from "../generate-tiny-uuid";
-import { hslToHex } from "../hsl-to-hex";
+import { hslToHex } from "../../utility";
 import { inspector } from "./inspector";
 import * as materials from "./editor-materials";
 import { renderCore } from "../render/render-core";

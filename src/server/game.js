@@ -1,5 +1,6 @@
 const log = require("../log");
 const config = require("./config");
+const utility = require("../utility");
 const socketsHelper = require("./network/sockets-helper");
 const physics = require("../physics/manager");
 const levelManager = require("./levels/manager");
@@ -30,7 +31,7 @@ function Marble(id, entryId, name, attributes = {}) {
 
 	// Check if skin supports a custom color
 	if(skins.skinList[this.skinId].allowCustomColor) {
-		this.color = attributes.color || _randomHexColor();
+		this.color = attributes.color || utility.randomHexColor();
 	} else {
 		this.color = "#ffffff";
 	}
@@ -275,7 +276,7 @@ let game = function() {
 		}
 
 		// Print the state change only once (e.g. aborted races technically "finish" and go to the waiting state right away)
-		if(newState == _currentGameState)
+		if(newState === _currentGameState)
 			log.info("Current state: ".magenta, stateName);
 	};
 
@@ -475,8 +476,9 @@ let game = function() {
 				return;
 
 			// Start physics simulation if this is the first marble
-			if(_marbles.length === 0)
+			if(_marbles.length === 0) {
 				physics.world.startUpdateInterval();
+			}
 
 			let newMarble = new Marble(id, _marbles.length, name, attributes);
 			_marbles.push(newMarble);
@@ -644,15 +646,5 @@ let game = function() {
 		}
 	};
 }();
-
-
-// Generates a random color in the HEX format
-function _randomHexColor() {
-	let color = (Math.random() * 0xffffff | 0).toString(16);
-	if (color.length !== 6) {
-		color = (`00000${color}`).slice(-6);
-	}
-	return `#${color}`;
-}
 
 module.exports = game;
