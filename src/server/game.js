@@ -1,64 +1,12 @@
 const log = require("../log");
 const config = require("./config");
-const utility = require("../utility");
 const socketsHelper = require("./network/sockets-helper");
-const physics = require("../physics/manager");
+const physicsWorld = require("../physics/world");
 const levelManager = require("./levels/manager");
 const db = require("./database/manager");
 const gameConstants = require("../game-constants");
-const permissions = require("./chat/permissions");
-const skins = require("./skins");
 const msgPack = require("msgpack-lite");
-
-function Marble(id, entryId, name, attributes = {}) {
-	this.userId = id;
-	this.entryId = entryId;
-
-	// Check for premium permissions
-	if (
-		config.discord.enabled
-		&& skins.skinList[attributes.skinId]
-		&& skins.skinList[attributes.skinId].premium
-	) {
-		if (permissions.memberHasPermission(id, "PREMIUM_SKINS")) {
-			this.skinId = attributes.skinId;
-		} else {
-			this.skinId = "default";
-		}
-	} else {
-		this.skinId = attributes.skinId || "default";
-	}
-
-	// Check if skin supports a custom color
-	if(skins.skinList[this.skinId].allowCustomColor) {
-		this.color = attributes.color || utility.randomHexColor();
-	} else {
-		this.color = "#ffffff";
-	}
-
-	this.name = name || "Nightbot";
-	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
-	this.ammoBody = null;
-	this.finished = false;
-	this.rank = null;
-	this.time = null;
-
-	physics.world.createMarble(this);
-}
-
-Marble.prototype.onMarbleFinish = function() {
-	if(this.finished === false) {
-		game.marbleFinished(this);
-		this.finished = true;
-	}
-};
-
-Marble.prototype.destroyMarble = function() {
-	if(this.ammoBody) {
-		physics.world.destroyMarble(this);
-		this.ammoBody = null;
-	}
-};
+const Marble = require("./marble");
 
 
 let game = function() {
@@ -141,7 +89,7 @@ let game = function() {
 
 		if(_marbles.length > 0) {
 			// Get marble positions/rotations
-			let marbleData = game.getMarbleTransformations();
+			let marbleData = physicsWorld.getMarbleTransforms();
 			_netGameUpdate.p = marbleData.position;
 			_netGameUpdate.r = marbleData.rotation;
 
@@ -303,10 +251,7 @@ let game = function() {
 	let _onStateStarted = function() {
 		_round.start = Date.now();
 
-		physics.world.openGates();
-		for(let i = 0; i < _marbles.length; i++) {
-			_marbles[i].ammoBody.activate();
-		}
+		physicsWorld.openGates();
 
 		// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 		_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_FINISHED); }, _currentLevel.gameplay.roundLength * 1000);
@@ -355,8 +300,8 @@ let game = function() {
 		_marblesFinished = 0;
 
 		// Close the gates and stop simulating
-		physics.world.closeGates();
-		physics.world.stopUpdateInterval();
+		physicsWorld.closeGates();
+		physicsWorld.stopUpdateInterval();
 
 		// Remove all marbles
 		for (let i = _marbles.length - 1; i >= 0; --i) {
@@ -386,11 +331,70 @@ let game = function() {
 		}
 	};
 
+	let _onMarbleFinished = function(entryId) {
+		let marble = _marbles[entryId];
+		if(marble.finished) return;
+
+		let finishTime = Date.now();
+		// Set their rank and final time
+		marble.rank = _marblesFinished++;
+		marble.time = finishTime - _round.start;
+		marble.finished = true;
+
+		// Get playerEntry that belongs to this marble
+		let playerEntry = _playersEnteredList.find((playerEntry) => {
+			return marble.userId === playerEntry.id;
+		});
+
+		if (playerEntry) {
+			// Mark them as finished
+			playerEntry.finished = true;
+			playerEntry.marblesFinished++;
+
+			// Add their time to the entry (so it can be stored in the case of a PB)
+			playerEntry.time = marble.time;
+
+			// Award points based on rank
+			let points = _awardPoints(marble.rank);
+			playerEntry.pointsEarned += points;
+
+			// Also add them to the round total
+			_round.pointsAwarded += points;
+		}
+
+		// Increment the amount of marbles that finished this round
+		_round.marblesFinished++;
+
+		// Add entry for network update
+		if(!_netGameUpdate.f) _netGameUpdate.f = [];
+		_netGameUpdate.f.push(marble.entryId, marble.time);
+
+		// If this is the first marble that finished, set a timeout to end the game soon
+		if (_marblesFinished === 1) {
+			// Set round time
+			_round.timeBest = marble.time;
+
+			// Update the current finish timeout
+			clearTimeout(_gameStateTimeout);
+			_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, config.marbles.rules.timeUntilDnf * 1000);
+		}
+
+		// If all marbles have finished, end the game
+		if (_marblesFinished === _marbles.length) {
+			clearTimeout(_gameStateTimeout);
+			_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, 2000);
+		}
+	};
+
 
 	return {
 
 		initialize() {
-			physics.world.setTickRate(config.physics.steps);
+			// Physics initialisation
+			physicsWorld.setTickRate(config.physics.steps);
+			physicsWorld.eventEmitter.on("marbleFinished", (entryId) => {
+				_onMarbleFinished(entryId);
+			});
 
 			// Socket initialisation
 			_gameplaySocket = new socketsHelper.Socket("/gameplay", {
@@ -434,7 +438,7 @@ let game = function() {
 
 			log.warn("Game loop stopped");
 
-			physics.world.stopUpdateInterval();
+			physicsWorld.stopUpdateInterval();
 			log.warn("PHYSICS stopped");
 		},
 
@@ -477,7 +481,7 @@ let game = function() {
 
 			// Start physics simulation if this is the first marble
 			if(_marbles.length === 0) {
-				physics.world.startUpdateInterval();
+				physicsWorld.startUpdateInterval();
 			}
 
 			let newMarble = new Marble(id, _marbles.length, name, attributes);
@@ -557,92 +561,11 @@ let game = function() {
 			});
 		},
 
-		marbleFinished(marble) {
-			let finishTime = Date.now();
-			// Set their rank and final time
-			marble.rank = _marblesFinished++;
-			marble.time = finishTime - _round.start;
-
-			// Get playerEntry that belongs to this marble
-			let playerEntry = _playersEnteredList.find((playerEntry) => {
-				return marble.userId === playerEntry.id;
-			});
-
-			if (playerEntry) {
-				// Mark them as finished
-				playerEntry.finished = true;
-				playerEntry.marblesFinished++;
-
-				// Add their time to the entry (so it can be stored in the case of a PB)
-				playerEntry.time = marble.time;
-
-				// Award points based on rank
-				let points = _awardPoints(marble.rank);
-				playerEntry.pointsEarned += points;
-
-				// Also add them to the round total
-				_round.pointsAwarded += points;
-			}
-
-			// Increment the amount of marbles that finished this round
-			_round.marblesFinished++;
-
-			// Add entry for network update
-			if(!_netGameUpdate.f) _netGameUpdate.f = [];
-			_netGameUpdate.f.push(marble.entryId, marble.time);
-
-			// If this is the first marble that finished, set a timeout to end the game soon
-			if (_marblesFinished === 1) {
-				// Set round time
-				_round.timeBest = marble.time;
-
-				// Update the current finish timeout
-				clearTimeout(_gameStateTimeout);
-				_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, config.marbles.rules.timeUntilDnf * 1000);
-			}
-
-			// If all marbles have finished, end the game
-			if (_marblesFinished === _marbles.length) {
-				clearTimeout(_gameStateTimeout);
-				_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, 2000);
-			}
-		},
-
 		getEnterPeriodTimeRemaining() {
 			if(_enterPeriodStart === null)
 				return config.marbles.rules.enterPeriod;
 			else
 				return Math.max(config.marbles.rules.enterPeriod * 1000 + _enterPeriodStart - Date.now(), 0);
-		},
-
-		getMarbleTransformations() {
-			if(_marbles.length === 0) return null;
-
-			let transform = new physics.ammo.btTransform();
-			let _pos = new Float32Array(_marbles.length * 3);
-			let _rot = new Float32Array(_marbles.length * 3);
-
-			for (let i = 0; i < _marbles.length; i++) {
-				let ms = _marbles[i].ammoBody.getMotionState();
-				if (ms) {
-					ms.getWorldTransform( transform );
-					let p = transform.getOrigin();
-					let r = _marbles[i].ammoBody.getAngularVelocity();
-
-					_pos[i * 3 + 0] = p.x();
-					_pos[i * 3 + 1] = p.y();
-					_pos[i * 3 + 2] = p.z();
-
-					_rot[i * 3 + 0] = r.x();
-					_rot[i * 3 + 1] = r.y();
-					_rot[i * 3 + 2] = r.z();
-				}
-			}
-
-			return {
-				position: _pos,
-				rotation: _rot
-			};
 		}
 	};
 }();

@@ -1,4 +1,5 @@
 const physics = require("./manager");
+const EventEmitter = require("events");
 
 // Constructor for starting area, starting gate, and finish line
 function LevelCollider(colliderData, functionality, transform, id) {
@@ -35,13 +36,14 @@ module.exports = function() {
 		_startAreas = [], // Quicklist of start areas
 		_startGates = [], // Quicklist of starting gates
 		_specialColliders = [], // Quicklist of colliders that cause collision callbacks
-		_marbles = [], // List of (active) Marble object references
+		_physicsMarbles = [], // List of (active) marbles
 		_ids = 1, // Starts at 1 to prevent conflicts with marble entryId 0
 		_timeStep = 1 / 120, // Default, configurable
 		_stepRemainder = 0,
 		_maxTicksPerUpdate = 10,
 		_updateInterval = null,
-		_lastPhysicsUpdate = null;
+		_lastPhysicsUpdate = null,
+		eventEmitter = null;
 
 	// Physics configuration
 	_collisionConfiguration = new physics.ammo.btDefaultCollisionConfiguration();
@@ -50,6 +52,10 @@ module.exports = function() {
 	_solver = new physics.ammo.btSequentialImpulseConstraintSolver();
 	physicsWorld = new physics.ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
 	physicsWorld.setGravity( new physics.ammo.btVector3( 0, -10, 0 ) );
+
+	// Used for physics-related events, such as finished/OoB marbles:
+	// "marbleFinished" (entryId)
+	eventEmitter = new EventEmitter();
 
 	function _updatePhysics() {
 		// Steps have to be constant WITHOUT bullet substepping
@@ -84,9 +90,9 @@ module.exports = function() {
 						}
 					}
 				} else {
-					for(let m = 0; m < _marbles.length; m++) {
-						if(_marbles[m].entryId === Math.abs(body0)) {
-							marble = _marbles[m];
+					for(let m = 0; m < _physicsMarbles.length; m++) {
+						if(_physicsMarbles[m].entryId === Math.abs(body0)) {
+							marble = _physicsMarbles[m];
 							break;
 						}
 					}
@@ -99,9 +105,9 @@ module.exports = function() {
 						}
 					}
 				} else {
-					for(let m = 0; m < _marbles.length; m++) {
-						if(_marbles[m].entryId === Math.abs(body1)) {
-							marble = _marbles[m];
+					for(let m = 0; m < _physicsMarbles.length; m++) {
+						if(_physicsMarbles[m].entryId === Math.abs(body1)) {
+							marble = _physicsMarbles[m];
 							break;
 						}
 					}
@@ -110,7 +116,11 @@ module.exports = function() {
 				if(marble === null || levelCollider === null) continue;
 
 				if(levelCollider.type === "endarea") {
-					if(marble.onMarbleFinish) marble.onMarbleFinish();
+					// Only fire this event once
+					if(!marble.finished) {
+						marble.finished = true;
+						eventEmitter.emit("marbleFinished", marble.entryId);
+					}
 				}
 			}
 		}
@@ -143,17 +153,23 @@ module.exports = function() {
 	};
 
 	return {
-		updateInterval: null,
 		physicsWorld,
+		eventEmitter,
 
-		createMarble(marble) {
+		createMarble(entryId, size) {
+			let physicsMarble = {
+				entryId,
+				size,
+				ammoBody: null,
+				finished: false
+			};
 			// Create physics body
 			let sphereShape = physics.defaultMarble;
-			if(0.2 !== marble.size) { // TODO: Magic number
-				sphereShape = new physics.ammo.btSphereShape(marble.size); // Create new collision shape if the radius does not match
+			if(size !== 0.2) { // TODO: Magic number
+				sphereShape = new physics.ammo.btSphereShape(size); // Create new collision shape if the radius does not match
 			}
 			sphereShape.setMargin( 0.05 );
-			let mass = 4 / 3 * Math.PI * (marble.size ** 3);
+			let mass = 4 / 3 * Math.PI * (size ** 3);
 			let localInertia = new physics.ammo.btVector3( 0, 0, 0 );
 			sphereShape.calculateLocalInertia( mass, localInertia );
 			let transform = new physics.ammo.btTransform();
@@ -161,21 +177,21 @@ module.exports = function() {
 			transform.setOrigin( _randomPositionInStartAreas() );
 			let motionState = new physics.ammo.btDefaultMotionState( transform );
 			let bodyInfo = new physics.ammo.btRigidBodyConstructionInfo( mass, motionState, sphereShape, localInertia );
-			marble.ammoBody = new physics.ammo.btRigidBody( bodyInfo );
+			physicsMarble.ammoBody = new physics.ammo.btRigidBody( bodyInfo );
 
 			// User index for marbles are their negative entryId
-			marble.ammoBody.setUserIndex(-marble.entryId);
+			physicsMarble.ammoBody.setUserIndex(-entryId);
 
 			// Add to physics world
-			physicsWorld.addRigidBody(marble.ammoBody);
-			_marbles.push(marble);
+			physicsWorld.addRigidBody(physicsMarble.ammoBody);
+			_physicsMarbles.push(physicsMarble);
 		},
 
-		destroyMarble(marble) {
-			physicsWorld.removeRigidBody(marble.ammoBody);
-			for(let i = 0; i < _marbles.length; i++) {
-				if(_marbles[i] === marble) {
-					_marbles.splice(i, 1);
+		destroyMarble(entryId) {
+			for(let i = 0; i < _physicsMarbles.length; i++) {
+				if(_physicsMarbles[i].entryId === entryId) {
+					physicsWorld.removeRigidBody(_physicsMarbles[i].ammoBody);
+					_physicsMarbles.splice(i, 1);
 					return;
 				}
 			}
@@ -324,9 +340,14 @@ module.exports = function() {
 			_ids = 1;
 		},
 
+		// "Opens" the gates by removing them from the world
 		openGates() {
 			for(let i = 0; i < _startGates.length; i++) {
 				_startGates[i].removeFromWorld();
+			}
+			// To ensure no marbles are stuck sleeping, all are awoken manually
+			for(let i = 0; i < _physicsMarbles.length; i++) {
+				_physicsMarbles[i].ammoBody.activate();
 			}
 		},
 
@@ -374,6 +395,37 @@ module.exports = function() {
 
 		setGravity(force) {
 			physicsWorld.setGravity( new physics.ammo.btVector3( 0, -force, 0 ) ); // Downwards force by default
+		},
+
+		// Returns the positions and angular velocities of all marbles in the physics world
+		getMarbleTransforms() {
+			if(_physicsMarbles.length === 0) return null;
+
+			let transform = new physics.ammo.btTransform();
+			let _pos = new Float32Array(_physicsMarbles.length * 3);
+			let _rot = new Float32Array(_physicsMarbles.length * 3);
+
+			for (let i = 0; i < _physicsMarbles.length; i++) {
+				let ms = _physicsMarbles[i].ammoBody.getMotionState();
+				if (ms) {
+					ms.getWorldTransform( transform );
+					let p = transform.getOrigin();
+					let r = _physicsMarbles[i].ammoBody.getAngularVelocity();
+
+					_pos[i * 3 + 0] = p.x();
+					_pos[i * 3 + 1] = p.y();
+					_pos[i * 3 + 2] = p.z();
+
+					_rot[i * 3 + 0] = r.x();
+					_rot[i * 3 + 1] = r.y();
+					_rot[i * 3 + 2] = r.z();
+				}
+			}
+
+			return {
+				position: _pos,
+				rotation: _rot
+			};
 		}
 	};
 }();
