@@ -3,6 +3,5 @@
         "node": false,
         "browser": true,
         "commonjs": true
-    },
-    "parser": "babel-eslint"
+    }
 }

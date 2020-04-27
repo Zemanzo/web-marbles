@@ -1,3 +1,5 @@
+const sharedConfig = require("./webpack.shared.config");
+
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
@@ -17,7 +19,7 @@ module.exports = {
 	output: {
 		filename: "[name].js",
 		chunkFilename: "[name].bundle.js",
-		path: path.resolve(__dirname, "public/dist"),
+		path: path.resolve(__dirname, "../public/dist"),
 		publicPath: "dist/"
 	},
 	optimization: {
@@ -30,7 +32,8 @@ module.exports = {
 			{
 				test: /\.worker\.js$/,
 				use: { loader: "worker-loader" }
-			}
+			},
+			...sharedConfig.module // Add default module, used for transpiling React JSX
 		]
 	},
 	plugins: [
