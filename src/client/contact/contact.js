@@ -1,14 +1,12 @@
 import domReady from "../dom-ready";
-import * as config from "../config";
+
+import React from "react";
+import ReactDOM from "react-dom";
+import RootComponent from "./RootComponent";
 
 domReady.then(() => {
-	document.getElementById("reveal").addEventListener("click", function() {
-		let email;
-
-		email = typeof config.contact.decode === "function"
-			? config.contact.decode(config.contact.email)
-			: config.contact.email;
-
-		this.innerHTML = `<a href="mailto:${email}">${email}</a>`;
-	}, false);
+	ReactDOM.hydrate(
+		<RootComponent />,
+		document.getElementById("root")
+	);
 });

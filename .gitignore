@@ -39,8 +39,8 @@ jspm_packages/
 # dotenv environment variables file
 .env
 
-# Process pictures
-process
+# For stuff that's nice to keep in the same folder but not in git (like process pictures / map files etc.)
+.ignore/
 
 # User config files (contains sensitive information / should not be committed)
 config.user.js
@@ -49,7 +49,8 @@ config.user.js
 *.db3
 
 # Webpack
-public/dist/
+dist/
 
 # VSCode
-.vscode/
+.vscode/*
+!.vscode/*.example.*

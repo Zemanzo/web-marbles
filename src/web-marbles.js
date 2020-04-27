@@ -151,9 +151,9 @@ app.get("/privacy", function(req, res) {
 	res.render("privacy", { rootUrl: config.network.rootUrl });
 });
 
-app.get("/contact", function(req, res) {
-	res.render("contact", { rootUrl: config.network.rootUrl });
-});
+import Page from "./server/router/Page";
+import RootComponent from "./client/contact/RootComponent";
+new Page(app, { id: "contact", label: "Contact", isSimplePage: true }, RootComponent);
 
 app.use(function(req, res) {
 	res.status(404)
