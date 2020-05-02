@@ -56,6 +56,10 @@ config.marbles.scoring.pointsAwardedForFinishing = 0;
 // G = 2.0; 1 / G = 0.500 = 50.0% of all entrants will receive more than one point for finishing.
 config.marbles.scoring.pointScale = 1.5;
 
+// Level rotation settings
+config.marbles.levels = {};
+config.marbles.levels.defaultLevel = ""; // First level to load when the server starts.
+
 /* Database */
 config.database = {};
 config.database.path = "web-marbles.db3";
@@ -99,7 +103,6 @@ config.discord.permissions.DEVELOPER_COMMANDS = ["USE CONFIG.USER.JS OVERRIDE"];
 
 /* Physics */
 config.physics = {};
-config.physics.gravity = -10;
 config.physics.steps = 120; // Amount of physics steps to calculate per second.
 
 /* Express */

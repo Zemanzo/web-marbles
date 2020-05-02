@@ -11,18 +11,13 @@ console.log(` ${(new Date()).toLocaleString("nl").cyan}`);
 const db = require("./server/database/manager");
 db.setCurrentDatabase(config.database.path);
 
-// Fetch levels & build primary level
+// Fetch and validate levels
 const levelManager = require("./server/levels/manager");
-levelManager.initialize();
+let levelManagerReady = levelManager.retrieveLevels();
 
 // Prepare marble skins
 const skins = require("./server/skins");
-skins.updateIdList();
-
-// Set up physics world
-const physics = require("./physics/manager");
-physics.world.setTickRate(config.physics.steps);
-physics.world.setGravity(config.physics.gravity);
+let skinsReady = skins.updateIdList();
 
 // Set up game logic
 const game = require("./server/game");
@@ -62,11 +57,10 @@ app.get("/", function(req, res) {
 });
 
 // Git commit hash, optional dependency
-let git, gitHash, gitBranch;
+let gitHash;
 try {
-	git = require("git-rev-sync");
+	let git = require("git-rev-sync");
 	gitHash = git.long();
-	gitBranch = git.branch();
 } catch (error) {
 	log.warn("git-rev-sync is not installed, no git information will be displayed");
 }
@@ -75,7 +69,6 @@ const version = require("../package.json").version;
 app.get("/client", function(req, res) {
 	res.render("client", {
 		gitHash,
-		gitBranch,
 		version,
 		discordEnabled: config.discord.enabled,
 		invitelink: config.discord.inviteLink,
@@ -174,7 +167,7 @@ let server = http.listen(config.express.port, function() {
 });
 
 // Start the game loop
-Promise.all([skins.readyPromise, levelManager.currentLevelData])
+Promise.all([skinsReady, levelManagerReady])
 	.then(() => {
 		game.initialize();
 	})
@@ -218,10 +211,6 @@ function shutdown() {
 		// Database
 		db.close();
 		log.warn("DATABASE connection closed");
-
-		// Stopped physics simulation
-		physics.world.stopUpdateInterval();
-		log.warn("PHYSICS stopped");
 
 		// µWebSockets
 		require("./server/network/sockets-helper").stopListening();

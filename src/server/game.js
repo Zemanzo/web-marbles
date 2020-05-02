@@ -1,77 +1,25 @@
 const log = require("../log");
 const config = require("./config");
 const socketsHelper = require("./network/sockets-helper");
-const physics = require("../physics/manager");
+const physicsWorld = require("../physics/world");
 const levelManager = require("./levels/manager");
 const db = require("./database/manager");
 const gameConstants = require("../game-constants");
-const permissions = require("./chat/permissions");
-const skins = require("./skins");
 const msgPack = require("msgpack-lite");
-
-const anyColorAllowed = ["abstract", "marble", "default", "swirly", "squares"]; // Will (probably) be changed to a meta file later on, next to the skin file?
-
-function Marble(id, entryId, name, attributes = {}) {
-	this.userId = id;
-	this.entryId = entryId;
-
-	// Check for premium permissions
-	if (
-		config.discord.enabled
-		&& skins.skinList[attributes.skinId]
-		&& skins.skinList[attributes.skinId].premium
-	) {
-		if (permissions.memberHasPermission(id, "PREMIUM_SKINS")) {
-			this.skinId = attributes.skinId;
-		} else {
-			this.skinId = "default";
-		}
-	} else {
-		this.skinId = attributes.skinId || "default";
-	}
-
-	// Check if skin supports a custom color
-	if (typeof attributes.color !== "undefined" && anyColorAllowed.includes(this.skinId)) {
-		this.color = attributes.color;
-	} else if (!anyColorAllowed.includes(this.skinId)) {
-		this.color = "#ffffff";
-	} else {
-		this.color = _randomHexColor();
-	}
-
-	this.name = name || "Nightbot";
-	this.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
-	this.ammoBody = null;
-	this.finished = false;
-	this.rank = null;
-	this.time = null;
-
-	physics.world.createMarble(this);
-}
-
-Marble.prototype.onMarbleFinish = function() {
-	if(this.finished === false) {
-		game.marbleFinished(this);
-		this.finished = true;
-	}
-};
-
-Marble.prototype.destroyMarble = function() {
-	if(this.ammoBody) {
-		physics.world.destroyMarble(this);
-		this.ammoBody = null;
-	}
-};
+const Marble = require("./marble");
 
 
 let game = function() {
+	let _currentGameState = gameConstants.STATE_WAITING;
+	let _marbleLimitReached = false;
+	let _gameStateTimeout = null; // Main setTimeout handle for when one game state should switch to another
+
+	let _enterPeriodStart = null; // Timestamp for when the enter period started, used to calculate remaining time
 	let _startDelay = 2825, // length in ms of audio
 
 		_marbles = [],
 		_playersEnteredList = [],
 		_marblesFinished = 0,
-		_isWaitingForEntry = true,
-		_firstMarbleHasFinished = false,
 
 		_currentLevel = null,
 
@@ -88,14 +36,6 @@ let game = function() {
 	};
 	let _netGameUpdate = {};
 	let _netGameStatePayload = null;
-
-	levelManager.currentLevelData.then((level) => {
-		_currentLevel = level;
-	});
-
-	levelManager.currentLevelName.then((name) => {
-		_netGameUpdate.l = name;
-	});
 
 	let _generateNewRoundData = function() {
 		return {
@@ -144,12 +84,12 @@ let game = function() {
 		if(_netGameUpdate.g === gameConstants.STATE_ENTER) {
 			_netGameUpdate.c = game.getEnterPeriodTimeRemaining();
 		} else if(_netGameUpdate.g === gameConstants.STATE_STARTED) {
-			_netGameUpdate.c = now - game.startTime;
+			_netGameUpdate.c = now - _round.start;
 		}
 
 		if(_marbles.length > 0) {
 			// Get marble positions/rotations
-			let marbleData = game.getMarbleTransformations();
+			let marbleData = physicsWorld.getMarbleTransforms();
 			_netGameUpdate.p = marbleData.position;
 			_netGameUpdate.r = marbleData.rotation;
 
@@ -171,22 +111,13 @@ let game = function() {
 		// gameState
 		if(_netGameUpdate.g !== undefined) {
 			_netGameState.g = _netGameUpdate.g;
-
-			// Remove all marbles if the state changed to finished
-			if(_netGameUpdate.g === gameConstants.STATE_FINISHED) {
-				delete _netGameState.n;
-				delete _netGameState.f; // Clients that join after a race don't have access to marble data
-				delete _netGameState.p;
-				delete _netGameState.r;
-				delete _netGameUpdate.t; // Timestamp no longer necessary, and won't be copied over
-			}
 		}
 
 		// currentGameTime
 		if(_netGameState.g === gameConstants.STATE_ENTER) {
 			_netGameState.c = game.getEnterPeriodTimeRemaining();
 		} else if(_netGameState.g === gameConstants.STATE_STARTED) {
-			_netGameState.c = now - game.startTime;
+			_netGameState.c = now - _round.start;
 		} else {
 			delete _netGameState.c;
 		}
@@ -255,13 +186,216 @@ let game = function() {
 		return _netGameStatePayload;
 	};
 
+	// Sets currentGameState and informs all connected clients about the state change
+	let _setCurrentGameState = function(newState) {
+		_currentGameState = newState;
+		_netGameUpdate.g = newState;
+		_triggerNetworkUpdate();
+		clearTimeout(_gameStateTimeout); // Always clear any remaining timeouts if we switch states
+
+		let stateName;
+		switch(newState) {
+		case gameConstants.STATE_LOADING:
+			stateName = "STATE_LOADING";
+			_onStateLoading();
+			break;
+		case gameConstants.STATE_WAITING:
+			stateName = "STATE_WAITING";
+			_onStateWaiting();
+			break;
+		case gameConstants.STATE_ENTER:
+			stateName = "STATE_ENTER";
+			_onStateEnter();
+			break;
+		case gameConstants.STATE_STARTING:
+			stateName = "STATE_STARTING";
+			_onStateStarting();
+			break;
+		case gameConstants.STATE_STARTED:
+			stateName = "STATE_STARTED";
+			_onStateStarted();
+			break;
+		case gameConstants.STATE_FINISHED:
+			stateName = "STATE_FINISHED";
+			_onStateFinished();
+			break;
+		default:
+			stateName = "Unknown";
+		}
+
+		// Print the state change only once (e.g. aborted races technically "finish" and go to the waiting state right away)
+		if(newState === _currentGameState)
+			log.info("Current state: ".magenta, stateName);
+	};
+
+	let _onStateLoading = function() {
+		_round = null;
+	};
+
+	let _onStateWaiting = function() {
+		// Create new round data
+		_round = _generateNewRoundData();
+	};
+
+	let _onStateEnter = function() {
+		_enterPeriodStart = Date.now();
+		// Start the game after the entering period is over
+		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_STARTING); }, config.marbles.rules.enterPeriod * 1000);
+	};
+
+	let _onStateStarting = function() {
+		// Wait for the countdown audio to end
+		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_STARTED); }, _startDelay);
+	};
+
+	let _onStateStarted = function() {
+		_round.start = Date.now();
+
+		physicsWorld.openGates();
+
+		// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
+		_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_FINISHED); }, _currentLevel.gameplay.roundLength * 1000);
+	};
+
+	let _onStateFinished = function() {
+		// Set the last few round parameters and store it in the database
+		// If _round is null, the results are discarded and the race is considered aborted
+		if (_round) {
+			_round.end = Date.now();
+			_round.playersEntered = _playersEnteredList.length;
+			_round.playersFinished = _playersEnteredList.filter(playerEntry => playerEntry.finished).length;
+			_round.playersNotFinished = _round.playersEntered - _round.playersFinished;
+			_round.marblesEntered = _marbles.length;
+			_round.marblesNotFinished = _round.marblesEntered - _round.marblesFinished;
+
+			db.round.insertNewRound(_round);
+			db.user.batchUpdateStatistics(_playersEnteredList);
+
+			// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
+			let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentLevel.getLevelId());
+
+			// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
+			let pointTotals = db.user.batchGetPoints(_playersEnteredList);
+
+			if(_playersEnteredList.length > 0 && _netGameUpdate.c === undefined)
+				_netGameUpdate.c = [];
+
+			// Points earned in this round
+			for (let player of _playersEnteredList) {
+				let pointTotal = 0;
+				for (let user of pointTotals) {
+					if(user.id === player.id) {
+						pointTotal = user.stat_points_earned;
+					}
+				}
+				let record = gameConstants.RECORD_NONE;
+				if (personalBestIds.includes(player.id)) {
+					record = gameConstants.RECORD_PB;
+				}
+				_netGameUpdate.c.push(player.id, player.pointsEarned, pointTotal, record);
+			}
+		}
+
+		// Finishing variables back to default
+		_marblesFinished = 0;
+
+		// Close the gates and stop simulating
+		physicsWorld.closeGates();
+		physicsWorld.stopUpdateInterval();
+
+		// Remove all marbles
+		for (let i = _marbles.length - 1; i >= 0; --i) {
+			_marbles[i].destroyMarble();
+		}
+		_marbles = [];
+
+		// Clear the array of people that entered
+		_playersEnteredList = [];
+
+		// If we hit the marble limit on the previous round, that's no longer true
+		_marbleLimitReached = false;
+		_enterPeriodStart = null;
+
+		// Remove all marble data in the network game state
+		delete _netGameState.n;
+		delete _netGameState.f; // Clients that join after a race don't have access to marble data
+		delete _netGameState.p;
+		delete _netGameState.r;
+		delete _netGameUpdate.t; // Timestamp no longer necessary, and won't be copied over
+
+		// Wait a bit until starting the next round, so the client can view leaderboards n stuff
+		if(_round) {
+			_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_WAITING); }, config.marbles.rules.finishPeriod * 1000);
+		} else {
+			_setCurrentGameState(gameConstants.STATE_WAITING); // Immediately go back to waiting state if this round was aborted
+		}
+	};
+
+	let _onMarbleFinished = function(entryId) {
+		let marble = _marbles[entryId];
+		if(marble.finished) return;
+
+		let finishTime = Date.now();
+		// Set their rank and final time
+		marble.rank = _marblesFinished++;
+		marble.time = finishTime - _round.start;
+		marble.finished = true;
+
+		// Get playerEntry that belongs to this marble
+		let playerEntry = _playersEnteredList.find((playerEntry) => {
+			return marble.userId === playerEntry.id;
+		});
+
+		if (playerEntry) {
+			// Mark them as finished
+			playerEntry.finished = true;
+			playerEntry.marblesFinished++;
+
+			// Add their time to the entry (so it can be stored in the case of a PB)
+			playerEntry.time = marble.time;
+
+			// Award points based on rank
+			let points = _awardPoints(marble.rank);
+			playerEntry.pointsEarned += points;
+
+			// Also add them to the round total
+			_round.pointsAwarded += points;
+		}
+
+		// Increment the amount of marbles that finished this round
+		_round.marblesFinished++;
+
+		// Add entry for network update
+		if(!_netGameUpdate.f) _netGameUpdate.f = [];
+		_netGameUpdate.f.push(marble.entryId, marble.time);
+
+		// If this is the first marble that finished, set a timeout to end the game soon
+		if (_marblesFinished === 1) {
+			// Set round time
+			_round.timeBest = marble.time;
+
+			// Update the current finish timeout
+			clearTimeout(_gameStateTimeout);
+			_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, config.marbles.rules.timeUntilDnf * 1000);
+		}
+
+		// If all marbles have finished, end the game
+		if (_marblesFinished === _marbles.length) {
+			clearTimeout(_gameStateTimeout);
+			_gameStateTimeout = setTimeout(() => {_setCurrentGameState(gameConstants.STATE_FINISHED);}, 2000);
+		}
+	};
+
+
 	return {
-		currentGameState: gameConstants.STATE_STARTED,
-		startTime: null,
-		limitReached: false,
-		enterTimeout: null,
 
 		initialize() {
+			// Physics initialisation
+			physicsWorld.setTickRate(config.physics.steps);
+			physicsWorld.eventEmitter.on("marbleFinished", (entryId) => {
+				_onMarbleFinished(entryId);
+			});
+
 			// Socket initialisation
 			_gameplaySocket = new socketsHelper.Socket("/gameplay", {
 				compression: 0,
@@ -274,8 +408,16 @@ let game = function() {
 				ws.send(_getInitialDataPayload(), true);
 			});
 
-			// Start the game loop. Still needs refactoring
-			this.end(false);
+			if(levelManager.availableLevels.length > 0) {
+				if(levelManager.availableLevels.includes(config.marbles.levels.defaultLevel)) {
+					this.changeLevel(config.marbles.levels.defaultLevel);
+				} else {
+					log.info("No default level set or found. The first available level will be loaded instead.");
+					this.changeLevel(levelManager.availableLevels[0]);
+				}
+			} else {
+				throw new Error("Game is unable to start: No levels available to load!");
+			}
 		},
 
 		stop() {
@@ -291,56 +433,26 @@ let game = function() {
 			this.end(false);
 
 			// Clear remaining timeouts
-			// This isn't even all timers but that's for another day in this jolly refactor land
-			clearTimeout(this.gameplayMaxTimeout);
-			clearTimeout(this.gameplayFinishTimeout);
-			clearTimeout(this.finishedTimeout);
-			clearTimeout(this.enterTimeout);
+			clearTimeout(_gameStateTimeout);
 			clearTimeout(_netUpdateHandle);
 
 			log.warn("Game loop stopped");
-		},
 
-		// Sets currentGameState and informs all connected clients about the state change
-		setCurrentGameState(newState) {
-			this.currentGameState = newState;
-			_netGameUpdate.g = newState;
-			_triggerNetworkUpdate();
-
-			let stateName;
-			switch(newState) {
-			case gameConstants.STATE_WAITING:
-				stateName = "STATE_WAITING";
-				break;
-			case gameConstants.STATE_ENTER:
-				stateName = "STATE_ENTER";
-				break;
-			case gameConstants.STATE_STARTING:
-				stateName = "STATE_STARTING";
-				break;
-			case gameConstants.STATE_STARTED:
-				stateName = "STATE_STARTED";
-				break;
-			case gameConstants.STATE_FINISHED:
-				stateName = "STATE_FINISHED";
-				break;
-			default:
-				stateName = "Unknown";
-			}
-			log.info("Current state: ".magenta, stateName);
+			physicsWorld.stopUpdateInterval();
+			log.warn("PHYSICS stopped");
 		},
 
 		// Enters the player into the race if allowed
 		addPlayerEntry(id, name, attributes) {
 			if (
 				// Only allow marbles during entering phase
-				( this.currentGameState === gameConstants.STATE_WAITING || this.currentGameState === gameConstants.STATE_ENTER )
+				( _currentGameState === gameConstants.STATE_WAITING || _currentGameState === gameConstants.STATE_ENTER )
 
 				// Make sure this person hasn't entered in this round yet
 				&& typeof _playersEnteredList.find(playerEntry => id === playerEntry.id) === "undefined"
 
 				// Check whether we have reached the maximum player limit
-				&& _playersEnteredList.length < config.marbles.rules.maxPlayerCount
+				&& !_marbleLimitReached
 			) {
 				// Add the player to the list of entries and award a single point for entering
 				_playersEnteredList.push({
@@ -357,30 +469,20 @@ let game = function() {
 				this.spawnMarble(id, name, attributes);
 
 				// Wait for a human entering the round before starting it
-				if (_isWaitingForEntry) {
-					_isWaitingForEntry = false;
-					this.setCurrentGameState(gameConstants.STATE_ENTER);
-
-					// Start the game after the entering period is over
-					clearTimeout(this.enterTimeout);
-					this.enterTimeout = _setTrackableTimeout(
-						this.start.bind(this),
-						config.marbles.rules.enterPeriod * 1000
-					);
-				}
+				if(_currentGameState === gameConstants.STATE_WAITING)
+					_setCurrentGameState(gameConstants.STATE_ENTER);
 			}
 		},
 
 		// Spawns marble unless the maximum amount of marbles has been hit
 		spawnMarble(id, name, attributes) {
-			if (
-				// Check whether the game state disallows new marbles
-				this.currentGameState === gameConstants.STATE_FINISHED
-				// Check whether we have reached the maximum marble limit
-				|| _marbles.length >= config.marbles.rules.maxMarbleCount) return;
+			if (_currentGameState === gameConstants.STATE_FINISHED || _currentGameState === gameConstants.STATE_LOADING || _marbleLimitReached)
+				return;
 
 			// Start physics simulation if this is the first marble
-			if(_marbles.length === 0) physics.world.startUpdateInterval();
+			if(_marbles.length === 0) {
+				physicsWorld.startUpdateInterval();
+			}
 
 			let newMarble = new Marble(id, _marbles.length, name, attributes);
 			_marbles.push(newMarble);
@@ -396,256 +498,76 @@ let game = function() {
 					_marbles.length >= config.marbles.rules.maxMarbleCount
 					|| _playersEnteredList.length >= config.marbles.rules.maxPlayerCount
 				)
-				&& !this.limitReached
+				&& !_marbleLimitReached
 			) {
-				this.limitReached = true;
+				_marbleLimitReached = true;
 				_gameplaySocket.emit(JSON.stringify({
 					content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
 					classNames: "red exclamation"
 				}));
-				this.start();
-				log.info(`We reached the marble limit! (${config.marbles.rules.maxMarbleCount})`);
+				log.info(`We reached the marble limit! (${_playersEnteredList.length}/${config.marbles.rules.maxPlayerCount} players, ${_marbles.length}/${config.marbles.rules.maxMarbleCount} marbles)`);
+				_setCurrentGameState(gameConstants.STATE_STARTING);
 			}
 		},
 
+		// Interrupts the race/pre-race, or ends the race early
 		end(saveRoundResults = true) {
-			if (this.currentGameState === gameConstants.STATE_STARTED) {
-				// Set the last few round parameters and store it in the database
-				if (_round && saveRoundResults) {
-					_round.end = Date.now();
-					_round.playersEntered = _playersEnteredList.length;
-					_round.playersFinished = _playersEnteredList.filter(playerEntry => playerEntry.finished).length;
-					_round.playersNotFinished = _round.playersEntered - _round.playersFinished;
-					_round.marblesEntered = _marbles.length;
-					_round.marblesNotFinished = _round.marblesEntered - _round.marblesFinished;
-
-					db.round.insertNewRound(_round);
-
-					db.user.batchUpdateStatistics(_playersEnteredList);
-
-					// Update personal bests where applicable. Returns array with all IDs that got a PB this round.
-					let personalBestIds = db.personalBest.batchInsertOrUpdatePersonalBest(_playersEnteredList, _currentLevel.getLevelId());
-
-					// Get points of all users that participated in this race. Returns array with objects: { stat_points_earned: <POINTS>, id: <USERID> }
-					let pointTotals = db.user.batchGetPoints(_playersEnteredList);
-
-					if(_playersEnteredList.length > 0 && _netGameUpdate.c === undefined) _netGameUpdate.c = [];
-
-					// Points earned in this round
-					for (let player of _playersEnteredList) {
-						let pointTotal = 0;
-						for (let user of pointTotals) {
-							if(user.id === player.id) {
-								pointTotal = user.stat_points_earned;
-							}
-						}
-						let record = gameConstants.RECORD_NONE;
-						if (personalBestIds.includes(player.id)) {
-							record = gameConstants.RECORD_PB;
-						}
-						_netGameUpdate.c.push(player.id, player.pointsEarned, pointTotal, record);
-					}
-				}
-
-				if (saveRoundResults === true) {
-					this.setCurrentGameState(gameConstants.STATE_FINISHED);
-				}
-
-				// Clear any remaining timeouts
-				clearTimeout(this.gameplayMaxTimeout);
-				clearTimeout(this.gameplayFinishTimeout);
-
-				// Finishing variables back to default
-				_marblesFinished = 0;
-				_firstMarbleHasFinished = false;
-				this.startTime = undefined;
-
-				// Close the gates and stop simulating
-				physics.world.closeGates();
-				physics.world.stopUpdateInterval();
-
-				// Remove all marbles
-				for (let i = _marbles.length - 1; i >= 0; --i) {
-					_marbles[i].destroyMarble();
-				}
-				_marbles = [];
-
-				// Clear the array of people that entered
-				_playersEnteredList = [];
-
-				// If we had hit the marble limit on the previous round, that's no longer true
-				this.limitReached = false;
-
-				// Wait a bit until starting the next round, so the client can view leaderboards n stuff
-				this.finishedTimeout = _setTrackableTimeout(
-					() => {
-						// Create new round data
-						_round = _generateNewRoundData();
-
-						// Wait for a human to start the next round
-						_isWaitingForEntry = true;
-
-						// Set state and inform the client
-						this.setCurrentGameState(gameConstants.STATE_WAITING);
-					},
-					saveRoundResults ? config.marbles.rules.finishPeriod * 1000 : 0
-				);
-
-				return true;
-			} else {
-				return false;
+			if(!saveRoundResults || _currentGameState !== gameConstants.STATE_STARTED) {
+				_round = null;
+				log.info("Race has been aborted!");
 			}
+
+			_setCurrentGameState(gameConstants.STATE_FINISHED);
 		},
 
+		// Manually starts the race when in a valid state
 		start() {
-			if (this.currentGameState === gameConstants.STATE_ENTER || this.currentGameState === gameConstants.STATE_WAITING) {
-				this.setCurrentGameState(gameConstants.STATE_STARTING);
-
-				// Have the audio clip play on the client before actually starting the race
-				setTimeout(() => {
-					this.setCurrentGameState(gameConstants.STATE_STARTED);
-
-					_round.start = this.startTime = Date.now();
-
-					physics.world.openGates();
-					for(let i = 0; i < _marbles.length; i++) {
-						_marbles[i].ammoBody.activate();
-					}
-
-					// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
-					this.gameplayMaxTimeout = _setTrackableTimeout(
-						this.end.bind(this),
-						_currentLevel.gameplay.roundLength * 1000
-					);
-				}, _startDelay);
-
-				return true;
-			} else {
-				return false;
+			if (_currentGameState === gameConstants.STATE_ENTER || _currentGameState === gameConstants.STATE_WAITING) {
+				_setCurrentGameState(gameConstants.STATE_STARTING);
 			}
 		},
 
-		marbleFinished(marble) {
-			let finishTime = Date.now();
-			// Set their rank and final time
-			let rank = marble.rank = _marblesFinished++,
-				time = marble.time = finishTime - this.startTime;
+		// Loads a new level
+		changeLevel(levelName) {
+			if(_currentLevel && _currentLevel.levelName === levelName)
+				return;
 
-			// Get playerEntry that belongs to this marble
-			let playerEntry = _playersEnteredList.find((playerEntry) => {
-				return marble.userId === playerEntry.id;
+			// Only allowing level changing in the waiting state for now
+			if(_currentGameState !== gameConstants.STATE_WAITING) {
+				return;
+			}
+
+			if(!levelManager.availableLevels.includes(levelName)) {
+				log.warn(`Attempted to change level to "${levelName}", but no such level is available.`);
+				return;
+			}
+
+			// Explicitly abort the race is there's marbles in this state (e.g. bots)
+			if(_marbles.length > 0)
+				this.end(false);
+
+			// Update clients on the change
+			_netGameUpdate.l = levelName;
+			_setCurrentGameState(gameConstants.STATE_LOADING);
+
+			levelManager.loadLevel(levelName).then( (levelData) => {
+				_currentLevel = levelData;
+				if(!levelData) {
+					// Well this is awkward
+					// This really shouldn't happen if all levels were validated earlier, so we're probably in booboo town already
+					throw new Error(`Game.changeLevel: Failed to load level "${levelName}"`);
+				}
+				_setCurrentGameState(gameConstants.STATE_WAITING);
 			});
-
-			if (playerEntry) {
-				// Mark them as finished
-				playerEntry.finished = true;
-				playerEntry.marblesFinished++;
-
-				// Add their time to the entry (so it can be stored in the case of a PB)
-				playerEntry.time = time;
-
-				// Award points based on rank
-				let points = _awardPoints(rank);
-				playerEntry.pointsEarned += points;
-
-				// Also add them to the round total
-				_round.pointsAwarded += points;
-			}
-
-			// Increment the amount of marbles that finished this round
-			_round.marblesFinished++;
-
-			// Add entry for network update
-			if(!_netGameUpdate.f) _netGameUpdate.f = [];
-			_netGameUpdate.f.push(marble.entryId, time);
-
-			// If this is the first marble that finished, set a timeout to end the game soon
-			if (_firstMarbleHasFinished === false) {
-				_firstMarbleHasFinished = true;
-
-				// Set round time
-				_round.timeBest = time;
-
-				this.gameplayFinishTimeout = _setTrackableTimeout(
-					this.end.bind(this),
-					config.marbles.rules.timeUntilDnf * 1000
-				);
-			}
-
-			// If all marbles have finished, end the game
-			if (_marblesFinished === _marbles.length) {
-				setTimeout(this.end.bind(this), 2000);
-			}
 		},
 
 		getEnterPeriodTimeRemaining() {
-			return _getTimeout(this.enterTimeout) || config.marbles.rules.enterPeriod;
-		},
-
-		getMarbles() {
-			return _marbles;
-		},
-
-		getMarbleTransformations() {
-			if(_marbles.length === 0) return null;
-
-			let transform = new physics.ammo.btTransform();
-			let _pos = new Float32Array(_marbles.length * 3);
-			let _rot = new Float32Array(_marbles.length * 3);
-
-			for (let i = 0; i < _marbles.length; i++) {
-				let ms = _marbles[i].ammoBody.getMotionState();
-				if (ms) {
-					ms.getWorldTransform( transform );
-					let p = transform.getOrigin();
-					let r = _marbles[i].ammoBody.getAngularVelocity();
-
-					_pos[i * 3 + 0] = p.x();
-					_pos[i * 3 + 1] = p.y();
-					_pos[i * 3 + 2] = p.z();
-
-					_rot[i * 3 + 0] = r.x();
-					_rot[i * 3 + 1] = r.y();
-					_rot[i * 3 + 2] = r.z();
-				}
-			}
-
-			return {
-				position: _pos,
-				rotation: _rot
-			};
+			if(_enterPeriodStart === null)
+				return config.marbles.rules.enterPeriod;
+			else
+				return Math.max(config.marbles.rules.enterPeriod * 1000 + _enterPeriodStart - Date.now(), 0);
 		}
 	};
 }();
-
-// Based on https://stackoverflow.com/questions/3144711/find-the-time-left-in-a-settimeout/36389263#36389263
-let _timeoutMap = {};
-function _setTrackableTimeout(callback, delay) {
-	// Run the original, and store the id
-	let id = setTimeout(callback, delay);
-
-	// Store the start date and delay
-	_timeoutMap[id] = [Date.now(), delay];
-
-	// Return the id
-	return id;
-}
-
-// The actual getTimeLeft function
-function _getTimeout(id) {
-	let m = _timeoutMap[id]; // Find the timeout in map
-
-	// If there was no timeout with that id, return NaN, otherwise, return the time left clamped to 0
-	return m ? Math.max(m[1] + m[0] - Date.now(), 0) : NaN;
-}
-
-// Generates a random color in the HEX format
-function _randomHexColor() {
-	let color = (Math.random() * 0xffffff | 0).toString(16);
-	if (color.length !== 6) {
-		color = (`00000${color}`).slice(-6);
-	}
-	return `#${color}`;
-}
 
 module.exports = game;
