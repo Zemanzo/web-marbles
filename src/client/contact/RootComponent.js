@@ -1,4 +1,10 @@
 import React from "react";
+import ContentRevealer from "../../components/ContentRevealer";
+import config from "../config";
+
+const email = typeof config.contact.decode === "function"
+	? config.contact.decode(config.contact.email)
+	: config.contact.email;
 
 const RootComponent = () => (
 	<React.Fragment>
@@ -7,7 +13,7 @@ const RootComponent = () => (
 			<h2>Contact</h2>
 			<p>
 				You can contact us at the following email address:
-				<div id="reveal">Click here to reveal</div>
+				<ContentRevealer initialContent="Click here to reveal" newContent={email}/>
 			</p>
 		</section>
 	</React.Fragment>

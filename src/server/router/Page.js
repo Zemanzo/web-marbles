@@ -26,8 +26,8 @@ export default class Page {
 		<meta name="description" content="A game of racing marbles, and hoping that your marble wins.">
 		<meta name="keywords" content="marble,racing,game,multiplayer,free,open source">
 		<meta name="author" content="Zemanzo">
-		<meta property="og:title" content="Contact - Manzo's Marbles" />
-		<meta property="og:description" content="Contact information for inqueries regarding the game or website." />
+		<meta property="og:title" content="${this.details.label} - Manzo's Marbles" />
+		<meta property="og:description" content="${this.details.description}" />
 		<meta property="og:type" content="game:multiplayer" />
 		<meta property="og:image" content="${config.network.rootUrl}images/logo.png"> <!-- This is required to be an absolute path -->
 		<meta property="og:image:type" content="image/png">
@@ -47,9 +47,7 @@ export default class Page {
 	</head>
 	<body>
 		<div id="root">`;
-
 		const rootComponentStream = ReactDOMServer.renderToNodeStream(this.rootComponent);
-
 		const htmlEnd = `
 		</div>
 	</body>
