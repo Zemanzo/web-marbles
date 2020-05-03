@@ -159,8 +159,18 @@ app.get("/privacy", function(req, res) {
 });
 
 import Page from "./server/router/Page";
+import React from "react";
 import RootComponent from "./client/contact/RootComponent";
-new Page(app, { id: "contact", label: "Contact", isSimplePage: true }, RootComponent);
+new Page(
+	app,
+	{
+		id: "contact",
+		label: "Contact",
+		description: "Contact information for inqueries regarding the game or website.",
+		isSimplePage: true
+	},
+	<RootComponent/>
+);
 
 app.use(function(req, res) {
 	res.status(404)

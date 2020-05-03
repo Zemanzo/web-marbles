@@ -47,6 +47,8 @@
         "no-trailing-spaces":
             ["error"],
         "no-fallthrough":
+            "off",
+        "react/prop-types":
             "off"
     }
 }
