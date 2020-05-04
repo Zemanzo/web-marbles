@@ -1,5 +1,5 @@
 import React from "react";
-import ContentRevealer from "../../components/ContentRevealer";
+import ContentRevealer from "../../components/content-revealer";
 import config from "../config";
 
 const email = typeof config.contact.decode === "function"

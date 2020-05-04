@@ -151,9 +151,9 @@ app.get("/privacy", function(req, res) {
 	res.render("privacy", { rootUrl: config.network.rootUrl });
 });
 
-import Page from "./server/router/Page";
+import Page from "./server/router/page";
 import React from "react";
-import RootComponent from "./client/contact/RootComponent";
+import RootComponent from "./client/contact/root-component";
 new Page(
 	app,
 	{
