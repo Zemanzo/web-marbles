@@ -24,7 +24,21 @@ module.exports = {
 	},
 	optimization: {
 		minimize: isProduction,
-		minimizer: [new TerserPlugin()]
+		minimizer: [new TerserPlugin()],
+		splitChunks: {
+			cacheGroups: {
+				threeAndPako: {
+					test: /[\\/]node_modules[\\/](three|pako)[\\/]/,
+					name: "threeAndPako",
+					chunks: "all"
+				},
+				otherVendors: {
+					test: /[\\/]node_modules[\\/](?!three|pako).*[\\/]/,
+					name: "vendors",
+					chunks: "all"
+				}
+			}
+		}
 	},
 	devtool: "source-map",
 	module: {
