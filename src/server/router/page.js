@@ -43,13 +43,13 @@ export default class Page {
 		<link href="styles/${this.details.id}.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
+		<script src="dist/vendors.bundle.js"></script>
+		${this.details.usesThreeOrPako ? "<script src=\"dist/threeAndPako.bundle.js\"></script >" : ""}
 		<script src="dist/${this.details.id}.js"></script>
 	</head>
-	<body>
-		<div id="root">`;
+	<body>`;
 		const rootComponentStream = ReactDOMServer.renderToNodeStream(this.rootComponent);
 		const htmlEnd = `
-		</div>
 	</body>
 </html>`;
 
