@@ -389,6 +389,24 @@ module.exports = function(db, common) {
 			const params = "?,".repeat(idList.length).slice(0, -1);
 			const statement = db.prepare(`SELECT stat_points_earned, id FROM users WHERE id IN (${params})`);
 			return statement.all(idList);
+		},
+
+		_getTopAlltime: db.prepare(
+			`SELECT
+				username,
+				stat_points_earned
+			FROM
+				users
+			ORDER BY
+				stat_points_earned DESC
+			LIMIT ?`
+		),
+
+		getTopAlltime(limit) {
+			return this._getTopAlltime.all(limit).map((entry, index) => {
+				entry.rank = index + 1;
+				return entry;
+			});
 		}
 	};
 };

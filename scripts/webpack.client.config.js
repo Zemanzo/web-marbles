@@ -14,6 +14,7 @@ module.exports = {
 		chat: "./src/client/chat/chat.js",
 		discordApiRedirect: "./src/client/chat/discord-api-redirect.js",
 		contact: "./src/client/contact/contact.js",
+		leaderboards: "./src/client/leaderboards/leaderboards.js",
 		debug: "./src/client/client/debug.js"
 	},
 	output: {

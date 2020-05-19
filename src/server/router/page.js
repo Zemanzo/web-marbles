@@ -1,11 +1,19 @@
 import config from "../config";
+import React from "react";
 import ReactDOMServer from "react-dom/server";
+import headerProps from "./componentProps/header";
 
 export default class Page {
-	constructor(app, details, rootComponent) {
+	constructor(app, details, rootComponent, props = {}) {
 		this.details = details;
 		this.rootComponent = rootComponent;
 
+		// Add default props
+		this.props = props;
+		this.props.serverSideProps = this.props.serverSideProps || {};
+		this.props.serverSideProps.header = headerProps;
+
+		// Set up route in express
 		app.get(`/${details.id}`, (req, res) => {
 			this._renderPage(req, res);
 		});
@@ -14,6 +22,9 @@ export default class Page {
 	_renderPage(req, res) {
 		res.setHeader("Content-Type", "text/html; charset=utf-8");
 		res.setHeader("Transfer-Encoding", "chunked");
+
+		// Get latest props
+		this.props.serverSideProps = this._deepRunObjectFunctions(this.props.serverSideProps);
 
 		// Create stream data
 		const htmlStart = `
@@ -38,6 +49,7 @@ export default class Page {
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 		<!-- Stylesheets -->
+		${this.details.useIcons ? "<link href=\"fontello/css/fontello.css\" rel=\"stylesheet\">" : ""}
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
 		${this.details.isSimplePage ? "<link href=\"styles/simple-page.css\" rel=\"stylesheet\" type=\"text/css\">" : ""}
 		<link href="styles/${this.details.id}.css" rel="stylesheet" type="text/css">
@@ -46,9 +58,14 @@ export default class Page {
 		<script src="dist/vendors.bundle.js"></script>
 		${this.details.usesThreeOrPako ? "<script src=\"dist/threeAndPako.bundle.js\"></script >" : ""}
 		<script src="dist/${this.details.id}.js"></script>
+		${this.props.serverSideProps ? `<script>
+			window.__INITIAL_STATE__ = ${JSON.stringify(this.props.serverSideProps)};
+		</script>` : ""}
+
 	</head>
 	<body>`;
-		const rootComponentStream = ReactDOMServer.renderToNodeStream(this.rootComponent);
+		const RootComponent = this.rootComponent;
+		const rootComponentStream = ReactDOMServer.renderToNodeStream(<RootComponent {...this.props}/>);
 		const htmlEnd = `
 	</body>
 </html>`;
@@ -60,5 +77,31 @@ export default class Page {
 			res.write(htmlEnd);
 			res.end();
 		});
+	}
+
+	/**
+	 * Runs all functions in an object, and saves the result in the original key.
+	 * @param {Object} obj
+	 */
+	_deepRunObjectFunctions(obj) {
+		const newObj = {};
+		for (const key in obj) {
+			if (this._isObject(obj[key])) {
+				newObj[key] = this._deepRunObjectFunctions(obj[key]);
+			} else if (this._isFunction(obj[key])) {
+				newObj[key] = obj[key]();
+			} else {
+				newObj[key] = obj[key];
+			}
+		}
+		return newObj;
+	}
+
+	_isObject(a) {
+		return (!!a) && (a.constructor === Object);
+	}
+
+	_isFunction(x) {
+		return Object.prototype.toString.call(x) == "[object Function]";
 	}
 }

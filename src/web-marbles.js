@@ -159,8 +159,7 @@ app.get("/privacy", function(req, res) {
 });
 
 import Page from "./server/router/page";
-import React from "react";
-import RootComponent from "./client/contact/root-component";
+import ContactComponent from "./client/contact/root-component";
 new Page(
 	app,
 	{
@@ -169,7 +168,28 @@ new Page(
 		description: "Contact information for inqueries regarding the game or website.",
 		isSimplePage: true
 	},
-	<RootComponent/>
+	ContactComponent
+);
+
+import LeaderboardsComponent from "./client/leaderboards/root-component";
+const getLatestLeaderboard = function() {
+	return this.user.getTopAlltime(10);
+};
+new Page(
+	app,
+	{
+		id: "leaderboards",
+		label: "Leaderboards",
+		description: "An overview of the current rankings for web-marbles"
+	},
+	LeaderboardsComponent,
+	{
+		serverSideProps: {
+			leaderboards: {
+				alltime: getLatestLeaderboard.bind(db) // oofies
+			}
+		}
+	}
 );
 
 app.use(function(req, res) {
