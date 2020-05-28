@@ -173,7 +173,7 @@ new Page(
 
 import LeaderboardsComponent from "./client/leaderboards/root-component";
 const getLatestLeaderboard = function() {
-	return this.user.getTopAlltime(10);
+	return this.user.getTopAlltime(100);
 };
 new Page(
 	app,

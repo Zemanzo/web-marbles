@@ -4,7 +4,7 @@ const path = require("path");
 const nodeExternals = require("webpack-node-externals");
 
 module.exports = {
-	mode: "development",
+	mode: sharedConfig.mode,
 	target: "node",
 	node: {
 		__dirname: true
@@ -21,5 +21,6 @@ module.exports = {
 		path: path.resolve(__dirname, "../dist"),
 		filename: "[name]",
 		publicPath: path.resolve(__dirname, "../")
-	}
+	},
+	plugins: [...sharedConfig.plugins]
 };

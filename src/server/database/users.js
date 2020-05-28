@@ -394,7 +394,8 @@ module.exports = function(db, common) {
 		_getTopAlltime: db.prepare(
 			`SELECT
 				username,
-				stat_points_earned
+				stat_points_earned,
+				stat_rounds_entered
 			FROM
 				users
 			ORDER BY
