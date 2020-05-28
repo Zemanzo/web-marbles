@@ -63,10 +63,12 @@ export default class Page {
 		</script>` : ""}
 
 	</head>
-	<body>`;
+	<body>
+		<div id="root">`;
 		const RootComponent = this.rootComponent;
 		const rootComponentStream = ReactDOMServer.renderToNodeStream(<RootComponent {...this.props}/>);
 		const htmlEnd = `
+		</div>
 	</body>
 </html>`;
 
@@ -98,7 +100,7 @@ export default class Page {
 	}
 
 	_isObject(a) {
-		return (!!a) && (a.constructor === Object);
+		return !!a && a.constructor === Object;
 	}
 
 	_isFunction(x) {

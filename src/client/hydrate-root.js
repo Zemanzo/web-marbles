@@ -6,7 +6,7 @@ export default function(RootComponent) {
 	domReady.then(() => {
 		ReactDOM.hydrate(
 			<RootComponent />,
-			document.body
+			document.getElementById("root")
 		);
 	});
 }
