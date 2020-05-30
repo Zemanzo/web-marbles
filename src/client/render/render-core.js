@@ -3,7 +3,8 @@ import {
 	WebGLRenderer,
 	Mesh,
 	BoxBufferGeometry,
-	MeshStandardMaterial
+	MeshStandardMaterial,
+	Vector2
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import * as THREE_CONSTANTS from "three/src/constants.js";
@@ -48,6 +49,11 @@ let renderCore = function() {
 		_stats.end();
 	};
 
+	const _onMouseMove = function(event) {
+		renderCore.mouse.x = (event.offsetX / _viewport.clientWidth) * 2 - 1;
+		renderCore.mouse.y = - (event.offsetY / _viewport.clientHeight) * 2 + 1;
+	};
+
 	const _onCanvasResize = function() {
 		_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 
@@ -73,6 +79,7 @@ let renderCore = function() {
 		shaderUniforms: {
 			"time": { value: 0 }
 		},
+		mouse: new Vector2(),
 
 		// Camera layer definitions
 		SPRITE_LAYER: 1,
@@ -152,6 +159,7 @@ let renderCore = function() {
 
 					_onCanvasResize();
 
+					_viewport.addEventListener("mousemove", _onMouseMove, false);
 					window.addEventListener("resize", _onCanvasResize, false);
 					let _cameraFreeButton = document.getElementById("cameraFree"),
 						_cameraTrackingButton = document.getElementById("cameraTracking");

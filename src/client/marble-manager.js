@@ -4,7 +4,10 @@ import {
 	Mesh,
 	Texture,
 	Sprite,
-	SpriteMaterial
+	SpriteMaterial,
+	MeshBasicMaterial,
+	Raycaster,
+	BackSide as THREE_BACK_SIDE
 } from "three";
 import * as config from "./config";
 import { renderCore } from "./render/render-core";
@@ -13,8 +16,12 @@ import { userState } from "./user-state";
 
 // This module manages all the marbles that physically exist in the scene.
 let marbleManager = function() {
+	let _intersectedMarble = null;
+	const _raycaster = new Raycaster();
+
 	return {
 		marbles: [], // Array of marbles that currently exist in the scene
+		marbleMeshes: [], // Array of only the main mesh of all marbles in the scene
 		marbleGroup: null, // Group containing marble instances
 		marbleGeometry: null,
 
@@ -29,6 +36,7 @@ let marbleManager = function() {
 		spawnMarble: function(marbleData) {
 			let marbleMesh = new MarbleMesh(marbleData);
 			this.marbles.push(marbleMesh);
+			this.marbleMeshes.push(marbleMesh.mesh); // Only the main mesh reference, so we can use it to target for raycasting
 			this.marbleGroup.add(marbleMesh.marbleOrigin);
 			return marbleMesh.marbleOrigin;
 		},
@@ -37,6 +45,7 @@ let marbleManager = function() {
 			for(let i = 0; i < this.marbles.length; i++) {
 				if(this.marbles[i].entryId === entryId) {
 					this.marbleGroup.remove(this.marbles[i].marbleOrigin);
+					this.marbleMeshes.splice(i, 1);
 					this.marbles.splice(i, 1);
 					return;
 				}
@@ -47,7 +56,31 @@ let marbleManager = function() {
 			for (let marble of this.marbles) {
 				this.marbleGroup.remove(marble.marbleOrigin);
 			}
+			this.marbleMeshes = [];
 			this.marbles = [];
+		},
+
+		// Gets called in render update loop
+		raycastFromCamera: function() {
+			// Update raycaster position
+			_raycaster.setFromCamera(renderCore.mouse, renderCore.activeCamera.camera);
+
+			// Only check for intersects on marbles
+			let intersects = _raycaster.intersectObjects(this.marbleMeshes);
+			if (intersects.length > 0) {
+				// if the object is the same as last frame, do nothing
+				if (intersects[0].object !== _intersectedMarble) {
+					if (_intersectedMarble) {
+						_intersectedMarble.marbleMeshData.outlineMesh.visible = false;
+					}
+
+					_intersectedMarble = intersects[0].object;
+					_intersectedMarble.marbleMeshData.outlineMesh.visible = true;
+				}
+			} else if (_intersectedMarble) {
+				_intersectedMarble.marbleMeshData.outlineMesh.visible = false;
+				_intersectedMarble = null;
+			}
 		}
 	};
 }();
@@ -66,6 +99,8 @@ const MarbleMesh = function(marbleData) {
 	this.geometry = marbleManager.marbleGeometry;
 	this.material = marbleSkins.placeholderMaterial;
 	this.mesh = new Mesh(this.geometry, this.material);
+
+	// Load skin
 	marbleSkins.loadSkin(this.skinId, this.color)
 		.then((skinMaterial) => {
 			this.material = this.mesh.material = skinMaterial;
@@ -78,6 +113,9 @@ const MarbleMesh = function(marbleData) {
 
 	// Useful for debugging
 	this.mesh.name = `Marble (${marbleData.name})`;
+
+	// Add reference to this on mesh
+	this.mesh.marbleMeshData = this;
 
 	// Shadows
 	this.mesh.castShadow = config.graphics.castShadow.marbles;
@@ -94,6 +132,13 @@ const MarbleMesh = function(marbleData) {
 	this.nameSprite = makeTextSprite(this.name, nameSpriteOptions);
 	this.nameSprite.position.y = this.size - 0.1;
 	this.marbleOrigin.add(this.nameSprite);
+
+	// Add outline mesh that gets rendered when targeted
+	const outlineMaterial = new MeshBasicMaterial({ color: 0xba0069, side: THREE_BACK_SIDE });
+	this.outlineMesh = new Mesh(this.geometry, outlineMaterial);
+	this.outlineMesh.visible = false;
+	this.outlineMesh.scale.multiplyScalar(1.05);
+	this.mesh.add(this.outlineMesh);
 };
 
 const makeTextSprite = function(message, options = {}) {

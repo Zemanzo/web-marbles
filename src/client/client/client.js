@@ -15,6 +15,7 @@ game.initialize();
 function clientUpdate(deltaTime) {
 	levelManager.activeLevel.update(deltaTime);
 	networking.update(deltaTime);
+	marbleManager.raycastFromCamera();
 }
 
 renderCore.updateCallback = clientUpdate;
