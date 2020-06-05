@@ -350,7 +350,7 @@ let modelsTab = function() {
 					}
 
 					file.reader = new FileReader();
-					file.reader.onload = async function() {
+					file.reader.onload = function() {
 						// Attempt to load model and add it to the project
 						let projectData = projectTab.activeProject.addModel(file.name, file.reader.result);
 						modelsTab.loadModel(file.name, file.reader.result, projectData);
