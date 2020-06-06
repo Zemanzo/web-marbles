@@ -39,6 +39,10 @@ const Link = styled.a`
 		transition: margin-right 0.4s;
 	}
 
+	i {
+		font-size:1.5em;
+	}
+
 	span {
 		display: inline-block;
 		text-align: center;
@@ -55,8 +59,9 @@ const Link = styled.a`
 const Header = (props) => {
 	return (
 		<Link href={props.link} backgroundColor={props.backgroundColor}>
-			<img src={props.imageLink} alt={props.imageAlt} />
-			<span>{props.text}</span>
+			{props.imageLink && <img src={props.imageLink} alt={props.imageAlt} />}
+			{props.icon && <i className={props.icon}></i>}
+			<span>{props.children}</span>
 		</Link>
 	);
 };

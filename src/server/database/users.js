@@ -398,6 +398,8 @@ module.exports = function(db, common) {
 				stat_rounds_entered
 			FROM
 				users
+			WHERE
+				stat_points_earned > 0
 			ORDER BY
 				stat_points_earned DESC
 			LIMIT ?`

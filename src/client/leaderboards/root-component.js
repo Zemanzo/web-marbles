@@ -9,11 +9,12 @@ const LeaderboardRoot = styled.div`
 `;
 
 const RootComponent = (props) => {
+	// Cannot modify original props object, so we have to copy it to a new variable
+	// We store the server data in a specific prop, so we can check if it exists, or should use the initial state to hydrate.
 	const serverSideProps = props.serverSideProps || window.__INITIAL_STATE__;
-	console.log(serverSideProps);
 	return (
 		<React.Fragment>
-			<Header headerInfo={serverSideProps.header}/>
+			<Header header={serverSideProps.header}/>
 			<LeaderboardRoot>
 				{serverSideProps.leaderboards.weekly && <Leaderboard rankings={serverSideProps.leaderboards.weekly} header="Best this week"/>}
 				{serverSideProps.leaderboards.monthly && <Leaderboard rankings={serverSideProps.leaderboards.monthly} header="Best this month"/>}

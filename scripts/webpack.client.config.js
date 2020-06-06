@@ -3,7 +3,6 @@ const sharedConfig = require("./webpack.shared.config");
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
 const TerserPlugin = require("terser-webpack-plugin");
-const isProduction = sharedConfig.isProduction;
 
 module.exports = {
 	mode: sharedConfig.mode,
@@ -24,7 +23,7 @@ module.exports = {
 		publicPath: "dist/"
 	},
 	optimization: {
-		minimize: isProduction,
+		minimize: sharedConfig.isProduction,
 		minimizer: [new TerserPlugin()],
 		splitChunks: {
 			cacheGroups: {
@@ -57,9 +56,9 @@ module.exports = {
 			{
 				from: path.resolve(
 					__dirname,
-					"node_modules/three/examples/js/libs/draco/gltf"
+					"../node_modules/three/examples/js/libs/draco/gltf"
 				),
-				to: path.resolve(__dirname, "public/dist/libs/draco")
+				to: path.resolve(__dirname, "../public/dist/libs/draco")
 			}
 		])
 	]

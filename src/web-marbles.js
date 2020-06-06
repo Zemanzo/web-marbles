@@ -180,14 +180,13 @@ new Page(
 	{
 		id: "leaderboards",
 		label: "Leaderboards",
-		description: "An overview of the current rankings for web-marbles"
+		description: "An overview of the current rankings for web-marbles",
+		useIcons: true
 	},
 	LeaderboardsComponent,
 	{
-		serverSideProps: {
-			leaderboards: {
-				alltime: getLatestLeaderboard.bind(db) // oofies
-			}
+		leaderboards: {
+			alltime: getLatestLeaderboard.bind(db) // oofies
 		}
 	}
 );

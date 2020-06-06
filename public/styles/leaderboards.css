@@ -74,6 +74,7 @@ body {
 	text-align: center;
 	font-size: 1.2em;
 	text-decoration: none;
+	padding: 0 1em;
 }
 
 	#title:hover {
@@ -81,7 +82,7 @@ body {
 	}
 
 	#title img {
-		height: 75%;
+		height: calc(var(--header-height) - 16px);
 		margin-right: .5em;
 	}
 
@@ -111,23 +112,6 @@ body {
 		color: #666;
 		}
 
-	#externalLinks {
-		display: flex;
-	}
-
 	.leaderboard .entries {
 		flex: 1;
 	}
-
-
-	.leaderboard .leaderboardHeaders,
-	.leaderboard .entry {
-	}
-
-	.leaderboard .leaderboardHeaders > *:not(:last-child),
-	.leaderboard .entry >
-
-	.leaderboard .entry:nth-child(even) {
-		background-color: rgba(0,0,0,.1);
-	}
-
