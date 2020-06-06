@@ -5,29 +5,18 @@ import headerProps from "./componentProps/header";
 
 export default class Page {
 	constructor(app, details, rootComponent, props = {}) {
-		this.details = details;
 		this.rootComponent = rootComponent;
 
 		// Add default props
 		this.props = props;
-		this.props.serverSideProps = this.props.serverSideProps || {};
-		this.props.serverSideProps.header = headerProps;
+		this.props.header = headerProps;
 
 		// Set up route in express
 		app.get(`/${details.id}`, (req, res) => {
 			this._renderPage(req, res);
 		});
-	}
 
-	_renderPage(req, res) {
-		res.setHeader("Content-Type", "text/html; charset=utf-8");
-		res.setHeader("Transfer-Encoding", "chunked");
-
-		// Get latest props
-		this.props.serverSideProps = this._deepRunObjectFunctions(this.props.serverSideProps);
-
-		// Create stream data
-		const htmlStart = `
+		this.htmlStart = `
 <!DOCTYPE html>
 <html>
 	<head>
@@ -37,43 +26,50 @@ export default class Page {
 		<meta name="description" content="A game of racing marbles, and hoping that your marble wins.">
 		<meta name="keywords" content="marble,racing,game,multiplayer,free,open source">
 		<meta name="author" content="Zemanzo">
-		<meta property="og:title" content="${this.details.label} - Manzo's Marbles" />
-		<meta property="og:description" content="${this.details.description}" />
+		<meta property="og:title" content="${details.label} - Manzo's Marbles" />
+		<meta property="og:description" content="${details.description}" />
 		<meta property="og:type" content="game:multiplayer" />
 		<meta property="og:image" content="${config.network.rootUrl}images/logo.png"> <!-- This is required to be an absolute path -->
 		<meta property="og:image:type" content="image/png">
 		<meta property="og:image:width" content="192">
 		<meta property="og:image:height" content="192">
 		<meta property="og:image:alt" content="A stylized marble">
-		<title>${this.details.label} - Manzo's Marbles</title>
+		<title>${details.label} - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
 		<!-- Stylesheets -->
-		${this.details.useIcons ? "<link href=\"fontello/css/fontello.css\" rel=\"stylesheet\">" : ""}
+		${details.useIcons ? "<link href=\"fontello/css/fontello.css\" rel=\"stylesheet\">" : ""}
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
-		${this.details.isSimplePage ? "<link href=\"styles/simple-page.css\" rel=\"stylesheet\" type=\"text/css\">" : ""}
-		<link href="styles/${this.details.id}.css" rel="stylesheet" type="text/css">
+		${details.isSimplePage ? "<link href=\"styles/simple-page.css\" rel=\"stylesheet\" type=\"text/css\">" : ""}
+		<link href="styles/${details.id}.css" rel="stylesheet" type="text/css">
 
 		<!-- Scripts -->
 		<script src="dist/vendors.bundle.js"></script>
-		${this.details.usesThreeOrPako ? "<script src=\"dist/threeAndPako.bundle.js\"></script >" : ""}
-		<script src="dist/${this.details.id}.js"></script>
-		${this.props.serverSideProps ? `<script>
-			window.__INITIAL_STATE__ = ${JSON.stringify(this.props.serverSideProps)};
-		</script>` : ""}
-
+		${details.usesThreeOrPako ? "<script src=\"dist/threeAndPako.bundle.js\"></script >" : ""}
+		<script src="dist/${details.id}.js"></script>
 	</head>
 	<body>
 		<div id="root">`;
+	}
+
+	_renderPage(req, res) {
+		res.setHeader("Content-Type", "text/html; charset=utf-8");
+		res.setHeader("Transfer-Encoding", "chunked");
+
+		// Get latest props
+		const latestProps = this._deepRunObjectFunctions(this.props);
+
 		const RootComponent = this.rootComponent;
-		const rootComponentStream = ReactDOMServer.renderToNodeStream(<RootComponent {...this.props}/>);
-		const htmlEnd = `
-		</div>
+		const rootComponentStream = ReactDOMServer.renderToNodeStream(<RootComponent serverSideProps={latestProps}/>);
+		const htmlEnd = `</div>
+		${latestProps ? `<script>
+			window.__INITIAL_STATE__ = ${JSON.stringify(latestProps)};
+		</script>` : ""}
 	</body>
 </html>`;
 
 		// Create the stream
-		res.write(htmlStart);
+		res.write(this.htmlStart);
 		rootComponentStream.pipe(res, { end: false });
 		rootComponentStream.on("end", () => {
 			res.write(htmlEnd);
