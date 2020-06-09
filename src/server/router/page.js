@@ -1,11 +1,12 @@
 import config from "../config";
 import React from "react";
 import ReactDOMServer from "react-dom/server";
+import {ServerStyleSheet} from "styled-components";
 import headerProps from "./componentProps/header";
 
 export default class Page {
-	constructor(app, details, rootComponent, props = {}) {
-		this.rootComponent = rootComponent;
+	constructor(app, details, RootComponent, props = {}) {
+		this.RootComponent = RootComponent;
 
 		// Add default props
 		this.props = props;
@@ -37,13 +38,13 @@ export default class Page {
 		<title>${details.label} - Manzo's Marbles</title>
 		<link href="favicon.ico" rel="shortcut icon" type="image/x-icon">
 
-		<!-- Stylesheets -->
-		${details.useIcons ? "<link href=\"fontello/css/fontello.css\" rel=\"stylesheet\">" : ""}
+		<!-- Static stylesheets -->
+		<link href="fontello/css/fontello.css" rel="stylesheet">
 		<link href="styles/common.css" rel="stylesheet" type="text/css">
 		${details.isSimplePage ? "<link href=\"styles/simple-page.css\" rel=\"stylesheet\" type=\"text/css\">" : ""}
 		<link href="styles/${details.id}.css" rel="stylesheet" type="text/css">
 
-		<!-- Scripts -->
+		<!-- Static scripts -->
 		<script src="dist/vendors.bundle.js"></script>
 		${details.usesThreeOrPako ? "<script src=\"dist/threeAndPako.bundle.js\"></script >" : ""}
 		<script src="dist/${details.id}.js"></script>
@@ -58,20 +59,24 @@ export default class Page {
 
 		// Get latest props
 		const latestProps = this._deepRunObjectFunctions(this.props);
+		const rootCompontentJsx = <this.RootComponent serverSideProps={latestProps}/>;
 
-		const RootComponent = this.rootComponent;
-		const rootComponentStream = ReactDOMServer.renderToNodeStream(<RootComponent serverSideProps={latestProps}/>);
-		const htmlEnd = `</div>
-		${latestProps ? `<script>
-			window.__INITIAL_STATE__ = ${JSON.stringify(latestProps)};
-		</script>` : ""}
-	</body>
-</html>`;
+		// Create stream including styles
+		const styleSheet = new ServerStyleSheet();
+		const combinedJsx = styleSheet.collectStyles(rootCompontentJsx);
+		const styleSheetStream = styleSheet.interleaveWithNodeStream(
+			ReactDOMServer.renderToNodeStream(combinedJsx)
+		);
+
+		// End html, including props for hydration. No formatting because we want to send a minimal amount of data, and not waste processing resources.
+		const htmlEnd = `</div>${
+			latestProps ? `<script>window.__INITIAL_STATE__ = ${JSON.stringify(latestProps)};</script>` : ""
+		}</body></html>`;
 
 		// Create the stream
 		res.write(this.htmlStart);
-		rootComponentStream.pipe(res, { end: false });
-		rootComponentStream.on("end", () => {
+		styleSheetStream.pipe(res, { end: false });
+		styleSheetStream.on("end", () => {
 			res.write(htmlEnd);
 			res.end();
 		});
@@ -80,6 +85,7 @@ export default class Page {
 	/**
 	 * Runs all functions in an object, and saves the result in the original key.
 	 * @param {Object} obj
+	 * @returns {Object}
 	 */
 	_deepRunObjectFunctions(obj) {
 		const newObj = {};
@@ -101,5 +107,14 @@ export default class Page {
 
 	_isFunction(x) {
 		return Object.prototype.toString.call(x) == "[object Function]";
+	}
+
+	/**
+	 * Minifies the HTML string, and returns the minified version
+	 * @param {string} html
+	 * @returns {string} Minified HTML string
+	 */
+	_basicMinifyHTML(html) {
+		html.replace(/\n\s*|<!--.*-->/g);
 	}
 }
