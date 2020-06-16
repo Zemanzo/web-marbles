@@ -5,12 +5,11 @@ import {ServerStyleSheet} from "styled-components";
 import headerProps from "./componentProps/header";
 
 export default class Page {
-	constructor(app, details, RootComponent, props = {}) {
+	constructor(app, details, RootComponent) {
 		this.RootComponent = RootComponent;
 
-		// Add default props
-		this.props = props;
-		this.props.header = headerProps;
+		this.details = details;
+		this.props = {}; // Should be filled by the page's _getLatestProps function
 
 		// Set up route in express
 		app.get(`/${details.id}`, (req, res) => {
@@ -51,62 +50,50 @@ export default class Page {
 	</head>
 	<body>
 		<div id="root">`;
+
+		this.htmlRoot = null;
+		this.htmlEnd = null;
 	}
 
 	_renderPage(req, res) {
 		res.setHeader("Content-Type", "text/html; charset=utf-8");
 		res.setHeader("Transfer-Encoding", "chunked");
-
-		// Get latest props
-		const latestProps = this._deepRunObjectFunctions(this.props);
-		const rootCompontentJsx = <this.RootComponent serverSideProps={latestProps}/>;
-
-		// Create stream including styles
-		const styleSheet = new ServerStyleSheet();
-		const combinedJsx = styleSheet.collectStyles(rootCompontentJsx);
-		const styleSheetStream = styleSheet.interleaveWithNodeStream(
-			ReactDOMServer.renderToNodeStream(combinedJsx)
-		);
-
-		// End html, including props for hydration. No formatting because we want to send a minimal amount of data, and not waste processing resources.
-		const htmlEnd = `</div>${
-			latestProps ? `<script>window.__INITIAL_STATE__ = ${JSON.stringify(latestProps)};</script>` : ""
-		}</body></html>`;
-
-		// Create the stream
 		res.write(this.htmlStart);
-		styleSheetStream.pipe(res, { end: false });
-		styleSheetStream.on("end", () => {
-			res.write(htmlEnd);
-			res.end();
-		});
-	}
 
-	/**
-	 * Runs all functions in an object, and saves the result in the original key.
-	 * @param {Object} obj
-	 * @returns {Object}
-	 */
-	_deepRunObjectFunctions(obj) {
-		const newObj = {};
-		for (const key in obj) {
-			if (this._isObject(obj[key])) {
-				newObj[key] = this._deepRunObjectFunctions(obj[key]);
-			} else if (this._isFunction(obj[key])) {
-				newObj[key] = obj[key]();
-			} else {
-				newObj[key] = obj[key];
+		// Get latest data and (re-)render if necessary
+		if(this._getLatestProps() === true || !this.htmlRoot) {
+			const latestProps = Object.assign({}, {header: headerProps}, this.props);
+
+			// Render the root component
+			const styleSheet = new ServerStyleSheet();
+			let styleTags = "";
+			try {
+				const combinedJsx = styleSheet.collectStyles(<this.RootComponent {...latestProps}/>);
+				this.htmlRoot = ReactDOMServer.renderToString(combinedJsx);
+				styleTags = styleSheet.getStyleTags();
+			} catch(error) {
+				console.error(`Failed to render root for page ${this.details.label}: ${error}`);
+			} finally {
+				styleSheet.seal();
 			}
+
+			// Generate end html, including props for hydration and style data
+			// No formatting because we want to send a minimal amount of data, and not waste processing resources
+			this.htmlEnd = `</div>${
+				latestProps ? `<script>window.__INITIAL_STATE__ = ${JSON.stringify(latestProps)};</script>` : ""
+			}${styleTags}</body></html>`;
 		}
-		return newObj;
+
+		// Send the rendered/generated data
+		res.write(this.htmlRoot);
+		res.write(this.htmlEnd);
+		res.end();
 	}
 
-	_isObject(a) {
-		return !!a && a.constructor === Object;
-	}
-
-	_isFunction(x) {
-		return Object.prototype.toString.call(x) == "[object Function]";
+	// Overridable function which will update this.props with the latest data relevant to this page
+	// If any data has changed, this function should return true to trigger a re-render
+	_getLatestProps() {
+		return false;
 	}
 
 	/**

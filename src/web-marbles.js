@@ -164,11 +164,9 @@ new Page(
 	ContactComponent
 );
 
+import LeaderboardsPage from "./server/router/leaderboards-page";
 import LeaderboardsComponent from "./client/leaderboards/root-component";
-const getLatestLeaderboard = function() {
-	return this.user.getTopAlltime(100);
-};
-new Page(
+new LeaderboardsPage(
 	app,
 	{
 		id: "leaderboards",
@@ -176,12 +174,7 @@ new Page(
 		description: "An overview of the current rankings for web-marbles",
 		useIcons: true
 	},
-	LeaderboardsComponent,
-	{
-		leaderboards: {
-			alltime: getLatestLeaderboard.bind(db) // oofies
-		}
-	}
+	LeaderboardsComponent
 );
 
 app.use(function(req, res) {

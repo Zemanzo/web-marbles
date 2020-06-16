@@ -5,7 +5,7 @@ import ReactDOM from "react-dom";
 export default function(RootComponent) {
 	domReady.then(() => {
 		ReactDOM.hydrate(
-			<RootComponent />,
+			<RootComponent {...window.__INITIAL_STATE__}/>,
 			document.getElementById("root")
 		);
 	});
