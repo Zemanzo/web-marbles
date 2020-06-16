@@ -1,3 +1,5 @@
+const EventEmitter = require("events");
+
 module.exports = {
 	setCurrentDatabase: function(databasePath) {
 		try {
@@ -12,7 +14,9 @@ module.exports = {
 			let _initializer = require("./initializer")(db);
 			_initializer.init();
 
-			this.user = require("./users")(db, _common);
+			this.events = new EventEmitter();
+
+			this.user = require("./users")(db, _common, this.events);
 			this.round = require("./rounds")(db);
 			this.personalBest = require("./personal-bests")(db, _common);
 
