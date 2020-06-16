@@ -1,4 +1,4 @@
-module.exports = function(db, common) {
+module.exports = function(db, common, dbEvents) {
 	return {
 		_idExists: db.prepare("SELECT id FROM users WHERE id = ?"),
 
@@ -54,6 +54,7 @@ module.exports = function(db, common) {
 		updateUsernameById(newName, id) {
 			if (typeof newName === "string") {
 				this._updateUsernameById.run([newName, id]);
+				dbEvents.emit("leaderboardsChanged");
 			}
 		},
 
@@ -368,6 +369,7 @@ module.exports = function(db, common) {
 			}
 
 			common.endTransaction.run();
+			dbEvents.emit("leaderboardsChanged");
 		},
 
 		_getPointsById: db.prepare(

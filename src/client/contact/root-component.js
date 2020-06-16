@@ -11,10 +11,10 @@ const RootComponent = () => (
 		<img src="images/logo_text.svg" alt="Manzo's Marbles" id="headerImage" />
 		<section className="column">
 			<h2>Contact</h2>
-			<p>
+			<div>
 				You can contact us at the following email address:
 				<ContentRevealer initialContent="Click here to reveal" newContent={email}/>
-			</p>
+			</div>
 		</section>
 	</React.Fragment>
 );
