@@ -11,7 +11,7 @@ const LeaderboardRoot = styled.div`
 const RootComponent = (props) => {
 	return (
 		<React.Fragment>
-			<Header header={props.header}/>
+			<Header {...props.header} />
 			<LeaderboardRoot>
 				{props.leaderboards.weekly && <Leaderboard rankings={props.leaderboards.weekly} header="Best this week"/>}
 				{props.leaderboards.monthly && <Leaderboard rankings={props.leaderboards.monthly} header="Best this month"/>}
