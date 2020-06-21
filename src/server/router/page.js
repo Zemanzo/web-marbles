@@ -16,6 +16,9 @@ export default class Page {
 			this._renderPage(req, res);
 		});
 
+		// Add route to header props
+		headerProps.route = details.id;
+
 		this.htmlStart = `
 <!DOCTYPE html>
 <html>
@@ -62,7 +65,7 @@ export default class Page {
 
 		// Get latest data and (re-)render if necessary
 		if(this._getLatestProps() === true || !this.htmlRoot) {
-			const latestProps = Object.assign({}, {header: headerProps}, this.props);
+			const latestProps = Object.assign({header: headerProps}, this.props);
 
 			// Render the root component
 			const styleSheet = new ServerStyleSheet();
