@@ -17,9 +17,9 @@ export default class Page {
 		});
 
 		// Add route to header props
-		headerProps.route = details.id;
+		this.headerProps = Object.assign({ route: details.id }, headerProps);
 
-		this.htmlStart = `
+		this.htmlStart = this._basicMinifyHTML(`
 <!DOCTYPE html>
 <html>
 	<head>
@@ -52,7 +52,7 @@ export default class Page {
 		<script src="dist/${details.id}.js"></script>
 	</head>
 	<body>
-		<div id="root">`;
+		<div id="root">`);
 
 		this.htmlRoot = null;
 		this.htmlEnd = null;
@@ -65,7 +65,7 @@ export default class Page {
 
 		// Get latest data and (re-)render if necessary
 		if(this._getLatestProps() === true || !this.htmlRoot) {
-			const latestProps = Object.assign({header: headerProps}, this.props);
+			const latestProps = Object.assign({header: this.headerProps}, this.props);
 
 			// Render the root component
 			const styleSheet = new ServerStyleSheet();
@@ -105,6 +105,6 @@ export default class Page {
 	 * @returns {string} Minified HTML string
 	 */
 	_basicMinifyHTML(html) {
-		html.replace(/\n\s*|<!--.*-->/g);
+		return html.replace(/\n\s*|<!--.*-->/g, "");
 	}
 }
