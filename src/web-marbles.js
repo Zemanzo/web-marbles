@@ -151,9 +151,31 @@ app.get("/privacy", function(req, res) {
 	res.render("privacy", { rootUrl: config.network.rootUrl });
 });
 
-app.get("/contact", function(req, res) {
-	res.render("contact", { rootUrl: config.network.rootUrl });
-});
+import Page from "./server/router/page";
+import ContactComponent from "./client/contact/root-component";
+new Page(
+	app,
+	{
+		id: "contact",
+		label: "Contact",
+		description: "Contact information for inqueries regarding the game or website.",
+		isSimplePage: true
+	},
+	ContactComponent
+);
+
+import LeaderboardsPage from "./server/router/leaderboards-page";
+import LeaderboardsComponent from "./client/leaderboards/root-component";
+new LeaderboardsPage(
+	app,
+	{
+		id: "leaderboards",
+		label: "Leaderboards",
+		description: "An overview of the current rankings for web-marbles",
+		useIcons: true
+	},
+	LeaderboardsComponent
+);
 
 app.use(function(req, res) {
 	res.status(404)

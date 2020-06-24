@@ -1,6 +1,10 @@
-#reveal {
+.unrevealed {
 	cursor: pointer;
 	text-decoration: underline;
 	font-style: italic;
 	color: #999;
+}
+
+.contentRevealer {
+	margin-top: 1em;
 }

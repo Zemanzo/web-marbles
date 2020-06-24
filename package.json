@@ -13,8 +13,10 @@
   ],
   "main": "src/web-marbles.js",
   "scripts": {
-    "start": "node src/web-marbles.js",
-    "build": "webpack"
+    "start": "node dist/web-marbles.js",
+    "build": "yarn build:client",
+    "build:client": "webpack --config scripts/webpack.client.config.js",
+    "build:server": "webpack --config scripts/webpack.server.config.js"
   },
   "author": {
     "name": "Merlijn van der Kamp",
@@ -43,11 +45,14 @@
     "msgpack-lite": "^0.1.26",
     "mustache-express": "^1.2.5",
     "pako": "^1.0.10",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "reconnecting-websocket": "^4.4.0",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7",
     "semver": "^7.1.0",
     "stats-js": "^1.0.0",
+    "styled-components": "^5.1.0",
     "three": "^0.114.0",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v17.3.0"
   },
@@ -59,12 +64,19 @@
     "url": "https://github.com/Zemanzo/web-marbles.git"
   },
   "devDependencies": {
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.5",
+    "@babel/preset-react": "^7.9.4",
     "babel-eslint": "10",
+    "babel-loader": "^8.1.0",
+    "babel-plugin-styled-components": "^1.10.7",
     "copy-webpack-plugin": "^5.0.5",
     "eslint": "~6.8.0",
+    "eslint-plugin-react": "^7.19.0",
     "terser-webpack-plugin": "^2.3.5",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.3.5",
+    "webpack-node-externals": "^1.7.2",
     "worker-loader": "^2.0.0"
   }
 }

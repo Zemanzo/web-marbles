@@ -3,7 +3,11 @@
         "node": true,
         "es6": true
     },
-    "extends": "eslint:recommended",
+    "extends": [
+        "eslint:recommended",
+        "plugin:react/recommended"
+    ],
+    "parser": "babel-eslint",
     "parserOptions": {
         "ecmaVersion": 2018
     },
@@ -43,6 +47,8 @@
         "no-trailing-spaces":
             ["error"],
         "no-fallthrough":
+            "off",
+        "react/prop-types":
             "off"
     }
 }
