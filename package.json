@@ -73,6 +73,7 @@
     "copy-webpack-plugin": "^5.0.5",
     "eslint": "~6.8.0",
     "eslint-plugin-react": "^7.19.0",
+    "react-svg-loader": "^3.0.3",
     "terser-webpack-plugin": "^2.3.5",
     "webpack": "^4.29.3",
     "webpack-cli": "^3.3.5",

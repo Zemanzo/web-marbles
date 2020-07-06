@@ -1,4 +1,5 @@
 :root {
+	/* Colors */
 	--theme-color: #BA0069;
 	--theme-color-dark: #4B002A;
 	--editor-theme-color: #EECC00;
@@ -9,6 +10,40 @@
 	--patreon-navy: #052d49;
 	--twitch-purple: #6441A4;
 	--twitch-purple-hover: rgb(125, 91, 190);
+
+	/* Sizes */
+	--header-height: 50px;
+	--border-radius: 8px;
+}
+
+/* do-hyeon-regular - latin */
+@font-face {
+	font-family: "Do Hyeon";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Do Hyeon Regular"),
+		local("DoHyeon-Regular"),
+		url("../fonts/do-hyeon/do-hyeon-v8-latin-regular.woff2") format("woff2");
+}
+
+/* share-tech-mono-regular - latin */
+@font-face {
+	font-family: "Share Tech Mono";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Share Tech Mono"),
+		local("ShareTechMono-Regular"),
+		url("../fonts/share-tech-mono/share-tech-mono-v8-latin-regular.woff2") format("woff2");
+}
+
+/* Quicksand - latin */
+@font-face {
+	font-family: "Quicksand";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Quicksand"),
+		local("Quicksand-Regular"),
+		url("../fonts/quicksand/quicksand-latin-regular.woff2") format("woff2");
 }
 
 button {

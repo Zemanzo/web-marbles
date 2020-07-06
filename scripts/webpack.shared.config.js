@@ -17,6 +17,15 @@ module.exports = {
 					plugins: ["babel-plugin-styled-components"]
 				}
 			}
+		},
+		{
+			test: /\.svg$/,
+			use: {
+				loader: "react-svg-loader",
+				options: {
+					jsx: true // true outputs JSX tags
+				}
+			}
 		}
 	],
 	plugins: []

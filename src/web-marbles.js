@@ -164,6 +164,18 @@ new Page(
 	ContactComponent
 );
 
+import ClientComponent from "./client/client/root-component";
+new Page(
+	app,
+	{
+		id: "newclient",
+		label: "Client",
+		description: "A game of racing marbles, and hoping that your marble wins.",
+		useIcons: true
+	},
+	ClientComponent
+);
+
 import LeaderboardsPage from "./server/router/leaderboards-page";
 import LeaderboardsComponent from "./client/leaderboards/root-component";
 new LeaderboardsPage(

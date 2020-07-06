@@ -1,6 +1,32 @@
 import React from "react";
 import HeaderLink from "./header-link";
 import styled, {css} from "styled-components";
+import Logo from "../../../public/images/logo.svg";
+
+const StyledHeader = styled.header`
+	grid-area: header;
+	width: 100%;
+	max-height: var(--header-height);
+	display: flex;
+	justify-content: space-between;
+`;
+
+const ReleaseMeta = styled.div`
+	background-color: #2b2929;
+	border-radius: var(--border-radius);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding: 0 8px;
+	font-family: "Share Tech Mono";
+	color: #bbb;
+	font-weight: 300;
+	flex: 1;
+`;
+
+const ReleaseHash = styled.div`
+	color: #666;
+`;
 
 const Nav = styled.nav`
 	display: flex;
@@ -11,14 +37,30 @@ const Nav = styled.nav`
 
 const TitleLink = styled.a`
 	width: 360px;
-`;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	color: var(--theme-color);
+	text-align: center;
+	font-size: 1.2em;
+	text-decoration: none;
+	padding: 0 1em;
 
+	&:hover {
+		text-decoration: underline;
+	}
+
+	& svg {
+		height: calc(var(--header-height) - 16px);
+		margin-right: .5em;
+	}
+`;
 
 const Header = (props) => {
 	return (
-		<header id="header">
-			<TitleLink href="/" id="title">
-				<img src="images/logo.svg" />
+		<StyledHeader>
+			<TitleLink href="/">
+				<Logo/>
 				<h1>Manzo&apos;s Marbles</h1>
 			</TitleLink>
 			<Nav includeRightMargin>
@@ -45,10 +87,10 @@ const Header = (props) => {
 					Leaderboards
 				</HeaderLink>
 			</Nav>
-			<div id="releaseMeta">
-				{props.version && <div id="releaseState">ALPHA ({props.version})</div>}
-				{props.gitHash && <div id="releaseHash">{props.gitHash}</div>}
-			</div>
+			<ReleaseMeta>
+				{props.version && <div>ALPHA ({props.version})</div>}
+				{props.gitHash && <ReleaseHash>{props.gitHash}</ReleaseHash>}
+			</ReleaseMeta>
 			<Nav>
 				{props.inviteLink && <HeaderLink
 					contentWidth="4.3em"
@@ -72,7 +114,7 @@ const Header = (props) => {
 					imageAlt="GitHub"
 				>View the<br/> source!</HeaderLink>
 			</Nav>
-		</header>
+		</StyledHeader>
 	);
 };
 

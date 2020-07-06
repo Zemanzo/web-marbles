@@ -1,32 +1,4 @@
-/* do-hyeon-regular - latin */
-@font-face {
-	font-family: "Do Hyeon";
-	font-style: normal;
-	font-weight: 400;
-	src: local("Do Hyeon Regular"),
-		local("DoHyeon-Regular"),
-		url("../fonts/do-hyeon/do-hyeon-v8-latin-regular.woff2") format("woff2");
-}
 
-/* share-tech-mono-regular - latin */
-@font-face {
-	font-family: "Share Tech Mono";
-	font-style: normal;
-	font-weight: 400;
-	src: local("Share Tech Mono"),
-		local("ShareTechMono-Regular"),
-		url("../fonts/share-tech-mono/share-tech-mono-v8-latin-regular.woff2") format("woff2");
-}
-
-/* Quicksand - latin */
-@font-face {
-	font-family: "Quicksand";
-	font-style: normal;
-	font-weight: 400;
-	src: local("Quicksand"),
-		local("Quicksand-Regular"),
-		url("../fonts/quicksand/quicksand-latin-regular.woff2") format("woff2");
-}
 
 * {
 	margin: 0;
@@ -36,7 +8,6 @@
 html {
 	background: #111;
 	padding: 1px;
-	--border-radius: 8px;
 }
 
 a {
@@ -58,60 +29,3 @@ body {
 	color: #eee;
 	border-top: 2px solid var(--theme-color);
 }
-
-#title,
-#viewport {
-	background-color: #2b2929;
-	border-radius: var(--border-radius);
-}
-
-#title {
-	grid-area: title;
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	color: var(--theme-color);
-	text-align: center;
-	font-size: 1.2em;
-	text-decoration: none;
-	padding: 0 1em;
-}
-
-	#title:hover {
-		text-decoration: underline;
-	}
-
-	#title img {
-		height: calc(var(--header-height) - 16px);
-		margin-right: .5em;
-	}
-
-#header {
-	--header-height: 50px;
-	grid-area: header;
-	width: 100%;
-	max-height: var(--header-height);
-	display: flex;
-	justify-content: space-between;
-}
-
-	#releaseMeta {
-		background-color: #2b2929;
-		border-radius: var(--border-radius);
-		display: flex;
-		flex-direction: column;
-		justify-content: center;
-		padding: 0 8px;
-		font-family: "Share Tech Mono";
-		color: #bbb;
-		font-weight: 300;
-		flex: 1;
-	}
-
-		#releaseHash {
-		color: #666;
-		}
-
-	.leaderboard .entries {
-		flex: 1;
-	}
