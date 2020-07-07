@@ -1,6 +1,6 @@
 body {
 	--theme-color: var(--editor-theme-color);
-	--theme-color-dark: var(--editor-theme-color-dark);
+	--theme-color-darker: var(--editor-theme-color-dark);
 	grid-template-areas: "title viewport" "sidebar viewport";
 	background: #2a2306;
 }
@@ -19,7 +19,7 @@ body {
 	grid-area: mode;
 	text-align: center;
 	font-size: 2em;
-	color: var(--theme-color-dark);
+	color: var(--theme-color-darker);
 }
 
 #editorVersion {
@@ -79,7 +79,7 @@ body {
 	justify-content: space-around;
 	align-items: center;
 	text-align: center;
-	color: var(--theme-color-dark);
+	color: var(--theme-color-darker);
 	margin: 12px;
 	text-transform: uppercase;
 	cursor: pointer;
@@ -282,7 +282,7 @@ body {
 	}
 
 	.textureUV.visible {
-		background-color: var(--theme-color-dark);
+		background-color: var(--theme-color-darker);
 	}
 
 	.textureUV.visible:hover {
@@ -682,7 +682,7 @@ body {
 		justify-content: space-around;
 		align-items: center;
 		text-align: center;
-		color: var(--theme-color-dark);
+		color: var(--theme-color-darker);
 		margin: 12px;
 		text-transform: uppercase;
 		cursor: pointer;

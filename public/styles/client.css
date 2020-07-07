@@ -754,7 +754,7 @@ body {
 	font-family: "Share Tech Mono", monospace;
 	font-weight: 600;
 	color: var(--theme-color);
-	text-shadow: 2px 2px var(--theme-color-dark);
+	text-shadow: 2px 2px var(--theme-color-darker);
 }
 
 p {
@@ -777,7 +777,7 @@ p {
 	order: 9999;
 }
 	.marbleListEntry.player {
-		background-color: var(--theme-color-dark);
+		background-color: var(--theme-color-darker);
 	}
 	.marbleListEntry .camera {
 		margin-right: 8px;

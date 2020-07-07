@@ -40,17 +40,22 @@ const TitleLink = styled.a`
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	background-color: #2b2929;
 	color: var(--theme-color);
 	text-align: center;
-	font-size: 1.2em;
 	text-decoration: none;
+	font-size: 1.2em;
 	padding: 0 1em;
+	border-radius: var(--border-radius);
+	transition: color .3s, background-color .3s;
 
 	&:hover {
-		text-decoration: underline;
+		color: #eee;
+		background-color: var(--theme-color-dark);
 	}
 
 	& svg {
+		width: auto;
 		height: calc(var(--header-height) - 16px);
 		margin-right: .5em;
 	}

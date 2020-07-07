@@ -16,7 +16,8 @@ const Link = styled.a`
 	margin-left: 2px;
 	color: #fff;
 	text-shadow: #0009 0px 1px 2px;
-	background-color: ${props => props.backgroundColor || (props.isCurrentRoute ? "var(--theme-color)" : "var(--theme-color-dark)")};
+	background-color: ${props => props.backgroundColor || (props.isCurrentRoute ? "var(--theme-color)" : "var(--theme-color-darker)")};
+	transition: background-color ${transitionTime};
 
 	i {
 		font-size: 1.5em;
@@ -44,6 +45,7 @@ const Link = styled.a`
 	&:hover {
 		color: #fff;
 		text-decoration: underline;
+		background-color: ${props => props.backgroundColor ? null : "var(--theme-color-dark)"};
 
 		i {
 			margin-left: -8px;

@@ -4,7 +4,7 @@ const ThemeNumber = (component) => styled(component)`
     font-family: "Share Tech Mono", monospace;
     font-weight: 600;
     color: var(--theme-color);
-    text-shadow: 2px 2px var(--theme-color-dark);
+    text-shadow: 2px 2px var(--theme-color-darker);
 `;
 
 export default ThemeNumber;

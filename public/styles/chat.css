@@ -165,7 +165,7 @@ header {
 		#unauthenticated > a {
 			margin: 4px;
 			background: var(--theme-color);
-			border-bottom: 2px solid var(--theme-color-dark);
+			border-bottom: 2px solid var(--theme-color-darker);
 			color: #eee;
 			text-decoration: none;
 			padding: 2px 0;

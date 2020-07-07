@@ -3,30 +3,34 @@ import styled from "styled-components";
 import ThemeNumber from "../components/styles/theme-number";
 
 const GameStateWrapper = styled.div`
-    display: flex;
+	display: flex;
+	height: var(--header-height);
 `;
 
 const SharedStyles = styled.div`
-    background-color: #2b2929;
-    border-radius: var(--border-radius);
+	background-color: #2b2929;
+	border-radius: var(--border-radius);
+	display: flex;
+	align-items: center;
+	justify-content: center;
 `;
 
 const State = styled(SharedStyles)`
-    font-size: 1.7em;
-    font-weight: 300;
-    text-align: center;
-    margin-right: 2px;
-    flex: 1;
+	font-size: 1.7em;
+	font-weight: 300;
+	text-align: center;
+	margin-right: 2px;
+	flex: 1;
 `;
 
 const Timer = ThemeNumber(
 	styled(SharedStyles)`
-        width: 80px;
-        text-align: center;
-        font-size: 2em;
-        letter-spacing: -3px;
-        padding-right: 3px;
-    `
+		width: 80px;
+		text-align: center;
+		font-size: 2em;
+		letter-spacing: -3px;
+		padding-right: 3px;
+	`
 );
 
 const GameState = (props) => {

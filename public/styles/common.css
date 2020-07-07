@@ -1,7 +1,8 @@
 :root {
 	/* Colors */
 	--theme-color: #BA0069;
-	--theme-color-dark: #4B002A;
+	--theme-color-dark: #83004a;
+	--theme-color-darker: #4B002A;
 	--editor-theme-color: #EECC00;
 	--editor-theme-color-dark: #997700;
 	--skins-theme-color: #8a9a5b;

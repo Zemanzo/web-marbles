@@ -25,7 +25,7 @@ nav a:hover {
 /* Client */
 #linkClient {grid-area: client;}
 #linkClient:not(:hover) {
-	background: var(--theme-color-dark);
+	background: var(--theme-color-darker);
 	color: var(--theme-color);
 }
 
