@@ -8,6 +8,7 @@ module.exports = {
 	mode: sharedConfig.mode,
 	entry: {
 		client: "./src/client/client/client.js",
+		newclient: "./src/client/client/newclient.js",
 		editor: "./src/client/editor/editor.js",
 		skins: "./src/client/skins/skins.js",
 		chat: "./src/client/chat/chat.js",

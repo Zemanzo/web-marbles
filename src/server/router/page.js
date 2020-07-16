@@ -71,11 +71,11 @@ export default class Page {
 			const styleSheet = new ServerStyleSheet();
 			let styleTags = "";
 			try {
-				const combinedJsx = styleSheet.collectStyles(<this.RootComponent {...latestProps}/>);
-				this.htmlRoot = ReactDOMServer.renderToString(combinedJsx);
+				//const combinedJsx = styleSheet.collectStyles(<this.RootComponent {...latestProps} />);
+				this.htmlRoot = ReactDOMServer.renderToString(<this.RootComponent {...latestProps} />);
 				styleTags = styleSheet.getStyleTags();
 			} catch(error) {
-				console.error(`Failed to render root for page ${this.details.label}: ${error}`);
+				console.error(`Failed to render root for page ${this.details.label}: ${error.message}`, error.stack);
 			} finally {
 				styleSheet.seal();
 			}
