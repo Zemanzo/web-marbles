@@ -2,24 +2,26 @@ import React from "react";
 import styled from "styled-components";
 
 const Wrapper = styled.div`
-    display: flex;
+	display: flex;
+	flex: 1;
 `;
 
 const StyledSection = styled.section`
-    display: flex;
+	display: flex;
 `;
 
 const Sidebar = styled(StyledSection)`
-    width: 360px;
-    flex-direction: column;
+	width: 360px;
+	flex-direction: column;
 
-    > * {
-        margin-top: 2px;
-    }
+	> * {
+		margin-top: 2px;
+	}
 `;
 
 const Main = styled(StyledSection)`
 	flex: 1;
+	position: relative;
 `;
 
 

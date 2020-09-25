@@ -7,7 +7,7 @@ import {
 	SpriteMaterial
 } from "three";
 import * as config from "./config";
-import { renderCore } from "./render/render-core";
+import { renderCore } from "./render/react-render-core";
 import { marbleSkins } from "./marble-skins";
 import { userState } from "./user-state";
 

@@ -15,7 +15,7 @@ import { Water as ThreeWater } from "three/examples/jsm/objects/Water";
 import { Sky as ThreeSky } from "three/examples/jsm/objects/Sky";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
-import { renderCore } from "./render/render-core";
+import renderCore from "./render/react-render-core";
 import { CustomMaterial } from "./render/custom-material";
 import * as LevelData from "../level/level-data";
 import { marbleManager } from "./marble-manager";

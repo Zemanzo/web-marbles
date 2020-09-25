@@ -38,6 +38,8 @@ function ViewportClientOnly(viewportElement, props) {
 		_activeCamera.camera.updateProjectionMatrix();
 	};
 
+	let clearColor = 0x000000;
+
 	// Core render loop
 	const _animate = () => {
 		let now = Date.now();
@@ -46,6 +48,8 @@ function ViewportClientOnly(viewportElement, props) {
 
 		// Request new frame
 		requestAnimationFrame(_animate);
+
+		_renderer.setClearColor((clearColor += 0xff) % 0xffffff, 1);
 
 		_stats.begin();
 
@@ -135,7 +139,7 @@ function ViewportClientOnly(viewportElement, props) {
 
 	window.addEventListener("resize", _onCanvasResize, false);
 
-	const _GLTFLoader = GLTFLoader();
+	const _GLTFLoader = new GLTFLoader();
 
 	// Default model
 	try {
@@ -184,6 +188,10 @@ function ViewportClientOnly(viewportElement, props) {
 		_stats.dom.style.left = "unset";
 		_stats.dom.style.right = "0px";
 
+		// Controls
+		_trackingCamera = new TrackingCamera(_mainScene, _renderer, { enabledByDefault: false });
+		_freeCamera = new FreeCamera(_mainScene, _renderer, { enabledByDefault: false });
+
 		_setCameraStyle(props.defaultCameraType);
 
 		_previousTime = Date.now(); // Update loop starts from this point in time, ignore load time
@@ -194,10 +202,6 @@ function ViewportClientOnly(viewportElement, props) {
 		// 	_cameraTrackingButton = document.getElementById("cameraTracking");
 		// if (_cameraFreeButton) _cameraFreeButton.addEventListener("click", () => { this.setCameraStyle(cameras.CAMERA_FREE); }, false);
 		// if (_cameraTrackingButton) _cameraTrackingButton.addEventListener("click", () => { this.setCameraStyle(cameras.CAMERA_TRACKING); }, false);
-
-		// Controls
-		_trackingCamera = new TrackingCamera(_mainScene, _renderer, { enabledByDefault: false });
-		_freeCamera = new FreeCamera(_mainScene, _renderer, { enabledByDefault: false });
 
 		viewportElement.appendChild(_renderer.domElement);
 		viewportElement.appendChild(_stats.dom);

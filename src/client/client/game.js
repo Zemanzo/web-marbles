@@ -27,9 +27,7 @@ let game = function() {
 	let _roundTimerStartDate,
 		_roundTimerIsVisible = false,
 		_enterCountdownTimer = null,
-
-		_initPromise = null,
-		_DOMElements = {},
+		_dispatch = null,
 
 		_marbleBeingTracked = null;
 
@@ -95,8 +93,9 @@ let game = function() {
 	return {
 		// Returns a Promise that resolves once initialization is complete
 		// Can be called multiple times but will initialize only once
-		initialize: function() {
-			if(!_initPromise) {
+		initialize: function(dispatch) {
+			_dispatch = dispatch;
+			/* if(!_initPromise) {
 				_initPromise = domReady.then( () => {
 					// Get element references
 					_DOMElements.timer = document.getElementById("timer");
@@ -112,7 +111,7 @@ let game = function() {
 					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
 				});
 			}
-			return _initPromise;
+			return _initPromise; */
 		},
 
 		setServerConstants: function(enterPeriod, finishPeriod) {
@@ -123,13 +122,13 @@ let game = function() {
 		// Resets the game's state (not including the level) to their defaults
 		resetGame: function() {
 			// Reset/hide DOM elements
-			_DOMElements.gameInfo.className = "";
-			_DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
-			_DOMElements.entries.innerText = "0";
-			_DOMElements.state.innerText = "...";
-			_DOMElements.timer.innerText = "...";
-			_DOMElements.resultsList.innerHTML = "";
-			_DOMElements.raceLeaderboard.className = "";
+			// _DOMElements.gameInfo.className = "";
+			// _DOMElements.marbleList.innerHTML = _DOMElements.marbleListTemplate.outerHTML;
+			// _DOMElements.entries.innerText = "0";
+			// _DOMElements.state.innerText = "...";
+			// _DOMElements.timer.innerText = "...";
+			// _DOMElements.resultsList.innerHTML = "";
+			// _DOMElements.raceLeaderboard.className = "";
 
 			// Stop timers
 			clearInterval(_enterCountdownTimer);
@@ -196,12 +195,24 @@ let game = function() {
 			switch(newState) {
 			// Server is loading a level
 			case gameConstants.STATE_LOADING:
+				_dispatch({
+					type: "LOAD_LEVEL",
+					enteredMarbleList: [],
+					finishedMarbles: 0,
+					timer: {
+						state: "alt", // "running" / "paused"
+						direction: "down", // "up"
+						since: new Date(),
+						alt: "..."
+					},
+					gameState: {
+						message: "waiting"
+					}
+				});
 				_DOMElements.gameInfo.className = "waiting";
 				clearInterval(_enterCountdownTimer);
 				_enterCountdownTimer = null;
 				_roundTimerIsVisible = false;
-				_enteredMarbleList = [];
-				_finishedMarbles = 0;
 				marbleManager.clearMarbles();
 				_marbleBeingTracked = null;
 				renderCore.trackingCamera.setTarget(null);

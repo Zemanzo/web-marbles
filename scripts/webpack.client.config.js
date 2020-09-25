@@ -26,20 +26,20 @@ module.exports = {
 	optimization: {
 		minimize: sharedConfig.isProduction,
 		minimizer: [new TerserPlugin()],
-		splitChunks: {
-			cacheGroups: {
-				threeAndPako: {
-					test: /[\\/]node_modules[\\/](three|pako)[\\/]/,
-					name: "threeAndPako",
-					chunks: "all"
-				},
-				otherVendors: {
-					test: /[\\/]node_modules[\\/](?!three|pako).*[\\/]/,
-					name: "vendors",
-					chunks: "all"
-				}
-			}
-		}
+		// splitChunks: {
+		// 	cacheGroups: {
+		// 		threeAndPako: {
+		// 			test: /[\\/]node_modules[\\/](three|pako)[\\/]/,
+		// 			name: "threeAndPako",
+		// 			chunks: "all"
+		// 		},
+		// 		otherVendors: {
+		// 			test: /[\\/]node_modules[\\/](?!three|pako).*[\\/]/,
+		// 			name: "vendors",
+		// 			chunks: "all"
+		// 		}
+		// 	}
+		// }
 	},
 	devtool: "source-map",
 	module: {

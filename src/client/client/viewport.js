@@ -1,29 +1,42 @@
-import React, { createRef, useState, useEffect } from "react";
+import React, { createRef, useEffect, useContext } from "react";
 import styled from "styled-components";
+import CameraControls from "../components/camera-controls";
+import { RenderContext } from "../render/render-manager";
+
+const CanvasContainer = styled.div`
+	flex: 1;
+`;
+
+const Overlay = styled.div`
+	position: absolute;
+`;
 
 function Viewport(props) {
 	const ref = createRef();
-	const [isUnsupported, setIsUnsupported] = useState(false);
+	const dispatch = useContext(RenderContext);
 
 	// Only do this once after rendering
 	useEffect(() => {
 		console.log(ref.current, props);
-		import("./viewport-client-only")
-			.then(ViewportClientOnly => {
-				setIsUnsupported(
-					ViewportClientOnly.default(ref.current, props)
-				);
-			});
+		dispatch({
+			type: "SET_RENDER_TARGET",
+			target: ref.current
+		});
 	}, [ref.current]);
 
 	return (
-		isUnsupported
+		props.isWebGLSupported
 			? <div id = "warning" >
-				Hmmm... Unfortunately, your {isUnsupported} does not seem to support
+				Hmmm... Unfortunately, your {props.isWebGLSupported} does not seem to support
 				<a href="http://khronos.org/webgl/wiki/Getting_a_WebGL_Implementation" style="color:#000" >WebGL</a>.
 				Please come back when you found something more compatible!
 			</div >
-			: <div ref={ref}></div>
+			: <React.Fragment>
+				<Overlay>
+					<CameraControls selected={props.cameraStyle} />
+				</Overlay>
+				<CanvasContainer ref={ref}></CanvasContainer>
+			</React.Fragment>
 	);
 }
 

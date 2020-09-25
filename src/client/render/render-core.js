@@ -74,9 +74,6 @@ let renderCore = function() {
 			"time": { value: 0 }
 		},
 
-		// Camera layer definitions
-		SPRITE_LAYER: 1,
-
 		initialize: function(defaultCameraType) {
 			// Check for WebGL availability and display a warning when it is missing.
 			if (!_isWebGLAvailable()) {
@@ -241,6 +238,9 @@ let renderCore = function() {
 	};
 }();
 
+const SPRITE_LAYER = 1;
+
 export {
-	renderCore
+	renderCore,
+	SPRITE_LAYER
 };

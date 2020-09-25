@@ -59,6 +59,12 @@ body {
 	border-top: 2px solid var(--theme-color);
 }
 
+#root {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
 #title,
 #viewport {
 	background-color: #2b2929;

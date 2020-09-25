@@ -8,7 +8,7 @@ import {
 	Euler,
 	Quaternion
 } from "three";
-import { renderCore } from "./render-core";
+import { SPRITE_LAYER } from "./render-core";
 
 const addRegisteredEventListener = function(scope, event, func, capture) {
 	scope.addEventListener(event, func, capture);
@@ -75,7 +75,7 @@ function FreeCamera(
 	this.pointerLockElement = options.pointerLockElement;
 	this.camera = options.camera;
 	this.camera.rotation.order = "YXZ";
-	this.camera.layers.enable(renderCore.SPRITE_LAYER);
+	this.camera.layers.enable(SPRITE_LAYER);
 	this.speed = options.speed;
 
 	this.moveForward = false;
@@ -335,7 +335,7 @@ function TrackingCamera(
 	this.type = cameras.CAMERA_TRACKING;
 	this.camera = options.camera;
 	this.camera.rotation.order = "YXZ";
-	this.camera.layers.enable(renderCore.SPRITE_LAYER);
+	this.camera.layers.enable(SPRITE_LAYER);
 	this.target = null;
 	this.distanceMultiplier = 1;
 

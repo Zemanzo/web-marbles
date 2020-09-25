@@ -1,11 +1,11 @@
-import { network as config } from "../config";
-import ReconnectingWebSocket from "reconnecting-websocket";
-import { HUDNotification } from "./hud-notification";
-import { game } from "./game";
-import * as gameConstants from "../../game-constants.json";
-import { marbleManager } from "../marble-manager";
 import { Vector3 } from "three";
+import ReconnectingWebSocket from "reconnecting-websocket";
 import * as msgPack from "msgpack-lite";
+
+import { game } from "./game";
+import { network as config } from "../config";
+import { marbleManager } from "../marble-manager";
+import * as gameConstants from "../../game-constants.json";
 
 let networking = function() {
 	let _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
@@ -16,17 +16,21 @@ let networking = function() {
 	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer size
 	let _previousMarblePositions = null;
 
-	let _processMessageEvent = function(event) {
+	let _processMessageEvent = function(event, dispatch) {
 		if(typeof event.data === "string") {
 			// This should only be a HUD Notification
 			let message = JSON.parse(event.data);
-			new HUDNotification({
-				content: message.content,
-				lifetime: message.lifetime,
-				styles: message.styles,
-				classNames: message.classNames
-				// progress is not supported for server-side messages
+			dispatch({
+				type: "SERVER_NOTIFICATION",
+				message
 			});
+			// new HUDNotification({
+			// 	content: message.content,
+			// 	lifetime: message.lifetime,
+			// 	styles: message.styles,
+			// 	classNames: message.classNames
+			// 	// progress is not supported for server-side messages
+			// });
 		} else {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
@@ -103,7 +107,7 @@ let networking = function() {
 	return {
 		websocketOpen: false,
 
-		initialize: function() {
+		initialize: function(dispatch) {
 			_ws = new ReconnectingWebSocket(_wsUri, [], {
 				minReconnectionDelay: 1000,
 				maxReconnectionDelay: 30000,
@@ -121,7 +125,7 @@ let networking = function() {
 			});
 
 			_ws.addEventListener("message", (event) => {
-				_processMessageEvent(event);
+				_processMessageEvent(event, dispatch);
 			});
 		},
 
