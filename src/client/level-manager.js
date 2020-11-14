@@ -284,8 +284,6 @@ MarbleLevel.prototype.loadLevel = function(data) {
 						depthPacking: THREE_CONSTANTS.RGBADepthPacking,
 						alphaTest: .5
 					});
-					obj.castShadow = true;
-					obj.receiveShadow = true;
 				}
 			});
 			this.levelObjects.add(clone);
