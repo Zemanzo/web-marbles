@@ -325,7 +325,7 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 			alpha: 1.0,
 			sunDirection: sunLight.position.clone().normalize(),
 			sunColor: 0xffffff,
-			waterColor: 0x001e0f,
+			waterColor: 0x000f30,
 			distortionScale: 3.7,
 			fog
 		}
@@ -373,14 +373,14 @@ function Sky(parameters = {}) {
 
 	let uniforms = this.skyObject.material.uniforms;
 	uniforms.turbidity.value = 10;
-	uniforms.rayleigh.value = 2;
+	uniforms.rayleigh.value = 1;
 	uniforms.mieCoefficient.value = 0.005;
-	uniforms.mieDirectionalG.value = 0.99;
+	uniforms.mieDirectionalG.value = 0.999;
 
 	// Adjust exposure only for the sky object
 	this.skyObject.onBeforeRender = function(renderer) {
 		renderer.toneMapping = THREE_CONSTANTS.ACESFilmicToneMapping;
-		renderer.toneMappingExposure = 0.3;
+		renderer.toneMappingExposure = 0.25;
 	};
 	this.skyObject.onAfterRender = function(renderer) {
 		renderer.toneMapping = THREE_CONSTANTS.NoToneMapping;
