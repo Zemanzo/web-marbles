@@ -325,7 +325,7 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 			alpha: 1.0,
 			sunDirection: sunLight.position.clone().normalize(),
 			sunColor: 0xffffff,
-			waterColor: 0x000f30,
+			waterColor: 0x000f20,
 			distortionScale: 3.7,
 			fog
 		}
@@ -346,6 +346,14 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 		parent.levelObjects.visible = true;
 		marbleManager.marbleGroup.visible = true;
 		camera.layers.enable(renderCore.SPRITE_LAYER);
+
+		// Darkening the water by applying tone-mapping
+		renderer.toneMapping = THREE_CONSTANTS.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 0.5;
+	};
+	this.waterObject.onAfterRender = function(renderer) {
+		renderer.toneMapping = THREE_CONSTANTS.NoToneMapping;
+		renderer.toneMappingExposure = 1;
 	};
 }
 
