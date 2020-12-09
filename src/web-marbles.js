@@ -117,7 +117,7 @@ if (config.discord.enabled) {
 				let color = req.query.color;
 				let amount = Math.max(parseInt(req.query.amount) || 1, 1);
 				for (let i = 0; i < amount; i++) {
-					game.spawnMarble(undefined, name, color);
+					game.addRaceEntry(undefined, name, color);
 				}
 			}
 			if (req.query.start) {

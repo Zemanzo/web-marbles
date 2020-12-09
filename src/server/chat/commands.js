@@ -35,7 +35,7 @@ const commands = function() {
 			commandString: "marble",
 			permission: "ANYONE",
 			action: function(messageContent, id, username) {
-				game.addPlayerEntry(
+				game.addRaceEntry(
 					id,
 					username,
 					_createMarbleAttributesObject(messageContent)
@@ -85,7 +85,7 @@ const commands = function() {
 			action: function(messageContent) {
 				let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
 				for (let i = 0; i < amount; i++) {
-					game.spawnMarble(
+					game.addRaceEntry(
 						undefined,
 						undefined,
 						_createMarbleAttributesObject(messageContent)

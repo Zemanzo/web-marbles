@@ -1,8 +1,8 @@
-const config = require("./config");
-const utility = require("../utility");
-const permissions = require("./chat/permissions");
-const skins = require("./skins");
-const physicsWorld = require("../physics/world");
+const config = require("../config");
+const utility = require("../../utility");
+const permissions = require("../chat/permissions");
+const skins = require("../skins");
+const physicsWorld = require("../../physics/world");
 
 function Marble(id, entryId, name, attributes = {}) {
 	this.userId = id;
