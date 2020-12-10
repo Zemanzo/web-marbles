@@ -1,14 +1,16 @@
-module.exports = function() {
+const physicsManager = function() {
+	let ammo = require("ammo.js")();
+	let defaultMarble = new ammo.btSphereShape(0.2);
+
 	return {
-		ammo: require("ammo.js")(),
-		world: null,
+		ammo,
 		shapes: {}, // Container for level collision shape re-usage
-		defaultMarble: null,
+		defaultMarble,
 
 		// Creates a convex shape using the given vertexData as float array
 		createConvexShape(name, vertexData) {
-			let convexShape = new this.ammo.btConvexHullShape();
-			let vertex = new this.ammo.btVector3();
+			let convexShape = new ammo.btConvexHullShape();
+			let vertex = new ammo.btVector3();
 
 			for (let i = 0; i < vertexData.length / 3; i++) {
 				vertex.setValue(
@@ -32,11 +34,11 @@ module.exports = function() {
 
 		// Creates a concave shape using the given vertexData as float array and indexData as indices
 		createConcaveShape(name, vertexData, indexData) {
-			let mesh = new this.ammo.btTriangleMesh(true, false);
+			let mesh = new ammo.btTriangleMesh(true, false);
 
-			let v0 = new this.ammo.btVector3();
-			let v1 = new this.ammo.btVector3();
-			let v2 = new this.ammo.btVector3();
+			let v0 = new ammo.btVector3();
+			let v1 = new ammo.btVector3();
+			let v2 = new ammo.btVector3();
 			for(let t = 0; t < indexData.length / 3; t++) {
 				v0.setValue(
 					vertexData[ indexData[t * 3 + 0] * 3 + 0 ],
@@ -52,7 +54,7 @@ module.exports = function() {
 					vertexData[ indexData[t * 3 + 2] * 3 + 2 ]);
 				mesh.addTriangle(v0, v1, v2, true);
 			}
-			let concaveShape = new this.ammo.btBvhTriangleMeshShape(mesh, true, true);
+			let concaveShape = new ammo.btBvhTriangleMeshShape(mesh, true, true);
 
 			if(name in this.shapes) {
 				this.shapes[name].concave = concaveShape;
@@ -76,6 +78,4 @@ module.exports = function() {
 	};
 }();
 
-// Module initialization
-module.exports.defaultMarble = new module.exports.ammo.btSphereShape(0.2);
-module.exports.world = require("./world");
+module.exports = physicsManager;

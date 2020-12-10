@@ -14,24 +14,24 @@ function LevelCollider(colliderData, functionality, transform, id) {
 LevelCollider.prototype.addToWorld = function() {
 	if(!this.isInWorld && this.ammoBody) {
 		this.isInWorld = true;
-		physics.world.physicsWorld.addRigidBody(this.ammoBody);
+		physicsWorld.ammoPhysicsWorld.addRigidBody(this.ammoBody);
 	}
 };
 
 LevelCollider.prototype.removeFromWorld = function() {
 	if(this.isInWorld) {
 		this.isInWorld = false;
-		physics.world.physicsWorld.removeRigidBody(this.ammoBody);
+		physicsWorld.ammoPhysicsWorld.removeRigidBody(this.ammoBody);
 	}
 };
 
 
-module.exports = function() {
+const physicsWorld = function() {
 	let _collisionConfiguration,
 		_dispatcher,
 		_broadphase,
 		_solver,
-		physicsWorld,
+		ammoPhysicsWorld,
 		_levelColliders = [], // Collection of all level colliders
 		_startAreas = [], // Quicklist of start areas
 		_startGates = [], // Quicklist of starting gates
@@ -50,8 +50,8 @@ module.exports = function() {
 	_dispatcher = new physics.ammo.btCollisionDispatcher(_collisionConfiguration );
 	_broadphase = new physics.ammo.btDbvtBroadphase();
 	_solver = new physics.ammo.btSequentialImpulseConstraintSolver();
-	physicsWorld = new physics.ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
-	physicsWorld.setGravity( new physics.ammo.btVector3( 0, -10, 0 ) );
+	ammoPhysicsWorld = new physics.ammo.btDiscreteDynamicsWorld(_dispatcher, _broadphase, _solver, _collisionConfiguration );
+	ammoPhysicsWorld.setGravity( new physics.ammo.btVector3( 0, -10, 0 ) );
 
 	// Used for physics-related events, such as finished/OoB marbles:
 	// "marbleFinished" (entryId)
@@ -59,7 +59,7 @@ module.exports = function() {
 
 	function _updatePhysics() {
 		// Steps have to be constant WITHOUT bullet substepping
-		physicsWorld.stepSimulation( _timeStep, 0 );
+		ammoPhysicsWorld.stepSimulation( _timeStep, 0 );
 
 		// Check collision pairs and handle callbacks
 		let numManifolds = _dispatcher.getNumManifolds();
@@ -153,7 +153,7 @@ module.exports = function() {
 	};
 
 	return {
-		physicsWorld,
+		ammoPhysicsWorld,
 		eventEmitter,
 
 		createMarble(entryId, size) {
@@ -183,14 +183,14 @@ module.exports = function() {
 			physicsMarble.ammoBody.setUserIndex(-entryId);
 
 			// Add to physics world
-			physicsWorld.addRigidBody(physicsMarble.ammoBody);
+			ammoPhysicsWorld.addRigidBody(physicsMarble.ammoBody);
 			_physicsMarbles.push(physicsMarble);
 		},
 
 		destroyMarble(entryId) {
 			for(let i = 0; i < _physicsMarbles.length; i++) {
 				if(_physicsMarbles[i].entryId === entryId) {
-					physicsWorld.removeRigidBody(_physicsMarbles[i].ammoBody);
+					ammoPhysicsWorld.removeRigidBody(_physicsMarbles[i].ammoBody);
 					_physicsMarbles.splice(i, 1);
 					return;
 				}
@@ -394,7 +394,7 @@ module.exports = function() {
 		},
 
 		setGravity(force) {
-			physicsWorld.setGravity( new physics.ammo.btVector3( 0, -force, 0 ) ); // Downwards force by default
+			ammoPhysicsWorld.setGravity( new physics.ammo.btVector3( 0, -force, 0 ) ); // Downwards force by default
 		},
 
 		// Returns the positions and angular velocities of all marbles in the physics world
@@ -429,3 +429,5 @@ module.exports = function() {
 		}
 	};
 }();
+
+module.exports = physicsWorld;
