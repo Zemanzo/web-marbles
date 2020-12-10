@@ -2,7 +2,6 @@ const log = require("../log");
 const config = require("./config");
 const socketsHelper = require("./network/sockets-helper");
 const physicsWorld = require("../physics/world");
-const levelManager = require("./levels/manager");
 const gameConstants = require("../game-constants");
 const msgPack = require("msgpack-lite");
 
@@ -12,12 +11,21 @@ const { Worker, MessageChannel } = require("worker_threads");
 
 let game = function() {
 	let _currentGameState = gameConstants.STATE_WAITING;
-	let _currentLevel = null;
+	let _currentLevel = null; // Contains metadata of the currently loaded level, received from the race worker
 	let _currentRace = null;
+	let _availableLevels = [];
 	let _gameStateTimeout = null; // Main setTimeout handle for when one game state should switch to another
 
 	let _enterPeriodStart = null; // Timestamp for when the enter period started, used to calculate remaining time
 	let _startDelay = 2825; // length in ms of audio
+
+	let _raceWorker = null; // Holds the handle to the race worker, or a reference to the module if single-threaded
+	let _singleThreadedRaceWorker = true;
+	let _messagePorts = {
+		raceControl: null,
+		levelControl: null,
+		marbleData: null
+	};
 
 	let _gameplaySocket = null;
 	let _netUpdateHandle = null; // Handle to setTimeout
@@ -197,7 +205,7 @@ let game = function() {
 
 	let _onStateWaiting = function() {
 		// Create new race
-		_currentRace = new DefaultRace(game, _currentLevel.getLevelId());
+		_currentRace = new DefaultRace(game, _messagePorts.raceControl, _currentLevel.levelId);
 	};
 
 	let _onStateEnter = function() {
@@ -215,7 +223,7 @@ let game = function() {
 
 	let _onStateStarted = function() {
 		// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
-		_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_FINISHED); }, _currentLevel.gameplay.roundLength * 1000);
+		_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_FINISHED); }, _currentLevel.roundLength * 1000);
 		_currentRace.onStateStarted();
 	};
 
@@ -240,6 +248,49 @@ let game = function() {
 		}
 
 		_currentRace = null;
+	};
+
+	// Callback for received _messagePorts.levelControl messages
+	let _onLevelControlMessage = function(data) {
+		// Initial check for available levels is done
+		if(data.availableLevels) {
+			_availableLevels = data.availableLevels;
+			log.info("Received available level data:");
+			log.info(_availableLevels);
+
+			if(_availableLevels.length > 0) {
+				if(_availableLevels.includes(config.marbles.levels.defaultLevel)) {
+					game.changeLevel(config.marbles.levels.defaultLevel);
+				} else {
+					log.info("No default level set or found. The first available level will be loaded instead.");
+					game.changeLevel(_availableLevels[0]);
+				}
+			} else {
+				throw new Error("Game is unable to start: No levels available to load!");
+			}
+		}
+
+		// Level loading has finished or failed
+		if(data.loadedLevel) {
+			log.info(`Received level load finish message: ${data.loadedLevel.ready}`);
+			if(!data.loadedLevel.ready) {
+				// Well this is awkward
+				// This really shouldn't happen if all levels were validated earlier, so we're probably in booboo town already
+				throw new Error(`Game.changeLevel: Failed to load level "${data.loadedLevel.levelName}"`);
+			} else {
+				_currentLevel = data.loadedLevel;
+				_setCurrentGameState(gameConstants.STATE_WAITING);
+			}
+		}
+	};
+
+	// Callback for received _messagePorts.raceControl messages
+	let _onRaceControlMessage = function(data) {
+		if(!_currentRace)
+			return;
+
+		if(data.finishedMarble)
+			_currentRace.onMarbleFinished(data.finishedMarble.entryId, data.finishedMarble.time);
 	};
 
 	let _onMarbleFinished = function(entryId) {
@@ -288,23 +339,41 @@ let game = function() {
 				ws.send(_getInitialDataPayload(), true);
 			});
 
-			// Worker thread test code
-			let raceWorker = new Worker("./src/server/races/race-worker.js");
-			let channel = new MessageChannel();
-			raceWorker.postMessage({ workerMessagePort: channel.port1 }, [channel.port1]);
-			channel.port2.on("message", (value) => {
-				console.log(`Received: ${value}`);
+			// Message channel setup
+			let raceControl = new MessageChannel();
+			let levelControl = new MessageChannel();
+			let marbleData = new MessageChannel();
+			_messagePorts.raceControl = raceControl.port1;
+			_messagePorts.levelControl = levelControl.port1;
+			_messagePorts.marbleData = marbleData.port1;
+
+			// Set up message port callback(s)
+			_messagePorts.raceControl.on("message", (data) => {
+				_onRaceControlMessage(data);
 			});
 
-			if(levelManager.availableLevels.length > 0) {
-				if(levelManager.availableLevels.includes(config.marbles.levels.defaultLevel)) {
-					this.changeLevel(config.marbles.levels.defaultLevel);
-				} else {
-					log.info("No default level set or found. The first available level will be loaded instead.");
-					this.changeLevel(levelManager.availableLevels[0]);
-				}
+			_messagePorts.levelControl.on("message", (data) => {
+				_onLevelControlMessage(data);
+			});
+
+			// Race worker thread initialisation
+			if(_singleThreadedRaceWorker) {
+				_raceWorker = require("./races/race-worker");
+				_raceWorker.initialize({
+					raceControl: raceControl.port2,
+					levelControl: levelControl.port2,
+					marbleData: marbleData.port2
+				});
 			} else {
-				throw new Error("Game is unable to start: No levels available to load!");
+				_raceWorker = new Worker("./src/server/races/race-worker.js");
+				_raceWorker.on("error", value => {
+					throw new Error(`Race worker encountered a unexpected error: ${value}`);
+				});
+				_raceWorker.postMessage({
+					raceControl: raceControl.port2,
+					levelControl: levelControl.port2,
+					marbleData: marbleData.port2
+				}, [raceControl.port2, levelControl.port2, marbleData.port2]);
 			}
 		},
 
@@ -319,6 +388,10 @@ let game = function() {
 
 			// Stop any ongoing race
 			this.end(false);
+
+			// Stop the race worker
+			if(!_singleThreadedRaceWorker)
+				_raceWorker.terminate();
 
 			// Clear remaining timeouts
 			clearTimeout(_gameStateTimeout);
@@ -386,7 +459,7 @@ let game = function() {
 				return;
 			}
 
-			if(!levelManager.availableLevels.includes(levelName)) {
+			if(!_availableLevels.includes(levelName)) {
 				log.warn(`Attempted to change level to "${levelName}", but no such level is available.`);
 				return;
 			}
@@ -399,15 +472,7 @@ let game = function() {
 			_netGameUpdate.l = levelName;
 			_setCurrentGameState(gameConstants.STATE_LOADING);
 
-			levelManager.loadLevel(levelName).then( (levelData) => {
-				_currentLevel = levelData;
-				if(!levelData) {
-					// Well this is awkward
-					// This really shouldn't happen if all levels were validated earlier, so we're probably in booboo town already
-					throw new Error(`Game.changeLevel: Failed to load level "${levelName}"`);
-				}
-				_setCurrentGameState(gameConstants.STATE_WAITING);
-			});
+			_messagePorts.levelControl.postMessage({loadLevel: levelName});
 		},
 
 		getEnterPeriodTimeRemaining() {

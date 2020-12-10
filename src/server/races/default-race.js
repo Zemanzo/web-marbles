@@ -44,8 +44,9 @@ function Round(levelId) {
 }
 
 class DefaultRace {
-	constructor(game, levelId) {
+	constructor(game, raceControl, levelId) {
 		this.game = game;
+		this.raceControl = raceControl;
 		this.raceEntries = [];
 		this.pointContributors = 0;
 		this.marbleEntries = [];
