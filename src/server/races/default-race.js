@@ -1,32 +1,9 @@
 const gameConstants = require("../../game-constants");
 const config = require("../config");
 const Marble = require("./marble");
+const RaceEntry = require("./race-entry");
 const db = require("../database/manager");
 const physicsWorld = require("../../physics/world");
-
-class RaceEntry {
-	constructor(id, name, marbleAttributes = {}) {
-		this.id = id;
-		this.isHuman = true;
-		this.contributesPoints = true;
-		this.earnsPoints = true;
-		this.name = name;
-		this.finished = false; // TODO: Redundant with marblesFinished?
-		this.time = undefined;
-		this.pointsEarned = config.marbles.scoring.pointsAwardedForEntering;
-		this.marbles = [];
-		this.marbleAttributes = marbleAttributes;
-		this.marblesEntered = 0; // TODO: Redundant, can be read from marbles.length
-		this.marblesFinished = 0; // TODO: Maybe redundant? Could be wrapped in a function
-
-		if(typeof id === "undefined") {
-			this.isHuman = false;
-			this.contributesPoints = false;
-			this.earnsPoints = false;
-			this.pointsEarned = 0;
-		}
-	}
-}
 
 // Object containing all race data to be recorded in the database
 function Round(levelId) {
@@ -109,7 +86,6 @@ class DefaultRace {
 	spawnMarble(entry) {
 		let marble = new Marble(entry.id, this.marbleEntries.length, entry.name, entry.marbleAttributes);
 		entry.marbles.push(marble);
-		entry.marblesEntered++;
 		this.marbleEntries.push(marble);
 		this.game.onSpawnedMarble(marble);
 	}
@@ -141,10 +117,6 @@ class DefaultRace {
 		});
 
 		if (raceEntry) {
-			// Mark them as finished
-			raceEntry.finished = true;
-			raceEntry.marblesFinished++;
-
 			// Add their best time to the entry (so it can be stored in the case of a PB)
 			if(typeof raceEntry.time === "undefined")
 				raceEntry.time = marble.time;
@@ -190,7 +162,7 @@ class DefaultRace {
 			this.round.end = Date.now();
 			this.round.pointsAwarded = totalPointsAwarded;
 			this.round.playersEntered = playerEntries.length;
-			this.round.playersFinished = playerEntries.filter(playerEntry => playerEntry.finished).length;
+			this.round.playersFinished = playerEntries.filter(playerEntry => playerEntry.hasFinished()).length;
 			this.round.playersNotFinished = this.round.playersEntered - this.round.playersFinished;
 			this.round.marblesEntered = this.marbleEntries.length;
 			this.round.marblesFinished = this.marblesFinished;
