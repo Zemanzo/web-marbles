@@ -1,33 +1,6 @@
 const game = require("../game");
-const skins = require("../skins");
 
 const commands = function() {
-	const _colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
-	const _createMarbleAttributesObject = function(messageContent) {
-		let messageSections = messageContent.split(" ");
-		let color, skinId;
-
-		// At most, check only the first three words. The first occurrence of an attribute will be used, the rest will be ignored.
-		for (let i = 1; i < Math.min(messageSections.length, 4); i++) {
-			if (!color) {
-				let match = messageSections[i].match(_colorRegEx);
-				color = (match === null ? undefined : match[0]);
-				if (typeof color !== "undefined") continue;
-			}
-
-			if (!skinId) {
-				// Get the skinId that corresponds to the provided message. Non-existing skins will set `skinId` to undefined.
-				skinId = skins.idList[messageSections[i]];
-				if (typeof skinId !== "undefined") continue;
-			}
-		}
-
-		return {
-			color,
-			skinId
-		};
-	};
-
 	return [
 		// Anyone
 		{
@@ -38,7 +11,7 @@ const commands = function() {
 				game.addRaceEntry(
 					id,
 					username,
-					_createMarbleAttributesObject(messageContent)
+					messageContent.substr(7)
 				);
 			}
 		},
@@ -88,7 +61,7 @@ const commands = function() {
 					game.addRaceEntry(
 						undefined,
 						undefined,
-						_createMarbleAttributesObject(messageContent)
+						messageContent.substr(11)
 					);
 				}
 			}

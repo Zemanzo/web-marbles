@@ -4,6 +4,8 @@ const Marble = require("./marble");
 const RaceEntry = require("./race-entry");
 const db = require("../database/manager");
 const physicsWorld = require("../../physics/world");
+const skins = require("../skins");
+const permissions = require("../chat/permissions");
 
 // Object containing all race data to be recorded in the database
 function Round(levelId) {
@@ -30,6 +32,28 @@ class DefaultRace {
 		this.marblesFinished = 0;
 
 		this.round = new Round(levelId);
+
+		this.marbleAttributeList = {};
+
+		// Define default marble attributes
+		this.marbleAttributeList.color = function(attribute) {
+			const colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
+			let match = attribute.match(colorRegEx);
+			return match === null ? undefined : match[0];
+		};
+		this.marbleAttributeList.skinId = function(attribute, userId) {
+			let skinId = skins.idList[attribute];
+			if (typeof skinId === "undefined")
+				return undefined;
+
+			// Check if this user has permission to use this skin
+			if(	config.discord.enabled
+				&& skins.skinList[skinId].premium
+				&& !permissions.memberHasPermission(userId, "PREMIUM_SKINS")) {
+				return undefined;
+			}
+			return skinId;
+		};
 	}
 
 	// State-related functions
@@ -64,13 +88,14 @@ class DefaultRace {
 	//
 
 	// Returns true if the marble/entry limit has been reached
-	addRaceEntry(id, name, marbleAttributes = {}) {
+	addRaceEntry(id, name, attributeString = "") {
 		// Don't add new player entries if the limit has been reached, or players that already entered
 		// Exception: Added bots with a undefined id (only spawnable by devs/operators)
 		if(typeof id === "string" && this.isRaceFull()
 		|| (typeof id === "string" && typeof this.raceEntries.find(playerEntry => id === playerEntry.id) !== "undefined") )
 			return this.isRaceFull();
 
+		let marbleAttributes = this.parseMarbleAttributes(id, attributeString);
 		let entry = new RaceEntry(id, name, marbleAttributes);
 		this.raceEntries.push(entry);
 
@@ -79,7 +104,30 @@ class DefaultRace {
 		return this.isRaceFull();
 	}
 
+	// Returns a marbleAttributes object for the given user id and attributes string
+	parseMarbleAttributes(id, attributeString) {
+		let marbleAttributes = {};
+		let messageSections = attributeString.split(" ");
+		messageSections.length = Math.min(messageSections.length, 4); // At most, check only the first 4 words
+
+		for(let i = 0; i < messageSections.length; i++) {
+			Object.keys(this.marbleAttributeList).forEach( attribute => {
+				// If this attribute hasn't been set yet, check for a match and set the property if we have a valid return value
+				if(typeof marbleAttributes[attribute] === "undefined") {
+					let match = this.marbleAttributeList[attribute](messageSections[i], id);
+					if(typeof match !== "undefined") {
+						marbleAttributes[attribute] = match;
+					}
+				}
+			});
+		}
+
+		return marbleAttributes;
+	}
+
 	onNewRaceEntry(entry) {
+		// By default, set the marble size without using the attributes string (with random chance for a big one) and spawn a marble right away
+		entry.marbleAttributes.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
 		this.spawnMarble(entry);
 	}
 
