@@ -44,9 +44,8 @@ function Round(levelId) {
 }
 
 class DefaultRace {
-	constructor(game, raceControl, levelId) {
+	constructor(game, levelId) {
 		this.game = game;
-		this.raceControl = raceControl;
 		this.raceEntries = [];
 		this.pointContributors = 0;
 		this.marbleEntries = [];
@@ -79,13 +78,8 @@ class DefaultRace {
 	onStateFinished() {
 		this.finalizeRound();
 
+		physicsWorld.clearMarbles();
 		physicsWorld.closeGates();
-		physicsWorld.stopUpdateInterval();
-
-		// Remove all marbles
-		for (let i = this.marbleEntries.length - 1; i >= 0; --i) {
-			this.marbleEntries[i].destroyMarble();
-		}
 	}
 
 	//
@@ -118,9 +112,6 @@ class DefaultRace {
 		entry.marblesEntered++;
 		this.marbleEntries.push(marble);
 		this.game.onSpawnedMarble(marble);
-
-		if(this.marbleEntries.length === 1)
-			physicsWorld.startUpdateInterval(); //TODO: Let physics handle this automatically
 	}
 
 	// Returns true if the player and/or marble limit has been reached for this race

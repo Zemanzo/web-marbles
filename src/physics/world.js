@@ -182,9 +182,10 @@ const physicsWorld = function() {
 			// User index for marbles are their negative entryId
 			physicsMarble.ammoBody.setUserIndex(-entryId);
 
-			// Add to physics world
+			// Add to physics world, start updates if this is the first marble
 			ammoPhysicsWorld.addRigidBody(physicsMarble.ammoBody);
 			_physicsMarbles.push(physicsMarble);
+			if(_physicsMarbles.length === 1) this.startUpdateInterval();
 		},
 
 		destroyMarble(entryId) {
@@ -192,9 +193,18 @@ const physicsWorld = function() {
 				if(_physicsMarbles[i].entryId === entryId) {
 					ammoPhysicsWorld.removeRigidBody(_physicsMarbles[i].ammoBody);
 					_physicsMarbles.splice(i, 1);
+					if(_physicsMarbles.length === 0) this.stopUpdateInterval();
 					return;
 				}
 			}
+		},
+
+		clearMarbles() {
+			for(let i = _physicsMarbles.length - 1; i >= 0; i--) {
+				ammoPhysicsWorld.removeRigidBody(_physicsMarbles[i].ammoBody);
+			}
+			_physicsMarbles = [];
+			this.stopUpdateInterval();
 		},
 
 		// Takes a prefabCollider from project data, and its world transform
