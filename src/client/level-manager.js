@@ -174,6 +174,20 @@ MarbleLevel.prototype.loadLevel = function(data) {
 		try {
 			materials[materialUuid] = (new CustomMaterial(properties)).material;
 			materials[materialUuid].needsUpdate = true;
+
+			// For whatever reason, when the water reflects a custom material, the material keeps recompiling, tanking the framerate. Here's some findings:
+			// - needsUpdate isn't set to false afterwards, so now it's set to false manually
+			// - onBeforeCompile is called even when needsUpdate is set to false (though only once, IF we prevent the recompile when that happens)!
+			//   The original function seems to trigger a recompile regardless of the flag, maybe due to above. Either way, check added
+			// - Compiling once seems to work fine for the water and standard rendering, so I guess this is the fix until it breaks in a future update?
+			// Note to future person: No, it's not about texture encoding, it's all staying default/linear now, including the water render target. That isn't it. You went over this.
+			materials[materialUuid].originalOnBeforeCompile = materials[materialUuid].onBeforeCompile;
+			materials[materialUuid].onBeforeCompile = function(shader, renderer) {
+				if(!this.needsUpdate)
+					return;
+				this.originalOnBeforeCompile(shader, renderer);
+				this.needsUpdate = false;
+			};
 		} catch (error) {
 			console.warn(error);
 		}
@@ -270,8 +284,6 @@ MarbleLevel.prototype.loadLevel = function(data) {
 						depthPacking: THREE_CONSTANTS.RGBADepthPacking,
 						alphaTest: .5
 					});
-					obj.castShadow = true;
-					obj.receiveShadow = true;
 				}
 			});
 			this.levelObjects.add(clone);
@@ -313,7 +325,7 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 			alpha: 1.0,
 			sunDirection: sunLight.position.clone().normalize(),
 			sunColor: 0xffffff,
-			waterColor: 0x001e0f,
+			waterColor: 0x000f20,
 			distortionScale: 3.7,
 			fog
 		}
@@ -322,11 +334,6 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 	this.waterObject.rotation.x = -Math.PI / 2;
 	this.waterObject.position.y = waterLevel;
 	this.waterObject.material.uniforms.size.value = 8;
-
-	// Sets the water's render target output to the same encoding type as the renderer's, fixing the shader recompile issue
-	// NOTE: What we mean to modify here is renderTarget.texture, which we don't have access to
-	// But luckily we can get to the texture through the material's uniforms :D
-	this.waterObject.material.uniforms[ "mirrorSampler" ].value.encoding = THREE_CONSTANTS.GammaEncoding;
 
 	let originalOnBeforeRender = this.waterObject.onBeforeRender;
 	this.waterObject.onBeforeRender = function(renderer, scene, camera) {
@@ -339,6 +346,14 @@ function Water(parent, sunLight, waterLevel = 0, fog = false) {
 		parent.levelObjects.visible = true;
 		marbleManager.marbleGroup.visible = true;
 		camera.layers.enable(renderCore.SPRITE_LAYER);
+
+		// Darkening the water by applying tone-mapping
+		renderer.toneMapping = THREE_CONSTANTS.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 0.5;
+	};
+	this.waterObject.onAfterRender = function(renderer) {
+		renderer.toneMapping = THREE_CONSTANTS.NoToneMapping;
+		renderer.toneMappingExposure = 1;
 	};
 }
 
@@ -366,10 +381,19 @@ function Sky(parameters = {}) {
 
 	let uniforms = this.skyObject.material.uniforms;
 	uniforms.turbidity.value = 10;
-	uniforms.rayleigh.value = 2;
-	uniforms.luminance.value = 1;
+	uniforms.rayleigh.value = 1;
 	uniforms.mieCoefficient.value = 0.005;
-	uniforms.mieDirectionalG.value = 0.8;
+	uniforms.mieDirectionalG.value = 0.999;
+
+	// Adjust exposure only for the sky object
+	this.skyObject.onBeforeRender = function(renderer) {
+		renderer.toneMapping = THREE_CONSTANTS.ACESFilmicToneMapping;
+		renderer.toneMappingExposure = 0.25;
+	};
+	this.skyObject.onAfterRender = function(renderer) {
+		renderer.toneMapping = THREE_CONSTANTS.NoToneMapping;
+		renderer.toneMappingExposure = 1;
+	};
 
 	this.parameters = parameters;
 	this.parameters.distance	= !isNaN(parameters.distance)	 ? parameters.distance	  : 4000;

@@ -469,6 +469,7 @@ function TrackingCamera(
 				);
 			}
 		}
+		this.camera.rotation.z = 0; // Ensure the camera doesn't "roll" and remains upright
 	};
 
 	if (options.enabledByDefault) {
