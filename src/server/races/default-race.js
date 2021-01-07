@@ -61,8 +61,9 @@ class DefaultRace {
 	onStateEnter() {
 	}
 
+	// Returns a promise that resolves once preparation has finished, or null if this state can be skipped
 	onStatePreparing() {
-		// TODO: Currently unused, but could be useful for some race types in the future
+		return null;
 	}
 
 	onStateStarting() {

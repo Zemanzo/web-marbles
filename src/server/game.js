@@ -169,6 +169,10 @@ let game = function() {
 			stateName = "STATE_ENTER";
 			_onStateEnter();
 			break;
+		case gameConstants.STATE_PREPARING:
+			stateName = "STATE_PREPARING";
+			_onStatePreparing();
+			break;
 		case gameConstants.STATE_STARTING:
 			stateName = "STATE_STARTING";
 			_onStateStarting();
@@ -201,8 +205,24 @@ let game = function() {
 	let _onStateEnter = function() {
 		_enterPeriodStart = Date.now();
 		// Start the game after the entering period is over
-		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_STARTING); }, config.marbles.rules.enterPeriod * 1000);
+		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_PREPARING); }, config.marbles.rules.enterPeriod * 1000);
 		_currentRace.onStateEnter();
+	};
+
+	let _onStatePreparing = function() {
+		// The race returns a promise if preparation is needed, or null if this state can be skipped
+		let prepPromise = _currentRace.onStatePreparing();
+		if(!prepPromise) {
+			log.info("Skipped preparation state");
+			_setCurrentGameState(gameConstants.STATE_STARTING);
+		} else {
+			prepPromise.then( () => {
+				_setCurrentGameState(gameConstants.STATE_STARTING);
+			}).catch( (error) => {
+				log.error(`Unable to prepare race: ${error}`);
+				game.end(false);
+			});
+		}
 	};
 
 	let _onStateStarting = function() {
@@ -331,7 +351,7 @@ let game = function() {
 				// Start the race countdown if no other players can join
 				// Or start the enter period timeout if this was the first entry
 				if(isRaceFull && (_currentGameState === gameConstants.STATE_WAITING || _currentGameState === gameConstants.STATE_ENTER)) {
-					_setCurrentGameState(gameConstants.STATE_STARTING);
+					_setCurrentGameState(gameConstants.STATE_PREPARING);
 					_gameplaySocket.emit(JSON.stringify({
 						content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
 						classNames: "red exclamation"
@@ -359,7 +379,7 @@ let game = function() {
 		// Manually starts the race when in a valid state
 		start() {
 			if (_currentGameState === gameConstants.STATE_ENTER || _currentGameState === gameConstants.STATE_WAITING) {
-				_setCurrentGameState(gameConstants.STATE_STARTING);
+				_setCurrentGameState(gameConstants.STATE_PREPARING);
 			}
 		},
 
