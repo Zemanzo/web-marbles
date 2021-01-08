@@ -355,7 +355,7 @@ let game = function() {
 						content: "The maximum amount of marbles has been hit! No more marbles can be entered for this round.",
 						classNames: "red exclamation"
 					}));
-					log.info(`We reached the marble limit! (${_currentRace.raceEntries.length}/${config.marbles.rules.maxPlayerCount} entries, ${_currentRace.marbleEntries.length}/${config.marbles.rules.maxMarbleCount} marbles)`);
+					log.info(`We reached the marble limit! (${_currentRace.raceEntries.length}/${config.marbles.rules.maxPlayerCount} entries, ${_currentRace.getProjectedMarbleCount()}/${config.marbles.rules.maxMarbleCount} marbles)`);
 				}
 				else if(_currentGameState === gameConstants.STATE_WAITING)
 					_setCurrentGameState(gameConstants.STATE_ENTER);

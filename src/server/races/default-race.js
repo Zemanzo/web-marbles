@@ -164,8 +164,13 @@ class DefaultRace {
 
 	// Returns true if the player and/or marble limit has been reached for this race
 	isRaceFull() {
-		return this.marbleEntries.length >= config.marbles.rules.maxMarbleCount
+		return this.getProjectedMarbleCount() >= config.marbles.rules.maxMarbleCount
 			|| this.raceEntries.length >= config.marbles.rules.maxPlayerCount;
+	}
+
+	// Returns the current/expected marble count for the race
+	getProjectedMarbleCount() {
+		return this.raceEntries.length; // By default, we have one marble per entry
 	}
 
 	onMarbleFinished(entryId) {
