@@ -213,7 +213,6 @@ let game = function() {
 		// The race returns a promise if preparation is needed, or null if this state can be skipped
 		let prepPromise = _currentRace.onStatePreparing();
 		if(!prepPromise) {
-			log.info("Skipped preparation state");
 			_setCurrentGameState(gameConstants.STATE_STARTING);
 		} else {
 			prepPromise.then( () => {

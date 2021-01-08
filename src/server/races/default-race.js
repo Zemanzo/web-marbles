@@ -6,6 +6,7 @@ const db = require("../database/manager");
 const physicsWorld = require("../../physics/world");
 const skins = require("../skins");
 const permissions = require("../chat/permissions");
+const utility = require("../../utility");
 
 // Object containing all race data to be recorded in the database
 function Round(levelId) {
@@ -33,7 +34,9 @@ class DefaultRace {
 
 		this.round = new Round(levelId);
 
+		// Contains a set of functions that returns a valid value if the passed attribute string can be parsed correctly
 		this.marbleAttributeList = {};
+		this.defaultMarbleAttributeList = {}; // Similar to above, but sets defaults for attributes that were not set/provided by the user
 
 		// Define default marble attributes
 		this.marbleAttributeList.color = function(attribute) {
@@ -41,6 +44,10 @@ class DefaultRace {
 			let match = attribute.match(colorRegEx);
 			return match === null ? undefined : match[0];
 		};
+		this.defaultMarbleAttributeList.color = function() {
+			return utility.randomHexColor();
+		};
+
 		this.marbleAttributeList.skinId = function(attribute, userId) {
 			let skinId = skins.idList[attribute];
 			if (typeof skinId === "undefined")
@@ -54,9 +61,19 @@ class DefaultRace {
 			}
 			return skinId;
 		};
+		this.defaultMarbleAttributeList.skinId = function() {
+			return "default";
+		};
+
+		// 2% chance for a entry's marbles to be of a random size between .3 and .6
+		this.defaultMarbleAttributeList.size = function() {
+			return Math.random() > .98 ? (.3 + Math.random() * .3) : 0.2;
+		};
 	}
 
+	//
 	// State-related functions
+	//
 
 	onStateEnter() {
 	}
@@ -123,12 +140,18 @@ class DefaultRace {
 			});
 		}
 
+		// Set any default attributes that are (still) undefined
+		Object.keys(this.defaultMarbleAttributeList).forEach( attribute => {
+			if(typeof marbleAttributes[attribute] === "undefined") {
+				marbleAttributes[attribute] = this.defaultMarbleAttributeList[attribute]();
+			}
+		});
+
 		return marbleAttributes;
 	}
 
 	onNewRaceEntry(entry) {
-		// By default, set the marble size without using the attributes string (with random chance for a big one) and spawn a marble right away
-		entry.marbleAttributes.size = (Math.random() > .98 ? (.3 + Math.random() * .3) : false) || 0.2;
+		// By default, spawn a marble right away
 		this.spawnMarble(entry);
 	}
 
@@ -150,7 +173,7 @@ class DefaultRace {
 		if(marble.finished)
 			return;
 
-		let finishTime = Date.now(); // TODO: May be *slightly* inaccurate, more so in laggy situations. Maybe prefer frame-counting in physics instead
+		let finishTime = Date.now();
 		// Set their rank and final time
 		marble.rank = this.marblesFinished++;
 		marble.time = finishTime - this.round.start;

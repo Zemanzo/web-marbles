@@ -1,4 +1,3 @@
-const utility = require("../../utility");
 const skins = require("../skins");
 const physicsWorld = require("../../physics/world");
 
@@ -14,7 +13,7 @@ function Marble(id, entryId, name, attributes = {}) {
 
 	// Check if skin supports a custom color
 	if(skins.skinList[this.skinId].allowCustomColor) {
-		this.color = attributes.color || utility.randomHexColor();
+		this.color = attributes.color || "#ffffff";
 	} else {
 		this.color = "#ffffff";
 	}
