@@ -199,7 +199,7 @@ let game = function() {
 
 	let _onStateWaiting = function() {
 		// Create new race
-		_currentRace = new DefaultRace(game, _currentLevel.levelId);
+		_currentRace = new DefaultRace(game, _currentLevel.getLevelId());
 	};
 
 	let _onStateEnter = function() {
