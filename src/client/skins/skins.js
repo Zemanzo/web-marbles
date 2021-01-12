@@ -3,11 +3,12 @@ import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
 import { marbleSkins } from "../marble-skins";
 import { cameras } from "../render/cameras";
+import { updateManager } from "../update-manager";
 import domReady from "../dom-ready";
 
 // Set up core (rendering, level & marble management)
 renderCore.initialize(cameras.CAMERA_FREE);
-renderCore.updateCallback = function(deltaTime) {
+let update = function(deltaTime) {
 	levelManager.activeLevel.update(deltaTime);
 
 	if (_rotateMarbles) {
@@ -75,4 +76,5 @@ domReady.then(() => {
 	document.getElementById("toggleRotate").addEventListener("change", function() {
 		_rotateMarbles = this.checked;
 	}, false);
+	updateManager.addUpdateCallback(update);
 });

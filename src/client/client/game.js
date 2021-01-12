@@ -5,6 +5,8 @@ import { userState } from "../user-state";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
 import { HUDNotification } from "./hud-notification";
+import { updateManager } from "../update-manager";
+import { networking } from "./networking";
 import * as gameConstants from "../../game-constants.json";
 
 let game = function() {
@@ -92,6 +94,11 @@ let game = function() {
 		}
 	};
 
+	let _update = function(deltaTime) {
+		levelManager.activeLevel.update(deltaTime);
+		networking.update(deltaTime);
+	};
+
 	return {
 		// Returns a Promise that resolves once initialization is complete
 		// Can be called multiple times but will initialize only once
@@ -110,6 +117,7 @@ let game = function() {
 					_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
 					_DOMElements.resultsList = document.getElementById("resultsList");
 					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+					updateManager.addUpdateCallback(_update);
 				});
 			}
 			return _initPromise;

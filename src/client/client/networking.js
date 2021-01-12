@@ -6,6 +6,7 @@ import * as gameConstants from "../../game-constants.json";
 import { marbleManager } from "../marble-manager";
 import { Vector3 } from "three";
 import * as msgPack from "msgpack-lite";
+import { updateManager } from "../update-manager";
 
 let networking = function() {
 	let _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
@@ -31,8 +32,10 @@ let networking = function() {
 			let contents = msgPack.decode(new Uint8Array(event.data));
 			_updateBuffer.push(contents);
 
+			// Trigger normal progression
+			updateManager.triggerUpdate();
+
 			// Force progression if buffer gets too large
-			// This may happen frequently with inactive tabs
 			while(_updateBuffer.length > config.maxBufferSize) {
 				_processGameEvents(_updateBuffer[0]);
 				_updateBuffer.splice(0, 1);
