@@ -8,8 +8,8 @@ import { Vector3 } from "three";
 import * as msgPack from "msgpack-lite";
 import { updateManager } from "../update-manager";
 
-let networking = function() {
-	let _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
+const networking = function() {
+	const _wsUri = `ws${config.ssl ? "s" : ""}://${window.location.hostname}${config.websockets.localReroute ? "" : `:${config.websockets.port}`}/ws/gameplay`;
 	let _ws = null;
 
 	let _updateBuffer = []; // Array of game updates, each containing events and marble data
@@ -17,7 +17,24 @@ let networking = function() {
 	let _desiredBufferSize = config.defaultBufferSize; // Desired buffer size
 	let _previousMarblePositions = null;
 
-	let _processMessageEvent = function(event) {
+	// Page visibility logic. If the page is hidden, the network buffer will fast-forward when a race ends
+	// Based on https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API example code
+	let isPageHidden = false;
+	let hiddenVarName, visibilityChangeEventName;
+	if(typeof document.hidden !== "undefined") {
+		hiddenVarName = "hidden";
+		visibilityChangeEventName = "visibilitychange";
+	} else if(typeof document.msHidden !== "undefined") {
+		hiddenVarName = "msHidden";
+		visibilityChangeEventName = "msvisibilitychange";
+	} else if(typeof document.webkitHidden !== "undefined") {
+		hiddenVarName = "webkitHidden";
+		visibilityChangeEventName = "webkitvisibilitychange";
+	}
+
+	document.addEventListener(visibilityChangeEventName, () => {isPageHidden = document[hiddenVarName];}, false);
+
+	const _processMessageEvent = function(event) {
 		if(typeof event.data === "string") {
 			// This should only be a HUD Notification
 			let message = JSON.parse(event.data);
@@ -35,6 +52,15 @@ let networking = function() {
 			// Trigger normal progression
 			updateManager.triggerUpdate();
 
+			// Fast-forward when the page is inactive and the race has ended
+			if(isPageHidden && contents.g === gameConstants.STATE_FINISHED) {
+				while(_updateBuffer.length > 0) {
+					_processGameEvents(_updateBuffer[0]);
+					_updateBuffer.splice(0, 1);
+					if(_timeDeltaRemainder !== null) _timeDeltaRemainder = 0;
+				}
+			}
+
 			// Force progression if buffer gets too large
 			while(_updateBuffer.length > config.maxBufferSize) {
 				_processGameEvents(_updateBuffer[0]);
@@ -45,7 +71,7 @@ let networking = function() {
 		}
 	};
 
-	let _processGameEvents = function(thisUpdate) {
+	const _processGameEvents = function(thisUpdate) {
 		// Update server constants
 		if(thisUpdate.s !== undefined) {
 			game.setServerConstants(thisUpdate.s[0], thisUpdate.s[1]);

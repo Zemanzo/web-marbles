@@ -8,7 +8,7 @@ import domReady from "../dom-ready";
 
 // Set up core (rendering, level & marble management)
 renderCore.initialize(cameras.CAMERA_FREE);
-let update = function(deltaTime) {
+const update = function(deltaTime) {
 	levelManager.activeLevel.update(deltaTime);
 
 	if (_rotateMarbles) {

@@ -110,10 +110,10 @@ EditorObject.prototype.setName = function(name) {
 };
 
 
-let editor = function() {
+const editor = function() {
 	let _activeTab = 2;
 
-	let _update = function(deltaTime) {
+	const _update = function(deltaTime) {
 		levelManager.activeLevel.update(deltaTime);
 	};
 

@@ -1,6 +1,6 @@
 import domReady from "./dom-ready";
 
-let updateManager = function() {
+const updateManager = function() {
 	let _previousTime = Date.now();
 	let _updateFunctions = [];
 

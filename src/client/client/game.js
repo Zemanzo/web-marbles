@@ -9,8 +9,8 @@ import { updateManager } from "../update-manager";
 import { networking } from "./networking";
 import * as gameConstants from "../../game-constants.json";
 
-let game = function() {
-	let _audio = {
+const game = function() {
+	const _audio = {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
 	};
@@ -35,7 +35,7 @@ let game = function() {
 
 		_marbleBeingTracked = null;
 
-	let _trackMarble = function(marble, forceTracking) {
+	const _trackMarble = function(marble, forceTracking) {
 		if (forceTracking) {
 			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
 		}
@@ -61,7 +61,7 @@ let game = function() {
 	};
 
 	// Starts the "enter marbles now" visual timer. timeLeft in milliseconds
-	let _startEnterCountdown = function(timerValue) {
+	const _startEnterCountdown = function(timerValue) {
 		// Make sure it only runs once
 		if(_enterCountdownTimer !== null) clearInterval(_enterCountdownTimer);
 
@@ -87,14 +87,14 @@ let game = function() {
 		}, timerValue % 1000); // milliseconds only, i.e. 23941 becomes 941
 	};
 
-	let _animateRoundTimer = function() {
+	const _animateRoundTimer = function() {
 		if (_roundTimerIsVisible) {
 			requestAnimationFrame(_animateRoundTimer);
 			_DOMElements.timer.innerText = ((Date.now() - _roundTimerStartDate) * .001).toFixed(1);
 		}
 	};
 
-	let _update = function(deltaTime) {
+	const _update = function(deltaTime) {
 		levelManager.activeLevel.update(deltaTime);
 		networking.update(deltaTime);
 	};
