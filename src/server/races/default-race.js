@@ -35,39 +35,42 @@ class DefaultRace {
 		this.round = new Round(levelId);
 
 		// Contains a set of functions that returns a valid value if the passed attribute string can be parsed correctly
-		this.marbleAttributeList = {};
-		this.defaultMarbleAttributeList = {}; // Similar to above, but sets defaults for attributes that were not set/provided by the user
+		// Attributes/functions can be replaced/removed/added as needed
+		this.marbleAttributeList = {
+			color: {
+				userValue: (userId, attribute) => {
+					const colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
+					let match = attribute.match(colorRegEx);
+					return match === null ? undefined : match[0];
+				},
+				defaultValue: () => {
+					return utility.randomHexColor();
+				}
+			},
+			size: {
+				defaultValue: () => {
+					// 2% chance for a entry's marbles to be of a random size between .3 and .6
+					return Math.random() > .98 ? (.3 + Math.random() * .3) : 0.2;
+				}
+			},
+			skinId: {
+				userValue: (userId, attribute) => {
+					let skinId = skins.idList[attribute];
+					if (typeof skinId === "undefined")
+						return undefined;
 
-		// Define default marble attributes
-		this.marbleAttributeList.color = function(attribute) {
-			const colorRegEx = /#(?:[0-9a-fA-F]{3}){1,2}$/g;
-			let match = attribute.match(colorRegEx);
-			return match === null ? undefined : match[0];
-		};
-		this.defaultMarbleAttributeList.color = function() {
-			return utility.randomHexColor();
-		};
-
-		this.marbleAttributeList.skinId = function(attribute, userId) {
-			let skinId = skins.idList[attribute];
-			if (typeof skinId === "undefined")
-				return undefined;
-
-			// Check if this user has permission to use this skin
-			if(	config.discord.enabled
-				&& skins.skinList[skinId].premium
-				&& !permissions.memberHasPermission(userId, "PREMIUM_SKINS")) {
-				return undefined;
+					// Check if this user has permission to use this skin
+					if(	config.discord.enabled
+						&& skins.skinList[skinId].premium
+						&& !permissions.memberHasPermission(userId, "PREMIUM_SKINS")) {
+						return undefined;
+					}
+					return skinId;
+				},
+				defaultValue: () => {
+					return "default";
+				}
 			}
-			return skinId;
-		};
-		this.defaultMarbleAttributeList.skinId = function() {
-			return "default";
-		};
-
-		// 2% chance for a entry's marbles to be of a random size between .3 and .6
-		this.defaultMarbleAttributeList.size = function() {
-			return Math.random() > .98 ? (.3 + Math.random() * .3) : 0.2;
 		};
 	}
 
@@ -129,11 +132,13 @@ class DefaultRace {
 		let messageSections = attributeString.split(" ").filter( (attr) => {return attr != "";}); // Split, filter out additional whitespaces
 		messageSections.length = Math.min(messageSections.length, 4); // At most, check only the first 4 words
 
+		// Set attributes based on user input
 		for(let i = 0; i < messageSections.length; i++) {
 			Object.keys(this.marbleAttributeList).forEach( attribute => {
-				// If this attribute hasn't been set yet, check for a match and set the property if we have a valid return value
-				if(typeof marbleAttributes[attribute] === "undefined") {
-					let match = this.marbleAttributeList[attribute](messageSections[i], id);
+				// If this attribute hasn't been set yet and supports user input, check for a match and set the property if we have a valid return value
+				if(typeof marbleAttributes[attribute] === "undefined"
+				&& typeof this.marbleAttributeList[attribute].userValue !== "undefined") {
+					let match = this.marbleAttributeList[attribute].userValue(id, messageSections[i]);
 					if(typeof match !== "undefined") {
 						marbleAttributes[attribute] = match;
 					}
@@ -142,9 +147,10 @@ class DefaultRace {
 		}
 
 		// Set any default attributes that are (still) undefined
-		Object.keys(this.defaultMarbleAttributeList).forEach( attribute => {
-			if(typeof marbleAttributes[attribute] === "undefined") {
-				marbleAttributes[attribute] = this.defaultMarbleAttributeList[attribute]();
+		Object.keys(this.marbleAttributeList).forEach( attribute => {
+			if(typeof marbleAttributes[attribute] === "undefined"
+			&& typeof this.marbleAttributeList[attribute].defaultValue !== "undefined") {
+				marbleAttributes[attribute] = this.marbleAttributeList[attribute].defaultValue(id);
 			}
 		});
 
