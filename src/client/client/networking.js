@@ -18,21 +18,10 @@ const networking = function() {
 	let _previousMarblePositions = null;
 
 	// Page visibility logic. If the page is hidden, the network buffer will fast-forward when a race ends
-	// Based on https://developer.mozilla.org/en-US/docs/Web/API/Page_Visibility_API example code
+	// https://developer.mozilla.org/en-US/docs/Web/API/Document/visibilityState
 	let isPageHidden = false;
-	let hiddenVarName, visibilityChangeEventName;
-	if(typeof document.hidden !== "undefined") {
-		hiddenVarName = "hidden";
-		visibilityChangeEventName = "visibilitychange";
-	} else if(typeof document.msHidden !== "undefined") {
-		hiddenVarName = "msHidden";
-		visibilityChangeEventName = "msvisibilitychange";
-	} else if(typeof document.webkitHidden !== "undefined") {
-		hiddenVarName = "webkitHidden";
-		visibilityChangeEventName = "webkitvisibilitychange";
-	}
-
-	document.addEventListener(visibilityChangeEventName, () => {isPageHidden = document[hiddenVarName];}, false);
+	document.addEventListener("visibilitychange", () => {isPageHidden = document.visibilityState === "hidden";}, false);
+	window.addEventListener("pagehide", () => {isPageHidden = document.visibilityState === "hidden";}, false); // Safari fix, which doesn't trigger the visibilitychange event
 
 	const _processMessageEvent = function(event) {
 		if(typeof event.data === "string") {
