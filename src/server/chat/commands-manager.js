@@ -24,6 +24,7 @@ const commandsManager = function() {
 							return;
 						}
 						commandObject.lastUse = Date.now();
+						messageContent = messageContent.substring(commandObject.commandString.length + 1); // Remove "![command]" from the message content
 						commandObject.action(messageContent, id, username, channel || _defaultChannel);
 					}
 				}

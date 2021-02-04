@@ -110,8 +110,9 @@ class DefaultRace {
 		// Don't add new player entries if the limit has been reached, or players that already entered
 		// Exception: Added bots with a undefined id (only spawnable by devs/operators)
 		if(typeof id === "string" && this.isRaceFull()
-		|| (typeof id === "string" && typeof this.raceEntries.find(playerEntry => id === playerEntry.id) !== "undefined") )
+		|| (typeof id === "string" && typeof this.raceEntries.find(playerEntry => id === playerEntry.id) !== "undefined") ) {
 			return this.isRaceFull();
+		}
 
 		let marbleAttributes = this.parseMarbleAttributes(id, attributeString);
 		let entry = new RaceEntry(id, name, marbleAttributes);
@@ -125,7 +126,7 @@ class DefaultRace {
 	// Returns a marbleAttributes object for the given user id and attributes string
 	parseMarbleAttributes(id, attributeString) {
 		let marbleAttributes = {};
-		let messageSections = attributeString.split(" ");
+		let messageSections = attributeString.split(" ").filter( (attr) => {return attr != "";}); // Split, filter out additional whitespaces
 		messageSections.length = Math.min(messageSections.length, 4); // At most, check only the first 4 words
 
 		for(let i = 0; i < messageSections.length; i++) {
@@ -175,8 +176,9 @@ class DefaultRace {
 
 	onMarbleFinished(entryId) {
 		let marble = this.marbleEntries[entryId];
-		if(marble.finished)
+		if(marble.finished) {
 			return;
+		}
 
 		let finishTime = Date.now();
 		// Set their rank and final time
@@ -185,8 +187,9 @@ class DefaultRace {
 		marble.finished = true;
 
 		// If this is the first finished marble, record it in the round data
-		if(this.marblesFinished === 1)
+		if(this.marblesFinished === 1) {
 			this.round.timeBest = marble.time;
+		}
 
 		// Get raceEntry that belongs to this marble
 		let raceEntry = this.raceEntries.find((raceEntry) => {
@@ -195,12 +198,14 @@ class DefaultRace {
 
 		if (raceEntry) {
 			// Add their best time to the entry (so it can be stored in the case of a PB)
-			if(typeof raceEntry.time === "undefined")
+			if(typeof raceEntry.time === "undefined") {
 				raceEntry.time = marble.time;
+			}
 
 			// Award points if eligible
-			if(raceEntry.earnsPoints)
+			if(raceEntry.earnsPoints) {
 				this.awardPoints(raceEntry, marble);
+			}
 		}
 	}
 
@@ -270,8 +275,9 @@ class DefaultRace {
 				}
 				scoreResults.push(player.id, player.pointsEarned, pointTotal, record);
 			}
-			if(scoreResults.length > 0)
+			if(scoreResults.length > 0) {
 				this.game.onRaceResults(scoreResults);
+			}
 		}
 	}
 }

@@ -11,7 +11,7 @@ const commands = function() {
 				game.addRaceEntry(
 					id,
 					username,
-					messageContent.substr(7)
+					messageContent
 				);
 			}
 		},
@@ -56,12 +56,12 @@ const commands = function() {
 			commandString: "lotsofbots",
 			permission: "DEVELOPER_COMMANDS",
 			action: function(messageContent) {
-				let amount = Math.min(100, parseInt(messageContent.substr(11)) || 10);
+				let amount = Math.min(100, parseInt(messageContent) || 10);
 				for (let i = 0; i < amount; i++) {
 					game.addRaceEntry(
 						undefined,
 						undefined,
-						messageContent.substr(11)
+						messageContent
 					);
 				}
 			}
@@ -71,7 +71,7 @@ const commands = function() {
 			commandString: "level",
 			permission: "DEVELOPER_COMMANDS",
 			action: function(messageContent) {
-				game.changeLevel(messageContent.substr(7));
+				game.changeLevel(messageContent);
 			}
 		}
 	];

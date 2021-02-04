@@ -8,7 +8,7 @@ const msgPack = require("msgpack-lite");
 
 const DefaultRace = require("./races/default-race");
 
-let game = function() {
+const game = function() {
 	let _currentGameState = gameConstants.STATE_WAITING;
 	let _currentLevel = null;
 	let _currentRace = null;
@@ -30,7 +30,7 @@ let game = function() {
 	let _netGameStatePayload = null;
 
 	// Triggers a network update loop if it hasn't started yet
-	let _triggerNetworkUpdate = function() {
+	const _triggerNetworkUpdate = function() {
 		if(!_netUpdateHandle) {
 			// Start asap, but not during the code in which this function is called
 			_netUpdateHandle = setTimeout( _netUpdate, 0, Date.now());
@@ -38,7 +38,7 @@ let game = function() {
 	};
 
 	// Network update function. Sets a timer to call itself if subsequent updates are desired
-	let _netUpdate = function(lastUpdate, combinedDelay) {
+	const _netUpdate = function(lastUpdate, combinedDelay) {
 		let now = Date.now();
 		let delta = now - lastUpdate;
 
@@ -140,7 +140,7 @@ let game = function() {
 		}
 	};
 
-	let _getInitialDataPayload = function() {
+	const _getInitialDataPayload = function() {
 		// Encode initial data payload once. Resets if the initial data changes
 		if(!_netGameStatePayload) {
 			_netGameStatePayload = msgPack.encode(_netGameState);
@@ -149,7 +149,7 @@ let game = function() {
 	};
 
 	// Sets currentGameState and informs all connected clients about the state change
-	let _setCurrentGameState = function(newState) {
+	const _setCurrentGameState = function(newState) {
 		_currentGameState = newState;
 		_netGameUpdate.g = newState;
 		_triggerNetworkUpdate();
@@ -194,22 +194,22 @@ let game = function() {
 			log.info("Current state: ".magenta, stateName);
 	};
 
-	let _onStateLoading = function() {
+	const _onStateLoading = function() {
 	};
 
-	let _onStateWaiting = function() {
+	const _onStateWaiting = function() {
 		// Create new race
 		_currentRace = new DefaultRace(game, _currentLevel.getLevelId());
 	};
 
-	let _onStateEnter = function() {
+	const _onStateEnter = function() {
 		_enterPeriodStart = Date.now();
 		// Start the game after the entering period is over
 		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_PREPARING); }, config.marbles.rules.enterPeriod * 1000);
 		_currentRace.onStateEnter();
 	};
 
-	let _onStatePreparing = function() {
+	const _onStatePreparing = function() {
 		// The race returns a promise if preparation is needed, or null if this state can be skipped
 		let prepPromise = _currentRace.onStatePreparing();
 		if(!prepPromise) {
@@ -224,19 +224,19 @@ let game = function() {
 		}
 	};
 
-	let _onStateStarting = function() {
+	const _onStateStarting = function() {
 		// Wait for the countdown audio to end
 		_gameStateTimeout = setTimeout(() => { _setCurrentGameState(gameConstants.STATE_STARTED); }, _startDelay);
 		_currentRace.onStateStarting();
 	};
 
-	let _onStateStarted = function() {
+	const _onStateStarted = function() {
 		// Set timeout that ends the game if the round takes too long to end (e.g. all marbles getting stuck)
 		_gameStateTimeout = setTimeout( () => { _setCurrentGameState(gameConstants.STATE_FINISHED); }, _currentLevel.gameplay.roundLength * 1000);
 		_currentRace.onStateStarted();
 	};
 
-	let _onStateFinished = function() {
+	const _onStateFinished = function() {
 		// Reset variable here to ensure it is reset during aborts
 		_enterPeriodStart = null;
 
@@ -259,7 +259,7 @@ let game = function() {
 		_currentRace = null;
 	};
 
-	let _onMarbleFinished = function(entryId) {
+	const _onMarbleFinished = function(entryId) {
 		_currentRace.onMarbleFinished(entryId);
 
 		let marble = _currentRace.marbleEntries[entryId];

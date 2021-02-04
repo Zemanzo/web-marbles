@@ -5,7 +5,7 @@ function generateTinyUUID() {
 	let l = 4;
 	let possibilities = Math.pow(charset.length, l);
 	let timeString = (new Date()).getTime().toString();
-	let decimal = parseInt(timeString.substr(timeString.length - possibilities.toString().length)) % possibilities;
+	let decimal = parseInt(timeString.substring(timeString.length - possibilities.toString().length)) % possibilities;
 	while (TUUIDs.indexOf(decimal) !== -1) {
 		decimal++;
 	}
@@ -14,7 +14,7 @@ function generateTinyUUID() {
 	for (let i = 0; i < l; i++) {
 		let remain = decimal % charset.length;
 		decimal = (decimal - remain) / charset.length;
-		tUUID += charset.substr(remain, 1);
+		tUUID += charset.substring(remain, 1);
 	}
 	return tUUID.split("").reverse().join("");
 }
