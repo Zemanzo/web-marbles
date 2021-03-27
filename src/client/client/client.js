@@ -11,10 +11,3 @@ renderCore.initialize(cameras.CAMERA_TRACKING);
 levelManager.initialize();
 marbleManager.initialize();
 game.initialize();
-
-function clientUpdate(deltaTime) {
-	levelManager.activeLevel.update(deltaTime);
-	networking.update(deltaTime);
-}
-
-renderCore.updateCallback = clientUpdate;
