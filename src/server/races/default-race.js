@@ -56,8 +56,9 @@ class DefaultRace {
 			skinId: {
 				userValue: (userId, attribute) => {
 					let skinId = skins.idList[attribute];
-					if (typeof skinId === "undefined")
+					if (typeof skinId === "undefined") {
 						return undefined;
+					}
 
 					// Check if this user has permission to use this skin
 					if(	config.discord.enabled
@@ -129,12 +130,12 @@ class DefaultRace {
 	// Returns a marbleAttributes object for the given user id and attributes string
 	parseMarbleAttributes(id, attributeString) {
 		let marbleAttributes = {};
-		let messageSections = attributeString.split(" ").filter( (attr) => {return attr != "";}); // Split, filter out additional whitespaces
+		let messageSections = attributeString.split(" ").filter( attr => attr !== "" ); // Split, filter out additional whitespaces
 		messageSections.length = Math.min(messageSections.length, 4); // At most, check only the first 4 words
 
 		// Set attributes based on user input
 		for(let i = 0; i < messageSections.length; i++) {
-			Object.keys(this.marbleAttributeList).forEach( attribute => {
+			for (let attribute in this.marbleAttributeList) {
 				// If this attribute hasn't been set yet and supports user input, check for a match and set the property if we have a valid return value
 				if(typeof marbleAttributes[attribute] === "undefined"
 				&& typeof this.marbleAttributeList[attribute].userValue !== "undefined") {
@@ -143,16 +144,16 @@ class DefaultRace {
 						marbleAttributes[attribute] = match;
 					}
 				}
-			});
+			}
 		}
 
 		// Set any default attributes that are (still) undefined
-		Object.keys(this.marbleAttributeList).forEach( attribute => {
+		for (let attribute in this.marbleAttributeList) {
 			if(typeof marbleAttributes[attribute] === "undefined"
 			&& typeof this.marbleAttributeList[attribute].defaultValue !== "undefined") {
 				marbleAttributes[attribute] = this.marbleAttributeList[attribute].defaultValue(id);
 			}
-		});
+		}
 
 		return marbleAttributes;
 	}

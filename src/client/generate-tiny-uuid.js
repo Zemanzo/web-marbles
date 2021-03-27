@@ -14,7 +14,7 @@ function generateTinyUUID() {
 	for (let i = 0; i < l; i++) {
 		let remain = decimal % charset.length;
 		decimal = (decimal - remain) / charset.length;
-		tUUID += charset.substring(remain, 1);
+		tUUID += charset.substring(remain, remain + 1);
 	}
 	return tUUID.split("").reverse().join("");
 }
