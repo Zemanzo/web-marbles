@@ -251,6 +251,11 @@ const game = function() {
 				_startEnterCountdown(additionalData); // TODO: Take ping & buffer into account
 				break;
 
+			// Server is preparing a race start
+			case gameConstants.STATE_PREPARING:
+				_DOMElements.state.innerText = "Getting ready...";
+				break;
+
 			// Marbles can no longer be entered
 			case gameConstants.STATE_STARTING:
 				_DOMElements.gameInfo.className = "starting";

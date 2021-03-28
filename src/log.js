@@ -1,4 +1,5 @@
 const utility = require("./utility.js");
+require("colors"); // Fixes colored text strings for worker thread logging
 
 module.exports = {
 	info: function(message, ...args) {
