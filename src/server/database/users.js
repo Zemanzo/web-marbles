@@ -349,7 +349,7 @@ module.exports = function(db, common, dbEvents) {
 			}
 		},
 
-		// batch update user statistics
+		// batch update user statistics from an array of RaceEntry objects
 		batchUpdateStatistics(batch) {
 			common.beginTransaction.run();
 
@@ -357,15 +357,15 @@ module.exports = function(db, common, dbEvents) {
 				this.incrementUserPoints(user.pointsEarned, user.id);
 
 				this.incrementRoundsEntered(user.id);
-				if (user.finished) {
+				if (user.hasFinished()) {
 					this.incrementRoundsFinished(user.id);
 				} else {
 					this.incrementRoundsNotFinished(user.id);
 				}
 
-				this.incrementMarblesEntered(user.marblesEntered);
-				this.incrementMarblesFinished(user.marblesFinished);
-				this.incrementMarblesNotFinished(user.marblesEntered - user.marblesFinished);
+				this.incrementMarblesEntered(user.getEnteredMarbleCount());
+				this.incrementMarblesFinished(user.getFinishedMarbleCount());
+				this.incrementMarblesNotFinished(user.getEnteredMarbleCount() - user.getFinishedMarbleCount());
 			}
 
 			common.endTransaction.run();

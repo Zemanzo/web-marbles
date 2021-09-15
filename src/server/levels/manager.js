@@ -2,6 +2,7 @@ const fs = require("fs").promises;
 const log = require("../../log");
 const levelIO = require("../../level/level-io");
 const physics = require("../../physics/manager");
+const physicsWorld = require("../../physics/world");
 
 const levelManager = function() {
 	// Level builder helper function
@@ -30,7 +31,7 @@ const levelManager = function() {
 	// Parses level data and loads it as their appropriate physics colliders
 	let _buildLevel = function(levelData) {
 		// Clear previous level data, if any
-		physics.world.clearColliders();
+		physicsWorld.clearColliders();
 		physics.clearShapes();
 
 		for(let key in levelData.models) {
@@ -43,7 +44,7 @@ const levelManager = function() {
 			}
 		}
 
-		physics.world.setGravity(levelData.gameplay.gravity);
+		physicsWorld.setGravity(levelData.gameplay.gravity);
 
 		for (let worldObjectUuid in levelData.worldObjects) {
 			let worldEntity = levelData.worldObjects[worldObjectUuid];
@@ -65,7 +66,7 @@ const levelManager = function() {
 
 				transform.op_mul(prefabEntityTransform); // Modifies "transform"
 
-				physics.world.createCollider(prefabEntity, transform);
+				physicsWorld.createCollider(prefabEntity, transform);
 			}
 		}
 	};
