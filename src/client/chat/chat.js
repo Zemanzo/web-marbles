@@ -45,7 +45,7 @@ domReady.then(() => {
 	let chatMessageTemplate = document.getElementById("messageTemplate");
 
 	// Check for former authentication
-	cookieData = Cookies.getJSON("user_data");
+	cookieData = JSON.parse(Cookies.get("user_data"));
 	checkAuthentication();
 
 	let lastMessageSent = Date.now();
@@ -181,7 +181,7 @@ function authenticationWindow() {
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
 	if (event.data && event.data.success && event.origin === window.location.origin) {
-		cookieData = Cookies.getJSON("user_data");
+		cookieData = JSON.parse(Cookies.get("user_data"));
 		authWindow.close();
 		checkAuthentication();
 
