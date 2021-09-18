@@ -23,7 +23,7 @@ const discordManager = function() {
 			if (user_data) {
 				try {
 					user_data = decodeURIComponent(user_data);
-					user_data = user_data.substr(10);
+					user_data = user_data.substring(10);
 					user_data = JSON.parse(user_data);
 					if (db.user.idIsAuthenticated(user_data.id, user_data.access_token)) {
 						name = (`(${db.user.getUsernameById(user_data.id)})`).yellow;
@@ -103,6 +103,10 @@ const discordManager = function() {
 						.channels.cache.get(config.discord.gameplayChannelId)
 				);
 
+				// Prefetch current member data at the start for role/permission checks
+				permissions.guild.members.fetch()
+					.catch( (error) => {log.warn(`Unable to fetch guild member data at startup: ${error}`);});
+
 				log.info(`DISCORD: ${"Discord bot is ready!".green}`);
 				_discordClient.user.setActivity("Manzo's Marbles", { type: "PLAYING" });
 			}, console.error);
@@ -155,6 +159,7 @@ const discordManager = function() {
 			}, console.error);
 
 			_discordClient.on("guildMemberUpdate", (oldGuildMember, newGuildMember) => {
+				_discordClient.guilds.cache.get(config.discord.permissions.guildId).members.fetch(newGuildMember.id); // Update cache
 				if (oldGuildMember.nickname !== newGuildMember.nickname) {
 					db.user.updateUsernameById(
 						newGuildMember.nickname || newGuildMember.user.username,
@@ -188,7 +193,7 @@ const discordManager = function() {
 
 			// Make an API request to get the access token
 			request.post({
-				url: "https://discordapp.com/api/oauth2/token",
+				url: "https://discord.com/api/oauth2/token",
 				form: {
 					client_id: config.discord.clientId,
 					client_secret: config.discord.clientSecret,
@@ -202,7 +207,7 @@ const discordManager = function() {
 					tokenBody = JSON.parse(token_body);
 
 					return request.get({
-						url: "https://discordapp.com/api/users/@me",
+						url: "https://discord.com/api/users/@me",
 						headers: {
 							"Authorization": `Bearer ${tokenBody.access_token}`
 						}
@@ -244,7 +249,7 @@ const discordManager = function() {
 				if (db.user.idIsAllowedRefresh(req.body.id, req.body.access_token)) {
 					let row = db.user.getTokenById(req.body.id),
 						options = {
-							url: "https://discordapp.com/api/oauth2/token",
+							url: "https://discord.com/api/oauth2/token",
 							form: {
 								client_id: config.discord.clientId,
 								client_secret: config.discord.clientSecret,

@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build server",
+			"type": "shell",
+			"command": "yarn build:server",
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"panel": "shared"
+			}
+		},
+		{
+			"label": "Build client",
+			"type": "shell",
+			"command": "yarn build:client",
+			"group": "build",
+			"presentation": {
+				"reveal": "silent",
+				"revealProblems": "onProblem",
+				"panel": "shared"
+			}
+		}
+	]
+}

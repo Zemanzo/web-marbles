@@ -469,6 +469,7 @@ function TrackingCamera(
 				);
 			}
 		}
+		this.camera.rotation.z = 0; // Ensure the camera doesn't "roll" and remains upright
 	};
 
 	if (options.enabledByDefault) {
@@ -506,7 +507,7 @@ const _lookAtWithReturn = function() {
 		if (parent) {
 			m1.extractRotation(parent.matrixWorld);
 			q1.setFromRotationMatrix(m1);
-			return q2.premultiply(q1.inverse());
+			return q2.premultiply(q1.invert());
 		}
 	};
 }();

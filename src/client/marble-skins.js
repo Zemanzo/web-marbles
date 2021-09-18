@@ -118,7 +118,6 @@ let marbleSkins = function() {
 										_textureLoader.load(
 											`resources/skins/${skinId}/${map}.png`,
 											(texture) => {
-												texture.encoding = THREE_CONSTANTS.GammaEncoding;
 												_skins[skinId][map] = texture;
 												resolve(texture);
 											},

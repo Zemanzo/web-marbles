@@ -1,4 +1,4 @@
-module.exports = function(db, common) {
+module.exports = function(db, common, dbEvents) {
 	return {
 		_idExists: db.prepare("SELECT id FROM users WHERE id = ?"),
 
@@ -54,6 +54,7 @@ module.exports = function(db, common) {
 		updateUsernameById(newName, id) {
 			if (typeof newName === "string") {
 				this._updateUsernameById.run([newName, id]);
+				dbEvents.emit("leaderboardsChanged");
 			}
 		},
 
@@ -348,7 +349,7 @@ module.exports = function(db, common) {
 			}
 		},
 
-		// batch update user statistics
+		// batch update user statistics from an array of RaceEntry objects
 		batchUpdateStatistics(batch) {
 			common.beginTransaction.run();
 
@@ -356,18 +357,19 @@ module.exports = function(db, common) {
 				this.incrementUserPoints(user.pointsEarned, user.id);
 
 				this.incrementRoundsEntered(user.id);
-				if (user.finished) {
+				if (user.hasFinished()) {
 					this.incrementRoundsFinished(user.id);
 				} else {
 					this.incrementRoundsNotFinished(user.id);
 				}
 
-				this.incrementMarblesEntered(user.marblesEntered);
-				this.incrementMarblesFinished(user.marblesFinished);
-				this.incrementMarblesNotFinished(user.marblesEntered - user.marblesFinished);
+				this.incrementMarblesEntered(user.getEnteredMarbleCount());
+				this.incrementMarblesFinished(user.getFinishedMarbleCount());
+				this.incrementMarblesNotFinished(user.getEnteredMarbleCount() - user.getFinishedMarbleCount());
 			}
 
 			common.endTransaction.run();
+			dbEvents.emit("leaderboardsChanged");
 		},
 
 		_getPointsById: db.prepare(
@@ -389,6 +391,27 @@ module.exports = function(db, common) {
 			const params = "?,".repeat(idList.length).slice(0, -1);
 			const statement = db.prepare(`SELECT stat_points_earned, id FROM users WHERE id IN (${params})`);
 			return statement.all(idList);
+		},
+
+		_getTopAlltime: db.prepare(
+			`SELECT
+				username,
+				stat_points_earned,
+				stat_rounds_entered
+			FROM
+				users
+			WHERE
+				stat_points_earned > 0
+			ORDER BY
+				stat_points_earned DESC
+			LIMIT ?`
+		),
+
+		getTopAlltime(limit) {
+			return this._getTopAlltime.all(limit).map((entry, index) => {
+				entry.rank = index + 1;
+				return entry;
+			});
 		}
 	};
 };

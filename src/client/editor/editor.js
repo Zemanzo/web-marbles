@@ -18,6 +18,7 @@ import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
 import { levelManager } from "../level-manager";
 import { marbleManager } from "../marble-manager";
+import { updateManager } from "../update-manager";
 
 
 // Object template used by prefabObject, prefabCollider, and worldObject
@@ -109,8 +110,12 @@ EditorObject.prototype.setName = function(name) {
 };
 
 
-let editor = function() {
+const editor = function() {
 	let _activeTab = 2;
+
+	const _update = function(deltaTime) {
+		levelManager.activeLevel.update(deltaTime);
+	};
 
 	return {
 		elements: {
@@ -133,7 +138,7 @@ let editor = function() {
 			prefabsTab.initialize();
 			worldTab.initialize();
 
-			renderCore.updateCallback = this.update;
+			updateManager.addUpdateCallback(_update);
 
 			// Update version number
 			document.getElementById("editorVersion").innerHTML = `v${levelIO.getCurrentVersion()}`;
@@ -233,10 +238,6 @@ let editor = function() {
 			// Models tab is the active tab on load
 			document.getElementById("properties").firstElementChild.style.marginLeft = "-200%";
 			modelsTab.onTabActive();
-		},
-
-		update: function(deltaTime) {
-			levelManager.activeLevel.update(deltaTime);
 		}
 	};
 }();

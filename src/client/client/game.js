@@ -5,10 +5,12 @@ import { userState } from "../user-state";
 import { renderCore } from "../render/render-core";
 import { cameras } from "../render/cameras";
 import { HUDNotification } from "./hud-notification";
+import { updateManager } from "../update-manager";
+import { networking } from "./networking";
 import * as gameConstants from "../../game-constants.json";
 
-let game = function() {
-	let _audio = {
+const game = function() {
+	const _audio = {
 		start: new Audio("resources/audio/start.mp3"),
 		end: new Audio("resources/audio/end.mp3")
 	};
@@ -33,7 +35,7 @@ let game = function() {
 
 		_marbleBeingTracked = null;
 
-	let _trackMarble = function(marble, forceTracking) {
+	const _trackMarble = function(marble, forceTracking) {
 		if (forceTracking) {
 			renderCore.setCameraStyle(cameras.CAMERA_TRACKING);
 		}
@@ -59,7 +61,7 @@ let game = function() {
 	};
 
 	// Starts the "enter marbles now" visual timer. timeLeft in milliseconds
-	let _startEnterCountdown = function(timerValue) {
+	const _startEnterCountdown = function(timerValue) {
 		// Make sure it only runs once
 		if(_enterCountdownTimer !== null) clearInterval(_enterCountdownTimer);
 
@@ -85,11 +87,17 @@ let game = function() {
 		}, timerValue % 1000); // milliseconds only, i.e. 23941 becomes 941
 	};
 
-	let _animateRoundTimer = function() {
+	const _animateRoundTimer = function() {
 		if (_roundTimerIsVisible) {
 			requestAnimationFrame(_animateRoundTimer);
 			_DOMElements.timer.innerText = ((Date.now() - _roundTimerStartDate) * .001).toFixed(1);
 		}
+	};
+
+	const _update = function(deltaTime) {
+		levelManager.activeLevel.update(deltaTime);
+		networking.update(deltaTime);
+		marbleManager.raycastFromCamera();
 	};
 
 	return {
@@ -110,6 +118,7 @@ let game = function() {
 					_DOMElements.raceLeaderboardAuthorName = _DOMElements.raceLeaderboard.getElementsByClassName("authorName")[0];
 					_DOMElements.resultsList = document.getElementById("resultsList");
 					_DOMElements.resultsListTemplate = document.getElementById("resultsListTemplate");
+					updateManager.addUpdateCallback(_update);
 				});
 			}
 			return _initPromise;
@@ -241,6 +250,11 @@ let game = function() {
 				_DOMElements.state.innerText = "Enter marbles now!";
 				// Start enter period countdown. additionalData is time left in ms
 				_startEnterCountdown(additionalData); // TODO: Take ping & buffer into account
+				break;
+
+			// Server is preparing a race start
+			case gameConstants.STATE_PREPARING:
+				_DOMElements.state.innerText = "Getting ready...";
 				break;
 
 			// Marbles can no longer be entered

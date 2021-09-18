@@ -1,16 +1,22 @@
 import {
 	Scene,
 	WebGLRenderer,
+	PerspectiveCamera,
 	Mesh,
 	BoxBufferGeometry,
 	MeshStandardMaterial,
 	Vector2
 } from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { ShaderPass } from "three/examples/jsm/postprocessing/ShaderPass.js";
+import { GammaCorrectionShader } from "three/examples/jsm/shaders/GammaCorrectionShader.js";
 import * as THREE_CONSTANTS from "three/src/constants.js";
 import * as config from "../config";
 import * as Stats from "stats-js";
 import { cameras, FreeCamera, TrackingCamera } from "./cameras";
+import { updateManager } from "../update-manager";
 import domReady from "../dom-ready";
 
 const _GLTFLoader = new GLTFLoader();
@@ -18,33 +24,23 @@ const _GLTFLoader = new GLTFLoader();
 let renderCore = function() {
 	let _renderer = null,
 		_viewport = null, // DOM viewport element
+		_effectComposer = null, // Post-processing pipeline
 		_stats = null,
 		_defaultModel = null,
-		_previousTime = Date.now();
+		_mainCamera = null;
 
 	// Core render loop
 	const _animate = function() {
-		let now = Date.now();
-		let deltaTime = (now - _previousTime) * 0.001; // Time in seconds
-		_previousTime = now;
-
 		// Request new frame
 		requestAnimationFrame(_animate);
 
 		_stats.begin();
 
-		// Make updates
-		renderCore.updateCallback(deltaTime);
-
-		// Update shader uniforms
-		renderCore.shaderUniforms["time"].value += deltaTime;
-
-		if (renderCore.activeCamera.enabled === true) {
-			renderCore.activeCamera.update(deltaTime);
-		}
+		// Make updates before we render
+		updateManager.triggerUpdate();
 
 		// Render the darn thing
-		_renderer.render(renderCore.mainScene, renderCore.activeCamera.camera);
+		_effectComposer.render();
 
 		_stats.end();
 	};
@@ -56,9 +52,10 @@ let renderCore = function() {
 
 	const _onCanvasResize = function() {
 		_renderer.setSize(_viewport.clientWidth, _viewport.clientHeight);
+		_effectComposer.setSize(_viewport.clientWidth, _viewport.clientHeight);
 
-		renderCore.activeCamera.camera.aspect = _viewport.clientWidth / _viewport.clientHeight;
-		renderCore.activeCamera.camera.updateProjectionMatrix();
+		_mainCamera.aspect = _viewport.clientWidth / _viewport.clientHeight;
+		_mainCamera.updateProjectionMatrix();
 	};
 
 	// From https://github.com/mrdoob/three.js/blob/master/examples/js/WebGL.js
@@ -68,6 +65,15 @@ let renderCore = function() {
 			return !!(window.WebGLRenderingContext && (canvas.getContext("webgl") || canvas.getContext("experimental-webgl")));
 		} catch (error) {
 			return false;
+		}
+	};
+
+	const _update = function(deltaTime) {
+		// Update shader uniforms
+		renderCore.shaderUniforms["time"].value += deltaTime;
+
+		if (renderCore.activeCamera.enabled === true) {
+			renderCore.activeCamera.update(deltaTime);
 		}
 	};
 
@@ -102,8 +108,18 @@ let renderCore = function() {
 			} else { // Initialize
 				this.mainScene = new Scene();
 				_renderer = new WebGLRenderer();
-				_renderer.outputEncoding = THREE_CONSTANTS.GammaEncoding;
-				_renderer.gammaFactor = 2.2;
+
+				// Create one main camera
+				_mainCamera = new PerspectiveCamera(
+					75, _renderer.domElement.clientWidth / _renderer.domElement.clientHeight, 0.1, 5000
+				);
+
+				// Set up render/post-process pipeline
+				_effectComposer = new EffectComposer(_renderer);
+				_effectComposer.addPass( new RenderPass(renderCore.mainScene, _mainCamera));
+				let gammaCorrection = new ShaderPass( GammaCorrectionShader );
+				_effectComposer.addPass(gammaCorrection);
+
 				_renderer.debug.checkShaderErrors = false;
 				_defaultModel = new Mesh(
 					new BoxBufferGeometry(1, 1, 1, 1),
@@ -147,14 +163,13 @@ let renderCore = function() {
 				_stats.dom.style.right = "0px";
 
 				// Controls
-				this.trackingCamera = new TrackingCamera(this.mainScene, _renderer, { enabledByDefault: false });
-				this.freeCamera = new FreeCamera(this.mainScene, _renderer, { enabledByDefault: false });
+				this.freeCamera = new FreeCamera(this.mainScene, _renderer, { camera: _mainCamera, enabledByDefault: false });
+				this.trackingCamera = new TrackingCamera(this.mainScene, _renderer, { camera: _mainCamera, enabledByDefault: false });
 
 				this.setCameraStyle(defaultCameraType);
 
 				// Once the DOM is ready, append the renderer DOM element & stats and start animating.
 				return domReady.then(() => {
-					_previousTime = Date.now(); // Update loop starts from this point in time, ignore load time
 					_viewport = document.getElementById("viewport");
 
 					_onCanvasResize();
@@ -169,6 +184,7 @@ let renderCore = function() {
 					_viewport.appendChild(_renderer.domElement);
 					_viewport.appendChild(_stats.dom);
 
+					updateManager.addUpdateCallback(_update);
 					_animate();
 				});
 			}
@@ -221,10 +237,6 @@ let renderCore = function() {
 					node.classList.add("selected");
 				}
 			});
-		},
-
-		updateCallback: function() {
-			// Overridable function for the client and editor to attach their update functions to.
 		},
 
 		updateShadowMap: function() {

@@ -36,7 +36,9 @@ const compression = require("compression");
 const helmet = require("helmet");
 const app = express();
 const http = require("http").Server(app);
-app.use(helmet());
+app.use(helmet({
+	contentSecurityPolicy: false
+}));
 app.use(compression({
 	filter: function() { return true; }
 }));
@@ -117,7 +119,7 @@ if (config.discord.enabled) {
 				let color = req.query.color;
 				let amount = Math.max(parseInt(req.query.amount) || 1, 1);
 				for (let i = 0; i < amount; i++) {
-					game.spawnMarble(undefined, name, color);
+					game.addRaceEntry(undefined, name, color);
 				}
 			}
 			if (req.query.start) {
@@ -151,9 +153,31 @@ app.get("/privacy", function(req, res) {
 	res.render("privacy", { rootUrl: config.network.rootUrl });
 });
 
-app.get("/contact", function(req, res) {
-	res.render("contact", { rootUrl: config.network.rootUrl });
-});
+import Page from "./server/router/page";
+import ContactComponent from "./client/contact/root-component";
+new Page(
+	app,
+	{
+		id: "contact",
+		label: "Contact",
+		description: "Contact information for inqueries regarding the game or website.",
+		isSimplePage: true
+	},
+	ContactComponent
+);
+
+import LeaderboardsPage from "./server/router/leaderboards-page";
+import LeaderboardsComponent from "./client/leaderboards/root-component";
+new LeaderboardsPage(
+	app,
+	{
+		id: "leaderboards",
+		label: "Leaderboards",
+		description: "An overview of the current rankings for web-marbles",
+		useIcons: true
+	},
+	LeaderboardsComponent
+);
 
 app.use(function(req, res) {
 	res.status(404)

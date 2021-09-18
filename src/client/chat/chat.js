@@ -168,7 +168,7 @@ domReady.then(() => {
 
 let authWindow;
 function authenticationWindow() {
-	let authorizationUrl = "https://discordapp.com/api/oauth2/authorize?response_type=code";
+	let authorizationUrl = "https://discord.com/api/oauth2/authorize?response_type=code";
 	authorizationUrl += `&client_id=${this.dataset.client_id}`;
 	authorizationUrl += `&scope=${this.dataset.scope}`;
 	authorizationUrl += `&redirect_uri=${this.dataset.redirect_uri}`;
