@@ -347,6 +347,10 @@ function TrackingCamera(
 	const _YOffset = 7;
 	const _minZoom = .2;
 	const _maxZoom = 3;
+	const _zoomChangePerPixel = .002;
+	const _zoomChangePerLine = _zoomChangePerPixel * 16;
+	const _zoomChangeFineGrainModifier = .25;
+	const _zoomChangePerKeyboardStep = .2;
 
 	/**
 	 * Enables the controls
@@ -365,8 +369,8 @@ function TrackingCamera(
 				_self.distanceMultiplier = Math.min(_maxZoom, Math.max(_minZoom,
 					_self.distanceMultiplier + (
 						event.deltaY
-						* (event.deltaMode !== 0 ? 0.032 : .002)
-						* (event.shiftKey === true ? .25 : 1)
+						* (event.deltaMode !== 0 ? _zoomChangePerLine : _zoomChangePerPixel)
+						* (event.shiftKey === true ? _zoomChangeFineGrainModifier : 1)
 					)
 				));
 			}
@@ -377,11 +381,11 @@ function TrackingCamera(
 				switch(event.code) {
 				case "Equal":
 				case "NumpadAdd":
-					_self.distanceMultiplier = Math.max(_minZoom, _self.distanceMultiplier - .2);
+					_self.distanceMultiplier = Math.max(_minZoom, _self.distanceMultiplier - _zoomChangePerKeyboardStep);
 					break;
 				case "Minus":
 				case "NumpadSubtract":
-					_self.distanceMultiplier = Math.min(_maxZoom, _self.distanceMultiplier + .2);
+					_self.distanceMultiplier = Math.min(_maxZoom, _self.distanceMultiplier + _zoomChangePerKeyboardStep);
 					break;
 				case "Digit0":
 				case "Numpad0":
