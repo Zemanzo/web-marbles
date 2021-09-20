@@ -343,17 +343,19 @@ function TrackingCamera(
 	let _self = this;
 
 	// Some default camera values. Could be added as an option later?
-	let _XZOffset = 3;
-	let _YOffset = 7;
-	let _minZoom = .2;
-	let _maxZoom = 3;
+	const _XZOffset = 3;
+	const _YOffset = 7;
+	const _minZoom = .2;
+	const _maxZoom = 3;
+	const _zoomChangePerPixel = .002;
+	const _zoomChangePerLine = _zoomChangePerPixel * 16;
+	const _zoomChangeFineGrainModifier = .25;
+	const _zoomChangePerKeyboardStep = .2;
 
 	/**
 	 * Enables the controls
 	 */
 	this.enable = function() {
-		let func;
-
 		this.enabled = true;
 
 		this.update = function() {
@@ -361,13 +363,42 @@ function TrackingCamera(
 		};
 
 		// Using the scrolling wheel allows a user to zoom the camera (closer or further away from the marble that is being tracked)
-		func = function(event) {
-			let newMultiplier = _self.distanceMultiplier + .05 * event.deltaY;
-			if (_self.enabled === true && newMultiplier > _minZoom && newMultiplier < _maxZoom) {
-				_self.distanceMultiplier = newMultiplier;
+		// 1 pixel should result in a .002 zoom change. When `deltaMode` is not 0, we assume notched intervals, of 16px each.
+		const zoomWheelFunction = function(event) {
+			if (_self.enabled === true) {
+				_self.distanceMultiplier = Math.min(_maxZoom, Math.max(_minZoom,
+					_self.distanceMultiplier + (
+						event.deltaY
+						* (event.deltaMode !== 0 ? _zoomChangePerLine : _zoomChangePerPixel)
+						* (event.shiftKey === true ? _zoomChangeFineGrainModifier : 1)
+					)
+				));
 			}
 		};
-		_listeners.push(addRegisteredEventListener(options.controlsElement, "wheel", func, false));
+
+		const zoomKeypressFunction = function(event) {
+			if (_self.enabled === true) {
+				switch(event.code) {
+				case "Equal":
+				case "NumpadAdd":
+					_self.distanceMultiplier = Math.max(_minZoom, _self.distanceMultiplier - _zoomChangePerKeyboardStep);
+					break;
+				case "Minus":
+				case "NumpadSubtract":
+					_self.distanceMultiplier = Math.min(_maxZoom, _self.distanceMultiplier + _zoomChangePerKeyboardStep);
+					break;
+				case "Digit0":
+				case "Numpad0":
+					_self.distanceMultiplier = 1;
+					break;
+				}
+			}
+		};
+
+		_listeners.push(
+			addRegisteredEventListener(options.controlsElement, "wheel", zoomWheelFunction, false),
+			addRegisteredEventListener(window, "keypress", zoomKeypressFunction, false)
+		);
 	};
 
 	/**
