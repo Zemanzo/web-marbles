@@ -18,7 +18,8 @@ domReady.then(() => {
 				expires: days,
 				path: "/",
 				domain: window.location.hostname,
-				secure: config.ssl
+				secure: config.ssl,
+				sameSite: "strict"
 			});
 
 			window.opener.postMessage({
