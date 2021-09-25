@@ -7,6 +7,11 @@ export function setEditorLogElement(el) {
 }
 
 export function editorLog(message, type = "info") {
+	if (console[type]) {
+		console[type](message);
+	} else {
+		console.info(message);
+	}
 	element.insertAdjacentHTML(
 		"beforeend",
 		`<div class='${type}'>[${currentTimeString()}] ${message}</div>`
