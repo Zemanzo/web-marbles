@@ -2,7 +2,7 @@ import {
 	Group,
 	Vector3,
 	Mesh,
-	Geometry,
+	BufferGeometry,
 	BoxBufferGeometry,
 	SphereBufferGeometry,
 	CylinderBufferGeometry,
@@ -473,7 +473,7 @@ PrefabCollider.prototype.setShape = function(shapeType) {
 			model: null,
 			convex: true
 		};
-		this.sceneObject.geometry = new Geometry();
+		this.sceneObject.geometry = new BufferGeometry();
 		break;
 	default:
 		console.error(`Attempted to set unknown collider shape type ${shapeType}`);
@@ -524,7 +524,7 @@ PrefabCollider.prototype.setModel = function(modelName) {
 	// Remove from references
 	if(this.colliderData.model) {
 		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
-		this.sceneObject.geometry = new Geometry();
+		this.sceneObject.geometry = new BufferGeometry();
 		this.colliderData.model = null;
 		this.colliderData.convex = true;
 	}
@@ -561,7 +561,7 @@ PrefabCollider.prototype.setConvex = function(isConvex) {
 		editorLog(`Failed to switch collider to ${isConvex ? "convex" : "concave"}.`, "error");
 		// Reset collider data so it stays valid
 		delete modelsTab.models[this.colliderData.model].prefabEntities[this.uuid];
-		this.sceneObject.geometry = new Geometry();
+		this.sceneObject.geometry = new BufferGeometry();
 		this.colliderData.model = null;
 		this.colliderData.convex = true;
 	}

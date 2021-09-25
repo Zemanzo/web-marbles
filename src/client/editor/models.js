@@ -1,10 +1,9 @@
 import {
 	Vector3,
 	Matrix4,
-	Geometry,
-	BufferGeometry,
 	Group
 } from "three";
+import * as BufferGeometryUtils from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { ConvexGeometry } from "three/examples/jsm/geometries/ConvexGeometry";
@@ -160,13 +159,10 @@ Model.prototype.getConvexHull = function() {
 			let vertexArray = _getVertices(this.sceneObject);
 			this.convexHull = new ConvexGeometry(vertexArray); // Could throw an error if input is not valid
 			if(this.convexHull) {
-				this.projectData.convexData = [];
-				for(let i = 0; i < this.convexHull.vertices.length; i++) {
-					this.projectData.convexData.push(this.convexHull.vertices[i].x);
-					this.projectData.convexData.push(this.convexHull.vertices[i].y);
-					this.projectData.convexData.push(this.convexHull.vertices[i].z);
-				}
-				this.convexHull = new BufferGeometry().fromGeometry(this.convexHull);
+				// Clone the data
+				this.projectData.convexData = Float32Array.from(
+					this.convexHull.attributes.position.array
+				);
 			} else {
 				this.convexHull = false;
 			}
@@ -178,27 +174,25 @@ Model.prototype.getConvexHull = function() {
 	return this.convexHull;
 };
 
-// Recursive function: Returns one Geometry object of all combined geometries within the passed object
+// Recursive function: Returns one BufferGeometry object of all combined geometries within the passed object
 function _combineGeometry(obj) {
-	let geo = new Geometry();
+	let geo;
 
 	// obj.matrix isn't guaranteed to be up-to-date
 	let matrix = new Matrix4().identity();
 	matrix = matrix.compose(obj.position, obj.quaternion, obj.scale);
 
 	if(obj.type === "Mesh") {
-		let objGeo = obj.geometry;
-		// BufferGeometry needs to be converted before merging
-		if(objGeo.type === "BufferGeometry") {
-			objGeo = new Geometry().fromBufferGeometry(objGeo);
-		}
-		objGeo.mergeVertices(); // Never hurts, right?
-		geo.merge(objGeo, matrix);
+		geo = BufferGeometryUtils.mergeVertices(obj.geometry).applyMatrix4(matrix);
 	}
 
 	for(let c = 0; c < obj.children.length; c++) {
-		let childGeo = _combineGeometry(obj.children[c]);
-		geo.merge(childGeo, matrix);
+		const childGeo = _combineGeometry(obj.children[c]);
+		if (geo) {
+			geo.merge(childGeo);
+		} else {
+			geo = childGeo;
+		}
 	}
 
 	return geo;
@@ -211,20 +205,9 @@ Model.prototype.getConcaveGeometry = function() {
 		this.concaveGeo = _combineGeometry(this.sceneObject);
 		if(this.concaveGeo) {
 			this.projectData.concaveData = {
-				vertices: [],
-				indices: []
+				vertices: Float32Array.from(this.concaveGeo.attributes.position.array),
+				indices: Float32Array.from(this.concaveGeo.index.array)
 			};
-			for(let i = 0; i < this.concaveGeo.vertices.length; i++) {
-				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].x);
-				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].y);
-				this.projectData.concaveData.vertices.push(this.concaveGeo.vertices[i].z);
-			}
-			for(let i = 0; i < this.concaveGeo.faces.length; i++) {
-				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].a);
-				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].b);
-				this.projectData.concaveData.indices.push(this.concaveGeo.faces[i].c);
-			}
-			this.concaveGeo = new BufferGeometry().fromGeometry(this.concaveGeo);
 		} else {
 			this.concaveGeo = false;
 		}
