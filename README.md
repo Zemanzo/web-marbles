@@ -1,3 +1,8 @@
+# ⚠️ ARCHIVED
+**This project is no longer active. We have no intent to work any further on it, at least in the foreseeable future.**
+
+----
+
 [![Discord](https://img.shields.io/discord/478527288854708226.svg?color=%237289DA&label=discord&logo=discord)](https://discord.gg/XB3k9T5)
 [![Dependencies](https://img.shields.io/david/Zemanzo/web-marbles.svg)](https://david-dm.org/Zemanzo/web-marbles)
 [![Patreon](https://img.shields.io/badge/support%20us-patreon-%23e85b46.svg?logo=patreon)](https://www.patreon.com/webmarbles)
