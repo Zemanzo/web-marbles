@@ -21,6 +21,17 @@ function inIframe() {
 	}
 }
 
+function getParsedUserDataCookie() {
+	try {
+		const cookie = Cookies.get("user_data");
+		if (cookie) {
+			return JSON.parse(cookie);
+		}
+	} catch (err) {
+		console.warn("Could not parse user_data cookie. Will assume it was empty...", err);
+	}
+}
+
 domReady.then(() => {
 	// String formatted timestamp
 	let timestamp = function() {
@@ -45,7 +56,7 @@ domReady.then(() => {
 	let chatMessageTemplate = document.getElementById("messageTemplate");
 
 	// Check for former authentication
-	cookieData = Cookies.getJSON("user_data");
+	cookieData = getParsedUserDataCookie();
 	checkAuthentication();
 
 	let lastMessageSent = Date.now();
@@ -181,7 +192,7 @@ function authenticationWindow() {
 window.addEventListener("message", receiveMessage, false);
 function receiveMessage(event) {
 	if (event.data && event.data.success && event.origin === window.location.origin) {
-		cookieData = Cookies.getJSON("user_data");
+		cookieData = getParsedUserDataCookie();
 		authWindow.close();
 		checkAuthentication();
 
@@ -226,7 +237,8 @@ function checkAuthentication() {
 						expires: days,
 						path: "/",
 						domain: window.location.hostname,
-						secure: config.ssl
+						secure: config.ssl,
+						SameSite: "Strict"
 					});
 					cookieData = response.tokenBody;
 				}

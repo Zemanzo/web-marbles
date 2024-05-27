@@ -14,11 +14,12 @@ domReady.then(() => {
 			let user_data = JSON.parse(response);
 
 			let days = (user_data.expires_in / 62400) - 0.1; // seconds to days minus some slack
-			Cookies.set("user_data", user_data, {
+			Cookies.set("user_data", response, {
 				expires: days,
 				path: "/",
 				domain: window.location.hostname,
-				secure: config.ssl
+				secure: config.ssl,
+				sameSite: "strict"
 			});
 
 			window.opener.postMessage({
